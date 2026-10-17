@@ -24,9 +24,9 @@ rm -rf $SCRIPT_DIR/vanadium/patches/*javascript-optimizer-{site-setting,settings
 rm -rf $SCRIPT_DIR/vanadium/patches/*component-updates.patch
 rm -rf $SCRIPT_DIR/vanadium/patches/*{pdf,PDF,for-content-public,toolbar-button,configs-from-config-app,config-app-parsing,new-tab-card,predictive-back}*.patch
 # rm -rf $SCRIPT_DIR/vanadium/patches/*crashpad*.patch
-replace "$SCRIPT_DIR/vanadium/patches" "VANADIUM" "TITANIUM"
-replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "Titanium"
-replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "titanium"
+replace "$SCRIPT_DIR/vanadium/patches" "VANADIUM" "ORA"
+replace "$SCRIPT_DIR/vanadium/patches" "Vanadium" "Ora"
+replace "$SCRIPT_DIR/vanadium/patches" "vanadium" "ora"
 git am --whitespace=nowarn --keep-non-patch $SCRIPT_DIR/vanadium/patches/*.patch
 
 gclient sync -D --no-history --nohooks
