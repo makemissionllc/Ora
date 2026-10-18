@@ -189,5 +189,6 @@ sed -i 's/|| mSupportedProfileType == SupportedProfileType.REGULAR) {/|| mSuppor
 sed -i 's/|| mSupportedProfileType == SupportedProfileType.OFF_THE_RECORD) {/|| mSupportedProfileType == SupportedProfileType.OFF_THE_RECORD || mSupportedProfileType == SupportedProfileType.MIXED) {/' chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 
 bash "$SCRIPT_DIR/ora/apply_ui_foundation.sh"
+bash "$SCRIPT_DIR/ora/apply_toolbar_layout.sh"
 
 export PATCHED=1
