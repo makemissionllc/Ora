@@ -4,4 +4,9 @@
     <dimen name="bottom_sheet_corner_radius">20dp</dimen>
     <dimen name="card_rounded_corner_radius">12dp</dimen>
     <dimen name="settings_item_rounded_corner_radius_default">12dp</dimen>
+    <dimen name="tab_grid_card_bg_radius">12dp</dimen>
+    <dimen name="tab_grid_card_highlight_bg_radius">12dp</dimen>
+    <dimen name="tab_grid_card_thumbnail_corner_radius_top">12dp</dimen>
+    <dimen name="tab_grid_card_thumbnail_corner_radius_bottom">12dp</dimen>
+    <dimen name="tab_grid_dialog_bg_radius">20dp</dimen>
 </resources>

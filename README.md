@@ -13,6 +13,7 @@ The Android application ID is `com.makemission.ora`. The generated app is brande
 - Ora’s light and dark Material 3 color palette, with theme selection following Android’s system appearance.
 - Phone browsers default to the bottom toolbar, with the existing Address bar setting to move it to the top. Tablet toolbar, address pill, and tab strip use the wireframe dimensions and order.
 - Shared browser cards use 12dp corners and bottom sheets use 20dp corners.
+- Tab overview cards use the same 12dp corners in grid and group views.
 - Tablet tab search uses Chromium’s existing tab-search surface and preserves named, colored tab groups.
 - Reader mode keeps Chromium’s text-size and theme controls, with Ora light/dark colors and a readable tablet text column.
 

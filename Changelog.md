@@ -9,6 +9,7 @@ Changes are recorded here for each repository update.
 - Added Ora light and dark Material 3 color roles and connected them through the existing Chromium extension-resource hook. The Ora palette disables Android dynamic colors so the interface uses the wireframe colors.
 - Enabled Chromium’s phone bottom toolbar by default, kept its menu button available on the browser bar and start page, and defaulted the existing Address bar preference to bottom. Added tablet-specific toolbar, address pill, and tab strip sizing and placed the tab strip below the toolbar.
 - Matched shared Chromium card, settings-card, and bottom-sheet corner radii to the Ora wireframes.
+- Matched tab grid cards, thumbnails, highlights, and tab overview dialogs to the Ora corner scale.
 - Enabled Chromium’s desktop Android tab-search surface for searching open tabs on tablets.
 - Applied the Ora reader palette and constrained the article column on tablet-sized viewports; existing reader text-size and theme controls remain available.
 
