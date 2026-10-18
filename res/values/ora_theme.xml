@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Ora contributors. SPDX-License-Identifier: GPL-2.0-only -->
+<!-- Ora Material 3 color roles for light mode. -->
+<resources>
+    <style name="Theme.Ora" parent="Theme.BrowserUI.Light">
+        <item name="dynamicColorThemeOverlay">@null</item>
+        <item name="colorPrimary">@color/ora_accent</item>
+        <item name="colorPrimaryInverse">@color/ora_accent_container</item>
+        <item name="colorOnPrimary">@color/ora_on_accent</item>
+        <item name="colorPrimaryContainer">@color/ora_accent_container</item>
+        <item name="colorOnPrimaryContainer">@color/ora_on_accent_container</item>
+        <item name="colorSecondaryContainer">@color/ora_placeholder</item>
+        <item name="colorOnSecondaryContainer">@color/ora_text</item>
+        <item name="colorAccent">@color/ora_accent</item>
+        <item name="android:colorBackground">@color/ora_background</item>
+        <item name="colorOnBackground">@color/ora_text</item>
+        <item name="colorSurface">@color/ora_surface</item>
+        <item name="colorOnSurface">@color/ora_text</item>
+        <item name="colorSurfaceVariant">@color/ora_placeholder</item>
+        <item name="colorSurfaceContainerLow">@color/ora_background</item>
+        <item name="colorSurfaceContainer">@color/ora_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/ora_background</item>
+        <item name="colorSurfaceContainerHighest">@color/ora_placeholder</item>
+        <item name="colorOnSurfaceVariant">@color/ora_muted</item>
+        <item name="colorSurfaceInverse">@color/ora_text</item>
+        <item name="colorOnSurfaceInverse">@color/ora_surface</item>
+        <item name="colorOutline">@color/ora_outline</item>
+        <item name="colorOutlineVariant">@color/ora_outline_variant</item>
+        <item name="colorTertiaryContainer">@color/ora_placeholder</item>
+        <item name="colorOnTertiaryContainer">@color/ora_text</item>
+        <item name="android:textColorPrimary">?attr/colorOnSurface</item>
+        <item name="android:textColorSecondary">?attr/colorOnSurfaceVariant</item>
+        <item name="android:textColorHint">?attr/colorOnSurfaceVariant</item>
+        <item name="colorControlNormal">?attr/colorOnSurfaceVariant</item>
+        <item name="colorControlActivated">?attr/colorPrimary</item>
+    </style>
+</resources>

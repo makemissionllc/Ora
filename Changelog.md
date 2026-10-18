@@ -2,6 +2,12 @@
 
 Changes are recorded here for each repository update.
 
+## 2026-10-18
+
+### Added
+
+- Added Ora light and dark Material 3 color roles and connected them through the existing Chromium extension-resource hook. The Ora palette disables Android dynamic colors so the interface uses the wireframe colors.
+
 ## 2026-10-17
 
 ### Changed

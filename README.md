@@ -10,6 +10,7 @@ The Android application ID is `com.makemission.ora`. The generated app is brande
 - Ora downstream patches for extension installation and browser behavior.
 - Manifest V2 compatibility and loading unpacked extensions for development.
 - Build configuration for ARM and ARM64 APKs, plus an ARM64 Android App Bundle.
+- Ora’s light and dark Material 3 color palette, with theme selection following Android’s system appearance.
 
 Ora is a downstream Chromium project. Its code and patches do not provide the operating-system-level hardening available when using GrapheneOS with Vanadium.
 
@@ -28,7 +29,8 @@ For Chromium debug pages, visit `chrome://chrome-urls`; experiments are availabl
 - `patch.sh`: applies Ora-specific source and resource changes after the upstream patch set.
 - `vanadium/`: upstream Vanadium submodule with version information and its Chromium patch series.
 - `extensions/`: extension bundling helpers and the code that stages the bundled CRX.
-- `res/`: Ora app icon resources.
+- `res/`: Ora app icon and light/dark theme resources.
+- `ora/`: Ora-owned Chromium resource and source integration helpers.
 - `fastlane/metadata/`: Android store listing text and screenshots.
 
 ## Building

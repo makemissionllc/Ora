@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Ora contributors. SPDX-License-Identifier: GPL-2.0-only -->
+<!-- Ora browser palette for dark mode. -->
+<resources>
+    <color name="ora_background">#141518</color>
+    <color name="ora_surface">#23252b</color>
+    <color name="ora_placeholder">#2e3138</color>
+    <color name="ora_text">#ecedf0</color>
+    <color name="ora_muted">#9097a6</color>
+    <color name="ora_accent">#6c93ff</color>
+    <color name="ora_on_accent">#10234f</color>
+    <color name="ora_accent_container">#22365f</color>
+    <color name="ora_on_accent_container">#e7ecff</color>
+    <color name="ora_outline">#777f8e</color>
+    <color name="ora_outline_variant">#424650</color>
+</resources>
