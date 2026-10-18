@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2026 Ora contributors. SPDX-License-Identifier: GPL-2.0-only -->
+<resources>
+    <dimen name="bottom_sheet_corner_radius">20dp</dimen>
+    <dimen name="card_rounded_corner_radius">12dp</dimen>
+    <dimen name="settings_item_rounded_corner_radius_default">12dp</dimen>
+</resources>
