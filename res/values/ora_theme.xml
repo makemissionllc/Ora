@@ -21,6 +21,8 @@
         <item name="colorSurfaceContainer">@color/ora_surface</item>
         <item name="colorSurfaceContainerHigh">@color/ora_background</item>
         <item name="colorSurfaceContainerHighest">@color/ora_placeholder</item>
+        <item name="colorSurfaceBright">@color/ora_surface</item>
+        <item name="colorSurfaceDim">@color/ora_background</item>
         <item name="colorOnSurfaceVariant">@color/ora_muted</item>
         <item name="colorSurfaceInverse">@color/ora_text</item>
         <item name="colorOnSurfaceInverse">@color/ora_surface</item>

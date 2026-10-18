@@ -12,6 +12,7 @@ Changes are recorded here for each repository update.
 - Matched tab grid cards, thumbnails, highlights, and tab overview dialogs to the Ora corner scale.
 - Enabled Chromium’s desktop Android tab-search surface for searching open tabs on tablets.
 - Applied the Ora reader palette and constrained the article column on tablet-sized viewports; existing reader text-size and theme controls remain available.
+- Aligned bright, dim, and elevated surface roles with Ora colors so settings, menus, and dark sheets use the intended surface palette. Documented the split-view engine TODO and the existing Chromium screens reused by Ora.
 
 ## 2026-10-17
 

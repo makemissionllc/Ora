@@ -16,6 +16,9 @@ The Android application ID is `com.makemission.ora`. The generated app is brande
 - Tab overview cards use the same 12dp corners in grid and group views.
 - Tablet tab search uses Chromium’s existing tab-search surface and preserves named, colored tab groups.
 - Reader mode keeps Chromium’s text-size and theme controls, with Ora light/dark colors and a readable tablet text column.
+- Chromium’s existing Android surfaces provide bookmarks, downloads, find-in-page, per-site settings, and send-tab actions.
+
+Split view is not implemented yet. Chromium’s Android tab engine does not support showing two tabs in one browser window; TODO: add an Ora split-view screen and connect it to a tab-pair engine once that support exists.
 
 Ora is a downstream Chromium project. Its code and patches do not provide the operating-system-level hardening available when using GrapheneOS with Vanadium.
 
