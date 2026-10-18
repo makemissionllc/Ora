@@ -192,5 +192,6 @@ bash "$SCRIPT_DIR/ora/apply_ui_foundation.sh"
 bash "$SCRIPT_DIR/ora/apply_toolbar_layout.sh"
 bash "$SCRIPT_DIR/ora/apply_surface_shapes.sh"
 bash "$SCRIPT_DIR/ora/apply_tab_search.sh"
+bash "$SCRIPT_DIR/ora/apply_reader_mode.sh"
 
 export PATCHED=1
