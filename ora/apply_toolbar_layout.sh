@@ -24,7 +24,7 @@ def replace_once(path, old, new):
         raise SystemExit(f"Ora toolbar patch expected one source match in {path}, found {old_count}")
 
 resource_source = ora_root / "res/values-sw600dp/ora_toolbar_dimens.xml"
-resource_destination = Path("chrome/android/java/res/values-sw600dp/ora_toolbar_dimens.xml")
+resource_destination = Path("ora/chromium_src/chrome/android/java/res/values-sw600dp/ora_toolbar_dimens.xml")
 resource_destination.parent.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(resource_source, resource_destination)
 

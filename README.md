@@ -62,7 +62,58 @@ Then run:
 
 The script writes signed outputs under `chromium/src/out/release`. The GitHub Actions workflow expects the same two values as repository secrets. For a CI build, run the **Build** workflow in Actions.
 
-The build rewrites Vanadium patch text in the submodule checkout to apply Ora branding, then applies those patches to Chromium. Building therefore modifies files inside the local submodule checkout. Review the resulting Git state before committing or updating submodule content.
+The build script prevents overlapping builds, reuses the existing Chromium and `depot_tools` checkouts, and resets Chromium to the pinned version before applying patches. It seeds the local remote-head reference for `gclient`, avoiding a separate network lookup. It rewrites a temporary copy of the Vanadium patch series, leaving the upstream submodule unchanged. Browser builds skip Chromium’s large Android WebView CTS test archive and Android emulator package; set `ORA_INCLUDE_WEBVIEW_CTS_ARCHIVE=1` or `ORA_INCLUDE_ANDROID_EMULATOR=1` to include either one. Chromium’s `DEPS` file is restored immediately after dependency sync. Ninja uses four jobs by default; set `ORA_BUILD_JOBS` to change the concurrency for your machine.
+
+## Android Studio
+
+Open this repository root in Android Studio, trust the project, and import it as a Gradle project. Use the Gradle wrapper and Android Studio’s bundled JDK (JDK 17 or newer). Gradle sync only loads the build tasks; it does not download Chromium or start compilation.
+
+Ora uses Chromium’s GN/Ninja build system. The root Gradle project connects Android Studio to that compiler. In the **Gradle** tool window, open **Ora Browser → Tasks → ora**:
+
+- `doctorOra`: show required tools, preparation status, and ADB devices.
+- `prepareOra`: fetch dependencies, run hooks, and apply Ora source changes. Run once before the first build; subsequent calls reuse a matching preparation marker.
+- `assembleOra`: build the arm64 APK for devices such as the Pad 8 Pro.
+- `installOra`: build and install over ADB.
+- `runOra`: build, install, and launch `com.makemission.ora`.
+- `generateChromiumProject`: after a successful build, generate the Chromium Java source project under `chromium/src/out/OraStudio` for source navigation. Open that generated project separately when you need Chromium Java indexing.
+
+Select **Ora Browser (build APK)** in the Run configuration menu and click Run to compile. Choose **Ora Browser (build, install, launch)** to also install and open the app on a connected device. You can also run the same tasks in Android Studio’s terminal:
+
+~~~sh
+./gradlew doctorOra
+./gradlew assembleOra
+./gradlew runOra -Pora.serial=YOUR_ADB_SERIAL
+~~~
+
+The APK is copied to `build/outputs/apk/ora/ora-arm64.apk`. Chromium’s local APK build uses its development signing configuration; use the existing `build.sh` release workflow with your signing inputs for distribution builds. Ora XML files under `res/values*` are synced into Chromium’s Ora extension resource directory before compilation, so incremental builds pick up palette and dimension edits. Missing registered resources produce a clear sync error. Sync also removes identical XML copies left in Chromium’s main resource tree by older staging scripts; it preserves separately edited copies and asks you to merge them into the repository’s `res/` files. Native intermediate files stay in `chromium/src/out/Ora-arm64` for incremental builds. `./gradlew clean` removes the root Gradle outputs and keeps the expensive Chromium checkout and native cache.
+
+System dependencies require a terminal with sudo. Before your first IDE build, initialize the Vanadium submodule and prepare the Linux environment and sources:
+
+~~~sh
+git submodule update --init --recursive
+bash build.sh --prepare-only
+~~~
+
+This preparation mode needs no release signing secrets. If a previous preparation stopped during dependency sync, resume it with `bash build.sh --resume --prepare-only`, or `./gradlew prepareOra -Pora.resume=true` when system dependencies are already installed. IDE tasks pass `--skip-system-deps` to avoid interactive sudo prompts. Preparation without `--resume` resets the fetched Chromium checkout before applying patches; preserve edits there before refreshing preparation. A failed preparation does not create a ready marker.
+
+If another Ora build is active, IDE tasks wait for its checkout lock and then recheck readiness. They reuse successful preparation instead of resetting the checkout again. The Build output shows a waiting message while the active build finishes; current bootstrap progress is in `build/ora-build.log`.
+
+Android Studio tasks use one compiler worker by default to limit memory use. Set `-Pora.jobs=4` to increase parallelism on machines with enough memory. If several devices are connected, select one using `-Pora.serial=SERIAL`. ADB is found in `ANDROID_SDK_ROOT`, `ANDROID_HOME`, `~/Android/Sdk`, the fetched Chromium SDK, or `PATH`. Linux, substantial memory/disk space, and network access for the first Chromium sync are still required. The root project exposes Gradle build/run tasks; Android app variants and the native compiler remain managed by Chromium.
+
+### Long builds outside Android Studio
+
+On Linux with a user systemd session, a transient service can own the entire Gradle/compiler process tree. This lets a long build continue after a terminal or chat process exits. Set `JAVA_HOME` to your installed JDK before starting:
+
+~~~sh
+mkdir -p build
+systemd-run --user --unit=ora-browser-build \
+  --working-directory="$PWD" --setenv=JAVA_HOME="$JAVA_HOME" \
+  /bin/bash -c 'exec ./gradlew --no-daemon --console=plain -Pora.jobs=1 assembleOra > build/ora-persistent-build.log 2>&1'
+systemctl --user status ora-browser-build.service
+tail -f build/ora-persistent-build.log
+~~~
+
+`--no-daemon` gives the service its own Gradle process tree instead of reusing a daemon owned by another session. To stop this build, run `systemctl --user stop ora-browser-build.service`. Before relaunching a stopped or failed unit with the same name, run `systemctl --user reset-failed ora-browser-build.service`. This transient service does not resume automatically after a reboot or the user service manager exits. Android Studio builds use the same checkout lock and wait if this service is compiling.
 
 ## License and attribution
 

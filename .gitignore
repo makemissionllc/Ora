@@ -7,3 +7,9 @@ keys/
 
 *.aab
 *.apk
+
+# Android Studio / Gradle local outputs
+.gradle/
+.kotlin/
+build/
+local.properties

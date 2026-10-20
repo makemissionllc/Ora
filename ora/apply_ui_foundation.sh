@@ -22,10 +22,10 @@ copy_resource() {
     cp -f "$source" "$destination"
 }
 
-copy_resource "$ORA_ROOT/res/values/ora_colors.xml" "$CHROME_ANDROID/res/values/ora_colors.xml"
-copy_resource "$ORA_ROOT/res/values-night/ora_colors.xml" "$CHROME_ANDROID/res/values-night/ora_colors.xml"
-copy_resource "$ORA_ROOT/res/values/ora_theme.xml" "$CHROME_ANDROID/res/values/ora_theme.xml"
-copy_resource "$ORA_ROOT/res/values-night/ora_theme.xml" "$CHROME_ANDROID/res/values-night/ora_theme.xml"
+copy_resource "$ORA_ROOT/res/values/ora_colors.xml" "$ORA_CHROME_ANDROID/java/res/values/ora_colors.xml"
+copy_resource "$ORA_ROOT/res/values-night/ora_colors.xml" "$ORA_CHROME_ANDROID/java/res/values-night/ora_colors.xml"
+copy_resource "$ORA_ROOT/res/values/ora_theme.xml" "$ORA_CHROME_ANDROID/java/res/values/ora_theme.xml"
+copy_resource "$ORA_ROOT/res/values-night/ora_theme.xml" "$ORA_CHROME_ANDROID/java/res/values-night/ora_theme.xml"
 
 add_resource_source() {
     local resource_path="$1"

@@ -194,4 +194,6 @@ bash "$SCRIPT_DIR/ora/apply_surface_shapes.sh"
 bash "$SCRIPT_DIR/ora/apply_tab_search.sh"
 bash "$SCRIPT_DIR/ora/apply_reader_mode.sh"
 
+python3 "$SCRIPT_DIR/tools/sync_resources.py" .
+
 export PATCHED=1

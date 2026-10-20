@@ -1,0 +1,28 @@
+plugins {
+    id 'base'
+}
+
+def oraTask = { String taskName, String action, String descriptionText ->
+    tasks.register(taskName, Exec) {
+        group = 'ora'
+        description = descriptionText
+        workingDir = rootDir
+        commandLine 'bash', file('tools/studio.sh').absolutePath, action
+        environment 'ORA_BUILD_JOBS', providers.gradleProperty('ora.jobs').getOrElse('1')
+        environment 'ORA_ADB_SERIAL', providers.gradleProperty('ora.serial').getOrElse('')
+        environment 'ORA_RESUME_PREPARATION', providers.gradleProperty('ora.resume').getOrElse('false')
+    }
+}
+
+oraTask('doctorOra', 'doctor', 'Show tool, checkout, and connected-device status.')
+oraTask('prepareOra', 'prepare', 'Fetch Chromium dependencies and prepare Ora sources once.')
+oraTask('assembleOra', 'assemble', 'Build the arm64 Ora Browser APK using GN/Ninja.')
+oraTask('installOra', 'install', 'Build and install Ora Browser on an ADB device.')
+oraTask('runOra', 'run', 'Build, install, and launch Ora Browser on an ADB device.')
+oraTask('generateChromiumProject', 'project', 'Generate Chromium Java source projects for Android Studio.')
+
+tasks.named('assembleOra') { dependsOn 'prepareOra' }
+tasks.named('installOra') { dependsOn 'assembleOra' }
+tasks.named('runOra') { dependsOn 'installOra' }
+tasks.named('generateChromiumProject') { dependsOn 'assembleOra' }
+tasks.named('assemble') { dependsOn 'assembleOra' }

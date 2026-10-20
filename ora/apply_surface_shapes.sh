@@ -4,7 +4,7 @@ set -euo pipefail
 
 ORA_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 RESOURCE_SOURCE="$ORA_ROOT/res/values/ora_shape_dimens.xml"
-RESOURCE_DESTINATION="chrome/android/java/res/values/ora_shape_dimens.xml"
+RESOURCE_DESTINATION="ora/chromium_src/chrome/android/java/res/values/ora_shape_dimens.xml"
 RESOURCE_GNI="ora/chromium_src/chrome/android/chrome_app_java_resources_ext_sources.gni"
 RESOURCE_PATH='  "java/res/values/ora_shape_dimens.xml",'
 
