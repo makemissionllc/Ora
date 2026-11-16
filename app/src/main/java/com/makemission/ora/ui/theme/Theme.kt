@@ -103,6 +103,13 @@ object BrowserTokens {
     val TabletAddressMaxWidth = 520.dp
     val SidebarSegmentHeight = 32.dp
 
+    // Settings (tablet): a category rail beside one centered column, as in the Settings mockup.
+    val SettingsRailWidth = 260.dp
+    val SettingsRailRowHeight = 44.dp
+    val SettingsContentMaxWidth = 720.dp
+    /** Width of the Theme segmented control. Wider than the mockup's 220 dp so every mode label fits. */
+    val SettingsSegmentWidth = 280.dp
+
     // Link quick menu (long press on a link or image)
     val QuickMenuWidth = 260.dp
     val QuickMenuRadius = 16.dp
