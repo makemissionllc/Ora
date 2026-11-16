@@ -815,7 +815,8 @@ private fun PhoneCompactBar(
             onStop = { tab.session.stop() },
             modifier = Modifier.weight(1f),
             onSwipeUp = onSwipeUp,
-            onSwitchTab = onSwitchTab
+            onSwitchTab = onSwitchTab,
+            shape = BrowserTokens.PhoneCompactPill
         )
         FloatingCircleButton(onClick = onMore, enabled = true, description = "More") {
             Icon(Icons.Filled.MoreVert, contentDescription = null)
@@ -888,6 +889,7 @@ private fun AddressBar(
     modifier: Modifier = Modifier,
     onSwipeUp: () -> Unit = {},
     onSwitchTab: (Int) -> Unit = {},
+    shape: androidx.compose.ui.graphics.Shape = BrowserTokens.AddressBarShape,
 ) {
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
@@ -910,8 +912,8 @@ private fun AddressBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.AddressBarHeight)
-            .shadow(BrowserTokens.AddressBarElevation, BrowserTokens.AddressBarShape),
-        shape = BrowserTokens.AddressBarShape,
+            .shadow(BrowserTokens.AddressBarElevation, shape),
+        shape = shape,
         color = browserColors().AddressBarBackground
     ) {
         Row(

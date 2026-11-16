@@ -120,6 +120,7 @@ object BrowserTokens {
     val PhoneCompactPadding = 12.dp
     val PhoneCompactGap = 8.dp
     val PhoneCompactCircle = 44.dp
+    val PhoneCompactPill = RoundedCornerShape(percent = 50)
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */
