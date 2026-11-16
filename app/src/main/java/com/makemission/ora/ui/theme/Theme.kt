@@ -95,6 +95,9 @@ object BrowserTokens {
     val SidebarWidth = 272.dp
     val SidebarPadding = PaddingValues(horizontal = 12.dp, vertical = 20.dp)
     val SidebarRowHeight = 44.dp
+    /** Widest the centered address pill grows on tablet (design: D-Browse). */
+    val TabletAddressMaxWidth = 520.dp
+    val SidebarSegmentHeight = 32.dp
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */

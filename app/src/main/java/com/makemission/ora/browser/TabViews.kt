@@ -15,8 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items as gridItems
@@ -25,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -35,6 +38,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -175,6 +184,16 @@ fun TabSidebar(
     onNewTab: () -> Unit,
     onOpenBookmark: (String) -> Unit,
 ) {
+    var showBookmarks by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    val needle = query.trim()
+    val shownTabs = tabs.tabs.filter {
+        needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true)
+    }
+    val shownBookmarks = bookmarks.filter {
+        needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true)
+    }
+
     Column(
         modifier = Modifier
             .width(BrowserTokens.SidebarWidth)
@@ -183,47 +202,128 @@ fun TabSidebar(
             .padding(BrowserTokens.SidebarPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        // Tabs and Bookmarks switch, like the segmented control in the design (D-Sidebar).
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BrowserTokens.SidebarSegmentHeight)
+                .clip(RoundedCornerShape(10.dp))
+                .background(browserColors().AddressBarBackground),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SegmentLabel("Tabs", selected = !showBookmarks, modifier = Modifier.weight(1f)) { showBookmarks = false }
+            SegmentLabel("Bookmarks", selected = showBookmarks, modifier = Modifier.weight(1f)) { showBookmarks = true }
+        }
+        // Filters the list below by title or address.
+        SidebarSearch(
+            query = query,
+            placeholder = if (showBookmarks) "Search bookmarks" else "Search open tabs",
+            onQueryChange = { query = it }
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Tabs", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = browserColors().AddressBarText)
-            IconButton(onClick = onNewTab) {
-                Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
+            Text(
+                if (showBookmarks) "Bookmarks" else "${shownTabs.size} of ${tabs.tabs.size} tabs",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = browserColors().SecondaryText
+            )
+            if (!showBookmarks) {
+                IconButton(onClick = onNewTab) {
+                    Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
+                }
             }
         }
         LazyColumn(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            items(tabs.tabs, key = { it.id }) { tab ->
-                SidebarRow(
-                    label = tab.title.ifBlank { displayUrl(tab.url) },
-                    selected = tab.id == tabs.selectedId,
-                    onClick = { tabs.select(tab.id) }
-                )
-            }
-            if (bookmarks.isNotEmpty()) {
-                item {
-                    Text(
-                        "Bookmarks",
-                        modifier = Modifier.padding(top = 16.dp, bottom = 4.dp, start = 12.dp),
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = browserColors().SecondaryText
-                    )
+            if (showBookmarks) {
+                if (shownBookmarks.isEmpty()) {
+                    item { EmptySidebarText(if (bookmarks.isEmpty()) "No bookmarks yet. Use the bookmark button to save a page." else "No bookmarks match \"$needle\"") }
                 }
-                items(bookmarks, key = { it.url }) { bookmark ->
+                items(shownBookmarks, key = { it.url }) { bookmark ->
                     SidebarRow(
                         label = bookmark.title,
                         selected = false,
                         onClick = { onOpenBookmark(bookmark.url) }
                     )
                 }
+            } else {
+                if (shownTabs.isEmpty()) {
+                    item { EmptySidebarText("No tabs match \"$needle\"") }
+                }
+                items(shownTabs, key = { it.id }) { tab ->
+                    SidebarRow(
+                        label = tab.title.ifBlank { displayUrl(tab.url) },
+                        selected = tab.id == tabs.selectedId,
+                        onClick = { tabs.select(tab.id) }
+                    )
+                }
             }
         }
     }
+}
+
+@Composable
+private fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(10.dp))
+            .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text,
+            fontSize = 13.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = if (selected) browserColors().AddressBarText else browserColors().SecondaryText
+        )
+    }
+}
+
+@Composable
+private fun SidebarSearch(query: String, placeholder: String, onQueryChange: (String) -> Unit) {
+    BasicTextField(
+        value = query,
+        onValueChange = onQueryChange,
+        singleLine = true,
+        textStyle = TextStyle(color = browserColors().AddressBarText, fontSize = 14.sp),
+        cursorBrush = SolidColor(browserColors().Accent),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(BrowserTokens.SidebarSegmentHeight)
+            .clip(RoundedCornerShape(10.dp))
+            .background(browserColors().AddressBarBackground)
+            .padding(horizontal = 10.dp),
+        decorationBox = { inner ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Search, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(6.dp))
+                Box(modifier = Modifier.weight(1f)) {
+                    if (query.isEmpty()) {
+                        Text(placeholder, fontSize = 14.sp, color = browserColors().SecondaryText)
+                    }
+                    inner()
+                }
+            }
+        }
+    )
+}
+
+@Composable
+private fun EmptySidebarText(text: String) {
+    Text(
+        text,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp),
+        fontSize = 13.sp,
+        color = browserColors().SecondaryText
+    )
 }
 
 @Composable

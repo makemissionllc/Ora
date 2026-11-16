@@ -8,7 +8,9 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
@@ -34,7 +36,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,8 +47,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
@@ -187,6 +194,21 @@ private fun BrowserContent(
     }
 
     val onNewTab: () -> Unit = { tabs.newTab(homePage) }
+    /** Tablet only: whether the tab and bookmark sidebar is visible. */
+    var showSidebar by remember { mutableStateOf(true) }
+
+    /** Loads typed text: searches through the chooser or default engine, or opens a URL. */
+    fun submitAddress(input: String) {
+        if (isSearchInput(input) && searchEngines.size > 1) {
+            pendingSearch = input.trim()
+        } else if (isSearchInput(input)) {
+            val engine = defaultEngine
+            BrowserLog.info("search", "Searching ${engine.label} for \"${input.trim()}\"")
+            selected.session.loadUri(engine.urlFor(input.trim()))
+        } else {
+            selected.session.loadUri(toLoadableUrl(input, defaultEngine.template))
+        }
+    }
 
     // Full-screen phone overlay currently open (tablets never use one).
     val phoneOverlay = when {
@@ -225,7 +247,23 @@ private fun BrowserContent(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        topBar = {
+            // Tablet keeps every control on one top toolbar (design: D-Browse).
+            if (isTablet) {
+                TabletToolbar(
+                    tab = selected,
+                    isBookmarked = bookmarkList.any { it.url == selected.url },
+                    showSidebar = showSidebar,
+                    onToggleSidebar = { showSidebar = !showSidebar },
+                    onSubmit = { input -> submitAddress(input) },
+                    onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                    onShare = { shareUrl(context, selected.url) },
+                    onNewTab = onNewTab
+                )
+            }
+        },
         bottomBar = {
+            if (!isTablet) {
             // The toolbar folds down into its bottom edge while an overlay grows out of the tabs button.
             AnimatedVisibility(
                 visible = phoneOverlay == PhoneOverlay.NONE,
@@ -235,17 +273,7 @@ private fun BrowserContent(
                 BrowserToolbar(
                     tab = selected,
                     isBookmarked = bookmarkList.any { it.url == selected.url },
-                    onSubmit = { input ->
-                        if (isSearchInput(input) && searchEngines.size > 1) {
-                            pendingSearch = input.trim()
-                        } else if (isSearchInput(input)) {
-                            val engine = defaultEngine
-                            BrowserLog.info("search", "Searching ${engine.label} for \"${input.trim()}\"")
-                            selected.session.loadUri(engine.urlFor(input.trim()))
-                        } else {
-                            selected.session.loadUri(toLoadableUrl(input, defaultEngine.template))
-                        }
-                    },
+                    onSubmit = { input -> submitAddress(input) },
                     onBookmark = { bookmarks.toggle(selected.url, selected.title) },
                     onShare = { shareUrl(context, selected.url) },
                     onTabs = if (isTablet) onNewTab else {
@@ -258,10 +286,16 @@ private fun BrowserContent(
                     onMenu = if (isTablet) null else { { showMenu = true } }
                 )
             }
+            }
         }
     ) { innerPadding ->
         Row(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            if (isTablet) {
+            // The sidebar slides in and out from its left edge, using the shared overlay motion.
+            AnimatedVisibility(
+                visible = isTablet && showSidebar,
+                enter = fadeIn(OraMotion.enter()) + expandHorizontally(expandFrom = Alignment.Start, animationSpec = OraMotion.enter()),
+                exit = fadeOut(OraMotion.exit()) + shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = OraMotion.exit())
+            ) {
                 TabSidebar(
                     tabs = tabs,
                     bookmarks = bookmarkList,
@@ -472,6 +506,75 @@ private fun BrowserToolbar(
                 }
             }
         }
+    }
+}
+
+/**
+ * Tablet top toolbar (design: D-Browse): sidebar toggle, back, forward, a centered
+ * address pill, then share, bookmark and new tab.
+ */
+@Composable
+private fun TabletToolbar(
+    tab: BrowserTab,
+    isBookmarked: Boolean,
+    showSidebar: Boolean,
+    onToggleSidebar: () -> Unit,
+    onSubmit: (String) -> Unit,
+    onBookmark: () -> Unit,
+    onShare: () -> Unit,
+    onNewTab: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(browserColors().ToolbarBackground)
+            .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(BrowserTokens.ToolbarPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(BrowserTokens.ToolbarRowSpacing)
+        ) {
+            ToolbarButton(onClick = onToggleSidebar, enabled = true, description = if (showSidebar) "Hide sidebar" else "Show sidebar") {
+                Icon(Icons.Filled.Menu, contentDescription = null)
+            }
+            ToolbarButton(onClick = { tab.session.goBack() }, enabled = tab.canGoBack, description = "Back") {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+            }
+            ToolbarButton(onClick = { tab.session.goForward() }, enabled = tab.canGoForward, description = "Forward") {
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+            }
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                AddressBar(
+                    currentUrl = tab.url,
+                    loading = tab.loading,
+                    onSubmit = onSubmit,
+                    onReload = { tab.session.reload() },
+                    onStop = { tab.session.stop() },
+                    modifier = Modifier.widthIn(max = BrowserTokens.TabletAddressMaxWidth)
+                )
+            }
+            ToolbarButton(onClick = onShare, enabled = tab.url.isNotBlank(), description = "Share") {
+                Icon(Icons.Filled.Share, contentDescription = null)
+            }
+            ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = "Bookmark") {
+                Icon(
+                    if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                    contentDescription = null
+                )
+            }
+            ToolbarButton(onClick = onNewTab, enabled = true, description = "New tab") {
+                Icon(Icons.Filled.Add, contentDescription = null)
+            }
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BrowserTokens.HairlineHeight)
+                .background(browserColors().ToolbarBorder)
+        )
     }
 }
 
