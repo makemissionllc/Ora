@@ -126,6 +126,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Tablet tab bar set to ${style.label}")
     }
 
+    private val _askEachSearch = MutableStateFlow(prefs.getBoolean(KEY_ASK_EACH_SEARCH, false))
+    /** When on and several engines are on, each search asks which engine to use. Off searches with the default engine. */
+    val askEachSearch: StateFlow<Boolean> = _askEachSearch.asStateFlow()
+
+    fun setAskEachSearch(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_ASK_EACH_SEARCH, enabled).apply()
+        _askEachSearch.value = enabled
+        BrowserLog.info("settings", "Ask engine each search ${if (enabled) "on" else "off"}")
+    }
+
     private val _searchEngines = MutableStateFlow(loadSearchEngines())
     /** Engines the user has turned on. When more than one is on, a search asks which to use. */
     val searchEngines: StateFlow<Set<SearchEngine>> = _searchEngines.asStateFlow()
@@ -167,6 +177,7 @@ class SettingsRepository(context: Context) {
         private const val PREFS_NAME = "ora_settings"
         private const val KEY_SEARCH_ENGINES = "search_engines"
         private const val KEY_SEARCH_DEFAULT = "search_default"
+        private const val KEY_ASK_EACH_SEARCH = "ask_each_search"
         private const val KEY_HOME_PAGE = "home_page"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEBSITE_THEME = "website_theme"

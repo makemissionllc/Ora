@@ -62,6 +62,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import kotlin.math.abs
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
@@ -94,6 +95,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalConfiguration
@@ -219,6 +223,7 @@ private fun BrowserContent(
     val extensions = remember { ExtensionsRepository(GeckoEngine.runtime(context)) }
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
+    val askEachSearch by settings.askEachSearch.collectAsState()
     /** Search text waiting for the user to pick an engine. Null when the chooser is closed. */
     var pendingSearch by remember { mutableStateOf<String?>(null) }
     val pageView = remember { PageView() }
@@ -263,7 +268,7 @@ private fun BrowserContent(
     /** Loads typed text: searches through the chooser or default engine, or opens a URL. */
     fun submitAddress(input: String) {
         selected.markStartPageBehind()
-        if (isSearchInput(input) && searchEngines.size > 1) {
+        if (isSearchInput(input) && askEachSearch && searchEngines.size > 1) {
             pendingSearch = input.trim()
         } else if (isSearchInput(input)) {
             val engine = defaultEngine
@@ -1025,6 +1030,11 @@ private fun AddressBar(
 ) {
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
+    // Set when the field gains focus so the whole address is selected; cleared once the user edits.
+    var selectAllPending by remember { mutableStateOf(false) }
+    // A tap outside the suggestions closes them only. It must not drop focus, or the clear button and typed text reset.
+    var suggestionsHidden by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
     var anchorWidth by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
 
@@ -1035,7 +1045,7 @@ private fun AddressBar(
 
     // What the user has typed, without any autocompleted tail that is still selected.
     val typed = fieldValue.text.substring(0, fieldValue.selection.min.coerceIn(0, fieldValue.text.length))
-    val suggestions = if (focused) addressSuggestions(typed, candidates) else emptyList()
+    val suggestions = if (focused && !suggestionsHidden) addressSuggestions(typed, candidates) else emptyList()
 
     Box(
         modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } }
@@ -1065,6 +1075,13 @@ private fun AddressBar(
             BasicTextField(
                 value = fieldValue,
                 onValueChange = { next ->
+                    // The input method can collapse the selection to the start right after focus, which
+                    // made Backspace do nothing on "Start page". Keep the pending select-all in that case.
+                    if (selectAllPending && next.text == fieldValue.text && next.selection.collapsed && next.selection.start == 0) {
+                        return@BasicTextField
+                    }
+                    selectAllPending = false
+                    suggestionsHidden = false
                     val typing = next.text.length > fieldValue.text.length
                     val completion = if (typing) autocompleteFor(next.text, candidates) else null
                     fieldValue = if (completion != null) {
@@ -1075,9 +1092,12 @@ private fun AddressBar(
                 },
                 modifier = Modifier
                     .weight(1f)
+                    .focusRequester(focusRequester)
                     .onFocusChanged { state ->
                         focused = state.isFocused
                         if (state.isFocused) {
+                            suggestionsHidden = false
+                            selectAllPending = true
                             fieldValue = fieldValue.copy(selection = TextRange(0, fieldValue.text.length))
                         }
                     },
@@ -1102,6 +1122,20 @@ private fun AddressBar(
             )
             // Autocomplete: when typing forward, finish a known domain and select the added part.
             // Deleting never autocompletes, so backspace behaves normally.
+            // Quality of life: one tap clears the whole address while editing, and keeps the keyboard up.
+            if (focused && fieldValue.text.isNotEmpty()) {
+                // Not focusable, so tapping it keeps the field focused and the URL does not refill it.
+                IconButton(
+                    modifier = Modifier.focusProperties { canFocus = false },
+                    onClick = {
+                        BrowserLog.info("search", "Address cleared")
+                        selectAllPending = false
+                        fieldValue = TextFieldValue("")
+                    }
+                ) {
+                    Icon(Icons.Filled.Clear, contentDescription = "Clear address", tint = browserColors().SecondaryText)
+                }
+            }
             if (loading) {
                 IconButton(onClick = onStop) {
                     Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)
@@ -1116,7 +1150,7 @@ private fun AddressBar(
     // Suggestions drop down under the field. Not focusable, so the keyboard stays open while they show.
     DropdownMenu(
         expanded = focused && suggestions.isNotEmpty(),
-        onDismissRequest = { focused = false },
+        onDismissRequest = { suggestionsHidden = true },
         modifier = Modifier.width(anchorWidth),
         properties = PopupProperties(focusable = false)
     ) {

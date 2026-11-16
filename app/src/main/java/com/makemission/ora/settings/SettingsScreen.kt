@@ -54,6 +54,7 @@ fun SettingsScreen(
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
+    val askEachSearch by settings.askEachSearch.collectAsState()
     // Each device gets its own options: tablets see the sidebar and tablet bar, phones see the phone bar.
     val isTablet = LocalConfiguration.current.screenWidthDp >= TABLET_MIN_WIDTH_DP
     val blockPopups by settings.blockPopups.collectAsState()
@@ -280,11 +281,32 @@ fun SettingsScreen(
                         }
                     }
                     Text(
-                        "Turn on several to pick one each time you search. The selected dot is the default.",
+                        "The selected dot is the default. Searches use it unless the switch below is on.",
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                         fontSize = 12.sp,
                         color = browserColors().SecondaryText
                     )
+                }
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(browserColors().AddressBarBackground)
+                        .clickable { settings.setAskEachSearch(!askEachSearch) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("Ask which engine each search", fontSize = 15.sp, color = browserColors().AddressBarText)
+                        Text(
+                            "When several engines are on, pick one from a sheet each time.",
+                            fontSize = 12.sp,
+                            color = browserColors().SecondaryText
+                        )
+                    }
+                    Switch(checked = askEachSearch, onCheckedChange = { settings.setAskEachSearch(it) })
                 }
             }
             item {
