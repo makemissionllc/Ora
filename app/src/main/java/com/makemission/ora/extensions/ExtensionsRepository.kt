@@ -1,5 +1,6 @@
 package com.makemission.ora.extensions
 
+import com.makemission.ora.log.BrowserLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,7 +57,7 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
                 safe.forEach { extensionsById[it.id] = it }
                 _extensions.value = safe.map { it.toInfo() }
             },
-            { error -> _lastError.value = error?.message ?: "Could not load extensions" }
+            { error -> reportError("Loading extensions", error, "Could not load extensions") }
         )
     }
 
@@ -65,9 +66,10 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
         val trimmed = url.trim()
         if (trimmed.isEmpty()) return
         _lastError.value = null
+        BrowserLog.info("extensions", "Installing from $trimmed")
         controller.install(trimmed).accept(
-            { refresh() },
-            { error -> _lastError.value = error?.message ?: "Could not install this extension" }
+            { BrowserLog.info("extensions", "Installed from $trimmed"); refresh() },
+            { error -> reportError("Installing $trimmed", error, "Could not install this extension") }
         )
     }
 
@@ -75,16 +77,25 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
         val extension = extensionsById[id] ?: return
         val source = WebExtensionController.EnableSource.USER
         val result = if (enabled) controller.enable(extension, source) else controller.disable(extension, source)
-        result.accept({ refresh() }, { error -> _lastError.value = error?.message })
+        val action = if (enabled) "Enabling ${extension.id}" else "Disabling ${extension.id}"
+        result.accept({ refresh() }, { error -> reportError(action, error, "Could not change this extension") })
     }
 
     fun uninstall(id: String) {
         val extension = extensionsById[id] ?: return
-        controller.uninstall(extension).accept({ refresh() }, { error -> _lastError.value = error?.message })
+        controller.uninstall(extension).accept(
+            { BrowserLog.info("extensions", "Removed $id"); refresh() },
+            { error -> reportError("Removing $id", error, "Could not remove this extension") }
+        )
     }
 
     fun clearError() {
         _lastError.value = null
+    }
+
+    private fun reportError(action: String, error: Throwable?, fallback: String) {
+        BrowserLog.error("extensions", "$action failed", error)
+        _lastError.value = error?.message ?: fallback
     }
 
     private fun WebExtension.toInfo(): ExtensionInfo = ExtensionInfo(

@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,6 +32,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.DiagnosticsScreen
 import com.makemission.ora.ui.theme.browserColors
 
 /**
@@ -45,8 +48,16 @@ fun SettingsScreen(
 ) {
     val appearance by settings.appearance.collectAsState()
     val homePage by settings.homePage.collectAsState()
+    val websiteTheme by settings.websiteTheme.collectAsState()
+    val logEntries by BrowserLog.entries.collectAsState()
     var homeDraft by remember(homePage) { mutableStateOf(homePage) }
     var confirmClear by remember { mutableStateOf(false) }
+    var showDiagnostics by remember { mutableStateOf(false) }
+
+    if (showDiagnostics) {
+        DiagnosticsScreen(onDone = { showDiagnostics = false })
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -90,6 +101,24 @@ fun SettingsScreen(
                             }
                         }
                     }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { settings.setWebsiteTheme(!websiteTheme) }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column {
+                            Text("Match app theme on websites", fontSize = 15.sp, color = browserColors().AddressBarText)
+                            Text(
+                                "Web pages use this app's light or dark colors",
+                                fontSize = 12.sp,
+                                color = browserColors().SecondaryText
+                            )
+                        }
+                        Switch(checked = websiteTheme, onCheckedChange = { settings.setWebsiteTheme(it) })
+                    }
                 }
             }
             item {
@@ -130,6 +159,22 @@ fun SettingsScreen(
                 ) {
                     Text("Clear browsing data", fontSize = 15.sp, color = browserColors().AddressBarText)
                     Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+                }
+            }
+            item {
+                SectionTitle("Diagnostics")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(browserColors().AddressBarBackground)
+                        .clickable { showDiagnostics = true }
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Log and errors", fontSize = 15.sp, color = browserColors().AddressBarText)
+                    Text("${logEntries.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                 }
             }
         }

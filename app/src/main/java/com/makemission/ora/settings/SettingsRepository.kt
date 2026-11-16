@@ -2,6 +2,7 @@ package com.makemission.ora.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import com.makemission.ora.log.BrowserLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +37,7 @@ class SettingsRepository(context: Context) {
         val value = url.trim().ifEmpty { DEFAULT_HOME_PAGE }
         prefs.edit().putString(KEY_HOME_PAGE, value).apply()
         _homePage.value = value
+        BrowserLog.info("settings", "Home page set to $value")
     }
 
     private val _appearance = MutableStateFlow(
@@ -46,12 +48,24 @@ class SettingsRepository(context: Context) {
     fun setAppearance(mode: AppearanceMode) {
         prefs.edit().putString(KEY_APPEARANCE, mode.key).apply()
         _appearance.value = mode
+        BrowserLog.info("settings", "Appearance set to ${mode.label}")
+    }
+
+    private val _websiteTheme = MutableStateFlow(prefs.getBoolean(KEY_WEBSITE_THEME, true))
+    /** When on, web pages use the app's light or dark palette instead of the system setting. */
+    val websiteTheme: StateFlow<Boolean> = _websiteTheme.asStateFlow()
+
+    fun setWebsiteTheme(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_WEBSITE_THEME, enabled).apply()
+        _websiteTheme.value = enabled
+        BrowserLog.info("settings", "Website theme ${if (enabled) "on" else "off"}")
     }
 
     companion object {
         private const val PREFS_NAME = "ora_settings"
         private const val KEY_HOME_PAGE = "home_page"
         private const val KEY_APPEARANCE = "appearance"
+        private const val KEY_WEBSITE_THEME = "website_theme"
         const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"
         /** Search URL used when the address bar input is not a URL. %s is replaced by the query. */
         const val DEFAULT_SEARCH_TEMPLATE = "https://duckduckgo.com/?q=%s"

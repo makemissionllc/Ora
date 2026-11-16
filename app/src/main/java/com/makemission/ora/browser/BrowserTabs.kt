@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.makemission.ora.log.BrowserLog
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
 
@@ -56,15 +57,25 @@ class BrowserTab(val id: Long, context: Context, initialUrl: String) {
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 loading = true
+                BrowserLog.info("page", "Loading $url")
             }
 
             override fun onPageStop(session: GeckoSession, success: Boolean) {
                 loading = false
+                if (success) {
+                    BrowserLog.info("page", "Loaded ${this@BrowserTab.url}")
+                } else {
+                    BrowserLog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")
+                }
             }
         }
         session.contentDelegate = object : GeckoSession.ContentDelegate {
             override fun onTitleChange(session: GeckoSession, title: String?) {
                 this@BrowserTab.title = title.orEmpty()
+            }
+
+            override fun onCrash(session: GeckoSession) {
+                BrowserLog.error("page", "Renderer crashed for ${this@BrowserTab.url}")
             }
         }
         session.open(GeckoEngine.runtime(context))
@@ -93,6 +104,7 @@ class BrowserTabs(private val context: Context, private val homePage: String) {
         val tab = BrowserTab(nextId++, context, url)
         tabs.add(tab)
         select(tab.id)
+        BrowserLog.info("tabs", "Opened tab ${tab.id} (${tabs.size} open)")
         return tab
     }
 
@@ -105,6 +117,7 @@ class BrowserTabs(private val context: Context, private val homePage: String) {
         val index = tabs.indexOfFirst { it.id == id }
         if (index < 0) return
         tabs.removeAt(index).close()
+        BrowserLog.info("tabs", "Closed tab $id (${tabs.size} open)")
         if (tabs.isEmpty()) {
             newTab(homePage)
         } else if (selectedId == id) {

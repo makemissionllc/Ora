@@ -93,6 +93,7 @@ import com.makemission.ora.settings.AppearanceMode
 import com.makemission.ora.settings.SettingsScreen
 import androidx.compose.foundation.isSystemInDarkTheme
 import java.net.URLEncoder
+import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.StorageController
 import android.widget.Toast
@@ -129,6 +130,17 @@ fun BrowserScreen(
         AppearanceMode.DARK -> DarkBrowserColors
         AppearanceMode.LIGHT -> LightBrowserColors
         AppearanceMode.AUTO -> if (isSystemInDarkTheme()) DarkBrowserColors else LightBrowserColors
+    }
+    // Web pages follow the app's light or dark palette (or the system setting when the toggle is off).
+    val websiteTheme by settings.websiteTheme.collectAsState()
+    val isDark = palette == DarkBrowserColors || palette == PureDarkBrowserColors
+    val runtimeSettings = GeckoEngine.runtime(LocalContext.current).settings
+    LaunchedEffect(websiteTheme, isDark) {
+        runtimeSettings.preferredColorScheme = when {
+            !websiteTheme -> GeckoRuntimeSettings.COLOR_SCHEME_SYSTEM
+            isDark -> GeckoRuntimeSettings.COLOR_SCHEME_DARK
+            else -> GeckoRuntimeSettings.COLOR_SCHEME_LIGHT
+        }
     }
     CompositionLocalProvider(LocalBrowserColors provides palette) {
         BrowserContent(settings, bookmarks, modifier)
