@@ -3,6 +3,7 @@ package com.makemission.ora.browser
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -176,6 +177,17 @@ private fun BrowserContent(
         showSettings -> PhoneOverlay.SETTINGS
         showExtensions -> PhoneOverlay.EXTENSIONS
         else -> PhoneOverlay.NONE
+    }
+
+    // Back closes the open overlay first, then steps back through page history, and only then exits.
+    BackHandler(enabled = phoneOverlay != PhoneOverlay.NONE) {
+        showTabGrid = false
+        showLibrary = false
+        showSettings = false
+        showExtensions = false
+    }
+    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && selected.canGoBack) {
+        selected.session.goBack()
     }
 
     Scaffold(
