@@ -210,6 +210,7 @@ private fun BrowserContent(
 
     val blockAds by settings.blockAds.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
+    val secureDns by settings.secureDns.collectAsState()
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
     val tabs = remember {
@@ -226,6 +227,12 @@ private fun BrowserContent(
             .setEnhancedTrackingProtectionCategory(
                 if (blockAds) ContentBlocking.EtpCategory.STRICT else ContentBlocking.EtpCategory.STANDARD
             )
+    }
+    // Secure DNS is a runtime setting: TRR_MODE_FIRST tries encrypted DNS and falls back to system DNS on failure.
+    LaunchedEffect(secureDns) {
+        GeckoEngine.runtime(context).settings.setTrustedRecursiveResolverMode(
+            if (secureDns) GeckoRuntimeSettings.TRR_MODE_FIRST else GeckoRuntimeSettings.TRR_MODE_OFF
+        )
     }
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }

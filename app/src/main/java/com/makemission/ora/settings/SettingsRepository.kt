@@ -106,6 +106,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Ad and tracker blocking ${if (enabled) "on" else "off"}")
     }
 
+    private val _secureDns = MutableStateFlow(prefs.getBoolean(KEY_SECURE_DNS, true))
+    /** When on, host names resolve over encrypted DNS (DNS over HTTPS), falling back to the network's DNS if that fails. */
+    val secureDns: StateFlow<Boolean> = _secureDns.asStateFlow()
+
+    fun setSecureDns(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SECURE_DNS, enabled).apply()
+        _secureDns.value = enabled
+        BrowserLog.info("settings", "Secure DNS ${if (enabled) "on" else "off"}")
+    }
+
     private val _fadePagesIn = MutableStateFlow(prefs.getBoolean(KEY_FADE_PAGES_IN, true))
     /** When on, a page fades in once it is half loaded instead of showing its pieces as they arrive. */
     val fadePagesIn: StateFlow<Boolean> = _fadePagesIn.asStateFlow()
@@ -195,6 +205,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_POPUPS = "block_popups"
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
+        private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_PHONE_BAR = "phone_bar_style"
         private const val KEY_TABLET_BAR = "tablet_bar_style"
         const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"

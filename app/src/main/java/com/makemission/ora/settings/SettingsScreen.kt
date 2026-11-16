@@ -80,6 +80,7 @@ fun SettingsScreen(
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val blockAds by settings.blockAds.collectAsState()
+    val secureDns by settings.secureDns.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
@@ -292,6 +293,32 @@ fun SettingsScreen(
                                     )
                                 }
                                 Switch(checked = blockAds, onCheckedChange = { settings.setBlockAds(it) })
+                            }
+                        }
+                        SectionTitle("Network")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(browserColors().AddressBarBackground)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setSecureDns(!secureDns) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Secure DNS", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Looks up site addresses over encrypted DNS. If that fails, the network's own DNS is used.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = secureDns, onCheckedChange = { settings.setSecureDns(it) })
                             }
                         }
                     }
