@@ -39,6 +39,16 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 17. **Log every error and browser process.** Route each error, GeckoView event (page load, load error, crash, permission request, extension install or enable failure, navigation) and app process (startup, settings change, tab open or close) through `BrowserLog`. Don't leave a failure silent or only in `Log.e` without a `BrowserLog` entry.
 18. **Logs are readable from the app.** Entries live in `BrowserLog` with a level, a tag and a timestamp, and show on the Diagnostics page in Settings, where they can be copied or cleared. A new feature that can fail adds its log calls in the same change.
 
+## Documentation rules
+
+19. **Keep the four project documents current.** `README.md`, `CHANGELOG.md`, `PROGRESS.md` and this file are the record of the project. Every prompt that changes code, docs or rules updates them in the same change set, not later:
+    - `CHANGELOG.md`: add one user-facing entry under *Unreleased* for each addition, improvement or fix, with its commit hash. Group by date, and use *Added*, *Changed*, *Fixed* or *Removed*.
+    - `PROGRESS.md`: move items between *Done*, *In progress*, *Pending* and *Known issues*. Add a row to the verification log with the devices checked and what was seen on each. Mark a device *Not checked* if it was not.
+    - `README.md`: update build, run, or code-layout notes when they change.
+    - `AGENTS.md`: record any new rule the user gives, in the right section.
+20. **Changelog stays in step with the app.** The in-app "What's new" page (Settings > About) reads the same entries as `CHANGELOG.md`. When an entry is added to `CHANGELOG.md`, add it to the in-app list too, in the same change set. Write entries in plain words for a user, not for a developer.
+21. **Record only what was checked.** Do not write a device as verified in `PROGRESS.md` unless a screenshot or test was seen on that device. If a check was skipped or blocked, say so in the log.
+
 ## Attribution
 
 Commits made by an agent end with:
