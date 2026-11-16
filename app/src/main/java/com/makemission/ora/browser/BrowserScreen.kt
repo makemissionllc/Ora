@@ -3,7 +3,17 @@ package com.makemission.ora.browser
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -82,6 +92,12 @@ import org.mozilla.geckoview.GeckoView
 /** Screens narrower than this use the phone layout (tab grid); wider ones use the sidebar layout. */
 private const val TABLET_MIN_WIDTH_DP = 600
 
+/** Full-screen overlays on phones. NONE means the browser page is showing. */
+private enum class PhoneOverlay { NONE, TABS, LIBRARY, SETTINGS }
+
+/** Bottom-right corner, where the tabs button sits. Overlays scale out of and into this point. */
+private val MORPH_ORIGIN = TransformOrigin(0.85f, 1f)
+
 /**
  * Browser screen. Picks the color palette from the Appearance setting, then draws the browser.
  */
@@ -134,10 +150,24 @@ private fun BrowserContent(
 
     val onNewTab: () -> Unit = { tabs.newTab(homePage) }
 
+    // Full-screen phone overlay currently open (tablets never use one).
+    val phoneOverlay = when {
+        isTablet -> PhoneOverlay.NONE
+        showTabGrid -> PhoneOverlay.TABS
+        showLibrary -> PhoneOverlay.LIBRARY
+        showSettings -> PhoneOverlay.SETTINGS
+        else -> PhoneOverlay.NONE
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            if (!(showTabGrid && !isTablet) && !(showLibrary && !isTablet) && !(showSettings && !isTablet)) {
+            // The toolbar folds down into its bottom edge while an overlay grows out of the tabs button.
+            AnimatedVisibility(
+                visible = phoneOverlay == PhoneOverlay.NONE,
+                enter = fadeIn(tween(200)) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = tween(260)),
+                exit = fadeOut(tween(160)) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = tween(220))
+            ) {
                 BrowserToolbar(
                     tab = selected,
                     isBookmarked = bookmarkList.any { it.url == selected.url },
@@ -192,37 +222,52 @@ private fun BrowserContent(
                         }
                     )
                 }
-                if (showSettings && !isTablet) {
-                    SettingsScreen(
-                        settings = settings,
-                        onDone = { showSettings = false }
-                    )
-                }
-                if (showLibrary && !isTablet) {
-                    BookmarksLibrary(
-                        bookmarks = bookmarkList,
-                        onOpen = { url ->
-                            selected.session.loadUri(url)
-                            showLibrary = false
-                        },
-                        onRemove = { url -> bookmarks.remove(url) },
-                        onDone = { showLibrary = false }
-                    )
-                }
-                if (showTabGrid && !isTablet) {
-                    TabGrid(
-                        tabs = tabs,
-                        onSelect = { id ->
-                            tabs.select(id)
-                            showTabGrid = false
-                        },
-                        onClose = { id -> tabs.close(id) },
-                        onNewTab = {
-                            onNewTab()
-                            showTabGrid = false
-                        },
-                        onDone = { showTabGrid = false }
-                    )
+                // Overlays grow out of the tabs button's corner and shrink back into it.
+                AnimatedContent(
+                    targetState = phoneOverlay,
+                    modifier = Modifier.fillMaxSize(),
+                    transitionSpec = {
+                        (fadeIn(tween(220)) + scaleIn(
+                            initialScale = 0.88f,
+                            animationSpec = tween(280),
+                            transformOrigin = MORPH_ORIGIN
+                        )) togetherWith (fadeOut(tween(160)) + scaleOut(
+                            targetScale = 0.88f,
+                            animationSpec = tween(200),
+                            transformOrigin = MORPH_ORIGIN
+                        ))
+                    },
+                    label = "phone-overlay"
+                ) { overlay ->
+                    when (overlay) {
+                        PhoneOverlay.SETTINGS -> SettingsScreen(
+                            settings = settings,
+                            onDone = { showSettings = false }
+                        )
+                        PhoneOverlay.LIBRARY -> BookmarksLibrary(
+                            bookmarks = bookmarkList,
+                            onOpen = { url ->
+                                selected.session.loadUri(url)
+                                showLibrary = false
+                            },
+                            onRemove = { url -> bookmarks.remove(url) },
+                            onDone = { showLibrary = false }
+                        )
+                        PhoneOverlay.TABS -> TabGrid(
+                            tabs = tabs,
+                            onSelect = { id ->
+                                tabs.select(id)
+                                showTabGrid = false
+                            },
+                            onClose = { id -> tabs.close(id) },
+                            onNewTab = {
+                                onNewTab()
+                                showTabGrid = false
+                            },
+                            onDone = { showTabGrid = false }
+                        )
+                        PhoneOverlay.NONE -> Unit
+                    }
                 }
             }
         }
