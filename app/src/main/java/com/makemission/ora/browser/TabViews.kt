@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.browserColors
 
 /** Phone tab overview: a grid of open tabs with a bottom bar for new tab and done. */
 @Composable
@@ -53,7 +54,7 @@ fun TabGrid(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BrowserTokens.GridBackground)
+            .background(browserColors().GridBackground)
     ) {
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
@@ -73,21 +74,21 @@ fun TabGrid(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(BrowserTokens.ToolbarBackground)
+                .background(browserColors().ToolbarBackground)
                 .padding(BrowserTokens.ToolbarPadding),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             IconButton(onClick = onNewTab, modifier = Modifier.size(BrowserTokens.ToolbarButtonSize)) {
-                Icon(Icons.Filled.Add, contentDescription = "New tab", tint = BrowserTokens.Accent)
+                Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
             }
             Text(
                 text = if (tabList.size == 1) "1 tab" else "${tabList.size} tabs",
-                color = BrowserTokens.SecondaryText,
+                color = browserColors().SecondaryText,
                 fontSize = 14.sp
             )
             TextButton(onClick = onDone) {
-                Text("Done", color = BrowserTokens.Accent, fontWeight = FontWeight.SemiBold)
+                Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -109,11 +110,11 @@ private fun TabTile(
                 .fillMaxWidth()
                 .height(BrowserTokens.TabTileHeight)
                 .then(
-                    if (selected) Modifier.border(BrowserTokens.SelectionWidth, BrowserTokens.Accent, BrowserTokens.TabTileShape)
+                    if (selected) Modifier.border(BrowserTokens.SelectionWidth, browserColors().Accent, BrowserTokens.TabTileShape)
                     else Modifier
                 ),
             shape = BrowserTokens.TabTileShape,
-            color = BrowserTokens.AddressBarBackground,
+            color = browserColors().AddressBarBackground,
             shadowElevation = BrowserTokens.TabTileElevation
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
@@ -123,7 +124,7 @@ private fun TabTile(
                         .align(Alignment.TopEnd)
                         .padding(6.dp)
                         .size(BrowserTokens.CloseBadgeSize)
-                        .background(BrowserTokens.CloseBadge, RoundedCornerShape(50))
+                        .background(browserColors().CloseBadge, RoundedCornerShape(50))
                         .clickable(onClick = onClose),
                     contentAlignment = Alignment.Center
                 ) {
@@ -144,7 +145,7 @@ private fun TabTile(
             modifier = Modifier.fillMaxWidth(),
             fontSize = 13.sp,
             fontWeight = FontWeight.Medium,
-            color = BrowserTokens.AddressBarText
+            color = browserColors().AddressBarText
         )
     }
 }
@@ -164,7 +165,7 @@ fun TabSidebar(
         modifier = Modifier
             .width(BrowserTokens.SidebarWidth)
             .fillMaxSize()
-            .background(BrowserTokens.SidebarBackground)
+            .background(browserColors().SidebarBackground)
             .padding(BrowserTokens.SidebarPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -173,9 +174,9 @@ fun TabSidebar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Tabs", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = BrowserTokens.AddressBarText)
+            Text("Tabs", fontWeight = FontWeight.SemiBold, fontSize = 15.sp, color = browserColors().AddressBarText)
             IconButton(onClick = onNewTab) {
-                Icon(Icons.Filled.Add, contentDescription = "New tab", tint = BrowserTokens.Accent)
+                Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
             }
         }
         LazyColumn(
@@ -196,7 +197,7 @@ fun TabSidebar(
                         modifier = Modifier.padding(top = 16.dp, bottom = 4.dp, start = 12.dp),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = BrowserTokens.SecondaryText
+                        color = browserColors().SecondaryText
                     )
                 }
                 items(bookmarks, key = { it.url }) { bookmark ->
@@ -218,7 +219,7 @@ private fun SidebarRow(label: String, selected: Boolean, onClick: () -> Unit) {
             .fillMaxWidth()
             .height(BrowserTokens.SidebarRowHeight)
             .clip(RoundedCornerShape(10.dp))
-            .background(if (selected) BrowserTokens.SidebarSelected else Color.Transparent)
+            .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -229,7 +230,7 @@ private fun SidebarRow(label: String, selected: Boolean, onClick: () -> Unit) {
             overflow = TextOverflow.Ellipsis,
             fontSize = 15.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            color = BrowserTokens.AddressBarText
+            color = browserColors().AddressBarText
         )
     }
 }

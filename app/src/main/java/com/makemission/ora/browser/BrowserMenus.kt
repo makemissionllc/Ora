@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.browserColors
 
 /** Phone "⋯" menu: page actions as a bottom sheet (design: M-Menu). */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,8 +53,9 @@ fun BrowserMenuSheet(
     onLibrary: () -> Unit,
     desktopSite: Boolean,
     onToggleDesktop: (Boolean) -> Unit,
+    onSettings: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = BrowserTokens.AddressBarBackground) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -76,8 +78,19 @@ fun BrowserMenuSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("Desktop site", fontSize = 15.sp, color = BrowserTokens.AddressBarText)
+                Text("Desktop site", fontSize = 15.sp, color = browserColors().AddressBarText)
                 Switch(checked = desktopSite, onCheckedChange = onToggleDesktop)
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onSettings)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Settings", fontSize = 15.sp, color = browserColors().AddressBarText)
+                Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
             }
         }
     }
@@ -93,13 +106,13 @@ private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit) {
         Row(
             modifier = Modifier
                 .size(56.dp)
-                .background(BrowserTokens.AddressBarBackground.copy(alpha = 1f), RoundedCornerShape(14.dp)),
+                .background(browserColors().AddressBarBackground.copy(alpha = 1f), RoundedCornerShape(14.dp)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            Icon(icon, contentDescription = label, tint = BrowserTokens.Accent)
+            Icon(icon, contentDescription = label, tint = browserColors().Accent)
         }
-        Text(label, fontSize = 12.sp, color = BrowserTokens.IconColor)
+        Text(label, fontSize = 12.sp, color = browserColors().IconColor)
     }
 }
 
@@ -114,7 +127,7 @@ fun BookmarksLibrary(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BrowserTokens.GridBackground)
+            .background(browserColors().GridBackground)
             .padding(top = 24.dp, start = 16.dp, end = 16.dp)
     ) {
         Row(
@@ -122,14 +135,14 @@ fun BookmarksLibrary(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Bookmarks", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = BrowserTokens.AddressBarText)
+            Text("Bookmarks", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
             TextButton(onClick = onDone) {
-                Text("Done", color = BrowserTokens.Accent, fontWeight = FontWeight.SemiBold)
+                Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
             }
         }
         Spacer(Modifier.height(12.dp))
         if (bookmarks.isEmpty()) {
-            Text("No bookmarks yet. Use the bookmark button to save a page.", color = BrowserTokens.SecondaryText, fontSize = 14.sp)
+            Text("No bookmarks yet. Use the bookmark button to save a page.", color = browserColors().SecondaryText, fontSize = 14.sp)
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
@@ -140,7 +153,7 @@ fun BookmarksLibrary(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(12.dp))
-                            .background(BrowserTokens.AddressBarBackground)
+                            .background(browserColors().AddressBarBackground)
                             .clickable { onOpen(bookmark.url) }
                             .padding(start = 14.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
                         verticalAlignment = Alignment.CenterVertically
@@ -152,18 +165,18 @@ fun BookmarksLibrary(
                                 overflow = TextOverflow.Ellipsis,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium,
-                                color = BrowserTokens.AddressBarText
+                                color = browserColors().AddressBarText
                             )
                             Text(
                                 displayUrl(bookmark.url),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 fontSize = 12.sp,
-                                color = BrowserTokens.SecondaryText
+                                color = browserColors().SecondaryText
                             )
                         }
                         IconButton(onClick = { onRemove(bookmark.url) }) {
-                            Icon(Icons.Filled.Close, contentDescription = "Remove bookmark", tint = BrowserTokens.SecondaryText)
+                            Icon(Icons.Filled.Close, contentDescription = "Remove bookmark", tint = browserColors().SecondaryText)
                         }
                     }
                 }

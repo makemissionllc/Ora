@@ -9,6 +9,8 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.PaddingValues
@@ -66,18 +68,6 @@ fun OraTheme(
  * "Android Browser Mockups" design. Change values here to restyle the browser.
  */
 object BrowserTokens {
-    // Colors
-    val Accent = Color(0xFF3B6DF0)
-    val ToolbarBackground = Color(0xFFF4F5F7)
-    val ToolbarBorder = Color(0x14000000)
-    val AddressBarBackground = Color(0xFFE6E8ED)
-    val AddressBarText = Color(0xFF23262F)
-    val SecondaryText = Color(0xFF6B7080)
-    val IconColor = Color(0xFF4A4F5C)
-    val DisabledIcon = Color(0xFFB4B4BA)
-    val TabStripBackground = Color(0xFFE6E8ED)
-    val TabStripActive = Color(0xFFFFFFFF)
-
     // Dimensions
     val ToolbarPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 10.dp)
     val ToolbarRowSpacing = 6.dp
@@ -91,20 +81,93 @@ object BrowserTokens {
     val LockIconSize = 13.dp
 
     // Tab grid (phone)
-    val GridBackground = Color(0xFFE9E9EE)
     val GridPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 12.dp)
     val GridSpacing = 16.dp
     val TabTileHeight = 196.dp
     val TabTileShape = RoundedCornerShape(14.dp)
     val TabTileElevation = 2.dp
     val SelectionWidth = 3.dp
-    val CloseBadge = Color(0x9C3C3C43)
     val CloseBadgeSize = 28.dp
 
     // Sidebar (tablet)
-    val SidebarBackground = Color(0xFFF2F2F6)
-    val SidebarSelected = Color(0x1F0B6BDE)
     val SidebarWidth = 272.dp
     val SidebarPadding = PaddingValues(horizontal = 12.dp, vertical = 20.dp)
     val SidebarRowHeight = 44.dp
 }
+
+/** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */
+data class BrowserColors(
+    val Accent: Color,
+    val ToolbarBackground: Color,
+    val ToolbarBorder: Color,
+    val AddressBarBackground: Color,
+    val AddressBarText: Color,
+    val SecondaryText: Color,
+    val IconColor: Color,
+    val DisabledIcon: Color,
+    val GridBackground: Color,
+    val CloseBadge: Color,
+    val SidebarBackground: Color,
+    val SidebarSelected: Color,
+    /** Page background behind the tab sidebar and grid chrome. */
+    val Surface: Color,
+)
+
+/** Light palette from the "Android Browser Mockups" design. */
+val LightBrowserColors = BrowserColors(
+    Accent = Color(0xFF3B6DF0),
+    ToolbarBackground = Color(0xFFF4F5F7),
+    ToolbarBorder = Color(0x14000000),
+    AddressBarBackground = Color(0xFFE6E8ED),
+    AddressBarText = Color(0xFF23262F),
+    SecondaryText = Color(0xFF6B7080),
+    IconColor = Color(0xFF4A4F5C),
+    DisabledIcon = Color(0xFFB4B4BA),
+    GridBackground = Color(0xFFE9E9EE),
+    CloseBadge = Color(0x9C3C3C43),
+    SidebarBackground = Color(0xFFF2F2F6),
+    SidebarSelected = Color(0x1F0B6BDE),
+    Surface = Color(0xFFFFFFFF),
+)
+
+/** Dark palette from the "Dark" browser mockups. */
+val DarkBrowserColors = BrowserColors(
+    Accent = Color(0xFF6C93FF),
+    ToolbarBackground = Color(0xFF141518),
+    ToolbarBorder = Color(0x14FFFFFF),
+    AddressBarBackground = Color(0xFF2E3138),
+    AddressBarText = Color(0xFFECEDF0),
+    SecondaryText = Color(0xFF9097A6),
+    IconColor = Color(0xFFB4B8C4),
+    DisabledIcon = Color(0xFF5A5E6A),
+    GridBackground = Color(0xFF141518),
+    CloseBadge = Color(0x9C8E8E93),
+    SidebarBackground = Color(0xFF1A1B1F),
+    SidebarSelected = Color(0x1F6C93FF),
+    Surface = Color(0xFF23252B),
+)
+
+/** Pure (OLED) black variant: same layout as dark, with true black chrome and surfaces. */
+val PureDarkBrowserColors = BrowserColors(
+    Accent = Color(0xFF6C93FF),
+    ToolbarBackground = Color(0xFF000000),
+    ToolbarBorder = Color(0x14FFFFFF),
+    AddressBarBackground = Color(0xFF1C1C1E),
+    AddressBarText = Color(0xFFF2F2F7),
+    SecondaryText = Color(0xFF8E8E93),
+    IconColor = Color(0xFFC7C7CC),
+    DisabledIcon = Color(0xFF48484A),
+    GridBackground = Color(0xFF000000),
+    CloseBadge = Color(0x9C8E8E93),
+    SidebarBackground = Color(0xFF000000),
+    SidebarSelected = Color(0x1F6C93FF),
+    Surface = Color(0xFF121212),
+)
+
+/** Active browser palette, provided by the browser screen. Light by default. */
+val LocalBrowserColors = staticCompositionLocalOf { LightBrowserColors }
+
+/** The active browser palette. Read it inside composables: `browserColors().Accent`. */
+@Composable
+@ReadOnlyComposable
+fun browserColors(): BrowserColors = LocalBrowserColors.current

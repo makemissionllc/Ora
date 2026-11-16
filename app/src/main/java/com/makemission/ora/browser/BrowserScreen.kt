@@ -68,6 +68,14 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.BookmarksRepository
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.DarkBrowserColors
+import com.makemission.ora.ui.theme.LightBrowserColors
+import com.makemission.ora.ui.theme.LocalBrowserColors
+import com.makemission.ora.ui.theme.PureDarkBrowserColors
+import com.makemission.ora.ui.theme.browserColors
+import com.makemission.ora.settings.AppearanceMode
+import com.makemission.ora.settings.SettingsScreen
+import androidx.compose.foundation.isSystemInDarkTheme
 import java.net.URLEncoder
 import org.mozilla.geckoview.GeckoView
 
@@ -75,11 +83,32 @@ import org.mozilla.geckoview.GeckoView
 private const val TABLET_MIN_WIDTH_DP = 600
 
 /**
- * Browser screen. Phone: full-screen page, bottom toolbar, tab grid on demand.
- * Tablet: tab/bookmark sidebar on the left, page and bottom toolbar on the right.
+ * Browser screen. Picks the color palette from the Appearance setting, then draws the browser.
  */
 @Composable
 fun BrowserScreen(
+    settings: SettingsRepository,
+    bookmarks: BookmarksRepository,
+    modifier: Modifier = Modifier
+) {
+    val appearance by settings.appearance.collectAsState()
+    val palette = when (appearance) {
+        AppearanceMode.PURE_DARK -> PureDarkBrowserColors
+        AppearanceMode.DARK -> DarkBrowserColors
+        AppearanceMode.LIGHT -> LightBrowserColors
+        AppearanceMode.AUTO -> if (isSystemInDarkTheme()) DarkBrowserColors else LightBrowserColors
+    }
+    CompositionLocalProvider(LocalBrowserColors provides palette) {
+        BrowserContent(settings, bookmarks, modifier)
+    }
+}
+
+/**
+ * Phone: full-screen page, bottom toolbar, tab grid on demand.
+ * Tablet: tab/bookmark sidebar on the left, page and bottom toolbar on the right.
+ */
+@Composable
+private fun BrowserContent(
     settings: SettingsRepository,
     bookmarks: BookmarksRepository,
     modifier: Modifier = Modifier
@@ -93,6 +122,7 @@ fun BrowserScreen(
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showLibrary by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
 
     val selected = tabs.selected ?: return
     val selectedId = tabs.selectedId
@@ -107,7 +137,7 @@ fun BrowserScreen(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
-            if (!(showTabGrid && !isTablet) && !(showLibrary && !isTablet)) {
+            if (!(showTabGrid && !isTablet) && !(showLibrary && !isTablet) && !(showSettings && !isTablet)) {
                 BrowserToolbar(
                     tab = selected,
                     isBookmarked = bookmarkList.any { it.url == selected.url },
@@ -155,7 +185,17 @@ fun BrowserScreen(
                         onToggleDesktop = { enabled ->
                             selected.applyDesktopSite(enabled)
                             showMenu = false
+                        },
+                        onSettings = {
+                            showMenu = false
+                            showSettings = true
                         }
+                    )
+                }
+                if (showSettings && !isTablet) {
+                    SettingsScreen(
+                        settings = settings,
+                        onDone = { showSettings = false }
                     )
                 }
                 if (showLibrary && !isTablet) {
@@ -212,14 +252,14 @@ private fun BrowserToolbar(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BrowserTokens.ToolbarBackground)
+            .background(browserColors().ToolbarBackground)
             .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(BrowserTokens.HairlineHeight)
-                .background(BrowserTokens.ToolbarBorder)
+                .background(browserColors().ToolbarBorder)
         )
         Column(
             modifier = Modifier.padding(BrowserTokens.ToolbarPadding),
@@ -297,7 +337,7 @@ private fun AddressBar(
             .height(BrowserTokens.AddressBarHeight)
             .shadow(BrowserTokens.AddressBarElevation, BrowserTokens.AddressBarShape),
         shape = BrowserTokens.AddressBarShape,
-        color = BrowserTokens.AddressBarBackground
+        color = browserColors().AddressBarBackground
     ) {
         Row(
             modifier = Modifier.fillMaxSize().padding(horizontal = BrowserTokens.AddressBarInnerPadding),
@@ -309,7 +349,7 @@ private fun AddressBar(
                     imageVector = Icons.Filled.Lock,
                     contentDescription = "Secure connection",
                     modifier = Modifier.size(BrowserTokens.LockIconSize),
-                    tint = BrowserTokens.SecondaryText
+                    tint = browserColors().SecondaryText
                 )
             }
             Spacer(Modifier.width(BrowserTokens.AddressBarTextStart))
@@ -326,11 +366,11 @@ private fun AddressBar(
                     },
                 singleLine = true,
                 textStyle = TextStyle(
-                    color = BrowserTokens.AddressBarText,
+                    color = browserColors().AddressBarText,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 ),
-                cursorBrush = SolidColor(BrowserTokens.Accent),
+                cursorBrush = SolidColor(browserColors().Accent),
                 keyboardOptions = KeyboardOptions(
                     imeAction = ImeAction.Go,
                     keyboardType = KeyboardType.Uri,
@@ -345,11 +385,11 @@ private fun AddressBar(
             )
             if (loading) {
                 IconButton(onClick = onStop) {
-                    Icon(Icons.Filled.Close, contentDescription = "Stop", tint = BrowserTokens.Accent)
+                    Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)
                 }
             } else {
                 IconButton(onClick = onReload) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = BrowserTokens.AddressBarText)
+                    Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = browserColors().AddressBarText)
                 }
             }
         }
@@ -369,7 +409,7 @@ private fun ToolbarButton(
         modifier = Modifier.size(BrowserTokens.ToolbarButtonSize)
     ) {
         CompositionLocalProvider(
-            LocalContentColor provides if (enabled) BrowserTokens.Accent else BrowserTokens.DisabledIcon
+            LocalContentColor provides if (enabled) browserColors().Accent else browserColors().DisabledIcon
         ) {
             icon()
         }
