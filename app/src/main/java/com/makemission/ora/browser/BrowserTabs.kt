@@ -1,0 +1,103 @@
+package com.makemission.ora.browser
+
+import android.content.Context
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import org.mozilla.geckoview.GeckoSession
+
+/** One browser tab: a GeckoSession plus the UI state the toolbar and tab grid read from it. */
+class BrowserTab(val id: Long, context: Context, initialUrl: String) {
+    val session: GeckoSession = GeckoSession()
+
+    var url by mutableStateOf(initialUrl)
+    var title by mutableStateOf("")
+    var loading by mutableStateOf(false)
+    var canGoBack by mutableStateOf(false)
+    var canGoForward by mutableStateOf(false)
+
+    init {
+        session.navigationDelegate = object : GeckoSession.NavigationDelegate {
+            override fun onLocationChange(
+                session: GeckoSession,
+                url: String?,
+                perms: MutableList<GeckoSession.PermissionDelegate.ContentPermission>,
+                hasUserGesture: Boolean
+            ) {
+                url?.let { this@BrowserTab.url = it }
+            }
+
+            override fun onCanGoBack(session: GeckoSession, canGoBack: Boolean) {
+                this@BrowserTab.canGoBack = canGoBack
+            }
+
+            override fun onCanGoForward(session: GeckoSession, canGoForward: Boolean) {
+                this@BrowserTab.canGoForward = canGoForward
+            }
+        }
+        session.progressDelegate = object : GeckoSession.ProgressDelegate {
+            override fun onPageStart(session: GeckoSession, url: String) {
+                loading = true
+            }
+
+            override fun onPageStop(session: GeckoSession, success: Boolean) {
+                loading = false
+            }
+        }
+        session.contentDelegate = object : GeckoSession.ContentDelegate {
+            override fun onTitleChange(session: GeckoSession, title: String?) {
+                this@BrowserTab.title = title.orEmpty()
+            }
+        }
+        session.open(GeckoEngine.runtime(context))
+        session.loadUri(initialUrl)
+    }
+
+    fun close() = session.close()
+}
+
+/** Owns every open tab and which one is selected. Survives recomposition; created once by the screen. */
+class BrowserTabs(private val context: Context, private val homePage: String) {
+    private var nextId = 0L
+    val tabs = mutableStateListOf<BrowserTab>()
+
+    var selectedId by mutableLongStateOf(-1L)
+        private set
+
+    init {
+        newTab(homePage)
+    }
+
+    val selected: BrowserTab?
+        get() = tabs.firstOrNull { it.id == selectedId }
+
+    fun newTab(url: String): BrowserTab {
+        val tab = BrowserTab(nextId++, context, url)
+        tabs.add(tab)
+        select(tab.id)
+        return tab
+    }
+
+    fun select(id: Long) {
+        if (tabs.none { it.id == id }) return
+        selectedId = id
+    }
+
+    fun close(id: Long) {
+        val index = tabs.indexOfFirst { it.id == id }
+        if (index < 0) return
+        tabs.removeAt(index).close()
+        if (tabs.isEmpty()) {
+            newTab(homePage)
+        } else if (selectedId == id) {
+            select(tabs[minOf(index, tabs.lastIndex)].id)
+        }
+    }
+
+    fun closeAll() {
+        tabs.forEach { it.close() }
+        tabs.clear()
+    }
+}
