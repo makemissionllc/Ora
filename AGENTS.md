@@ -34,6 +34,11 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 15. Write commit messages in the imperative mood, with a short summary and a body that lists the morph or animation change and the quality-of-life feature.
 16. Don't commit build outputs, `.idea/`, or local device settings.
 
+## Logging rules
+
+17. **Log every error and browser process.** Route each error, GeckoView event (page load, load error, crash, permission request, extension install or enable failure, navigation) and app process (startup, settings change, tab open or close) through `BrowserLog`. Don't leave a failure silent or only in `Log.e` without a `BrowserLog` entry.
+18. **Logs are readable from the app.** Entries live in `BrowserLog` with a level, a tag and a timestamp, and show on the Diagnostics page in Settings, where they can be copied or cleared. A new feature that can fail adds its log calls in the same change.
+
 ## Attribution
 
 Commits made by an agent end with:
