@@ -61,8 +61,47 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Website theme ${if (enabled) "on" else "off"}")
     }
 
+    private val _searchEngines = MutableStateFlow(loadSearchEngines())
+    /** Engines the user has turned on. When more than one is on, a search asks which to use. */
+    val searchEngines: StateFlow<Set<SearchEngine>> = _searchEngines.asStateFlow()
+
+    private val _defaultSearchEngine = MutableStateFlow(
+        SearchEngine.fromKey(prefs.getString(KEY_SEARCH_DEFAULT, null)) ?: SearchEngine.DUCKDUCKGO
+    )
+    /** The engine used when only one is on, and the one highlighted in the chooser. */
+    val defaultSearchEngine: StateFlow<SearchEngine> = _defaultSearchEngine.asStateFlow()
+
+    fun setSearchEngineEnabled(engine: SearchEngine, enabled: Boolean) {
+        val current = _searchEngines.value
+        // Always keep at least one engine on, so searching never has nothing to use.
+        if (!enabled && current.size == 1 && engine in current) return
+        val updated = if (enabled) current + engine else current - engine
+        _searchEngines.value = updated
+        prefs.edit().putStringSet(KEY_SEARCH_ENGINES, updated.map { it.key }.toSet()).apply()
+        if (!enabled && _defaultSearchEngine.value == engine) {
+            setDefaultSearchEngine(updated.first())
+        }
+        BrowserLog.info("settings", "${engine.label} ${if (enabled) "on" else "off"} for search")
+    }
+
+    fun setDefaultSearchEngine(engine: SearchEngine) {
+        if (engine !in _searchEngines.value) setSearchEngineEnabled(engine, true)
+        prefs.edit().putString(KEY_SEARCH_DEFAULT, engine.key).apply()
+        _defaultSearchEngine.value = engine
+        BrowserLog.info("settings", "Default search set to ${engine.label}")
+    }
+
+    private fun loadSearchEngines(): Set<SearchEngine> {
+        val saved = prefs.getStringSet(KEY_SEARCH_ENGINES, null)
+            ?.mapNotNull { SearchEngine.fromKey(it) }
+            ?.toSet()
+        return if (saved.isNullOrEmpty()) setOf(SearchEngine.DUCKDUCKGO) else saved
+    }
+
     companion object {
         private const val PREFS_NAME = "ora_settings"
+        private const val KEY_SEARCH_ENGINES = "search_engines"
+        private const val KEY_SEARCH_DEFAULT = "search_default"
         private const val KEY_HOME_PAGE = "home_page"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEBSITE_THEME = "website_theme"

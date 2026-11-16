@@ -15,7 +15,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -50,6 +52,8 @@ fun SettingsScreen(
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
+    val searchEngines by settings.searchEngines.collectAsState()
+    val defaultEngine by settings.defaultSearchEngine.collectAsState()
     var homeDraft by remember(homePage) { mutableStateOf(homePage) }
     var confirmClear by remember { mutableStateOf(false) }
     var showDiagnostics by remember { mutableStateOf(false) }
@@ -143,6 +147,46 @@ fun SettingsScreen(
                             Text("Save", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
                         }
                     }
+                }
+            }
+            item {
+                SectionTitle("Search engines")
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(browserColors().AddressBarBackground)
+                ) {
+                    SearchEngine.entries.forEach { engine ->
+                        val on = engine in searchEngines
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { settings.setSearchEngineEnabled(engine, !on) }
+                                .padding(start = 4.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Checkbox(checked = on, onCheckedChange = { settings.setSearchEngineEnabled(engine, it) })
+                            Text(
+                                engine.label,
+                                modifier = Modifier.weight(1f),
+                                fontSize = 15.sp,
+                                color = browserColors().AddressBarText
+                            )
+                            // Default is chosen among the engines that are on.
+                            RadioButton(
+                                selected = engine == defaultEngine,
+                                enabled = on,
+                                onClick = { settings.setDefaultSearchEngine(engine) }
+                            )
+                        }
+                    }
+                    Text(
+                        "Turn on several to pick one each time you search. The selected dot is the default.",
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        fontSize = 12.sp,
+                        color = browserColors().SecondaryText
+                    )
                 }
             }
             item {

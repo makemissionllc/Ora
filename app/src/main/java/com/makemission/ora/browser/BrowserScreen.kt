@@ -91,6 +91,9 @@ import com.makemission.ora.ui.theme.PureDarkBrowserColors
 import com.makemission.ora.ui.theme.browserColors
 import com.makemission.ora.settings.AppearanceMode
 import com.makemission.ora.settings.SettingsScreen
+import com.makemission.ora.settings.SearchEngine
+import com.makemission.ora.settings.isSearchInput
+import com.makemission.ora.log.BrowserLog
 import androidx.compose.foundation.isSystemInDarkTheme
 import java.net.URLEncoder
 import org.mozilla.geckoview.GeckoRuntimeSettings
@@ -169,6 +172,10 @@ private fun BrowserContent(
     var showSettings by remember { mutableStateOf(false) }
     var showExtensions by remember { mutableStateOf(false) }
     val extensions = remember { ExtensionsRepository(GeckoEngine.runtime(context)) }
+    val searchEngines by settings.searchEngines.collectAsState()
+    val defaultEngine by settings.defaultSearchEngine.collectAsState()
+    /** Search text waiting for the user to pick an engine. Null when the chooser is closed. */
+    var pendingSearch by remember { mutableStateOf<String?>(null) }
     val pageView = remember { PageView() }
 
     val selected = tabs.selected ?: return
@@ -202,6 +209,20 @@ private fun BrowserContent(
         selected.session.goBack()
     }
 
+    pendingSearch?.let { query ->
+        SearchChooserSheet(
+            query = query,
+            engines = SearchEngine.entries.filter { it in searchEngines },
+            default = defaultEngine,
+            onChoose = { engine ->
+                pendingSearch = null
+                BrowserLog.info("search", "Searching ${engine.label} for \"$query\"")
+                selected.session.loadUri(engine.urlFor(query))
+            },
+            onDismiss = { pendingSearch = null }
+        )
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         bottomBar = {
@@ -214,7 +235,17 @@ private fun BrowserContent(
                 BrowserToolbar(
                     tab = selected,
                     isBookmarked = bookmarkList.any { it.url == selected.url },
-                    onSubmit = { input -> selected.session.loadUri(toLoadableUrl(input, SettingsRepository.DEFAULT_SEARCH_TEMPLATE)) },
+                    onSubmit = { input ->
+                        if (isSearchInput(input) && searchEngines.size > 1) {
+                            pendingSearch = input.trim()
+                        } else if (isSearchInput(input)) {
+                            val engine = defaultEngine
+                            BrowserLog.info("search", "Searching ${engine.label} for \"${input.trim()}\"")
+                            selected.session.loadUri(engine.urlFor(input.trim()))
+                        } else {
+                            selected.session.loadUri(toLoadableUrl(input, defaultEngine.template))
+                        }
+                    },
                     onBookmark = { bookmarks.toggle(selected.url, selected.title) },
                     onShare = { shareUrl(context, selected.url) },
                     onTabs = if (isTablet) onNewTab else {
