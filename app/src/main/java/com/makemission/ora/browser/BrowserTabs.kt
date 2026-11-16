@@ -142,7 +142,7 @@ class BrowserTab(
 
             override fun onPageStop(session: GeckoSession, success: Boolean) {
                 loading = false
-                progress = 100
+                // Progress stays where it is: the bar fades out in place instead of sweeping to full first.
                 if (success) {
                     BrowserLog.info("page", "Loaded ${this@BrowserTab.url}")
                 } else {

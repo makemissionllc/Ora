@@ -1,10 +1,9 @@
 package com.makemission.ora.browser
 
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.graphics.Color
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
@@ -323,6 +322,61 @@ private fun BrowserContent(
         )
     }
 
+    // Bottom-edge bars: tablet keeps them in the Scaffold slot; phone draws them as a floating overlay.
+    val bottomBarContent: @Composable () -> Unit = {
+        if (!isTablet && barStyle == BarStyle.TOP) {
+            // Phone Top: the controls sit at the bottom edge, as in Safari's Top option.
+            AnimatedVisibility(
+                visible = phoneOverlay == PhoneOverlay.NONE && !selected.chromeHidden,
+                enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
+                exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
+            ) {
+                BottomControlsBar(
+                    tab = selected,
+                    isBookmarked = bookmarkList.any { it.url == selected.url },
+                    onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                    onShare = { shareUrl(context, selected.url) },
+                    onTabs = openTabs,
+                    onMenu = { showMenu = true },
+                    tabCount = tabs.tabs.size
+                )
+            }
+        } else if (!topLayout) {
+            // The bar folds down into its bottom edge while an overlay grows out of the tabs button.
+            AnimatedVisibility(
+                visible = phoneOverlay == PhoneOverlay.NONE && !selected.chromeHidden,
+                enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
+                exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
+            ) {
+                if (barStyle == BarStyle.BOTTOM) {
+                    BrowserToolbar(
+                        tab = selected,
+                        isBookmarked = bookmarkList.any { it.url == selected.url },
+                        onSubmit = { input -> submitAddress(input) },
+                        candidates = addressCandidates,
+                        onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                        onShare = { shareUrl(context, selected.url) },
+                        onTabs = openTabs,
+                        onMenu = { showMenu = true },
+                        tabCount = tabs.tabs.size,
+                        onSwipeUp = openTabs,
+                        onSwitchTab = switchTab
+                    )
+                } else {
+                    // Phone Compact: a floating row like iOS Safari's compact bar.
+                    PhoneCompactBar(
+                        tab = selected,
+                        onSubmit = { input -> submitAddress(input) },
+                        candidates = addressCandidates,
+                        onMore = { showMenu = true },
+                        onSwipeUp = openTabs,
+                        onSwitchTab = switchTab
+                    )
+                }
+            }
+        }
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -368,60 +422,9 @@ private fun BrowserContent(
                 }
             }
         },
-        bottomBar = {
-            if (!isTablet && barStyle == BarStyle.TOP) {
-                // Phone Top: the controls sit at the bottom edge, as in Safari's Top option.
-                AnimatedVisibility(
-                    visible = phoneOverlay == PhoneOverlay.NONE && !selected.chromeHidden,
-                    enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
-                    exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
-                ) {
-                    BottomControlsBar(
-                        tab = selected,
-                        isBookmarked = bookmarkList.any { it.url == selected.url },
-                        onBookmark = { bookmarks.toggle(selected.url, selected.title) },
-                        onShare = { shareUrl(context, selected.url) },
-                        onTabs = openTabs,
-                        onMenu = { showMenu = true },
-                        tabCount = tabs.tabs.size
-                    )
-                }
-            } else if (!topLayout) {
-                // The bar folds down into its bottom edge while an overlay grows out of the tabs button.
-                AnimatedVisibility(
-                    visible = phoneOverlay == PhoneOverlay.NONE && !selected.chromeHidden,
-                    enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
-                    exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
-                ) {
-                    if (barStyle == BarStyle.BOTTOM) {
-                        BrowserToolbar(
-                            tab = selected,
-                            isBookmarked = bookmarkList.any { it.url == selected.url },
-                            onSubmit = { input -> submitAddress(input) },
-                            candidates = addressCandidates,
-                            onBookmark = { bookmarks.toggle(selected.url, selected.title) },
-                            onShare = { shareUrl(context, selected.url) },
-                            onTabs = openTabs,
-                            onMenu = { showMenu = true },
-                            tabCount = tabs.tabs.size,
-                            onSwipeUp = openTabs,
-                            onSwitchTab = switchTab
-                        )
-                    } else {
-                        // Phone Compact: a floating row like iOS Safari's compact bar.
-                        PhoneCompactBar(
-                            tab = selected,
-                            onSubmit = { input -> submitAddress(input) },
-                            candidates = addressCandidates,
-                            onMore = { showMenu = true },
-                            onSwipeUp = openTabs,
-                            onSwitchTab = switchTab
-                        )
-                    }
-                }
-            }
-        }
+        bottomBar = { if (isTablet) bottomBarContent() }
     ) { innerPadding ->
+        Box(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             // The sidebar slides in and out from its left edge, using the shared overlay motion.
             AnimatedVisibility(
@@ -574,6 +577,11 @@ private fun BrowserContent(
                     }
                 }
             }
+        }
+        // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
+        if (!isTablet) {
+            Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
+        }
         }
     }
 }
@@ -1175,23 +1183,25 @@ private fun AddressBar(
         }
     }
     // Load bar: a thin line along the bottom edge fills as the page loads and fades out when it is done.
-    // Clipped to the field's shape so it follows the rounded corners.
-    val loadFraction by animateFloatAsState(
-        targetValue = progress / 100f,
-        animationSpec = OraMotion.enter(),
-        label = "loadBar"
-    )
+    // The fill only moves forward: a new load snaps back to empty rather than sweeping backwards.
+    // It fades in after a short delay, so pages that finish quickly never flash it.
+    val loadFraction = remember { Animatable(0f) }
+    LaunchedEffect(progress) {
+        val target = progress / 100f
+        if (target < loadFraction.value) loadFraction.snapTo(target)
+        else loadFraction.animateTo(target, OraMotion.enter())
+    }
     Box(
         modifier = Modifier.matchParentSize().clip(shape),
         contentAlignment = Alignment.BottomStart
     ) {
         AnimatedVisibility(
             visible = loading,
-            enter = fadeIn(OraMotion.enter()),
+            enter = fadeIn(OraMotion.enterAfterLoadDelay()),
             exit = fadeOut(OraMotion.exit())
         ) {
             LinearProgressIndicator(
-                progress = { loadFraction },
+                progress = { loadFraction.value },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(BrowserTokens.LoadBarHeight),

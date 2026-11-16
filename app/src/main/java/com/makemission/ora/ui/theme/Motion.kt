@@ -19,6 +19,11 @@ object OraMotion {
     /** Scale an overlay starts from (or shrinks back to) when it grows out of the tabs button. */
     const val MORPH_SCALE = 0.88f
 
+    /** Wait before the load bar fades in, so a page that finishes quickly never flashes it. */
+    const val LOAD_BAR_DELAY_MS = 120
+
     fun <T> enter(): FiniteAnimationSpec<T> = tween(durationMillis = ENTER_MS, easing = FastOutSlowInEasing)
+    fun <T> enterAfterLoadDelay(): FiniteAnimationSpec<T> =
+        tween(durationMillis = ENTER_MS, delayMillis = LOAD_BAR_DELAY_MS, easing = FastOutSlowInEasing)
     fun <T> exit(): FiniteAnimationSpec<T> = tween(durationMillis = EXIT_MS, easing = FastOutLinearInEasing)
 }
