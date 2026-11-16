@@ -36,6 +36,35 @@ class BrowserTab(
         private set
     /** Link or image under the last long press. The quick menu shows while this is set. */
     var pressTarget by mutableStateOf<PressTarget?>(null)
+    /** True while the bars are folded away so the page gets the room. Scrolling down folds them; scrolling up or reaching the top shows them. */
+    var chromeHidden by mutableStateOf(false)
+        private set
+    private var lastScrollY = 0
+
+    /** True when a page was opened from the native start page and the tab has not returned to it yet. */
+    var startPageBehind by mutableStateOf(false)
+        private set
+
+    /** Back can step through GeckoView history, or return to the native start page once that history runs out. */
+    val canStepBack: Boolean
+        get() = canGoBack || startPageBehind
+
+    /** Records that the start page is behind the current page, so Back can return to it. */
+    fun markStartPageBehind() {
+        if (url == BrowserTabs.START_URL) startPageBehind = true
+    }
+
+    /** One step back: GeckoView history first, then the native start page. */
+    fun stepBack() {
+        when {
+            canGoBack -> session.goBack()
+            startPageBehind -> {
+                startPageBehind = false
+                url = BrowserTabs.START_URL
+                BrowserLog.info("nav", "Back to start page on tab $id")
+            }
+        }
+    }
 
     /** Switches this tab between the mobile and desktop user agent, then reloads so the change applies. */
     fun applyDesktopSite(enabled: Boolean) {
@@ -80,9 +109,22 @@ class BrowserTab(
                 this@BrowserTab.canGoForward = canGoForward
             }
         }
+        session.scrollDelegate = object : GeckoSession.ScrollDelegate {
+            override fun onScrollChanged(session: GeckoSession, scrollX: Int, scrollY: Int) {
+                val delta = scrollY - lastScrollY
+                lastScrollY = scrollY
+                when {
+                    scrollY <= 0 -> chromeHidden = false
+                    delta > SCROLL_FOLD_THRESHOLD_PX -> chromeHidden = true
+                    delta < -SCROLL_FOLD_THRESHOLD_PX -> chromeHidden = false
+                }
+            }
+        }
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 loading = true
+                chromeHidden = false
+                lastScrollY = 0
                 BrowserLog.info("page", "Loading $url")
             }
 
@@ -128,6 +170,9 @@ class BrowserTab(
 
     fun close() = session.close()
 }
+
+/** Scroll distance in pixels before the bars fold or reappear, so small jitters do not flicker them. */
+private const val SCROLL_FOLD_THRESHOLD_PX = 24
 
 /** A link and/or image under a long press, with the press position in page pixels. */
 data class PressTarget(val linkUri: String?, val imageUri: String?, val x: Int, val y: Int)

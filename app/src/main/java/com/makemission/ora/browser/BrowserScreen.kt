@@ -5,6 +5,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -134,7 +135,8 @@ import org.mozilla.geckoview.StorageController
 import android.widget.Toast
 
 /** Screens narrower than this use the phone layout (tab grid); wider ones use the sidebar layout. */
-private const val TABLET_MIN_WIDTH_DP = 600
+/** Screens at least this wide use the tablet layout. Shared with Settings so each device sees its own options. */
+const val TABLET_MIN_WIDTH_DP = 600
 
 /** Full-screen overlays on phones. NONE means the browser page is showing. */
 private enum class PhoneOverlay { NONE, TABS, LIBRARY, SETTINGS, EXTENSIONS }
@@ -260,6 +262,7 @@ private fun BrowserContent(
 
     /** Loads typed text: searches through the chooser or default engine, or opens a URL. */
     fun submitAddress(input: String) {
+        selected.markStartPageBehind()
         if (isSearchInput(input) && searchEngines.size > 1) {
             pendingSearch = input.trim()
         } else if (isSearchInput(input)) {
@@ -287,8 +290,8 @@ private fun BrowserContent(
         showSettings = false
         showExtensions = false
     }
-    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && selected.canGoBack) {
-        selected.session.goBack()
+    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && selected.canStepBack) {
+        selected.stepBack()
     }
 
     pendingSearch?.let { query ->
@@ -308,7 +311,12 @@ private fun BrowserContent(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            if (topLayout) {
+            // Adaptive shrink: the top bar folds up while the page is scrolled down, and returns on scroll up.
+            AnimatedVisibility(
+                visible = topLayout && !selected.chromeHidden,
+                enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Top, animationSpec = OraMotion.enter()),
+                exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = OraMotion.exit())
+            ) {
                 if (isTablet && barStyle == BarStyle.TOP) {
                     // Tablet Top: the desktop-style toolbar with sidebar toggle, navigation and tools.
                     TabletToolbar(
@@ -326,7 +334,8 @@ private fun BrowserContent(
                         onMore = { showMenu = true },
                         onSwipeUp = openTabs,
                         onSwitchTab = switchTab,
-                        onTabs = openTabs
+                        onTabs = openTabs,
+                        tabCount = tabs.tabs.size
                     )
                 } else {
                     // Compact at the top (tablet, and phone Top): only the address bar and the menu.
@@ -348,7 +357,7 @@ private fun BrowserContent(
             if (!isTablet && barStyle == BarStyle.TOP) {
                 // Phone Top: the controls sit at the bottom edge, as in Safari's Top option.
                 AnimatedVisibility(
-                    visible = phoneOverlay == PhoneOverlay.NONE,
+                    visible = phoneOverlay == PhoneOverlay.NONE && !selected.chromeHidden,
                     enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
                     exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
                 ) {
@@ -358,13 +367,14 @@ private fun BrowserContent(
                         onBookmark = { bookmarks.toggle(selected.url, selected.title) },
                         onShare = { shareUrl(context, selected.url) },
                         onTabs = openTabs,
-                        onMenu = { showMenu = true }
+                        onMenu = { showMenu = true },
+                        tabCount = tabs.tabs.size
                     )
                 }
             } else if (!topLayout) {
                 // The bar folds down into its bottom edge while an overlay grows out of the tabs button.
                 AnimatedVisibility(
-                    visible = phoneOverlay == PhoneOverlay.NONE,
+                    visible = phoneOverlay == PhoneOverlay.NONE && !selected.chromeHidden,
                     enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
                     exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
                 ) {
@@ -378,6 +388,7 @@ private fun BrowserContent(
                             onShare = { shareUrl(context, selected.url) },
                             onTabs = openTabs,
                             onMenu = { showMenu = true },
+                            tabCount = tabs.tabs.size,
                             onSwipeUp = openTabs,
                             onSwitchTab = switchTab
                         )
@@ -592,19 +603,9 @@ private fun BrowserToolbar(
     onMenu: (() -> Unit)?,
     onSwipeUp: () -> Unit,
     onSwitchTab: (Int) -> Unit,
+    tabCount: Int,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(browserColors().ToolbarBackground)
-            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(BrowserTokens.HairlineHeight)
-                .background(browserColors().ToolbarBorder)
-        )
+    FloatingBarHolder(insets = WindowInsets.navigationBars.union(WindowInsets.ime)) {
         Column(
             modifier = Modifier.padding(BrowserTokens.ToolbarPadding),
             verticalArrangement = Arrangement.spacedBy(BrowserTokens.ToolbarRowSpacing)
@@ -627,8 +628,35 @@ private fun BrowserToolbar(
                 onBookmark = onBookmark,
                 onShare = onShare,
                 onTabs = onTabs,
-                onMenu = onMenu
+                onMenu = onMenu,
+                tabCount = tabCount
             )
+        }
+    }
+}
+
+/**
+ * Holds a phone bottom bar as a floating rounded card: inset from the screen edges, lifted by a shadow,
+ * and kept clear of the navigation bar. Nothing is drawn behind it, so the page shows around it.
+ */
+@Composable
+private fun FloatingBarHolder(
+    insets: WindowInsets,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(insets)
+            .padding(horizontal = BrowserTokens.FloatingBarInset, vertical = BrowserTokens.FloatingBarInset)
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = BrowserTokens.FloatingBarShape,
+            color = browserColors().ToolbarBackground,
+            shadowElevation = BrowserTokens.FloatingBarElevation
+        ) {
+            content()
         }
     }
 }
@@ -645,19 +673,9 @@ private fun BottomControlsBar(
     onShare: () -> Unit,
     onTabs: () -> Unit,
     onMenu: () -> Unit,
+    tabCount: Int,
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(browserColors().ToolbarBackground)
-            .windowInsetsPadding(WindowInsets.navigationBars)
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(BrowserTokens.HairlineHeight)
-                .background(browserColors().ToolbarBorder)
-        )
+    FloatingBarHolder(insets = WindowInsets.navigationBars) {
         BottomControls(
             tab = tab,
             isBookmarked = isBookmarked,
@@ -665,6 +683,7 @@ private fun BottomControlsBar(
             onShare = onShare,
             onTabs = onTabs,
             onMenu = onMenu,
+            tabCount = tabCount,
             modifier = Modifier.padding(BrowserTokens.ToolbarPadding)
         )
     }
@@ -679,6 +698,7 @@ private fun BottomControls(
     onShare: () -> Unit,
     onTabs: () -> Unit,
     onMenu: (() -> Unit)?,
+    tabCount: Int,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -686,7 +706,7 @@ private fun BottomControls(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        ToolbarButton(onClick = { tab.session.goBack() }, enabled = tab.canGoBack, description = "Back") {
+        ToolbarButton(onClick = { tab.stepBack() }, enabled = tab.canStepBack, description = "Back") {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
         }
         ToolbarButton(onClick = { tab.session.goForward() }, enabled = tab.canGoForward, description = "Forward") {
@@ -702,7 +722,7 @@ private fun BottomControls(
             )
         }
         ToolbarButton(onClick = onTabs, enabled = true, description = "Tabs") {
-            Icon(Icons.Outlined.Tab, contentDescription = null)
+            TabsIcon(tabCount)
         }
         if (onMenu != null) {
             ToolbarButton(onClick = onMenu, enabled = true, description = "Menu") {
@@ -716,6 +736,20 @@ private fun BottomControls(
  * Tablet top toolbar (design: D-Browse): sidebar toggle, back, forward, a centered
  * address pill, then share, bookmark and new tab.
  */
+/** The Tabs icon with the number of open tabs on top, so the count is visible without opening the overview. */
+@Composable
+private fun TabsIcon(tabCount: Int) {
+    Box(contentAlignment = Alignment.Center) {
+        Icon(Icons.Outlined.Tab, contentDescription = null)
+        Text(
+            text = tabCount.toString(),
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Bold,
+            color = browserColors().Accent
+        )
+    }
+}
+
 @Composable
 private fun TabletToolbar(
     tab: BrowserTab,
@@ -733,6 +767,7 @@ private fun TabletToolbar(
     onSwipeUp: () -> Unit,
     onSwitchTab: (Int) -> Unit,
     onTabs: () -> Unit,
+    tabCount: Int,
 ) {
     Column(
         modifier = Modifier
@@ -752,7 +787,7 @@ private fun TabletToolbar(
                     Icon(Icons.Filled.Menu, contentDescription = null)
                 }
             }
-            ToolbarButton(onClick = { tab.session.goBack() }, enabled = tab.canGoBack, description = "Back") {
+            ToolbarButton(onClick = { tab.stepBack() }, enabled = tab.canStepBack, description = "Back") {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
             }
             ToolbarButton(onClick = { tab.session.goForward() }, enabled = tab.canGoForward, description = "Forward") {
@@ -784,7 +819,7 @@ private fun TabletToolbar(
                 )
             }
             ToolbarButton(onClick = onTabs, enabled = true, description = "Tabs") {
-                Icon(Icons.Outlined.Tab, contentDescription = null)
+                TabsIcon(tabCount)
             }
             ToolbarButton(onClick = onNewTab, enabled = true, description = "New tab") {
                 Icon(Icons.Filled.Add, contentDescription = null)
@@ -872,11 +907,26 @@ private fun PhoneCompactBar(
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
-            .padding(horizontal = BrowserTokens.PhoneCompactPadding, vertical = BrowserTokens.PhoneCompactPadding),
+            .padding(
+                start = BrowserTokens.PhoneCompactPadding,
+                end = BrowserTokens.PhoneCompactPadding,
+                top = BrowserTokens.PhoneCompactPadding,
+                bottom = BrowserTokens.PhoneCompactFloatBottom
+            ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BrowserTokens.PhoneCompactGap)
     ) {
-        FloatingCircleButton(onClick = { tab.session.goBack() }, enabled = tab.canGoBack, description = "Back") {
+        FloatingCircleButton(
+            onClick = { tab.stepBack() },
+            enabled = tab.canStepBack,
+            description = "Back",
+            // Quality of life: a long press on Back jumps straight to the start page.
+            onLongClick = {
+                BrowserLog.info("nav", "Long-press Back: opened start page from ${tab.url}")
+                // The start page is native, so set the address directly; GeckoView cannot load ora://.
+                tab.url = BrowserTabs.START_URL
+            }
+        ) {
             Icon(Icons.Filled.ArrowBack, contentDescription = null)
         }
         AddressBar(
@@ -903,15 +953,24 @@ private fun FloatingCircleButton(
     onClick: () -> Unit,
     enabled: Boolean,
     description: String,
+    onLongClick: (() -> Unit)? = null,
     icon: @Composable () -> Unit,
 ) {
     val colors = browserColors()
     Box(
         modifier = Modifier
             .size(BrowserTokens.PhoneCompactCircle)
+            .shadow(BrowserTokens.PhoneCompactElevation, CircleShape)
             .clip(CircleShape)
             .background(colors.AddressBarBackground)
-            .clickable(enabled = enabled, role = Role.Button, onClickLabel = description, onClick = onClick),
+            .combinedClickable(
+                enabled = enabled,
+                role = Role.Button,
+                onClickLabel = description,
+                onClick = onClick,
+                onLongClickLabel = if (onLongClick != null) "$description: start page" else null,
+                onLongClick = onLongClick
+            ),
         contentAlignment = Alignment.Center
     ) {
         CompositionLocalProvider(

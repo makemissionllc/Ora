@@ -120,9 +120,16 @@ object BrowserTokens {
 
     // Phone Compact bar (design: Safari-style floating row).
     val PhoneCompactPadding = 12.dp
+    /** Gap under the floating Compact row, so it hovers above the navigation area. */
+    val PhoneCompactFloatBottom = 24.dp
+    val PhoneCompactElevation = 8.dp
     val PhoneCompactGap = 8.dp
     val PhoneCompactCircle = 44.dp
     val PhoneCompactPill = RoundedCornerShape(percent = 50)
+    /** Phone Bottom and Top control bars float above the page as rounded cards, like iOS Safari. */
+    val FloatingBarShape = RoundedCornerShape(28.dp)
+    val FloatingBarInset = 12.dp
+    val FloatingBarElevation = 8.dp
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */

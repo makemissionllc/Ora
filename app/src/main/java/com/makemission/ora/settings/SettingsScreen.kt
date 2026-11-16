@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -34,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.makemission.ora.browser.TABLET_MIN_WIDTH_DP
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.DiagnosticsScreen
 import com.makemission.ora.ui.theme.browserColors
@@ -52,6 +54,8 @@ fun SettingsScreen(
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
+    // Each device gets its own options: tablets see the sidebar and tablet bar, phones see the phone bar.
+    val isTablet = LocalConfiguration.current.screenWidthDp >= TABLET_MIN_WIDTH_DP
     val blockPopups by settings.blockPopups.collectAsState()
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
@@ -130,7 +134,7 @@ fun SettingsScreen(
                     }
                 }
             }
-            item {
+            if (isTablet) item {
                 SectionTitle("Tablet")
                 Row(
                     modifier = Modifier
@@ -153,11 +157,17 @@ fun SettingsScreen(
                     Switch(checked = tabletSidebar, onCheckedChange = { settings.setTabletSidebar(it) })
                 }
             }
-            item {
+            if (!isTablet) item {
                 SectionTitle("Phone tab bar")
                 BarStyleList(selected = phoneBar, onSelect = { settings.setPhoneBarStyle(it) })
+                Text(
+                    "Scroll down to fold the bars away; scroll up to bring them back.",
+                    modifier = Modifier.padding(start = 4.dp, top = 6.dp),
+                    fontSize = 12.sp,
+                    color = browserColors().SecondaryText
+                )
             }
-            item {
+            if (isTablet) item {
                 SectionTitle("Tablet tab bar")
                 BarStyleList(selected = tabletBar, onSelect = { settings.setTabletBarStyle(it) })
                 Text(
