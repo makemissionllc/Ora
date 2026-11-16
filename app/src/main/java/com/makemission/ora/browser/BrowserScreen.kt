@@ -93,6 +93,8 @@ import com.makemission.ora.settings.SettingsScreen
 import androidx.compose.foundation.isSystemInDarkTheme
 import java.net.URLEncoder
 import org.mozilla.geckoview.GeckoView
+import org.mozilla.geckoview.StorageController
+import android.widget.Toast
 
 /** Screens narrower than this use the phone layout (tab grid); wider ones use the sidebar layout. */
 private const val TABLET_MIN_WIDTH_DP = 600
@@ -281,7 +283,15 @@ private fun BrowserContent(
                     when (overlay) {
                         PhoneOverlay.SETTINGS -> SettingsScreen(
                             settings = settings,
-                            onDone = { showSettings = false }
+                            onDone = { showSettings = false },
+                            onClearData = {
+                                GeckoEngine.runtime(context).storageController
+                                    .clearData(StorageController.ClearFlags.ALL)
+                                    .accept(
+                                        { Toast.makeText(context, "Browsing data cleared", Toast.LENGTH_SHORT).show() },
+                                        { Toast.makeText(context, "Could not clear browsing data", Toast.LENGTH_SHORT).show() }
+                                    )
+                            }
                         )
                         PhoneOverlay.LIBRARY -> BookmarksLibrary(
                             bookmarks = bookmarkList,

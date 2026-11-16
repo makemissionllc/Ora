@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -40,10 +41,12 @@ import com.makemission.ora.ui.theme.browserColors
 fun SettingsScreen(
     settings: SettingsRepository,
     onDone: () -> Unit,
+    onClearData: () -> Unit,
 ) {
     val appearance by settings.appearance.collectAsState()
     val homePage by settings.homePage.collectAsState()
     var homeDraft by remember(homePage) { mutableStateOf(homePage) }
+    var confirmClear by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -113,7 +116,44 @@ fun SettingsScreen(
                     }
                 }
             }
+            item {
+                SectionTitle("Privacy")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(browserColors().AddressBarBackground)
+                        .clickable { confirmClear = true }
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text("Clear browsing data", fontSize = 15.sp, color = browserColors().AddressBarText)
+                    Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+                }
+            }
         }
+    }
+
+    if (confirmClear) {
+        AlertDialog(
+            onDismissRequest = { confirmClear = false },
+            title = { Text("Clear browsing data?") },
+            text = { Text("Cookies, site data and cached files for every site will be removed. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmClear = false
+                    onClearData()
+                }) {
+                    Text("Clear", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClear = false }) {
+                    Text("Cancel", color = browserColors().SecondaryText)
+                }
+            }
+        )
     }
 }
 
