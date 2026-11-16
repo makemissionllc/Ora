@@ -54,6 +54,7 @@ fun BrowserMenuSheet(
     desktopSite: Boolean,
     onToggleDesktop: (Boolean) -> Unit,
     onSettings: () -> Unit,
+    onExtensions: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
@@ -80,6 +81,17 @@ fun BrowserMenuSheet(
             ) {
                 Text("Desktop site", fontSize = 15.sp, color = browserColors().AddressBarText)
                 Switch(checked = desktopSite, onCheckedChange = onToggleDesktop)
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onExtensions)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Extensions", fontSize = 15.sp, color = browserColors().AddressBarText)
+                Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
             }
             Row(
                 modifier = Modifier

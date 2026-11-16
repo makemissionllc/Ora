@@ -76,6 +76,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.BookmarksRepository
+import com.makemission.ora.extensions.ExtensionsRepository
+import com.makemission.ora.extensions.ExtensionsScreen
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.DarkBrowserColors
@@ -93,7 +95,7 @@ import org.mozilla.geckoview.GeckoView
 private const val TABLET_MIN_WIDTH_DP = 600
 
 /** Full-screen overlays on phones. NONE means the browser page is showing. */
-private enum class PhoneOverlay { NONE, TABS, LIBRARY, SETTINGS }
+private enum class PhoneOverlay { NONE, TABS, LIBRARY, SETTINGS, EXTENSIONS }
 
 /** Bottom-right corner, where the tabs button sits. Overlays scale out of and into this point. */
 private val MORPH_ORIGIN = TransformOrigin(0.85f, 1f)
@@ -139,6 +141,8 @@ private fun BrowserContent(
     var showMenu by remember { mutableStateOf(false) }
     var showLibrary by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showExtensions by remember { mutableStateOf(false) }
+    val extensions = remember { ExtensionsRepository(GeckoEngine.runtime(context)) }
 
     val selected = tabs.selected ?: return
     val selectedId = tabs.selectedId
@@ -156,6 +160,7 @@ private fun BrowserContent(
         showTabGrid -> PhoneOverlay.TABS
         showLibrary -> PhoneOverlay.LIBRARY
         showSettings -> PhoneOverlay.SETTINGS
+        showExtensions -> PhoneOverlay.EXTENSIONS
         else -> PhoneOverlay.NONE
     }
 
@@ -219,6 +224,10 @@ private fun BrowserContent(
                         onSettings = {
                             showMenu = false
                             showSettings = true
+                        },
+                        onExtensions = {
+                            showMenu = false
+                            showExtensions = true
                         }
                     )
                 }
@@ -265,6 +274,10 @@ private fun BrowserContent(
                                 showTabGrid = false
                             },
                             onDone = { showTabGrid = false }
+                        )
+                        PhoneOverlay.EXTENSIONS -> ExtensionsScreen(
+                            repository = extensions,
+                            onDone = { showExtensions = false }
                         )
                         PhoneOverlay.NONE -> Unit
                     }

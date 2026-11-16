@@ -79,6 +79,8 @@ object BrowserTokens {
     val AddressBarInnerPadding = 4.dp
     val AddressBarTextStart = 8.dp
     val LockIconSize = 13.dp
+    /** Corner radius for cards on Settings, Extensions and the library. */
+    val CardRadius = 12.dp
 
     // Tab grid (phone)
     val GridPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 12.dp)
