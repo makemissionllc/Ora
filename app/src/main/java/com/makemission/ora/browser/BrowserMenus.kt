@@ -25,6 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -49,6 +50,8 @@ fun BrowserMenuSheet(
     onBookmark: () -> Unit,
     onNewTab: () -> Unit,
     onLibrary: () -> Unit,
+    desktopSite: Boolean,
+    onToggleDesktop: (Boolean) -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = BrowserTokens.AddressBarBackground) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
@@ -64,6 +67,17 @@ fun BrowserMenuSheet(
                 )
                 MenuAction(Icons.Filled.Add, "New tab", onNewTab)
                 MenuAction(Icons.Outlined.Tab, "Library", onLibrary)
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggleDesktop(!desktopSite) }
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Desktop site", fontSize = 15.sp, color = BrowserTokens.AddressBarText)
+                Switch(checked = desktopSite, onCheckedChange = onToggleDesktop)
             }
         }
     }

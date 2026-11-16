@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import org.mozilla.geckoview.GeckoSession
+import org.mozilla.geckoview.GeckoSessionSettings
 
 /** One browser tab: a GeckoSession plus the UI state the toolbar and tab grid read from it. */
 class BrowserTab(val id: Long, context: Context, initialUrl: String) {
@@ -17,6 +18,19 @@ class BrowserTab(val id: Long, context: Context, initialUrl: String) {
     var loading by mutableStateOf(false)
     var canGoBack by mutableStateOf(false)
     var canGoForward by mutableStateOf(false)
+    var desktopSite by mutableStateOf(false)
+        private set
+
+    /** Switches this tab between the mobile and desktop user agent, then reloads so the change applies. */
+    fun applyDesktopSite(enabled: Boolean) {
+        desktopSite = enabled
+        session.settings.userAgentMode = if (enabled) {
+            GeckoSessionSettings.USER_AGENT_MODE_DESKTOP
+        } else {
+            GeckoSessionSettings.USER_AGENT_MODE_MOBILE
+        }
+        session.reload()
+    }
 
     init {
         session.navigationDelegate = object : GeckoSession.NavigationDelegate {

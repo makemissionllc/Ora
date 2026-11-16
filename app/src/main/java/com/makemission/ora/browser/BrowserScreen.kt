@@ -150,6 +150,11 @@ fun BrowserScreen(
                         onLibrary = {
                             showMenu = false
                             showLibrary = true
+                        },
+                        desktopSite = selected.desktopSite,
+                        onToggleDesktop = { enabled ->
+                            selected.applyDesktopSite(enabled)
+                            showMenu = false
                         }
                     )
                 }
