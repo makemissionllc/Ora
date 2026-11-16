@@ -98,6 +98,23 @@ object BrowserTokens {
     /** Widest the centered address pill grows on tablet (design: D-Browse). */
     val TabletAddressMaxWidth = 520.dp
     val SidebarSegmentHeight = 32.dp
+
+    // Link quick menu (long press on a link or image)
+    val QuickMenuWidth = 260.dp
+    val QuickMenuRadius = 16.dp
+    val QuickMenuRowHeight = 48.dp
+    val QuickMenuEdgeGap = 8.dp
+
+    // Start page (design: M-Start / D-Start).
+    val StartContentMaxWidth = 640.dp
+    val StartWideBreakpoint = 600.dp
+    val StartSearchPadding = 16.dp
+    val StartTileSize = 64.dp
+    val StartTileRadius = 16.dp
+    val StartTileSlot = 84.dp
+    val StartCardPadding = 16.dp
+    val StartCardSpacing = 12.dp
+    val StartTopPadding = 48.dp
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */

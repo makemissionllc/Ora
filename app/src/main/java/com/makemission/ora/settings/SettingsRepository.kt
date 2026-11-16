@@ -20,6 +20,21 @@ enum class AppearanceMode(val key: String, val label: String) {
 }
 
 /**
+ * Where the address bar and tab controls sit, modeled on Safari's tab bar options.
+ * [BOTTOM] keeps the bottom toolbar with a tab row; [COMPACT] keeps only the address bar and a
+ * menu button; [TOP] moves the whole toolbar to the top.
+ */
+enum class BarStyle(val key: String, val label: String, val detail: String) {
+    TOP("top", "Top", "The address bar and every control sit at the top."),
+    BOTTOM("bottom", "Bottom", "A larger bar at the bottom with tabs, bookmarks and menu."),
+    COMPACT("compact", "Compact", "Only the address bar at the bottom, with a ⋯ menu for tabs.");
+
+    companion object {
+        fun fromKey(key: String?, default: BarStyle): BarStyle = entries.firstOrNull { it.key == key } ?: default
+    }
+}
+
+/**
  * Single source of truth for all app settings.
  *
  * To add a setting: add a key constant, a default, a MutableStateFlow backed
@@ -71,6 +86,46 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Tab sidebar ${if (shown) "shown" else "hidden"}")
     }
 
+    private val _blockPopups = MutableStateFlow(prefs.getBoolean(KEY_BLOCK_POPUPS, true))
+    /** When on, sites cannot open pop-up windows. When off, a pop-up opens as a new tab. */
+    val blockPopups: StateFlow<Boolean> = _blockPopups.asStateFlow()
+
+    fun setBlockPopups(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_BLOCK_POPUPS, enabled).apply()
+        _blockPopups.value = enabled
+        BrowserLog.info("settings", "Pop-up blocking ${if (enabled) "on" else "off"}")
+    }
+
+    private val _blockAds = MutableStateFlow(prefs.getBoolean(KEY_BLOCK_ADS, true))
+    /** When on, ads and trackers are blocked with GeckoView's strict tracking protection. */
+    val blockAds: StateFlow<Boolean> = _blockAds.asStateFlow()
+
+    fun setBlockAds(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_BLOCK_ADS, enabled).apply()
+        _blockAds.value = enabled
+        BrowserLog.info("settings", "Ad and tracker blocking ${if (enabled) "on" else "off"}")
+    }
+
+    private val _phoneBarStyle = MutableStateFlow(BarStyle.fromKey(prefs.getString(KEY_PHONE_BAR, null), BarStyle.BOTTOM))
+    /** Phone tab bar layout. */
+    val phoneBarStyle: StateFlow<BarStyle> = _phoneBarStyle.asStateFlow()
+
+    fun setPhoneBarStyle(style: BarStyle) {
+        prefs.edit().putString(KEY_PHONE_BAR, style.key).apply()
+        _phoneBarStyle.value = style
+        BrowserLog.info("settings", "Phone tab bar set to ${style.label}")
+    }
+
+    private val _tabletBarStyle = MutableStateFlow(BarStyle.fromKey(prefs.getString(KEY_TABLET_BAR, null), BarStyle.TOP))
+    /** Tablet tab bar layout. */
+    val tabletBarStyle: StateFlow<BarStyle> = _tabletBarStyle.asStateFlow()
+
+    fun setTabletBarStyle(style: BarStyle) {
+        prefs.edit().putString(KEY_TABLET_BAR, style.key).apply()
+        _tabletBarStyle.value = style
+        BrowserLog.info("settings", "Tablet tab bar set to ${style.label}")
+    }
+
     private val _searchEngines = MutableStateFlow(loadSearchEngines())
     /** Engines the user has turned on. When more than one is on, a search asks which to use. */
     val searchEngines: StateFlow<Set<SearchEngine>> = _searchEngines.asStateFlow()
@@ -116,6 +171,10 @@ class SettingsRepository(context: Context) {
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEBSITE_THEME = "website_theme"
         private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"
+        private const val KEY_BLOCK_POPUPS = "block_popups"
+        private const val KEY_BLOCK_ADS = "block_ads"
+        private const val KEY_PHONE_BAR = "phone_bar_style"
+        private const val KEY_TABLET_BAR = "tablet_bar_style"
         const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"
         /** Search URL used when the address bar input is not a URL. %s is replaced by the query. */
         const val DEFAULT_SEARCH_TEMPLATE = "https://duckduckgo.com/?q=%s"

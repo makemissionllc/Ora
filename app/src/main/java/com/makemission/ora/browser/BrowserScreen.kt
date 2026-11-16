@@ -48,6 +48,14 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
+import kotlin.math.abs
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
@@ -73,6 +81,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -92,9 +101,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.bookmarks.BookmarksRepository
 import com.makemission.ora.extensions.ExtensionsRepository
 import com.makemission.ora.extensions.ExtensionsScreen
+import com.makemission.ora.settings.BarStyle
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.DarkBrowserColors
@@ -106,9 +117,12 @@ import com.makemission.ora.settings.AppearanceMode
 import com.makemission.ora.settings.SettingsScreen
 import com.makemission.ora.settings.SearchEngine
 import com.makemission.ora.settings.isSearchInput
+import com.makemission.ora.downloads.DownloadsRepository
+import com.makemission.ora.downloads.DownloadsSheet
 import com.makemission.ora.log.BrowserLog
 import androidx.compose.foundation.isSystemInDarkTheme
 import java.net.URLEncoder
+import org.mozilla.geckoview.ContentBlocking
 import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.StorageController
@@ -174,11 +188,22 @@ private fun BrowserContent(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val homePage by settings.homePage.collectAsState()
     val bookmarkList by bookmarks.bookmarks.collectAsState()
     val isTablet = LocalConfiguration.current.screenWidthDp >= TABLET_MIN_WIDTH_DP
 
-    val tabs = remember(homePage) { BrowserTabs(context, homePage) }
+    val blockAds by settings.blockAds.collectAsState()
+    val downloads = remember { DownloadsRepository(context) }
+    var showDownloads by remember { mutableStateOf(false) }
+    val tabs = remember {
+        BrowserTabs(context, { settings.blockPopups.value }, { response, pageUrl -> downloads.start(response, pageUrl) })
+    }
+    // Ad and tracker blocking is a runtime setting: apply it whenever the toggle changes.
+    LaunchedEffect(blockAds) {
+        GeckoEngine.runtime(context).settings.contentBlocking
+            .setEnhancedTrackingProtectionCategory(
+                if (blockAds) ContentBlocking.EtpCategory.STRICT else ContentBlocking.EtpCategory.STANDARD
+            )
+    }
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     var showLibrary by remember { mutableStateOf(false) }
@@ -199,7 +224,27 @@ private fun BrowserContent(
         tabs.tabs.forEach { it.session.setActive(it.id == selectedId) }
     }
 
-    val onNewTab: () -> Unit = { tabs.newTab(homePage) }
+    val onNewTab: () -> Unit = { tabs.newTab(BrowserTabs.START_URL) }
+    val phoneBar by settings.phoneBarStyle.collectAsState()
+    val tabletBar by settings.tabletBarStyle.collectAsState()
+    val barStyle = if (isTablet) tabletBar else phoneBar
+    /** Opens the tab grid, refreshing the current tab's preview first. */
+    val openTabs: () -> Unit = {
+        captureThumbnail(pageView, selected)
+        showTabGrid = true
+    }
+    /** Moves to the next (+1) or previous (-1) open tab, wrapping at the ends. */
+    val switchTab: (Int) -> Unit = { delta ->
+        val list = tabs.tabs
+        if (list.size > 1) {
+            val index = list.indexOfFirst { it.id == selectedId }
+            val next = list[Math.floorMod(index + delta, list.size)]
+            tabs.select(next.id)
+            BrowserLog.info("tabs", "Swiped to tab ${next.id}")
+        }
+    }
+    // Where the bar sits. Tablet Compact sits at the top like a desktop address bar; phone Compact stays at the bottom.
+    val topLayout = barStyle == BarStyle.TOP || (isTablet && barStyle == BarStyle.COMPACT)
     /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
     val showSidebar by settings.tabletSidebar.collectAsState()
     /** Bookmarks and open tabs, offered as address bar suggestions. */
@@ -223,7 +268,6 @@ private fun BrowserContent(
 
     // Full-screen phone overlay currently open (tablets never use one).
     val phoneOverlay = when {
-        isTablet -> PhoneOverlay.NONE
         showTabGrid -> PhoneOverlay.TABS
         showLibrary -> PhoneOverlay.LIBRARY
         showSettings -> PhoneOverlay.SETTINGS
@@ -259,46 +303,77 @@ private fun BrowserContent(
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
-            // Tablet keeps every control on one top toolbar (design: D-Browse).
-            if (isTablet) {
-                TabletToolbar(
-                    tab = selected,
-                    isBookmarked = bookmarkList.any { it.url == selected.url },
-                    showSidebar = showSidebar,
-                    onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
-                    onSubmit = { input -> submitAddress(input) },
-                    candidates = addressCandidates,
-                    onBookmark = { bookmarks.toggle(selected.url, selected.title) },
-                    onShare = { shareUrl(context, selected.url) },
-                    onNewTab = onNewTab
-                )
+            if (topLayout) {
+                if (isTablet && barStyle == BarStyle.TOP) {
+                    // Tablet Top: the desktop-style toolbar with sidebar toggle, navigation and tools.
+                    TabletToolbar(
+                        tab = selected,
+                        isBookmarked = bookmarkList.any { it.url == selected.url },
+                        showSidebarToggle = isTablet,
+                        showSidebar = showSidebar,
+                        onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
+                        onSubmit = { input -> submitAddress(input) },
+                        candidates = addressCandidates,
+                        onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                        onShare = { shareUrl(context, selected.url) },
+                        onNewTab = onNewTab,
+                        onDownloads = { showDownloads = true },
+                        onMore = { showMenu = true },
+                        onSwipeUp = openTabs,
+                        onSwitchTab = switchTab
+                    )
+                } else {
+                    // Compact at the top (tablet, and phone Top): only the address bar and the menu.
+                    CompactToolbar(
+                        tab = selected,
+                        showSidebarToggle = false,
+                        showSidebar = showSidebar,
+                        onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
+                        onSubmit = { input -> submitAddress(input) },
+                        candidates = addressCandidates,
+                        onMore = { showMenu = true },
+                        onSwipeUp = openTabs,
+                        onSwitchTab = switchTab
+                    )
+                }
             }
         },
         bottomBar = {
-            if (!isTablet) {
-            // The toolbar folds down into its bottom edge while an overlay grows out of the tabs button.
-            AnimatedVisibility(
-                visible = phoneOverlay == PhoneOverlay.NONE,
-                enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
-                exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
-            ) {
-                BrowserToolbar(
-                    tab = selected,
-                    isBookmarked = bookmarkList.any { it.url == selected.url },
-                    onSubmit = { input -> submitAddress(input) },
-                    candidates = addressCandidates,
-                    onBookmark = { bookmarks.toggle(selected.url, selected.title) },
-                    onShare = { shareUrl(context, selected.url) },
-                    onTabs = if (isTablet) onNewTab else {
-                        {
-                            // Refresh the current tab's preview so the grid shows the page as it is now.
-                            captureThumbnail(pageView, selected)
-                            showTabGrid = true
-                        }
-                    },
-                    onMenu = if (isTablet) null else { { showMenu = true } }
-                )
-            }
+            if (!topLayout) {
+                // The bar folds down into its bottom edge while an overlay grows out of the tabs button.
+                AnimatedVisibility(
+                    visible = phoneOverlay == PhoneOverlay.NONE,
+                    enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
+                    exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
+                ) {
+                    if (barStyle == BarStyle.BOTTOM) {
+                        BrowserToolbar(
+                            tab = selected,
+                            isBookmarked = bookmarkList.any { it.url == selected.url },
+                            onSubmit = { input -> submitAddress(input) },
+                            candidates = addressCandidates,
+                            onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                            onShare = { shareUrl(context, selected.url) },
+                            onTabs = openTabs,
+                            onMenu = { showMenu = true },
+                            onSwipeUp = openTabs,
+                            onSwitchTab = switchTab
+                        )
+                    } else {
+                        // Phone Compact: the address bar with a settings menu, like iOS Safari's compact bar.
+                        CompactToolbar(
+                            tab = selected,
+                            showSidebarToggle = false,
+                            showSidebar = showSidebar,
+                            onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
+                            onSubmit = { input -> submitAddress(input) },
+                            candidates = addressCandidates,
+                            onMore = { showMenu = true },
+                            onSwipeUp = openTabs,
+                            onSwitchTab = switchTab
+                        )
+                    }
+                }
             }
         }
     ) { innerPadding ->
@@ -317,8 +392,28 @@ private fun BrowserContent(
                 )
             }
             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                BrowserPage(tab = selected, pageView = pageView)
-                if (showMenu && !isTablet) {
+                BrowserPage(
+                    tab = selected,
+                    pageView = pageView,
+                    bookmarks = bookmarkList,
+                    blockAds = blockAds,
+                    onSubmit = { input -> submitAddress(input) }
+                )
+                if (showDownloads) {
+                    DownloadsSheet(repository = downloads, onDismiss = { showDownloads = false })
+                }
+                // Long press on a link or image opens the quick menu at the press point (both layouts).
+                selected.pressTarget?.let { target ->
+                    key(target) {
+                        LinkQuickMenu(
+                            target = target,
+                            tabs = tabs,
+                            onDismiss = { selected.pressTarget = null },
+                            onShare = { url -> shareUrl(context, url) }
+                        )
+                    }
+                }
+                if (showMenu) {
                     BrowserMenuSheet(
                             isBookmarked = bookmarkList.any { it.url == selected.url },
                         onDismiss = { showMenu = false },
@@ -350,6 +445,14 @@ private fun BrowserContent(
                         onExtensions = {
                             showMenu = false
                             showExtensions = true
+                        },
+                        onDownloads = {
+                            showMenu = false
+                            showDownloads = true
+                        },
+                        onTabs = {
+                            showMenu = false
+                            openTabs()
                         }
                     )
                 }
@@ -431,7 +534,17 @@ private fun BrowserContent(
 
 /** Shows the selected tab's page. The single GeckoView is re-pointed at whichever session is selected. */
 @Composable
-private fun BrowserPage(tab: BrowserTab, pageView: PageView) {
+private fun BrowserPage(
+    tab: BrowserTab,
+    pageView: PageView,
+    bookmarks: List<Bookmark>,
+    blockAds: Boolean,
+    onSubmit: (String) -> Unit,
+) {
+    if (tab.url == BrowserTabs.START_URL) {
+        StartPage(bookmarks = bookmarks, blockAds = blockAds, onSubmit = onSubmit, modifier = Modifier.fillMaxSize())
+        return
+    }
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { ctx -> GeckoView(ctx).also { pageView.view = it } },
@@ -457,6 +570,8 @@ private fun BrowserToolbar(
     onShare: () -> Unit,
     onTabs: () -> Unit,
     onMenu: (() -> Unit)?,
+    onSwipeUp: () -> Unit,
+    onSwitchTab: (Int) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -490,7 +605,9 @@ private fun BrowserToolbar(
                     candidates = candidates,
                     onReload = { tab.session.reload() },
                     onStop = { tab.session.stop() },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    onSwipeUp = onSwipeUp,
+                    onSwitchTab = onSwitchTab
                 )
                 ToolbarButton(onClick = { tab.session.goForward() }, enabled = tab.canGoForward, description = "Forward") {
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
@@ -532,6 +649,7 @@ private fun BrowserToolbar(
 private fun TabletToolbar(
     tab: BrowserTab,
     isBookmarked: Boolean,
+    showSidebarToggle: Boolean,
     showSidebar: Boolean,
     onToggleSidebar: () -> Unit,
     onSubmit: (String) -> Unit,
@@ -539,6 +657,10 @@ private fun TabletToolbar(
     onBookmark: () -> Unit,
     onShare: () -> Unit,
     onNewTab: () -> Unit,
+    onDownloads: () -> Unit,
+    onMore: () -> Unit,
+    onSwipeUp: () -> Unit,
+    onSwitchTab: (Int) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -553,8 +675,10 @@ private fun TabletToolbar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BrowserTokens.ToolbarRowSpacing)
         ) {
-            ToolbarButton(onClick = onToggleSidebar, enabled = true, description = if (showSidebar) "Hide sidebar" else "Show sidebar") {
-                Icon(Icons.Filled.Menu, contentDescription = null)
+            if (showSidebarToggle) {
+                ToolbarButton(onClick = onToggleSidebar, enabled = true, description = if (showSidebar) "Hide sidebar" else "Show sidebar") {
+                    Icon(Icons.Filled.Menu, contentDescription = null)
+                }
             }
             ToolbarButton(onClick = { tab.session.goBack() }, enabled = tab.canGoBack, description = "Back") {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
@@ -570,11 +694,16 @@ private fun TabletToolbar(
                     candidates = candidates,
                     onReload = { tab.session.reload() },
                     onStop = { tab.session.stop() },
-                    modifier = Modifier.widthIn(max = BrowserTokens.TabletAddressMaxWidth)
+                    modifier = Modifier.widthIn(max = BrowserTokens.TabletAddressMaxWidth),
+                    onSwipeUp = onSwipeUp,
+                    onSwitchTab = onSwitchTab
                 )
             }
             ToolbarButton(onClick = onShare, enabled = tab.url.isNotBlank(), description = "Share") {
                 Icon(Icons.Filled.Share, contentDescription = null)
+            }
+            ToolbarButton(onClick = onDownloads, enabled = true, description = "Downloads") {
+                Icon(Icons.Filled.Download, contentDescription = null)
             }
             ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = "Bookmark") {
                 Icon(
@@ -584,6 +713,9 @@ private fun TabletToolbar(
             }
             ToolbarButton(onClick = onNewTab, enabled = true, description = "New tab") {
                 Icon(Icons.Filled.Add, contentDescription = null)
+            }
+            ToolbarButton(onClick = onMore, enabled = true, description = "More") {
+                Icon(Icons.Filled.MoreVert, contentDescription = null)
             }
         }
         Box(
@@ -595,6 +727,88 @@ private fun TabletToolbar(
     }
 }
 
+/** Compact layout: the address bar with a menu button. Tabs open from the menu or a swipe up. */
+@Composable
+private fun CompactToolbar(
+    tab: BrowserTab,
+    showSidebarToggle: Boolean,
+    showSidebar: Boolean,
+    onToggleSidebar: () -> Unit,
+    onSubmit: (String) -> Unit,
+    candidates: List<AddressSuggestion>,
+    onMore: () -> Unit,
+    onSwipeUp: () -> Unit,
+    onSwitchTab: (Int) -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(browserColors().ToolbarBackground)
+            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BrowserTokens.HairlineHeight)
+                .background(browserColors().ToolbarBorder)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(BrowserTokens.ToolbarPadding),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(BrowserTokens.ToolbarRowSpacing)
+        ) {
+            if (showSidebarToggle) {
+                ToolbarButton(onClick = onToggleSidebar, enabled = true, description = if (showSidebar) "Hide sidebar" else "Show sidebar") {
+                    Icon(Icons.Filled.Menu, contentDescription = null)
+                }
+            }
+            AddressBar(
+                currentUrl = tab.url,
+                loading = tab.loading,
+                onSubmit = onSubmit,
+                candidates = candidates,
+                onReload = { tab.session.reload() },
+                onStop = { tab.session.stop() },
+                modifier = Modifier.weight(1f),
+                onSwipeUp = onSwipeUp,
+                onSwitchTab = onSwitchTab
+            )
+            ToolbarButton(onClick = onMore, enabled = true, description = "More") {
+                Icon(Icons.Filled.MoreVert, contentDescription = null)
+            }
+        }
+    }
+}
+
+/**
+ * Address bar gestures that never consume the touch, so text selection keeps working:
+ * a swipe up calls [onSwipeUp]; a sideways swipe calls [onSwitchTab] with +1 (left) or -1 (right).
+ */
+private fun Modifier.addressSwipes(onSwipeUp: () -> Unit, onSwitchTab: (Int) -> Unit): Modifier =
+    pointerInput(onSwipeUp, onSwitchTab) {
+        awaitEachGesture {
+            val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            var dx = 0f
+            var dy = 0f
+            var released = false
+            while (!released) {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+                val change = event.changes.firstOrNull { it.id == down.id } ?: break
+                val move = change.positionChange()
+                dx += move.x
+                dy += move.y
+                if (!change.pressed) released = true
+            }
+            val threshold = 96f
+            if (abs(dy) > abs(dx) && dy < -threshold) {
+                BrowserLog.info("tabs", "Swipe up on address bar: all tabs")
+                onSwipeUp()
+            } else if (abs(dx) > abs(dy) && abs(dx) > threshold) {
+                onSwitchTab(if (dx < 0) 1 else -1)
+            }
+        }
+    }
+
 @Composable
 private fun AddressBar(
     currentUrl: String,
@@ -604,6 +818,8 @@ private fun AddressBar(
     onReload: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
+    onSwipeUp: () -> Unit = {},
+    onSwitchTab: (Int) -> Unit = {},
 ) {
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
@@ -620,7 +836,7 @@ private fun AddressBar(
     val suggestions = if (focused) addressSuggestions(typed, candidates) else emptyList()
 
     Box(
-        modifier = modifier.onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } }
+        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } }
     ) {
     Surface(
         modifier = Modifier
@@ -766,7 +982,7 @@ internal fun toLoadableUrl(input: String, searchTemplate: String): String {
 
 /** The part of a URL shown in the address bar when not editing, e.g. "mozilla.org". */
 internal fun displayUrl(url: String): String =
-    runCatching { Uri.parse(url).host }.getOrNull()?.removePrefix("www.") ?: url
+    if (url == BrowserTabs.START_URL) "Start page" else runCatching { Uri.parse(url).host }.getOrNull()?.removePrefix("www.") ?: url
 
 private fun shareUrl(context: Context, url: String) {
     if (url.isBlank()) return

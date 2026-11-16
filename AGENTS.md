@@ -5,7 +5,7 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 ## Working rules
 
 1. **Commit after every change.** Each change set gets its own commit on the working branch. Push it after committing. Don't batch unrelated changes into one commit.
-2. **Phone first.** Build and verify on the phone before the tablet. Tablet work follows once the phone version works.
+2. **Phone and tablet together.** Every change is implemented and verified on both the phone and the tablet in the same change set. Don't ship a feature to one form factor and leave the other for later.
 3. **Look before you tap.** Take a screenshot of the device before every tap, and tap only at coordinates read from that screenshot. Never tap blind.
 4. **Keep temp files out of the repo.** Screenshots and scratch files go in the scratchpad directory, or are deleted before committing.
 5. **Every change adds one quality-of-life feature.** Each change must ship at least one small usability improvement alongside the main work, such as a clearer empty state, a shortcut, a confirmation for destructive actions, or better feedback. Name it in the commit message.

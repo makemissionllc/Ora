@@ -52,6 +52,10 @@ fun SettingsScreen(
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
+    val blockPopups by settings.blockPopups.collectAsState()
+    val phoneBar by settings.phoneBarStyle.collectAsState()
+    val tabletBar by settings.tabletBarStyle.collectAsState()
+    val blockAds by settings.blockAds.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
@@ -147,6 +151,66 @@ fun SettingsScreen(
                         )
                     }
                     Switch(checked = tabletSidebar, onCheckedChange = { settings.setTabletSidebar(it) })
+                }
+            }
+            item {
+                SectionTitle("Phone tab bar")
+                BarStyleList(selected = phoneBar, onSelect = { settings.setPhoneBarStyle(it) })
+            }
+            item {
+                SectionTitle("Tablet tab bar")
+                BarStyleList(selected = tabletBar, onSelect = { settings.setTabletBarStyle(it) })
+                Text(
+                    "Swipe the address bar up to open all tabs, or sideways to switch between open tabs.",
+                    modifier = Modifier.padding(start = 4.dp, top = 6.dp),
+                    fontSize = 12.sp,
+                    color = browserColors().SecondaryText
+                )
+            }
+            item {
+                SectionTitle("Pop-ups and ads")
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(browserColors().AddressBarBackground)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { settings.setBlockPopups(!blockPopups) }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Block pop-up windows", fontSize = 15.sp, color = browserColors().AddressBarText)
+                            Text(
+                                "Stops sites opening windows on their own. When off, pop-ups open as a new tab.",
+                                fontSize = 12.sp,
+                                color = browserColors().SecondaryText
+                            )
+                        }
+                        Switch(checked = blockPopups, onCheckedChange = { settings.setBlockPopups(it) })
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { settings.setBlockAds(!blockAds) }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Block ads and trackers", fontSize = 15.sp, color = browserColors().AddressBarText)
+                            Text(
+                                "Strict tracking protection. Some pages may load more slowly or look different.",
+                                fontSize = 12.sp,
+                                color = browserColors().SecondaryText
+                            )
+                        }
+                        Switch(checked = blockAds, onCheckedChange = { settings.setBlockAds(it) })
+                    }
                 }
             }
             item {
@@ -267,6 +331,33 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+}
+
+@Composable
+private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(browserColors().AddressBarBackground)
+    ) {
+        BarStyle.entries.forEach { style ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelect(style) }
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(style.label, fontSize = 15.sp, color = browserColors().AddressBarText)
+                    Text(style.detail, fontSize = 12.sp, color = browserColors().SecondaryText)
+                }
+                RadioButton(selected = style == selected, onClick = { onSelect(style) })
+            }
+        }
     }
 }
 

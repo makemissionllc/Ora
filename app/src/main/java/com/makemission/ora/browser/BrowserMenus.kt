@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Tab
@@ -55,6 +56,8 @@ fun BrowserMenuSheet(
     onToggleDesktop: (Boolean) -> Unit,
     onSettings: () -> Unit,
     onExtensions: () -> Unit,
+    onDownloads: () -> Unit,
+    onTabs: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
@@ -69,6 +72,7 @@ fun BrowserMenuSheet(
                     onBookmark
                 )
                 MenuAction(Icons.Filled.Add, "New tab", onNewTab)
+                MenuAction(Icons.Filled.Dashboard, "Tabs", onTabs)
                 MenuAction(Icons.Outlined.Tab, "Library", onLibrary)
             }
             Row(
@@ -81,6 +85,17 @@ fun BrowserMenuSheet(
             ) {
                 Text("Desktop site", fontSize = 15.sp, color = browserColors().AddressBarText)
                 Switch(checked = desktopSite, onCheckedChange = onToggleDesktop)
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onDownloads)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Downloads", fontSize = 15.sp, color = browserColors().AddressBarText)
+                Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
             }
             Row(
                 modifier = Modifier
