@@ -115,6 +115,11 @@ object BrowserTokens {
     val StartCardPadding = 16.dp
     val StartCardSpacing = 12.dp
     val StartTopPadding = 48.dp
+
+    // Phone Compact bar (design: Safari-style floating row).
+    val PhoneCompactPadding = 12.dp
+    val PhoneCompactGap = 8.dp
+    val PhoneCompactCircle = 44.dp
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */

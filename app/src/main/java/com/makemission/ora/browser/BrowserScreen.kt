@@ -1,5 +1,10 @@
 package com.makemission.ora.browser
 
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.clickable
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -360,12 +365,9 @@ private fun BrowserContent(
                             onSwitchTab = switchTab
                         )
                     } else {
-                        // Phone Compact: the address bar with a settings menu, like iOS Safari's compact bar.
-                        CompactToolbar(
+                        // Phone Compact: a floating row like iOS Safari's compact bar.
+                        PhoneCompactBar(
                             tab = selected,
-                            showSidebarToggle = false,
-                            showSidebar = showSidebar,
-                            onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
                             onSubmit = { input -> submitAddress(input) },
                             candidates = addressCandidates,
                             onMore = { showMenu = true },
@@ -776,6 +778,72 @@ private fun CompactToolbar(
             ToolbarButton(onClick = onMore, enabled = true, description = "More") {
                 Icon(Icons.Filled.MoreVert, contentDescription = null)
             }
+        }
+    }
+}
+
+/**
+ * Phone Compact bar, modeled on iOS Safari: a floating row with a round back button, the address
+ * pill in the middle, and a round menu button. No full-width strip sits behind it.
+ */
+@Composable
+private fun PhoneCompactBar(
+    tab: BrowserTab,
+    onSubmit: (String) -> Unit,
+    candidates: List<AddressSuggestion>,
+    onMore: () -> Unit,
+    onSwipeUp: () -> Unit,
+    onSwitchTab: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+            .padding(horizontal = BrowserTokens.PhoneCompactPadding, vertical = BrowserTokens.PhoneCompactPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(BrowserTokens.PhoneCompactGap)
+    ) {
+        FloatingCircleButton(onClick = { tab.session.goBack() }, enabled = tab.canGoBack, description = "Back") {
+            Icon(Icons.Filled.ArrowBack, contentDescription = null)
+        }
+        AddressBar(
+            currentUrl = tab.url,
+            loading = tab.loading,
+            onSubmit = onSubmit,
+            candidates = candidates,
+            onReload = { tab.session.reload() },
+            onStop = { tab.session.stop() },
+            modifier = Modifier.weight(1f),
+            onSwipeUp = onSwipeUp,
+            onSwitchTab = onSwitchTab
+        )
+        FloatingCircleButton(onClick = onMore, enabled = true, description = "More") {
+            Icon(Icons.Filled.MoreVert, contentDescription = null)
+        }
+    }
+}
+
+/** A round, filled button that floats beside the address pill (phone Compact bar). */
+@Composable
+private fun FloatingCircleButton(
+    onClick: () -> Unit,
+    enabled: Boolean,
+    description: String,
+    icon: @Composable () -> Unit,
+) {
+    val colors = browserColors()
+    Box(
+        modifier = Modifier
+            .size(BrowserTokens.PhoneCompactCircle)
+            .clip(CircleShape)
+            .background(colors.AddressBarBackground)
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = description, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        CompositionLocalProvider(
+            LocalContentColor provides if (enabled) colors.Accent else colors.DisabledIcon
+        ) {
+            icon()
         }
     }
 }
