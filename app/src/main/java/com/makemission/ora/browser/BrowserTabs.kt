@@ -37,6 +37,12 @@ class BrowserTab(
     /** Load progress from 0 to 100 while a page loads; the address bar shows it as a thin bar. */
     var progress by mutableStateOf(100)
         private set
+    /**
+     * False while a page is still arriving, so the view can stay transparent and fade in once it is
+     * [REVEAL_PROGRESS_PERCENT] loaded. True once it is shown or nothing is loading.
+     */
+    var pageRevealed by mutableStateOf(true)
+        private set
     var canGoBack by mutableStateOf(false)
     var canGoForward by mutableStateOf(false)
     var desktopSite by mutableStateOf(false)
@@ -131,6 +137,7 @@ class BrowserTab(
             override fun onPageStart(session: GeckoSession, url: String) {
                 loading = true
                 progress = 0
+                pageRevealed = false
                 chromeHidden = false
                 lastScrollY = 0
                 BrowserLog.info("page", "Loading $url")
@@ -138,10 +145,15 @@ class BrowserTab(
 
             override fun onProgressChange(session: GeckoSession, progressPercent: Int) {
                 progress = progressPercent.coerceIn(0, 100)
+                if (!pageRevealed && progress >= REVEAL_PROGRESS_PERCENT) {
+                    pageRevealed = true
+                    BrowserLog.info("page", "Showing page at $progress% for ${this@BrowserTab.url}")
+                }
             }
 
             override fun onPageStop(session: GeckoSession, success: Boolean) {
                 loading = false
+                pageRevealed = true
                 // Progress stays where it is: the bar fades out in place instead of sweeping to full first.
                 if (success) {
                     BrowserLog.info("page", "Loaded ${this@BrowserTab.url}")
@@ -195,6 +207,9 @@ class BrowserTab(
 
 /** Scroll distance in pixels before the bars fold or reappear, so small jitters do not flicker them. */
 private const val SCROLL_FOLD_THRESHOLD_PX = 24
+
+/** Load progress at which a page is faded in. Earlier than this the page is still mostly blank. */
+const val REVEAL_PROGRESS_PERCENT = 50
 
 /** A link and/or image under a long press, with the press position in page pixels. */
 data class PressTarget(val linkUri: String?, val imageUri: String?, val x: Int, val y: Int)

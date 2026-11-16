@@ -71,6 +71,7 @@ fun SettingsScreen(
     val appearance by settings.appearance.collectAsState()
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
+    val fadePagesIn by settings.fadePagesIn.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
     val askEachSearch by settings.askEachSearch.collectAsState()
     // Each device gets its own options: tablets see the sidebar and tablet bar, phones see the phone bar.
@@ -184,6 +185,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 Switch(checked = websiteTheme, onCheckedChange = { settings.setWebsiteTheme(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setFadePagesIn(!fadePagesIn) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Fade pages in", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "A page appears in one smooth fade once it is half loaded, rather than in pieces.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = fadePagesIn, onCheckedChange = { settings.setFadePagesIn(it) })
                             }
                         }
                     }

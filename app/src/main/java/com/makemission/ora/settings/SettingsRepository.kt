@@ -106,6 +106,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Ad and tracker blocking ${if (enabled) "on" else "off"}")
     }
 
+    private val _fadePagesIn = MutableStateFlow(prefs.getBoolean(KEY_FADE_PAGES_IN, true))
+    /** When on, a page fades in once it is half loaded instead of showing its pieces as they arrive. */
+    val fadePagesIn: StateFlow<Boolean> = _fadePagesIn.asStateFlow()
+
+    fun setFadePagesIn(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_FADE_PAGES_IN, enabled).apply()
+        _fadePagesIn.value = enabled
+        BrowserLog.info("settings", "Page fade-in ${if (enabled) "on" else "off"}")
+    }
+
     private val _phoneBarStyle = MutableStateFlow(BarStyle.fromKey(prefs.getString(KEY_PHONE_BAR, null), BarStyle.BOTTOM))
     /** Phone tab bar layout. */
     val phoneBarStyle: StateFlow<BarStyle> = _phoneBarStyle.asStateFlow()
@@ -184,6 +194,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"
         private const val KEY_BLOCK_POPUPS = "block_popups"
         private const val KEY_BLOCK_ADS = "block_ads"
+        private const val KEY_FADE_PAGES_IN = "fade_pages_in"
         private const val KEY_PHONE_BAR = "phone_bar_style"
         private const val KEY_TABLET_BAR = "tablet_bar_style"
         const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"

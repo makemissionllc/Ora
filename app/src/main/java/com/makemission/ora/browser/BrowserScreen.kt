@@ -27,6 +27,8 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.graphics.graphicsLayer
 import com.makemission.ora.ui.theme.OraMotion
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.foundation.background
@@ -207,6 +209,7 @@ private fun BrowserContent(
     val isTablet = LocalConfiguration.current.screenWidthDp >= TABLET_MIN_WIDTH_DP
 
     val blockAds by settings.blockAds.collectAsState()
+    val fadePagesIn by settings.fadePagesIn.collectAsState()
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
     val tabs = remember {
@@ -445,6 +448,7 @@ private fun BrowserContent(
                     pageView = pageView,
                     bookmarks = bookmarkList,
                     blockAds = blockAds,
+                    fadePagesIn = fadePagesIn,
                     onSubmit = { input -> submitAddress(input) }
                 )
                 if (showDownloads) {
@@ -593,14 +597,22 @@ private fun BrowserPage(
     pageView: PageView,
     bookmarks: List<Bookmark>,
     blockAds: Boolean,
+    fadePagesIn: Boolean,
     onSubmit: (String) -> Unit,
 ) {
     if (tab.url == BrowserTabs.START_URL) {
         StartPage(bookmarks = bookmarks, blockAds = blockAds, onSubmit = onSubmit, modifier = Modifier.fillMaxSize())
         return
     }
+    // The page stays transparent while it arrives, then fades in with the shared enter motion.
+    // With the setting off it is always fully shown, as before.
+    val pageAlpha by animateFloatAsState(
+        targetValue = if (!fadePagesIn || tab.pageRevealed) 1f else 0f,
+        animationSpec = if (fadePagesIn && tab.pageRevealed) OraMotion.enter<Float>() else OraMotion.exit<Float>(),
+        label = "page reveal",
+    )
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().graphicsLayer { alpha = pageAlpha },
         factory = { ctx -> GeckoView(ctx).also { pageView.view = it } },
         update = { view -> if (view.session != tab.session) view.setSession(tab.session) }
     )
