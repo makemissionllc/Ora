@@ -1,6 +1,10 @@
 package com.makemission.ora.browser
 
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.graphics.Color
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
@@ -627,7 +631,7 @@ private fun BrowserToolbar(
                 loading = tab.loading,
                 onSubmit = onSubmit,
                 candidates = candidates,
-                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) },
+                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
                 onStop = { tab.session.stop() },
                 modifier = Modifier.fillMaxWidth(),
                 onSwipeUp = onSwipeUp,
@@ -810,7 +814,7 @@ private fun TabletToolbar(
                     loading = tab.loading,
                     onSubmit = onSubmit,
                     candidates = candidates,
-                    onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) },
+                    onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
                     onStop = { tab.session.stop() },
                     modifier = Modifier.widthIn(max = BrowserTokens.TabletAddressMaxWidth),
                     onSwipeUp = onSwipeUp,
@@ -888,7 +892,7 @@ private fun CompactToolbar(
                 loading = tab.loading,
                 onSubmit = onSubmit,
                 candidates = candidates,
-                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) },
+                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
                 onStop = { tab.session.stop() },
                 modifier = Modifier.weight(1f),
                 onSwipeUp = onSwipeUp,
@@ -945,7 +949,7 @@ private fun PhoneCompactBar(
             loading = tab.loading,
             onSubmit = onSubmit,
             candidates = candidates,
-            onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) },
+            onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
             onStop = { tab.session.stop() },
             modifier = Modifier.weight(1f),
             onSwipeUp = onSwipeUp,
@@ -1031,6 +1035,8 @@ private fun hardReload(tab: BrowserTab) {
 private fun AddressBar(
     currentUrl: String,
     loading: Boolean,
+    /** Load progress from 0 to 100, drawn as the load bar while the page loads. */
+    progress: Int = 100,
     onSubmit: (String) -> Unit,
     candidates: List<AddressSuggestion>,
     onReload: () -> Unit,
@@ -1166,6 +1172,32 @@ private fun AddressBar(
                     Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = browserColors().AddressBarText)
                 }
             }
+        }
+    }
+    // Load bar: a thin line along the bottom edge fills as the page loads and fades out when it is done.
+    // Clipped to the field's shape so it follows the rounded corners.
+    val loadFraction by animateFloatAsState(
+        targetValue = progress / 100f,
+        animationSpec = OraMotion.enter(),
+        label = "loadBar"
+    )
+    Box(
+        modifier = Modifier.matchParentSize().clip(shape),
+        contentAlignment = Alignment.BottomStart
+    ) {
+        AnimatedVisibility(
+            visible = loading,
+            enter = fadeIn(OraMotion.enter()),
+            exit = fadeOut(OraMotion.exit())
+        ) {
+            LinearProgressIndicator(
+                progress = { loadFraction },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(BrowserTokens.LoadBarHeight),
+                color = browserColors().Accent,
+                trackColor = Color.Transparent
+            )
         }
     }
     // Suggestions drop down under the field. Not focusable, so the keyboard stays open while they show.

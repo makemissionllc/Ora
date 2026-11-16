@@ -74,6 +74,8 @@ object BrowserTokens {
     val HairlineHeight = 1.dp
     val ToolbarButtonSize = 48.dp
     val AddressBarHeight = 48.dp
+    /** Thickness of the load bar along the bottom of the address field. */
+    val LoadBarHeight = 3.dp
     val AddressBarShape = RoundedCornerShape(14.dp)
     val AddressBarElevation = 4.dp
     val AddressBarInnerPadding = 4.dp

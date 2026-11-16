@@ -1,6 +1,7 @@
 package com.makemission.ora.browser
 
 import android.content.Context
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -26,12 +27,16 @@ class BrowserTab(
     private val desktopByDefault: Boolean = false,
 ) {
     val session: GeckoSession = GeckoSession()
+    private val appContext: Context = context.applicationContext
 
     var url by mutableStateOf(initialUrl)
     var title by mutableStateOf("")
     /** Last captured picture of the page, shown as the tab's preview in the tab grid. */
     var thumbnail by mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
     var loading by mutableStateOf(false)
+    /** Load progress from 0 to 100 while a page loads; the address bar shows it as a thin bar. */
+    var progress by mutableStateOf(100)
+        private set
     var canGoBack by mutableStateOf(false)
     var canGoForward by mutableStateOf(false)
     var desktopSite by mutableStateOf(false)
@@ -125,17 +130,25 @@ class BrowserTab(
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 loading = true
+                progress = 0
                 chromeHidden = false
                 lastScrollY = 0
                 BrowserLog.info("page", "Loading $url")
             }
 
+            override fun onProgressChange(session: GeckoSession, progressPercent: Int) {
+                progress = progressPercent.coerceIn(0, 100)
+            }
+
             override fun onPageStop(session: GeckoSession, success: Boolean) {
                 loading = false
+                progress = 100
                 if (success) {
                     BrowserLog.info("page", "Loaded ${this@BrowserTab.url}")
                 } else {
                     BrowserLog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")
+                    // Quality of life: say so, instead of leaving a half-drawn page with no explanation.
+                    Toast.makeText(appContext, "Page didn't finish loading. Tap reload to try again.", Toast.LENGTH_SHORT).show()
                 }
             }
         }
