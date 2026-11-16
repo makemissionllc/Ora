@@ -53,7 +53,10 @@ import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.browserColors
 
-/** Phone tab overview: a grid of open tabs with a bottom bar for new tab and done. */
+/**
+ * Tab overview. Phone: two columns with a bottom bar (new tab, count, done).
+ * Tablet ([tablet] = true): three columns, a header with the count and Done, and a centred New tab button.
+ */
 @Composable
 fun TabGrid(
     tabs: BrowserTabs,
@@ -61,15 +64,32 @@ fun TabGrid(
     onClose: (Long) -> Unit,
     onNewTab: () -> Unit,
     onDone: () -> Unit,
+    tablet: Boolean = false,
 ) {
     val tabList = tabs.tabs
+    val countText = if (tabList.size == 1) "1 tab" else "${tabList.size} tabs"
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(browserColors().GridBackground)
     ) {
+        if (tablet) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(BrowserTokens.TabHeaderPadding),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Spacer(modifier = Modifier.width(64.dp))
+                Text(text = countText, color = browserColors().AddressBarText, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                TextButton(onClick = onDone) {
+                    Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Fixed(if (tablet) 3 else 2),
             modifier = Modifier.weight(1f).padding(BrowserTokens.GridPadding),
             verticalArrangement = Arrangement.spacedBy(BrowserTokens.GridSpacing),
             horizontalArrangement = Arrangement.spacedBy(BrowserTokens.GridSpacing)
@@ -83,6 +103,24 @@ fun TabGrid(
                     onClose = { onClose(tab.id) }
                 )
             }
+        }
+        if (tablet) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                TextButton(
+                    onClick = onNewTab,
+                    modifier = Modifier.background(browserColors().AddressBarBackground, RoundedCornerShape(10.dp))
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = browserColors().Accent)
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("New tab", color = browserColors().AddressBarText, fontSize = 14.sp)
+                }
+            }
+            return@Column
         }
         Row(
             modifier = Modifier

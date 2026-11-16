@@ -325,7 +325,8 @@ private fun BrowserContent(
                         onDownloads = { showDownloads = true },
                         onMore = { showMenu = true },
                         onSwipeUp = openTabs,
-                        onSwitchTab = switchTab
+                        onSwitchTab = switchTab,
+                        onTabs = openTabs
                     )
                 } else {
                     // Compact at the top (tablet, and phone Top): only the address bar and the menu.
@@ -344,7 +345,23 @@ private fun BrowserContent(
             }
         },
         bottomBar = {
-            if (!topLayout) {
+            if (!isTablet && barStyle == BarStyle.TOP) {
+                // Phone Top: the controls sit at the bottom edge, as in Safari's Top option.
+                AnimatedVisibility(
+                    visible = phoneOverlay == PhoneOverlay.NONE,
+                    enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
+                    exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
+                ) {
+                    BottomControlsBar(
+                        tab = selected,
+                        isBookmarked = bookmarkList.any { it.url == selected.url },
+                        onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                        onShare = { shareUrl(context, selected.url) },
+                        onTabs = openTabs,
+                        onMenu = { showMenu = true }
+                    )
+                }
+            } else if (!topLayout) {
                 // The bar folds down into its bottom edge while an overlay grows out of the tabs button.
                 AnimatedVisibility(
                     visible = phoneOverlay == PhoneOverlay.NONE,
@@ -510,6 +527,7 @@ private fun BrowserContent(
                             onDone = { showLibrary = false }
                         )
                         PhoneOverlay.TABS -> TabGrid(
+                            tablet = isTablet,
                             tabs = tabs,
                             onSelect = { id ->
                                 tabs.select(id)
@@ -591,53 +609,104 @@ private fun BrowserToolbar(
             modifier = Modifier.padding(BrowserTokens.ToolbarPadding),
             verticalArrangement = Arrangement.spacedBy(BrowserTokens.ToolbarRowSpacing)
         ) {
-            // Top row: back, forward and the address pill (design: M-Browse).
-            Row(
+            // Like iOS Safari's bottom bar: the full-width address bar sits above the controls.
+            AddressBar(
+                currentUrl = tab.url,
+                loading = tab.loading,
+                onSubmit = onSubmit,
+                candidates = candidates,
+                onReload = { tab.session.reload() },
+                onStop = { tab.session.stop() },
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(BrowserTokens.ToolbarRowSpacing)
-            ) {
-                ToolbarButton(onClick = { tab.session.goBack() }, enabled = tab.canGoBack, description = "Back") {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-                }
-                AddressBar(
-                    currentUrl = tab.url,
-                    loading = tab.loading,
-                    onSubmit = onSubmit,
-                    candidates = candidates,
-                    onReload = { tab.session.reload() },
-                    onStop = { tab.session.stop() },
-                    modifier = Modifier.weight(1f),
-                    onSwipeUp = onSwipeUp,
-                    onSwitchTab = onSwitchTab
-                )
-                ToolbarButton(onClick = { tab.session.goForward() }, enabled = tab.canGoForward, description = "Forward") {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
-                }
-            }
-            // Bottom row: share, bookmark, tabs (design: bottom toolbar).
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                ToolbarButton(onClick = onShare, enabled = tab.url.isNotBlank(), description = "Share") {
-                    Icon(Icons.Filled.Share, contentDescription = null)
-                }
-                ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = "Bookmark") {
-                    Icon(
-                        if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                        contentDescription = null
-                    )
-                }
-                ToolbarButton(onClick = onTabs, enabled = true, description = "Tabs") {
-                    Icon(Icons.Outlined.Tab, contentDescription = null)
-                }
-                if (onMenu != null) {
-                    ToolbarButton(onClick = onMenu, enabled = true, description = "Menu") {
-                        Icon(Icons.Filled.MoreVert, contentDescription = null)
-                    }
-                }
+                onSwipeUp = onSwipeUp,
+                onSwitchTab = onSwitchTab
+            )
+            BottomControls(
+                tab = tab,
+                isBookmarked = isBookmarked,
+                onBookmark = onBookmark,
+                onShare = onShare,
+                onTabs = onTabs,
+                onMenu = onMenu
+            )
+        }
+    }
+}
+
+/**
+ * Control row for the phone Top layout: the address bar sits at the top, and back, forward,
+ * share, bookmark, tabs and menu sit at the bottom edge, as in Safari's Top option.
+ */
+@Composable
+private fun BottomControlsBar(
+    tab: BrowserTab,
+    isBookmarked: Boolean,
+    onBookmark: () -> Unit,
+    onShare: () -> Unit,
+    onTabs: () -> Unit,
+    onMenu: () -> Unit,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(browserColors().ToolbarBackground)
+            .windowInsetsPadding(WindowInsets.navigationBars)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BrowserTokens.HairlineHeight)
+                .background(browserColors().ToolbarBorder)
+        )
+        BottomControls(
+            tab = tab,
+            isBookmarked = isBookmarked,
+            onBookmark = onBookmark,
+            onShare = onShare,
+            onTabs = onTabs,
+            onMenu = onMenu,
+            modifier = Modifier.padding(BrowserTokens.ToolbarPadding)
+        )
+    }
+}
+
+/** Back, forward, share, bookmark, tabs and menu, spread evenly across the row. */
+@Composable
+private fun BottomControls(
+    tab: BrowserTab,
+    isBookmarked: Boolean,
+    onBookmark: () -> Unit,
+    onShare: () -> Unit,
+    onTabs: () -> Unit,
+    onMenu: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ToolbarButton(onClick = { tab.session.goBack() }, enabled = tab.canGoBack, description = "Back") {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+        }
+        ToolbarButton(onClick = { tab.session.goForward() }, enabled = tab.canGoForward, description = "Forward") {
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        }
+        ToolbarButton(onClick = onShare, enabled = tab.url.isNotBlank(), description = "Share") {
+            Icon(Icons.Filled.Share, contentDescription = null)
+        }
+        ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = "Bookmark") {
+            Icon(
+                if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                contentDescription = null
+            )
+        }
+        ToolbarButton(onClick = onTabs, enabled = true, description = "Tabs") {
+            Icon(Icons.Outlined.Tab, contentDescription = null)
+        }
+        if (onMenu != null) {
+            ToolbarButton(onClick = onMenu, enabled = true, description = "Menu") {
+                Icon(Icons.Filled.MoreVert, contentDescription = null)
             }
         }
     }
@@ -663,6 +732,7 @@ private fun TabletToolbar(
     onMore: () -> Unit,
     onSwipeUp: () -> Unit,
     onSwitchTab: (Int) -> Unit,
+    onTabs: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -712,6 +782,9 @@ private fun TabletToolbar(
                     if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                     contentDescription = null
                 )
+            }
+            ToolbarButton(onClick = onTabs, enabled = true, description = "Tabs") {
+                Icon(Icons.Outlined.Tab, contentDescription = null)
             }
             ToolbarButton(onClick = onNewTab, enabled = true, description = "New tab") {
                 Icon(Icons.Filled.Add, contentDescription = null)
