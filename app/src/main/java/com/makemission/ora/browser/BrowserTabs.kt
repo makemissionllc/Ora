@@ -22,6 +22,8 @@ class BrowserTab(
     private val onPopupAllowed: (String) -> Unit,
     /** A page handed over a file to save (a download link or a script-started download). */
     private val onDownload: (WebResponse, String) -> Unit,
+    /** Tablets open tabs with the desktop site, so pages lay out for the larger screen. */
+    private val desktopByDefault: Boolean = false,
 ) {
     val session: GeckoSession = GeckoSession()
 
@@ -163,6 +165,13 @@ class BrowserTab(
                 BrowserLog.error("page", "Renderer crashed for ${this@BrowserTab.url}")
             }
         }
+        // Set the user agent before the session opens so the first page already uses it.
+        desktopSite = desktopByDefault
+        session.settings.userAgentMode = if (desktopByDefault) {
+            GeckoSessionSettings.USER_AGENT_MODE_DESKTOP
+        } else {
+            GeckoSessionSettings.USER_AGENT_MODE_MOBILE
+        }
         session.open(GeckoEngine.runtime(context))
         // The start page is drawn natively, so it never goes to GeckoView.
         if (initialUrl != BrowserTabs.START_URL) session.loadUri(initialUrl)
@@ -182,6 +191,7 @@ class BrowserTabs(
     private val context: Context,
     private val popupsBlocked: () -> Boolean,
     private val onDownload: (WebResponse, String) -> Unit,
+    private val desktopByDefault: Boolean = false,
 ) {
     private var nextId = 0L
     val tabs = mutableStateListOf<BrowserTab>()
@@ -202,7 +212,7 @@ class BrowserTabs(
         get() = tabs.firstOrNull { it.id == selectedId }
 
     fun newTab(url: String, select: Boolean = true): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload)
+        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault)
         tabs.add(tab)
         if (select) select(tab.id)
         BrowserLog.info("tabs", "Opened tab ${tab.id} (${tabs.size} open)")

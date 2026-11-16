@@ -134,6 +134,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import java.net.URLEncoder
 import org.mozilla.geckoview.ContentBlocking
 import org.mozilla.geckoview.GeckoRuntimeSettings
+import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.StorageController
 import android.widget.Toast
@@ -206,7 +207,12 @@ private fun BrowserContent(
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
     val tabs = remember {
-        BrowserTabs(context, { settings.blockPopups.value }, { response, pageUrl -> downloads.start(response, pageUrl) })
+        BrowserTabs(
+            context,
+            { settings.blockPopups.value },
+            { response, pageUrl -> downloads.start(response, pageUrl) },
+            desktopByDefault = isTablet
+        )
     }
     // Ad and tracker blocking is a runtime setting: apply it whenever the toggle changes.
     LaunchedEffect(blockAds) {
@@ -621,7 +627,7 @@ private fun BrowserToolbar(
                 loading = tab.loading,
                 onSubmit = onSubmit,
                 candidates = candidates,
-                onReload = { tab.session.reload() },
+                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) },
                 onStop = { tab.session.stop() },
                 modifier = Modifier.fillMaxWidth(),
                 onSwipeUp = onSwipeUp,
@@ -804,7 +810,7 @@ private fun TabletToolbar(
                     loading = tab.loading,
                     onSubmit = onSubmit,
                     candidates = candidates,
-                    onReload = { tab.session.reload() },
+                    onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) },
                     onStop = { tab.session.stop() },
                     modifier = Modifier.widthIn(max = BrowserTokens.TabletAddressMaxWidth),
                     onSwipeUp = onSwipeUp,
@@ -882,7 +888,7 @@ private fun CompactToolbar(
                 loading = tab.loading,
                 onSubmit = onSubmit,
                 candidates = candidates,
-                onReload = { tab.session.reload() },
+                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) },
                 onStop = { tab.session.stop() },
                 modifier = Modifier.weight(1f),
                 onSwipeUp = onSwipeUp,
@@ -939,7 +945,7 @@ private fun PhoneCompactBar(
             loading = tab.loading,
             onSubmit = onSubmit,
             candidates = candidates,
-            onReload = { tab.session.reload() },
+            onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) },
             onStop = { tab.session.stop() },
             modifier = Modifier.weight(1f),
             onSwipeUp = onSwipeUp,
@@ -1015,6 +1021,12 @@ private fun Modifier.addressSwipes(onSwipeUp: () -> Unit, onSwitchTab: (Int) -> 
         }
     }
 
+/** Reloads the page ignoring cached copies. Logged so reloads show on the Diagnostics page. */
+private fun hardReload(tab: BrowserTab) {
+    BrowserLog.info("nav", "Reload without cache on tab ${tab.id}")
+    tab.session.reload(GeckoSession.LOAD_FLAGS_BYPASS_CACHE)
+}
+
 @Composable
 private fun AddressBar(
     currentUrl: String,
@@ -1022,6 +1034,8 @@ private fun AddressBar(
     onSubmit: (String) -> Unit,
     candidates: List<AddressSuggestion>,
     onReload: () -> Unit,
+    /** Long press on reload: reload past the cache. */
+    onHardReload: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
     onSwipeUp: () -> Unit = {},
@@ -1075,9 +1089,10 @@ private fun AddressBar(
             BasicTextField(
                 value = fieldValue,
                 onValueChange = { next ->
-                    // The input method can collapse the selection to the start right after focus, which
-                    // made Backspace do nothing on "Start page". Keep the pending select-all in that case.
-                    if (selectAllPending && next.text == fieldValue.text && next.selection.collapsed && next.selection.start == 0) {
+                    // Right after focus the input method or a tap can collapse the selection (to the start, or
+                    // to the tapped spot), so typing landed mid-URL and Backspace did nothing. While the
+                    // select-all is pending, ignore any collapse that does not change the text.
+                    if (selectAllPending && next.text == fieldValue.text && next.selection.collapsed) {
                         return@BasicTextField
                     }
                     selectAllPending = false
@@ -1141,7 +1156,13 @@ private fun AddressBar(
                     Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)
                 }
             } else {
-                IconButton(onClick = onReload) {
+                // Quality of life: a long press reloads past the cache, for pages that look stale.
+                Box(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .combinedClickable(onClick = onReload, onLongClick = onHardReload, onClickLabel = "Reload", onLongClickLabel = "Reload without cache"),
+                    contentAlignment = Alignment.Center
+                ) {
                     Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = browserColors().AddressBarText)
                 }
             }
