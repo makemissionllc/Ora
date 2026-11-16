@@ -51,6 +51,7 @@ fun SettingsScreen(
     val appearance by settings.appearance.collectAsState()
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
+    val tabletSidebar by settings.tabletSidebar.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
@@ -123,6 +124,29 @@ fun SettingsScreen(
                         }
                         Switch(checked = websiteTheme, onCheckedChange = { settings.setWebsiteTheme(it) })
                     }
+                }
+            }
+            item {
+                SectionTitle("Tablet")
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(browserColors().AddressBarBackground)
+                        .clickable { settings.setTabletSidebar(!tabletSidebar) }
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text("Show tab sidebar", fontSize = 15.sp, color = browserColors().AddressBarText)
+                        Text(
+                            "The tab and bookmark list on the left. The toolbar button also toggles it.",
+                            fontSize = 12.sp,
+                            color = browserColors().SecondaryText
+                        )
+                    }
+                    Switch(checked = tabletSidebar, onCheckedChange = { settings.setTabletSidebar(it) })
                 }
             }
             item {

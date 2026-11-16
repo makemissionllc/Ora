@@ -61,6 +61,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Website theme ${if (enabled) "on" else "off"}")
     }
 
+    private val _tabletSidebar = MutableStateFlow(prefs.getBoolean(KEY_TABLET_SIDEBAR, true))
+    /** Tablet only: whether the tab and bookmark sidebar is shown. Remembered across launches. */
+    val tabletSidebar: StateFlow<Boolean> = _tabletSidebar.asStateFlow()
+
+    fun setTabletSidebar(shown: Boolean) {
+        prefs.edit().putBoolean(KEY_TABLET_SIDEBAR, shown).apply()
+        _tabletSidebar.value = shown
+        BrowserLog.info("settings", "Tab sidebar ${if (shown) "shown" else "hidden"}")
+    }
+
     private val _searchEngines = MutableStateFlow(loadSearchEngines())
     /** Engines the user has turned on. When more than one is on, a search asks which to use. */
     val searchEngines: StateFlow<Set<SearchEngine>> = _searchEngines.asStateFlow()
@@ -105,6 +115,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_HOME_PAGE = "home_page"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEBSITE_THEME = "website_theme"
+        private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"
         const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"
         /** Search URL used when the address bar input is not a URL. %s is replaced by the query. */
         const val DEFAULT_SEARCH_TEMPLATE = "https://duckduckgo.com/?q=%s"

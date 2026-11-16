@@ -56,8 +56,14 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Tab
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.PopupProperties
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -194,8 +200,13 @@ private fun BrowserContent(
     }
 
     val onNewTab: () -> Unit = { tabs.newTab(homePage) }
-    /** Tablet only: whether the tab and bookmark sidebar is visible. */
-    var showSidebar by remember { mutableStateOf(true) }
+    /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
+    val showSidebar by settings.tabletSidebar.collectAsState()
+    /** Bookmarks and open tabs, offered as address bar suggestions. */
+    val addressCandidates = (
+        bookmarkList.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) } +
+            tabs.tabs.map { AddressSuggestion(it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url), it.url) }
+        ).distinctBy { it.target }
 
     /** Loads typed text: searches through the chooser or default engine, or opens a URL. */
     fun submitAddress(input: String) {
@@ -254,8 +265,9 @@ private fun BrowserContent(
                     tab = selected,
                     isBookmarked = bookmarkList.any { it.url == selected.url },
                     showSidebar = showSidebar,
-                    onToggleSidebar = { showSidebar = !showSidebar },
+                    onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
                     onSubmit = { input -> submitAddress(input) },
+                    candidates = addressCandidates,
                     onBookmark = { bookmarks.toggle(selected.url, selected.title) },
                     onShare = { shareUrl(context, selected.url) },
                     onNewTab = onNewTab
@@ -274,6 +286,7 @@ private fun BrowserContent(
                     tab = selected,
                     isBookmarked = bookmarkList.any { it.url == selected.url },
                     onSubmit = { input -> submitAddress(input) },
+                    candidates = addressCandidates,
                     onBookmark = { bookmarks.toggle(selected.url, selected.title) },
                     onShare = { shareUrl(context, selected.url) },
                     onTabs = if (isTablet) onNewTab else {
@@ -439,6 +452,7 @@ private fun BrowserToolbar(
     tab: BrowserTab,
     isBookmarked: Boolean,
     onSubmit: (String) -> Unit,
+    candidates: List<AddressSuggestion>,
     onBookmark: () -> Unit,
     onShare: () -> Unit,
     onTabs: () -> Unit,
@@ -473,6 +487,7 @@ private fun BrowserToolbar(
                     currentUrl = tab.url,
                     loading = tab.loading,
                     onSubmit = onSubmit,
+                    candidates = candidates,
                     onReload = { tab.session.reload() },
                     onStop = { tab.session.stop() },
                     modifier = Modifier.weight(1f)
@@ -520,6 +535,7 @@ private fun TabletToolbar(
     showSidebar: Boolean,
     onToggleSidebar: () -> Unit,
     onSubmit: (String) -> Unit,
+    candidates: List<AddressSuggestion>,
     onBookmark: () -> Unit,
     onShare: () -> Unit,
     onNewTab: () -> Unit,
@@ -551,6 +567,7 @@ private fun TabletToolbar(
                     currentUrl = tab.url,
                     loading = tab.loading,
                     onSubmit = onSubmit,
+                    candidates = candidates,
                     onReload = { tab.session.reload() },
                     onStop = { tab.session.stop() },
                     modifier = Modifier.widthIn(max = BrowserTokens.TabletAddressMaxWidth)
@@ -583,20 +600,30 @@ private fun AddressBar(
     currentUrl: String,
     loading: Boolean,
     onSubmit: (String) -> Unit,
+    candidates: List<AddressSuggestion>,
     onReload: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
+    var anchorWidth by remember { mutableStateOf(0.dp) }
+    val density = LocalDensity.current
 
     // Show the current page's host while the user is not typing in the field.
     LaunchedEffect(currentUrl, focused) {
         if (!focused) fieldValue = TextFieldValue(displayUrl(currentUrl))
     }
 
+    // What the user has typed, without any autocompleted tail that is still selected.
+    val typed = fieldValue.text.substring(0, fieldValue.selection.min.coerceIn(0, fieldValue.text.length))
+    val suggestions = if (focused) addressSuggestions(typed, candidates) else emptyList()
+
+    Box(
+        modifier = modifier.onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } }
+    ) {
     Surface(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.AddressBarHeight)
             .shadow(BrowserTokens.AddressBarElevation, BrowserTokens.AddressBarShape),
@@ -619,7 +646,15 @@ private fun AddressBar(
             Spacer(Modifier.width(BrowserTokens.AddressBarTextStart))
             BasicTextField(
                 value = fieldValue,
-                onValueChange = { fieldValue = it },
+                onValueChange = { next ->
+                    val typing = next.text.length > fieldValue.text.length
+                    val completion = if (typing) autocompleteFor(next.text, candidates) else null
+                    fieldValue = if (completion != null) {
+                        TextFieldValue(completion, TextRange(next.text.length, completion.length))
+                    } else {
+                        next
+                    }
+                },
                 modifier = Modifier
                     .weight(1f)
                     .onFocusChanged { state ->
@@ -647,6 +682,8 @@ private fun AddressBar(
                     }
                 )
             )
+            // Autocomplete: when typing forward, finish a known domain and select the added part.
+            // Deleting never autocompletes, so backspace behaves normally.
             if (loading) {
                 IconButton(onClick = onStop) {
                     Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)
@@ -657,6 +694,42 @@ private fun AddressBar(
                 }
             }
         }
+    }
+    // Suggestions drop down under the field. Not focusable, so the keyboard stays open while they show.
+    DropdownMenu(
+        expanded = focused && suggestions.isNotEmpty(),
+        onDismissRequest = { focused = false },
+        modifier = Modifier.width(anchorWidth),
+        properties = PopupProperties(focusable = false)
+    ) {
+        suggestions.forEach { suggestion ->
+            DropdownMenuItem(
+                text = {
+                    Column {
+                        Text(
+                            suggestion.title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 15.sp,
+                            color = browserColors().AddressBarText
+                        )
+                        Text(
+                            suggestion.subtitle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 12.sp,
+                            color = browserColors().SecondaryText
+                        )
+                    }
+                },
+                onClick = {
+                    focused = false
+                    BrowserLog.info("search", "Suggestion chosen: ${suggestion.target}")
+                    onSubmit(suggestion.target)
+                }
+            )
+        }
+    }
     }
 }
 
