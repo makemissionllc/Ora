@@ -1,7 +1,10 @@
 package com.makemission.ora.browser
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -65,6 +68,7 @@ fun TabGrid(
             gridItems(tabList, key = { it.id }) { tab ->
                 TabTile(
                     title = tab.title.ifBlank { displayUrl(tab.url) },
+                    thumbnail = tab.thumbnail,
                     selected = tab.id == tabs.selectedId,
                     onClick = { onSelect(tab.id) },
                     onClose = { onClose(tab.id) }
@@ -97,6 +101,7 @@ fun TabGrid(
 @Composable
 private fun TabTile(
     title: String,
+    thumbnail: ImageBitmap?,
     selected: Boolean,
     onClick: () -> Unit,
     onClose: () -> Unit,
@@ -118,6 +123,15 @@ private fun TabTile(
             shadowElevation = BrowserTokens.TabTileElevation
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
+                // Preview of the page, cropped to the tile. Falls back to the plain card until captured.
+                if (thumbnail != null) {
+                    Image(
+                        bitmap = thumbnail,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
                 // Plain box instead of IconButton: IconButton's minimum touch target clipped the badge.
                 Box(
                     modifier = Modifier

@@ -11,8 +11,11 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
+import androidx.compose.ui.graphics.asImageBitmap
+import com.makemission.ora.ui.theme.OraMotion
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -100,6 +103,14 @@ private enum class PhoneOverlay { NONE, TABS, LIBRARY, SETTINGS, EXTENSIONS }
 /** Bottom-right corner, where the tabs button sits. Overlays scale out of and into this point. */
 private val MORPH_ORIGIN = TransformOrigin(0.85f, 1f)
 
+/** Overlays that slide in from the right edge instead of growing out of the tabs button. */
+private val SLIDE_OVERLAYS = setOf(PhoneOverlay.LIBRARY, PhoneOverlay.SETTINGS, PhoneOverlay.EXTENSIONS)
+
+/** Holds the GeckoView so the tab grid can capture the current page as a thumbnail. */
+private class PageView {
+    var view: GeckoView? = null
+}
+
 /**
  * Browser screen. Picks the color palette from the Appearance setting, then draws the browser.
  */
@@ -143,6 +154,7 @@ private fun BrowserContent(
     var showSettings by remember { mutableStateOf(false) }
     var showExtensions by remember { mutableStateOf(false) }
     val extensions = remember { ExtensionsRepository(GeckoEngine.runtime(context)) }
+    val pageView = remember { PageView() }
 
     val selected = tabs.selected ?: return
     val selectedId = tabs.selectedId
@@ -170,8 +182,8 @@ private fun BrowserContent(
             // The toolbar folds down into its bottom edge while an overlay grows out of the tabs button.
             AnimatedVisibility(
                 visible = phoneOverlay == PhoneOverlay.NONE,
-                enter = fadeIn(tween(200)) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = tween(260)),
-                exit = fadeOut(tween(160)) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = tween(220))
+                enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
+                exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
             ) {
                 BrowserToolbar(
                     tab = selected,
@@ -179,7 +191,13 @@ private fun BrowserContent(
                     onSubmit = { input -> selected.session.loadUri(toLoadableUrl(input, SettingsRepository.DEFAULT_SEARCH_TEMPLATE)) },
                     onBookmark = { bookmarks.toggle(selected.url, selected.title) },
                     onShare = { shareUrl(context, selected.url) },
-                    onTabs = if (isTablet) onNewTab else { { showTabGrid = true } },
+                    onTabs = if (isTablet) onNewTab else {
+                        {
+                            // Refresh the current tab's preview so the grid shows the page as it is now.
+                            captureThumbnail(pageView, selected)
+                            showTabGrid = true
+                        }
+                    },
                     onMenu = if (isTablet) null else { { showMenu = true } }
                 )
             }
@@ -195,7 +213,7 @@ private fun BrowserContent(
                 )
             }
             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
-                BrowserPage(tab = selected)
+                BrowserPage(tab = selected, pageView = pageView)
                 if (showMenu && !isTablet) {
                     BrowserMenuSheet(
                             isBookmarked = bookmarkList.any { it.url == selected.url },
@@ -236,15 +254,27 @@ private fun BrowserContent(
                     targetState = phoneOverlay,
                     modifier = Modifier.fillMaxSize(),
                     transitionSpec = {
-                        (fadeIn(tween(220)) + scaleIn(
-                            initialScale = 0.88f,
-                            animationSpec = tween(280),
-                            transformOrigin = MORPH_ORIGIN
-                        )) togetherWith (fadeOut(tween(160)) + scaleOut(
-                            targetScale = 0.88f,
-                            animationSpec = tween(200),
-                            transformOrigin = MORPH_ORIGIN
-                        ))
+                        val intoSlide = targetState in SLIDE_OVERLAYS
+                        val outOfSlide = initialState in SLIDE_OVERLAYS
+                        when {
+                            // Pages slide in from the right edge and leave the same way.
+                            intoSlide -> (slideInHorizontally(OraMotion.enter()) { it } + fadeIn(OraMotion.enter())) togetherWith
+                                if (outOfSlide) slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit())
+                                else scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.exit(), transformOrigin = MORPH_ORIGIN) + fadeOut(OraMotion.exit())
+                            // Returning to the page: the slide pages leave to the right.
+                            outOfSlide -> (fadeIn(OraMotion.enter())) togetherWith
+                                (slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit()))
+                            // The tab grid grows out of the tabs button and shrinks back into it.
+                            else -> (fadeIn(OraMotion.enter()) + scaleIn(
+                                initialScale = OraMotion.MORPH_SCALE,
+                                animationSpec = OraMotion.enter(),
+                                transformOrigin = MORPH_ORIGIN
+                            )) togetherWith (fadeOut(OraMotion.exit()) + scaleOut(
+                                targetScale = OraMotion.MORPH_SCALE,
+                                animationSpec = OraMotion.exit(),
+                                transformOrigin = MORPH_ORIGIN
+                            ))
+                        }
                     },
                     label = "phone-overlay"
                 ) { overlay ->
@@ -289,11 +319,19 @@ private fun BrowserContent(
 
 /** Shows the selected tab's page. The single GeckoView is re-pointed at whichever session is selected. */
 @Composable
-private fun BrowserPage(tab: BrowserTab) {
+private fun BrowserPage(tab: BrowserTab, pageView: PageView) {
     AndroidView(
         modifier = Modifier.fillMaxSize(),
-        factory = { ctx -> GeckoView(ctx) },
+        factory = { ctx -> GeckoView(ctx).also { pageView.view = it } },
         update = { view -> if (view.session != tab.session) view.setSession(tab.session) }
+    )
+}
+
+/** Captures the visible page into the tab's thumbnail. Failures keep the previous preview. */
+private fun captureThumbnail(pageView: PageView, tab: BrowserTab) {
+    pageView.view?.capturePixels()?.accept(
+        { bitmap -> if (bitmap != null) tab.thumbnail = bitmap.asImageBitmap() },
+        { }
     )
 }
 

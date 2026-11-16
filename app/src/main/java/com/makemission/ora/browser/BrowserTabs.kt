@@ -15,6 +15,8 @@ class BrowserTab(val id: Long, context: Context, initialUrl: String) {
 
     var url by mutableStateOf(initialUrl)
     var title by mutableStateOf("")
+    /** Last captured picture of the page, shown as the tab's preview in the tab grid. */
+    var thumbnail by mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
     var loading by mutableStateOf(false)
     var canGoBack by mutableStateOf(false)
     var canGoForward by mutableStateOf(false)
