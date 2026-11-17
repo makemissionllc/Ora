@@ -48,6 +48,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -623,6 +624,8 @@ private fun BrowserContent(
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
+                        // Quality of life: the card rides above the keyboard, so Auto-fill is reachable in a focused field.
+                        .imePadding()
                         .padding(bottom = BrowserTokens.SelectionMenuBottomInset)
                 ) {
                     SelectionMenuOverlay(visible = picked != null) {
@@ -644,6 +647,9 @@ private fun BrowserContent(
                                     BrowserLog.info("select", "Shared a link with a highlight")
                                 },
                                 onDismiss = { selected.clearSelection() },
+                                onAutofill = if (autofillPasswords && picked.isActionAvailable(GeckoSession.SelectionActionDelegate.ACTION_PASTE)) {
+                                    { requestAutofill(context, pageView.view); selected.clearSelection() }
+                                } else null,
                             )
                         }
                     }
@@ -1765,3 +1771,18 @@ private const val TAB_BUMP_SCALE = 1.25f
 
 /** How long the "Tab closed · Undo" offer stays up. */
 private const val UNDO_CLOSE_MS = 5000L
+
+/** Asks Android's autofill service for suggestions for the focused page field, as the system "Auto-fill" menu item does. */
+private fun requestAutofill(context: android.content.Context, view: GeckoView?) {
+    val autofill = view?.session?.autofillSession
+    val data = autofill?.focusedData
+    val rect = autofill?.focused?.screenRect
+    val manager = context.getSystemService(android.view.autofill.AutofillManager::class.java)
+    if (data == null || rect == null || manager == null || !manager.isEnabled) {
+        BrowserLog.warn("autofill", "Auto-fill requested but no field or autofill service is available")
+        Toast.makeText(context, "No autofill service available for this field", Toast.LENGTH_SHORT).show()
+        return
+    }
+    manager.requestAutofill(view, data.id, rect)
+    BrowserLog.info("autofill", "Auto-fill requested for the focused field")
+}

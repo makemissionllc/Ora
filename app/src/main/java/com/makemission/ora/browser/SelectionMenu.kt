@@ -90,6 +90,8 @@ fun SelectionMenu(
     onShare: (String) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Set when the selection sits in a text field: offers the Android autofill service's suggestions. */
+    onAutofill: (() -> Unit)? = null,
 ) {
     val colors = browserColors()
     val context = LocalContext.current
@@ -111,7 +113,7 @@ fun SelectionMenu(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                "“$shown”",
+                if (shown.isEmpty()) "Text field" else "“$shown”",
                 color = colors.AddressBarText,
                 fontWeight = FontWeight.Medium,
                 fontSize = 15.sp,
@@ -125,10 +127,13 @@ fun SelectionMenu(
             )
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            SelectionChip("Search", onClick = { onSearch(text.trim()) })
-            SelectionChip("Copy", onClick = onCopy)
+            if (onAutofill != null) SelectionChip("Auto-fill", onClick = onAutofill)
+            if (shown.isNotEmpty()) {
+                SelectionChip("Search", onClick = { onSearch(text.trim()) })
+                SelectionChip("Copy", onClick = onCopy)
+            }
             SelectionChip("Select all", onClick = onSelectAll)
-            SelectionChip("Share with highlight", onClick = { onShare(text.trim()) })
+            if (shown.isNotEmpty()) SelectionChip("Share with highlight", onClick = { onShare(text.trim()) })
             when (val found = detected) {
                 is Detected.Phone -> {
                     SelectionChip("Call", onClick = { launch(context, Intent(Intent.ACTION_DIAL, Uri.parse("tel:${found.digits}"))) })

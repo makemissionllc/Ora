@@ -74,8 +74,11 @@ class BrowserTab(
 
     /** Clears the page's selection and its handles; GeckoView then reports the hide, which clears [selection]. */
     fun clearSelection() {
-        selection?.unselect()
-        selection?.hide()
+        // An empty text field offers no unselect action; calling it anyway throws.
+        selection?.let {
+            if (it.isActionAvailable(GeckoSession.SelectionActionDelegate.ACTION_UNSELECT)) it.unselect()
+            if (it.isActionAvailable(GeckoSession.SelectionActionDelegate.ACTION_HIDE)) it.hide()
+        }
         selection = null
     }
 
@@ -168,7 +171,9 @@ class BrowserTab(
         // Replaces GeckoView's built-in selection bar: the page's text selection drives Ora's own card instead.
         session.selectionActionDelegate = object : GeckoSession.SelectionActionDelegate {
             override fun onShowActionRequest(session: GeckoSession, selection: GeckoSession.SelectionActionDelegate.Selection) {
-                if (selection.text.isNullOrBlank()) return
+                // A long-press on an empty text field has no text, but it is still worth a card: it offers Auto-fill.
+                val inField = selection.isActionAvailable(GeckoSession.SelectionActionDelegate.ACTION_PASTE)
+                if (selection.text.isNullOrBlank() && !inField) return
                 this@BrowserTab.selection = selection
             }
 
