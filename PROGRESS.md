@@ -16,6 +16,8 @@ Last updated: 2026-11-17, at commit `5ddf098`.
 - GeckoView 160, with Kotlin 2.4.21 and compileSdk 37.2.
 - Secure DNS (DNS over HTTPS, with fallback).
 - Selection card for selected page text: Search, Copy, Select all, Share with highlight, and Call, Message or Add to calendar for phone numbers and dates (`5ddf098`).
+- App icon uses the charcoal ring-and-dot design (`cf85810`).
+- Phone Compact pill narrows toward the centre as you scroll, with the URL centred (`6e0ddeb`).
 - Keeps tabs, the page and the search when the screen rotates (`configChanges` in the manifest, so the activity is not recreated).
 - Clears the link menu when a new page starts.
 
@@ -78,4 +80,6 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `1f865d2` | Secure DNS row | Network card with the switch on | Not checked: toolbar hidden on a wiki page, Settings unreachable |
 | 2026-11-17 | `5ddf098` | Selection card | Card shown for a selected word; Close cleared the card and handles. Phone number and date actions not checked | Card shown for a selected word; Close cleared the card and handles. Phone number and date actions not checked |
 | 2026-11-17 | rotation fix (uncommitted) | Configuration changes handled in place | Loaded page, search and tab kept after switch to landscape; auto-rotate restored | Not checked |
+| 2026-11-17 | `6e0ddeb` | Compact pill shrinks toward centre, URL centred | Shrunk pill centred, URL centred (screenshot) | Not checked |
+| 2026-11-17 | `cf85810` | App icon | Charcoal ring-and-dot icon on the home screen (screenshot) | Charcoal ring-and-dot icon on the home screen (screenshot) |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
