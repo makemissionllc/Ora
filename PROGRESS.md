@@ -5,6 +5,7 @@ The status board for Ora. Update it with every change: move items between sectio
 Last updated: 2026-11-17, at commit `0b92ba3`.
 
 ## Done
+- Theme colour: a built-in WebExtension reads each page's meta theme-color and the status bar uses it (`be8efc6`). Tablet pages start below the floating top row (`be8efc6`). Smooth enter 220 ms and exit 160 ms, the fade values in AGENTS.md (`be8efc6`).
 - Status bar tints from the page's top colour, pages run under it, and a soft fade replaces the solid band once the page scrolls; icons switch light and dark (`2cadb19`). Diagnostics logs the sampled colour per page (`bd2c82e`). Verified on phone and tablet with the start page; a scrolled phone page was seen (see verification log).
 - Status-bar fades merged into one StatusBarFade composable; Extensions search results use the shared motion values (`0b92ba3`). Start page checked on both devices after the change.
 - Motion style setting: Settings > Appearance > Motion with Smooth, Elegant, Fast and Premium (`67c0218`). Verified on phone and tablet; Fast applied on both, Smooth restored.
@@ -50,8 +51,8 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 - Motion: Smooth still uses 260 ms enter and 200 ms exit. AGENTS.md specifies overlay enter 220 ms fade and 280 ms scale, and exit 160 ms fade and 200 ms scale. Scale and fade do not yet use separate values.
 
 ### Status bar
-- theme-color: read the page's `<meta name="theme-color">` when present. GeckoView 160 has no callback for it, so this needs a built-in WebExtension content script. Until then the strip uses the sampled top row.
-- Check the light-page icon switch and a scrolled tablet page.
+- Tablet: check a scrolled page with a theme colour (not seen yet).
+- Motion: scale timings for overlays still share the fade values (AGENTS.md: scale 280 ms enter, 200 ms exit).
 
 ### Tab management (from the Chrome and Safari comparison)
 
@@ -67,7 +68,6 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 - Keyboard autocorrect and capitals in the address bar (see Known issues).
 - Profiles: history, cookies and logins are still shared between profiles. Keeping them apart needs a storage decision.
 - Incognito tabs: private tabs that keep no history, cookies or thumbnails once closed.
-- Open in a new tab: opens the link in a new tab and switches to it immediately.
 - Built-in ad blocking beyond tracking protection: Privacy already has "Block ads and trackers" (GeckoView strict tracking protection). A fuller blocker would need a filter-list design, a choice of lists, and per-site exceptions before any work.
 
 ### Carried over
@@ -117,6 +117,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | fade text fix (`8c762ca`) | "Fade pages in" text keeps a gap from its switch | Text wraps clear of the switch (screenshot). Tablet not checked | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |
 | 2026-11-17 | Status-bar tint and scroll fade (`2cadb19`) | Phone (`3C15C5000LM00000`): Google page scrolled, dark top. Tablet (`7ba8e294`): start page | Phone: page runs under the bar and the fade shows on scroll (screenshot). Tablet: start-page strip matches (screenshot). Not checked: light-page icons, tablet scrolled page, solid strip on a fresh load |
 | 2026-11-17 | Status colour log (`bd2c82e`) | Phone and tablet: start page only (screenshots) | Log entry not seen on either device: it fires only after a web page loads. Not checked |
+| 2026-11-17 | Theme colour and tablet band (`be8efc6`) | Phone (`3C15C5000LM00000`) and tablet (`7ba8e294`): local dark page with theme-color `#1e3a8a`, and a light page with none | Phone: dark page scrolled, strip blue with white icons, fades on scroll (screenshot). Light page: light strip, dark icons (screenshot). Tablet dark page: strip blue with readable icons (screenshot). Tablet light page: text sits below the row, no overlap (screenshot). Phone light-page intent landed on the start page on a second try; not re-checked after the band change |
 | 2026-11-17 | Tablet Compact in the top bar layout, sidebar toggle (`762bf4e`) | Bottom Compact bar unchanged (screenshot) | Compact row sits above the page with no dark strip; sidebar toggle shows the sidebar (screenshots). Shrink on scroll and the side panel below the bar not checked |
 | 2026-11-17 | Password autofill with Bitwarden, local login page on localhost (no submit) | Tapping the password field starts an Android autofill session and Bitwarden is bound, but it reports no account; the page then turned fully black (repeated) (screenshots, logcat) | Page visible after the tap; the same Bitwarden "no account" message; no fill offered (screenshot, logcat) |
 | 2026-11-17 | Cookie card; solid status band with page fade (`c3d1857`) | Status band blends into the start page, icons clear (screenshot). Cookies card and Passwords switch shown in Settings > Privacy (screenshot) | Start page captured after the change (screenshot). Settings card not checked |

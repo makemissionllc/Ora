@@ -14,6 +14,9 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.CHANGED, "Pages that set a theme colour tint the status bar with it. Otherwise the bar takes the colour of the page's top edge."),
+            ChangeItem(ChangeKind.CHANGED, "On tablets, pages start below the floating top bar instead of running under its buttons."),
+            ChangeItem(ChangeKind.CHANGED, "Smooth motion is a little quicker: overlays fade in and out faster."),
             ChangeItem(ChangeKind.ADDED, "Diagnostics records the colour the status bar took from each page, to help check it when it looks wrong."),
             ChangeItem(ChangeKind.ADDED, "Motion style: choose Smooth, Elegant, Fast or Premium in Settings > Appearance. It sets how quickly pages, menus and panels move."),
             ChangeItem(ChangeKind.ADDED, "Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match."),

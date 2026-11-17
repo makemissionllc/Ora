@@ -30,6 +30,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Phone tab bar layouts modeled on Safari, and a tablet tab overview. (`538cd0b`, `6734c89`, `01ac130`)
 
 **Changed**
+- Pages that set a theme colour tint the status bar with it. Otherwise the bar takes the colour of the page's top edge. (`be8efc6`)
+- On tablets, pages start below the floating top bar instead of running under its buttons. (`be8efc6`)
+- Smooth motion is a little quicker: overlays fade in and out faster. (`be8efc6`)
 - The strip behind the status bar takes the colour of the page's top edge, and pages run under it. Once a page scrolls, the bar softly fades instead of showing a solid band. The status icons switch between light and dark to stay readable. (`2cadb19`)
 - On tablets, the top fade under the status bar is taller, so the clock and battery stay readable over a page. (`ce7dbd1`)
 - Link menu: "Open in new tab" now switches to the new tab. (`9104c7f`)
