@@ -71,6 +71,9 @@ class BrowserTab(
     /** True while the bars are folded away so the page gets the room. Scrolling down folds them; scrolling up or reaching the top shows them. */
     var chromeHidden by mutableStateOf(false)
         private set
+    /** True while this tab's page has a video in full screen. The bars hide and the gesture layer shows. */
+    var videoFullScreen by mutableStateOf(false)
+        private set
     var lastScrollY = 0
     /** True once the page has scrolled away from its top. The status bar then fades instead of showing a solid strip. */
     var scrolled by mutableStateOf(false)
@@ -83,6 +86,12 @@ class BrowserTab(
     /** Text the user has selected on the page, with its on-screen position. Null when nothing is selected. */
     var selection by mutableStateOf<GeckoSession.SelectionActionDelegate.Selection?>(null)
         private set
+
+    /** Brings the bars back at once, as a tap on the shrunk address bar does. A later scroll folds them again. */
+    fun showChrome() {
+        chromeHidden = false
+        foldDistance = 0
+    }
 
     /** Clears the page's selection and its handles; GeckoView then reports the hide, which clears [selection]. */
     fun clearSelection() {
@@ -263,6 +272,11 @@ class BrowserTab(
                 if (link == null && image == null) return
                 BrowserLog.info("page", "Long press on ${link ?: image}")
                 pressTarget = PressTarget(linkUri = link, imageUri = image, x = screenX, y = screenY)
+            }
+
+            override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
+                videoFullScreen = fullScreen
+                BrowserLog.info("page", if (fullScreen) "Full screen requested: ${this@BrowserTab.url}" else "Left full screen")
             }
 
             override fun onExternalResponse(session: GeckoSession, response: WebResponse) {

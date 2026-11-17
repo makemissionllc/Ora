@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.log.BrowserLog
@@ -49,6 +50,8 @@ import com.makemission.ora.ui.theme.browserColors
 fun LinkQuickMenu(
     target: PressTarget,
     tabs: BrowserTabs,
+    /** How far the page sits below the top of its box (tablet Compact's top space). Press points are page coordinates. */
+    pageTop: Dp = 0.dp,
     onDismiss: () -> Unit,
     onShare: (String) -> Unit,
 ) {
@@ -70,7 +73,7 @@ fun LinkQuickMenu(
         val cardWidth = BrowserTokens.QuickMenuWidth
         val gap = BrowserTokens.QuickMenuEdgeGap
         val rawX = with(density) { target.x.toDp() }
-        val rawY = with(density) { target.y.toDp() }
+        val rawY = with(density) { target.y.toDp() } + pageTop
         val left = rawX.coerceIn(gap, maxWidth - cardWidth - gap)
         val top = rawY.coerceIn(gap, maxHeight - gap - 240.dp)
         val origin = TransformOrigin(

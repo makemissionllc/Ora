@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +29,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -35,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -89,11 +92,14 @@ fun SettingsScreen(
     sitePermissions: SitePermissionStore,
 ) {
     val appearance by settings.appearance.collectAsState()
+    val videoGestures by settings.videoGestures.collectAsState()
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val edgeSwipeSidebar by settings.edgeSwipeSidebar.collectAsState()
     val motionStyle by settings.motionStyle.collectAsState()
+    val swipeTarget by settings.addressSwipeTarget.collectAsState()
+    val swipeEffect by settings.addressSwipeEffect.collectAsState()
     val paletteStyle by settings.paletteStyle.collectAsState()
     val usageStats by settings.usageStats.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
@@ -147,14 +153,28 @@ fun SettingsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(browserColors().GridBackground)
-            .padding(top = 24.dp, start = 16.dp, end = 16.dp)
+            .padding(start = 16.dp, end = 16.dp)
     ) {
+        // Its own header row below the status bar: back on the left, the title, and Done on the right.
+        // The browser bars are hidden while Settings is open, so nothing sits over this row.
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .statusBarsPadding()
+                .height(BrowserTokens.PanelHeaderHeight),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Settings", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
+            IconButton(onClick = onDone) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = browserColors().IconColor)
+            }
+            Text(
+                "Settings",
+                modifier = Modifier.weight(1f).padding(start = 4.dp),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = browserColors().AddressBarText,
+                maxLines = 1,
+            )
             TextButton(onClick = onDone) {
                 Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
             }
@@ -324,6 +344,71 @@ fun SettingsScreen(
                             }
                         }
                     }
+                    if (shown(SettingsCategory.APPEARANCE)) item {
+                        SectionTitle("Address bar swipe")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+                                .background(browserColors().AddressBarBackground)
+                                .padding(bottom = 4.dp)
+                        ) {
+                            Text(
+                                "Moves through",
+                                fontSize = 15.sp,
+                                color = browserColors().AddressBarText,
+                                modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                            )
+                            Text(
+                                swipeTarget.detail,
+                                fontSize = 12.sp,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+                            )
+                            AddressSwipeTarget.values().forEach { target ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { settings.setAddressSwipeTarget(target) }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(target.label, fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    if (target == swipeTarget) {
+                                        Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
+                                    }
+                                }
+                            }
+                            Text(
+                                "Effect",
+                                fontSize = 15.sp,
+                                color = browserColors().AddressBarText,
+                                modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                            )
+                            Text(
+                                swipeEffect.detail,
+                                fontSize = 12.sp,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+                            )
+                            AddressSwipeEffect.values().forEach { effect ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { settings.setAddressSwipeEffect(effect) }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(effect.label, fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    if (effect == swipeEffect) {
+                                        Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
+                                    }
+                                }
+                            }
+                        }
+                    }
                     if (isTablet && shown(SettingsCategory.TABS)) item {
                         SectionTitle("Tablet")
                         Row(
@@ -366,6 +451,34 @@ fun SettingsScreen(
                             fontSize = 12.sp,
                             color = browserColors().SecondaryText
                         )
+                    }
+                    if (shown(SettingsCategory.APPEARANCE)) item {
+                        SectionTitle("Video")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+                                .background(browserColors().AddressBarBackground)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setVideoGestures(!videoGestures) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Brightness and volume swipes", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "In full-screen video, swipe up or down on the left for brightness and on the right for volume.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = videoGestures, onCheckedChange = { settings.setVideoGestures(it) })
+                            }
+                        }
                     }
                     if (shown(SettingsCategory.PRIVACY)) item {
                         SectionTitle("History")

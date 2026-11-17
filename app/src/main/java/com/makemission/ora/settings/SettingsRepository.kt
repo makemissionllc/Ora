@@ -41,6 +41,28 @@ enum class BarStyle(val key: String, val label: String, val detail: String, val 
     }
 }
 
+/** What a sideways swipe on the address bar moves through: open tabs, the current tab's pages, or profiles. */
+enum class AddressSwipeTarget(val key: String, val label: String, val detail: String) {
+    TABS("tabs", "Open tabs", "Swipe to the next or previous open tab."),
+    PAGES("pages", "Pages in this tab", "Swipe forward and back through this tab's history."),
+    PROFILES("profiles", "Profiles", "Swipe to the next or previous profile.");
+
+    companion object {
+        fun fromKey(key: String?): AddressSwipeTarget = entries.firstOrNull { it.key == key } ?: TABS
+    }
+}
+
+/** How the page moves when a sideways swipe on the address bar switches it. */
+enum class AddressSwipeEffect(val key: String, val label: String, val detail: String) {
+    FADE("fade", "Fade", "The page fades out and the next one fades in."),
+    SLIDE("slide", "Slide", "The page slides out the way the swipe went and the next one slides in, with a fade."),
+    JIGGLE("jiggle", "Jiggle", "The page tilts and settles back with a small bounce. At the end of the list it bounces without moving.");
+
+    companion object {
+        fun fromKey(key: String?): AddressSwipeEffect = entries.firstOrNull { it.key == key } ?: SLIDE
+    }
+}
+
 /**
  * Single source of truth for all app settings.
  *
@@ -127,6 +149,16 @@ class SettingsRepository(context: Context) {
         prefs.edit().putBoolean(KEY_BLOCK_ADS, enabled).apply()
         _blockAds.value = enabled
         BrowserLog.info("settings", "Ad and tracker blocking ${if (enabled) "on" else "off"}")
+    }
+
+    private val _videoGestures = MutableStateFlow(prefs.getBoolean(KEY_VIDEO_GESTURES, true))
+    /** When on, a full-screen video takes swipes: up and down on the left changes brightness, on the right the volume. */
+    val videoGestures: StateFlow<Boolean> = _videoGestures.asStateFlow()
+
+    fun setVideoGestures(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_VIDEO_GESTURES, enabled).apply()
+        _videoGestures.value = enabled
+        BrowserLog.info("settings", "Video brightness and volume swipes ${if (enabled) "on" else "off"}")
     }
 
     private val _autofillPasswords = MutableStateFlow(prefs.getBoolean(KEY_AUTOFILL_PASSWORDS, true))
@@ -255,6 +287,28 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Motion style ${style.label}")
     }
 
+    private val _addressSwipeTarget = MutableStateFlow(AddressSwipeTarget.fromKey(prefs.getString(KEY_ADDRESS_SWIPE_TARGET, null)))
+    /** What a sideways swipe on the address bar moves through. */
+    val addressSwipeTarget: StateFlow<AddressSwipeTarget> = _addressSwipeTarget.asStateFlow()
+
+    fun setAddressSwipeTarget(target: AddressSwipeTarget) {
+        prefs.edit().putString(KEY_ADDRESS_SWIPE_TARGET, target.key).apply()
+        _addressSwipeTarget.value = target
+        UsageStats.count("setting.address_swipe_target")
+        BrowserLog.info("settings", "Address bar swipe moves through ${target.label}")
+    }
+
+    private val _addressSwipeEffect = MutableStateFlow(AddressSwipeEffect.fromKey(prefs.getString(KEY_ADDRESS_SWIPE_EFFECT, null)))
+    /** How the page moves when an address bar swipe switches it. */
+    val addressSwipeEffect: StateFlow<AddressSwipeEffect> = _addressSwipeEffect.asStateFlow()
+
+    fun setAddressSwipeEffect(effect: AddressSwipeEffect) {
+        prefs.edit().putString(KEY_ADDRESS_SWIPE_EFFECT, effect.key).apply()
+        _addressSwipeEffect.value = effect
+        UsageStats.count("setting.address_swipe_effect")
+        BrowserLog.info("settings", "Address bar swipe effect ${effect.label}")
+    }
+
     private val _paletteStyle = MutableStateFlow(PaletteStyle.fromKey(prefs.getString(KEY_PALETTE_STYLE, null)))
     /** Original blue controls, or controls in Material colours from the theme. Backgrounds never change. */
     val paletteStyle: StateFlow<PaletteStyle> = _paletteStyle.asStateFlow()
@@ -349,11 +403,14 @@ class SettingsRepository(context: Context) {
         private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"
         private const val KEY_BLOCK_POPUPS = "block_popups"
         private const val KEY_BLOCK_ADS = "block_ads"
+        private const val KEY_VIDEO_GESTURES = "video_gestures"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
         private const val KEY_QUICK_RESUME = "quick_resume"
         private const val KEY_SAVE_HISTORY = "save_history"
         private const val KEY_EDGE_SWIPE_SIDEBAR = "edge_swipe_sidebar"
         private const val KEY_MOTION_STYLE = "motion_style"
+        private const val KEY_ADDRESS_SWIPE_TARGET = "address_swipe_target"
+        private const val KEY_ADDRESS_SWIPE_EFFECT = "address_swipe_effect"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"

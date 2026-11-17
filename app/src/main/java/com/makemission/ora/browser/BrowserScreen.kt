@@ -7,6 +7,7 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import android.app.Activity
 import androidx.compose.animation.animateColorAsState
@@ -111,6 +112,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -118,6 +120,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -156,6 +159,8 @@ import com.makemission.ora.profiles.ProfileSwitcher
 import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.extensions.ExtensionsRepository
 import com.makemission.ora.extensions.ExtensionsScreen
+import com.makemission.ora.settings.AddressSwipeEffect
+import com.makemission.ora.settings.AddressSwipeTarget
 import com.makemission.ora.settings.BarStyle
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.BrowserTokens
@@ -206,6 +211,8 @@ private val SLIDE_OVERLAYS = setOf(PhoneOverlay.LIBRARY, PhoneOverlay.SETTINGS, 
 /** Holds the GeckoView so the tab grid can capture the current page as a thumbnail. */
 private class PageView {
     var view: GeckoView? = null
+    /** The bottom space last given to the GeckoView, so it is only set again when the floating row changes height. */
+    var appliedClip = 0
 }
 
 /**
@@ -278,6 +285,7 @@ private fun BrowserContent(
         sitePermissionStores.getOrPut(id) { SitePermissionStore(context, id) }
 
     val blockAds by settings.blockAds.collectAsState()
+    val videoGestures by settings.videoGestures.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
@@ -423,20 +431,55 @@ private fun BrowserContent(
         captureThumbnail(pageView, selected)
         showTabGrid = true
     }
-    /** Moves to the next (+1) or previous (-1) open tab, wrapping at the ends. */
+    // A sideways swipe on the address bar moves through open tabs, the tab's pages or profiles, as the Settings choice
+    // says, and the page moves with the chosen effect instead of cutting over. A swipe with nowhere to go bounces.
+    val swipeMotion = rememberAddressSwipeMotion()
+    val swipeScope = rememberCoroutineScope()
+    val swipeTarget by settings.addressSwipeTarget.collectAsState()
+    val swipeEffect by settings.addressSwipeEffect.collectAsState()
+    /** Moves by +1 (a swipe to the left, next) or -1 (a swipe to the right, previous), wrapping at the ends. */
     val switchTab: (Int) -> Unit = { delta ->
-        val list = tabs.tabs
-        if (list.size > 1) {
-            val index = list.indexOfFirst { it.id == selectedId }
-            val next = list[Math.floorMod(index + delta, list.size)]
-            tabs.select(next.id)
-            BrowserLog.info("tabs", "Swiped to tab ${next.id}")
+        swipeScope.launch {
+            when (swipeTarget) {
+                AddressSwipeTarget.TABS -> {
+                    val list = tabs.tabs
+                    val canSwitch = list.size > 1
+                    val index = list.indexOfFirst { it.id == selectedId }
+                    val next = if (canSwitch) list[Math.floorMod(index + delta, list.size)] else null
+                    swipeMotion.play(delta, swipeEffect, canSwitch) {
+                        next?.let {
+                            tabs.select(it.id)
+                            BrowserLog.info("tabs", "Swiped to tab ${it.id}")
+                        }
+                    }
+                }
+                AddressSwipeTarget.PAGES -> {
+                    val canSwitch = if (delta > 0) selected.canGoForward else selected.canStepBack
+                    swipeMotion.play(delta, swipeEffect, canSwitch) {
+                        if (delta > 0) selected.session.goForward() else selected.stepBack()
+                        BrowserLog.info("tabs", "Swiped to the ${if (delta > 0) "next" else "previous"} page in tab ${selected.id}")
+                    }
+                }
+                AddressSwipeTarget.PROFILES -> {
+                    val list = profileList
+                    val canSwitch = list.size > 1
+                    val index = list.indexOfFirst { it.id == profiles.activeId.value }
+                    val next = if (canSwitch) list[Math.floorMod(index + delta, list.size)] else null
+                    swipeMotion.play(delta, swipeEffect, canSwitch) {
+                        next?.let { profiles.select(it.id) }
+                    }
+                }
+            }
         }
     }
     // Where the bar sits. Tablet Compact sits at the top like a desktop address bar; phone Compact stays at the bottom.
     val topLayout = barStyle == BarStyle.TOP
     /** Tablet Compact floats over the top of the page, the way the phone Compact bar floats at the bottom. */
     val tabletCompact = isTablet && barStyle == BarStyle.COMPACT
+    /** Phone Compact: the floating row sits at the bottom, with the page running under the status bar and the row. */
+    val phoneCompact = !isTablet && barStyle == BarStyle.COMPACT
+    /** Phone Compact: the height of the status bar, the space the page starts below at the top of the page. */
+    val phoneZoneHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
     val showSidebar by settings.tabletSidebar.collectAsState()
     val edgeSwipeSidebar by settings.edgeSwipeSidebar.collectAsState()
@@ -445,6 +488,8 @@ private fun BrowserContent(
     var topBarHeight by remember { mutableStateOf(0.dp) }
     // Tablet Compact floats over the page, so the sidebar reserves this much room at its top.
     var compactRowHeight by remember { mutableStateOf(0.dp) }
+    // Phone Compact: the floating row's measured height in pixels. GeckoView is told it, so the page ends above the row.
+    var bottomBarPx by remember { mutableIntStateOf(0) }
     /**
      * The colour behind the status bar: the start page's grey on the start page, otherwise the page's own top colour
      * once it has loaded, and the theme background until one is known. It eases between colours with the shared enter motion.
@@ -501,6 +546,23 @@ private fun BrowserContent(
         showExtensions -> PhoneOverlay.EXTENSIONS
         else -> PhoneOverlay.NONE
     }
+    // Hidden while a full-screen panel (Settings, Library, Extensions, the tab overview) or the downloads sheet is open,
+    // so the browser bars never sit over a panel's own header.
+    // A full-screen video hides the bars too, so only the video is on screen.
+    val toolbarHidden = phoneOverlay != PhoneOverlay.NONE || showDownloads || tabletTabsOpen || selected.videoFullScreen
+    VideoFullScreenEffect(active = selected.videoFullScreen)
+    BackHandler(enabled = selected.videoFullScreen) {
+        BrowserLog.info("page", "Back leaves full screen")
+        selected.session.exitFullScreen()
+    }
+    // Tablet Compact: the space under the floating row takes the page's top colour and the page starts below it.
+    // Phone Compact does the same with the status bar's height. Once the page scrolls, that space folds away
+    // with a short move, and the content runs up under the status bar fade.
+    val zoneFraction by animateFloatAsState(
+        targetValue = if ((tabletCompact || phoneCompact) && !selected.scrolled) 1f else 0f,
+        animationSpec = if (selected.scrolled) OraMotion.exit<Float>() else OraMotion.enter<Float>(),
+        label = "compact top zone",
+    )
     val clearBrowsingData: () -> Unit = {
         GeckoEngine.runtime(context).storageController
             .clearData(StorageController.ClearFlags.ALL)
@@ -553,7 +615,7 @@ private fun BrowserContent(
         if (!isTablet && barStyle == BarStyle.TOP) {
             // Phone Top: the controls sit at the bottom edge, as in Safari's Top option.
             AnimatedVisibility(
-                visible = phoneOverlay == PhoneOverlay.NONE && !selected.chromeHidden,
+                visible = !toolbarHidden && !selected.chromeHidden,
                 enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
                 exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
             ) {
@@ -571,7 +633,7 @@ private fun BrowserContent(
             // The bar folds down into its bottom edge while an overlay grows out of the tabs button.
             // Phone Compact never leaves while a page is open: scrolling only shrinks it, as in iOS Safari.
             AnimatedVisibility(
-                visible = phoneOverlay == PhoneOverlay.NONE && (barStyle == BarStyle.COMPACT || !selected.chromeHidden),
+                visible = !toolbarHidden && (barStyle == BarStyle.COMPACT || !selected.chromeHidden),
                 enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
                 exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
             ) {
@@ -650,7 +712,7 @@ private fun BrowserContent(
             Column(modifier = Modifier.fillMaxWidth().onSizeChanged { topBarHeight = with(density) { it.height.toDp() } }) {
             // Adaptive shrink: the top bar folds up while the page is scrolled down, and returns on scroll up.
             AnimatedVisibility(
-                visible = topLayout && !selected.chromeHidden,
+                visible = topLayout && !selected.chromeHidden && !toolbarHidden,
                 enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Top, animationSpec = OraMotion.enter()),
                 exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = OraMotion.exit())
             ) {
@@ -737,7 +799,7 @@ private fun BrowserContent(
                     }
                 }
             }
-            Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+            Box(modifier = Modifier.weight(1f).fillMaxSize().addressSwipeEffect(swipeMotion, swipeEffect)) {
                 BrowserPage(
                     tab = selected,
                     pageView = pageView,
@@ -749,8 +811,22 @@ private fun BrowserContent(
                     belowStatusBar = !isTablet && !topLayout,
                     // Tablet Compact floats over the page; the start page keeps its content clear of the row.
                     topInset = if (tabletCompact) compactRowHeight else 0.dp,
+                    // Tablet Compact: the space under the floating row takes the page's top colour and the page moves down to meet it.
+                    zoneHeight = when {
+                        tabletCompact -> compactRowHeight
+                        phoneCompact -> phoneZoneHeight
+                        else -> 0.dp
+                    },
+                    zoneFraction = zoneFraction,
+                    zoneColor = barColor,
+                    // Phone Compact: the page ends above the floating row, which GeckoView is told about (0 elsewhere).
+                    bottomClipPx = if (phoneCompact) bottomBarPx else 0,
                     onSubmit = { input -> submitAddress(input) }
                 )
+                // Brightness and volume swipes sit over the page while its video is full screen.
+                if (selected.videoFullScreen && videoGestures) {
+                    VideoGestureLayer(modifier = Modifier.fillMaxSize())
+                }
                 if (showDownloads) {
                     DownloadsSheet(repository = downloads, onDismiss = { showDownloads = false })
                 }
@@ -760,6 +836,8 @@ private fun BrowserContent(
                         LinkQuickMenu(
                             target = target,
                             tabs = tabs,
+                            // The page sits lower by the tablet's top zone, so the press point is moved down by the same amount.
+                            pageTop = (if (tabletCompact) compactRowHeight else phoneZoneHeight) * zoneFraction,
                             onDismiss = { selected.pressTarget = null },
                             onShare = { url -> shareUrl(context, url) }
                         )
@@ -927,11 +1005,19 @@ private fun BrowserContent(
                 modifier = Modifier.align(Alignment.TopCenter),
             )
             // Transparent around the pill: the page shows through, so the row seems to float over it.
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .onSizeChanged { compactRowHeight = with(density) { it.height.toDp() } }
-            ) { tabletCompactRow() }
+            // It leaves while a full-screen panel is open. The measured height is kept during that move, so the page stays put.
+            AnimatedVisibility(
+                visible = !toolbarHidden,
+                modifier = Modifier.align(Alignment.TopCenter),
+                enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Top, animationSpec = OraMotion.enter()),
+                exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = OraMotion.exit()),
+            ) {
+                Box(
+                    modifier = Modifier.onSizeChanged {
+                        if (!toolbarHidden) compactRowHeight = with(density) { it.height.toDp() }
+                    }
+                ) { tabletCompactRow() }
+            }
         }
         // Tablet: a rightward swipe from the left edge of the page opens the sidebar, when the setting is on.
         // The strip starts below the toolbar (or the Compact row), so it never takes taps meant for the buttons.
@@ -944,7 +1030,21 @@ private fun BrowserContent(
             )
         }
         if (!isTablet) {
-            Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
+            // Phone Compact: a soft fade in the page's colour sits behind the floating row, drawn first so the row stays on top.
+            AnimatedVisibility(
+                visible = phoneCompact && !toolbarHidden,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = fadeIn(OraMotion.enter()),
+                exit = fadeOut(OraMotion.exit()),
+            ) {
+                BottomFade(color = barColor, shrunk = selected.chromeHidden)
+            }
+            // The measured height is kept while a full-screen panel is open, as the tablet's top row is.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .onSizeChanged { if (!toolbarHidden) bottomBarPx = it.height }
+            ) { bottomBarContent() }
             if (!topLayout) {
                 // Phone: the strip behind the status bar matches the page's top colour, and fades once the page scrolls.
                 StatusBarOverlay(
@@ -1045,6 +1145,14 @@ private fun BrowserPage(
     androidAutofill: Boolean,
     belowStatusBar: Boolean,
     topInset: Dp,
+    /** Tablet Compact only: the height of the space above the page that the floating row covers, status bar included. */
+    zoneHeight: Dp,
+    /** 1 while that space is shown at the top of an unscrolled page, 0 once it has folded away. */
+    zoneFraction: Float,
+    /** The page's top colour, which fills that space. */
+    zoneColor: Color,
+    /** Phone Compact only: the height of the floating row at the bottom, which the page ends above. 0 elsewhere. */
+    bottomClipPx: Int,
     onSubmit: (String) -> Unit,
 ) {
     // The start page's content starts below the status bar on phones. Web pages run up under it: the strip behind
@@ -1079,17 +1187,38 @@ private fun BrowserPage(
                 }
             )
     ) {
+        // The space above the page, filled with the page's top colour. The page moves down by the same height, so
+        // its own top row starts below the floating row; the move reverses when the page scrolls.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .fillMaxWidth()
+                .height(zoneHeight * zoneFraction)
+                .background(zoneColor)
+        )
         AndroidView(
-            modifier = Modifier.fillMaxSize().graphicsLayer { alpha = pageAlpha },
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer {
+                    alpha = pageAlpha
+                    translationY = zoneHeight.toPx() * zoneFraction
+                },
             factory = { ctx ->
                 GeckoView(ctx).also {
                     // Lets Android's autofill service (Bitwarden, Google and others) see the page's login fields.
                     it.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_YES
                     pageView.view = it
+                    pageView.appliedClip = 0
                 }
             },
             update = { view ->
                 if (view.session != tab.session) view.setSession(tab.session)
+                // Phone Compact: the bottom space is the floating row's height. Set only when that height changes.
+                if (pageView.appliedClip != bottomClipPx) {
+                    pageView.appliedClip = bottomClipPx
+                    view.setVerticalClipping(bottomClipPx)
+                    view.setDynamicToolbarMaxHeight(bottomClipPx)
+                }
                 if (view.autofillEnabled != androidAutofill) {
                     view.setAutofillEnabled(androidAutofill)
                     BrowserLog.info("autofill", "Android autofill ${if (androidAutofill) "on" else "off"} for the page view")
@@ -1568,21 +1697,38 @@ private fun FloatingCompactRow(
         // The middle slot takes the free width and centres the pill. Shrinking narrows the pill around the
         // centre, as Safari does, instead of letting it widen into the space the round buttons leave.
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            AddressBar(
-                currentUrl = tab.url,
-                loading = tab.loading,
-                onSubmit = onSubmit,
-                candidates = candidates,
-                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
-                onStop = { tab.session.stop() },
+            Box(
                 modifier = (if (pillMaxWidth != null) Modifier.widthIn(max = pillMaxWidth) else Modifier)
-                    .fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink),
-                height = lerp(BrowserTokens.AddressBarHeight, if (top) BrowserTokens.TabletCompactShrunkHeight else BrowserTokens.PhoneCompactShrunkHeight, shrink),
-                onSwipeUp = onSwipeUp,
-                onSwitchTab = onSwitchTab,
-                shape = BrowserTokens.PhoneCompactPill,
-                centered = true
-            )
+                    .fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink)
+            ) {
+                AddressBar(
+                    currentUrl = tab.url,
+                    loading = tab.loading,
+                    onSubmit = onSubmit,
+                    candidates = candidates,
+                    onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
+                    onStop = { tab.session.stop() },
+                    modifier = Modifier.fillMaxWidth(),
+                    height = lerp(BrowserTokens.AddressBarHeight, if (top) BrowserTokens.TabletCompactShrunkHeight else BrowserTokens.PhoneCompactShrunkHeight, shrink),
+                    onSwipeUp = onSwipeUp,
+                    onSwitchTab = onSwitchTab,
+                    shape = BrowserTokens.PhoneCompactPill,
+                    centered = true
+                )
+                // Quality of life: while the row is shrunk (tablet top or phone bottom), a tap on the pill brings the full
+                // toolbar back instead of opening the address for editing. The overlay sits only over the pill.
+                if (shrunk) {
+                    Box(
+                        modifier = Modifier
+                            .matchParentSize()
+                            .clip(BrowserTokens.PhoneCompactPill)
+                            .clickable {
+                                BrowserLog.info("nav", "Tapped the shrunk address bar: showed the toolbar")
+                                tab.showChrome()
+                            }
+                    )
+                }
+            }
         }
         if (onTabs != null) {
             CompactSlot(shrink) {
@@ -1597,6 +1743,33 @@ private fun FloatingCompactRow(
             }
         }
     }
+}
+
+/**
+ * The soft fade behind the phone Compact row: clear at its top edge, then the page colour at about 85% halfway and 96%
+ * at the bottom, so page text never shows between the row's buttons. It shortens once the row shrinks.
+ */
+@Composable
+private fun BottomFade(color: Color, shrunk: Boolean) {
+    val shrink by animateFloatAsState(
+        targetValue = if (shrunk) 1f else 0f,
+        animationSpec = if (shrunk) OraMotion.exit<Float>() else OraMotion.enter<Float>(),
+        label = "bottomFadeShrink"
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(lerp(BrowserTokens.PhoneBottomFade, BrowserTokens.PhoneBottomFadeShrunk, shrink))
+            .background(
+                Brush.verticalGradient(
+                    colorStops = arrayOf(
+                        0f to color.copy(alpha = 0f),
+                        0.5f to color.copy(alpha = 0.85f),
+                        1f to color.copy(alpha = 0.96f),
+                    )
+                )
+            )
+    )
 }
 
 /** A slot for one round button. It narrows to nothing as the row shrinks, so the button folds away instead of vanishing. */

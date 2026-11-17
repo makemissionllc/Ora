@@ -121,6 +121,8 @@ object BrowserTokens {
     // Settings (tablet): a category rail beside one centered column, as in the Settings mockup.
     val SettingsRailWidth = 260.dp
     val SettingsRailRowHeight = 44.dp
+    /** The header row of Settings and the other full-screen panels, under the status bar: back, title, Done. */
+    val PanelHeaderHeight = 56.dp
     val SettingsContentMaxWidth = 720.dp
     /** Width of the Theme segmented control. Wider than the mockup's 220 dp so every mode label fits. */
     val SettingsSegmentWidth = 280.dp
@@ -166,6 +168,10 @@ object BrowserTokens {
     val StatusFadeExtra = 16.dp
     /** Total height of the soft fade behind the status bar once a page scrolls under it (design: SB-Scroll). */
     val StatusScrollFade = 84.dp
+    /** Height of the soft fade behind the phone Compact row, in the page's colour, so page text never shows between its buttons. */
+    val PhoneBottomFade = 150.dp
+    /** The bottom fade once the page scrolls and the Compact row shrinks. */
+    val PhoneBottomFadeShrunk = 90.dp
     val PhoneCompactPill = RoundedCornerShape(percent = 50)
     /** Phone Bottom and Top control bars float above the page as rounded cards, like iOS Safari. */
     val FloatingBarShape = RoundedCornerShape(28.dp)
@@ -178,6 +184,8 @@ object BrowserTokens {
     val ProfileChipPadding = PaddingValues(horizontal = 14.dp)
     val ProfileChipSpacing = 8.dp
     val ProfileSwitcherPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
+    /** How far a page slides when an address bar swipe switches it (Slide, and part of Jiggle). */
+    val AddressSwipeDistance = 72.dp
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */
