@@ -10,6 +10,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 **Added**
 - Quick resume: when you leave Ora, your open tabs are kept, and they reopen the next time you start it. Turn it off in Settings > Home page. Private tabs are never kept, and turning the switch off clears what was kept. (`24f1261`)
+- Two privacy switches in Settings > Privacy: Global Privacy Control, which asks sites not to sell or share your data (on by default), and Fingerprinting protection, which hides details sites use to recognise your device (off by default, as some pages may look different). (`d12870d`)
 - The sidebar search has a × button that clears the text in one tap. (`9ca2ced`)
 - Overlays appear and disappear at once when Android's Remove animations setting is on. (`40a19c2`)
 - A Material colours switch in Settings > Appearance. When it is on, buttons, the accent and icons take colours from your theme. Turn it off to keep the original blue design. (`b2ef99d`)
