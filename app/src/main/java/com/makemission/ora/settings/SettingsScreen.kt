@@ -43,6 +43,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.browser.TABLET_MIN_WIDTH_DP
+import com.makemission.ora.changelog.Changelog
+import com.makemission.ora.changelog.ChangelogScreen
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.DiagnosticsScreen
 import com.makemission.ora.ui.theme.BrowserTokens
@@ -56,6 +58,7 @@ private enum class SettingsCategory(val label: String) {
     SEARCH("Search"),
     HOME("Home page"),
     DIAGNOSTICS("Diagnostics"),
+    ABOUT("About"),
 }
 
 /**
@@ -87,10 +90,15 @@ fun SettingsScreen(
     var homeDraft by remember(homePage) { mutableStateOf(homePage) }
     var confirmClear by remember { mutableStateOf(false) }
     var showDiagnostics by remember { mutableStateOf(false) }
+    var showChangelog by remember { mutableStateOf(false) }
     var category by rememberSaveable { mutableStateOf(SettingsCategory.APPEARANCE) }
 
     if (showDiagnostics) {
         DiagnosticsScreen(onDone = { showDiagnostics = false })
+        return
+    }
+    if (showChangelog) {
+        ChangelogScreen(onDone = { showChangelog = false })
         return
     }
 
@@ -437,6 +445,25 @@ fun SettingsScreen(
                         ) {
                             Text("Log and errors", fontSize = 15.sp, color = browserColors().AddressBarText)
                             Text("${logEntries.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
+                        }
+                    }
+                    if (shown(SettingsCategory.ABOUT)) item {
+                        SectionTitle("About")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(browserColors().AddressBarBackground)
+                                .clickable {
+                                    BrowserLog.info("settings", "Opened What's new")
+                                    showChangelog = true
+                                }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("What's new", fontSize = 15.sp, color = browserColors().AddressBarText)
+                            Text("${Changelog.first().date} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
                     }
                 }
