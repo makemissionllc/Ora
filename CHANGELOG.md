@@ -25,6 +25,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - On tablet, the profile chips in the sidebar scroll to the edge instead of being cut off partway. (`db79a5a`)
 
 **Changed**
+- Opening a page from the start page fades the start page out and the page in, instead of cutting over. (`9db59f6`)
 - Cards, menus, the address field, tiles and side panels share one set of softer rounded corners. (`9ca2ced`)
 - Password autofill now follows its switch fully: with it on, your Android password app offers suggestions above the keyboard on login pages; with it off, the page is hidden from Android autofill. The Settings text says where suggestions appear.
 

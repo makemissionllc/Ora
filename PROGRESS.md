@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `24f1261`.
+Last updated: 2026-11-17, at commit `9db59f6`.
 
 ## Done
+- Start page and web pages cross-fade (`9db59f6`): opening a page from the start page fades the start page out and the page in, on the shared motion values, instead of cutting over. The web layer stays composed, so its session is kept. Verified on tablet: address typed on the start page, Google results loaded and the start page gone. Phone not checked; the fade itself was not captured mid-animation.
 - Quick resume (`24f1261`): each profile's open tabs (addresses and the selected one) are saved when Ora leaves the screen and reopened on the next start. Private tabs are never saved. Switch in Settings > Home page under Resume, on by default; turning it off clears the saved tabs. Verified on tablet: after a force-stop, animex.one reopened instead of the start page; with the switch off, the start page opened. Phone not checked.
 - Softer corner radii on one scale (12, 16 and 20 dp tokens in `BrowserTokens`) across cards, menus, the address field, tiles and side panels (`9ca2ced`). Verified on tablet: start page, sidebar, ⋯ menu and tab overview. Settings, error page, Downloads and changelog corners not checked on tablet; phone not checked.
 - Sidebar search has a × button that clears the text, shown only while the field has text (`9ca2ced`). Verified on tablet: text cleared and the placeholder returned.
@@ -54,6 +55,10 @@ Last updated: 2026-11-17, at commit `24f1261`.
 
 ## Pending
 
+### Motion
+- Sidebar and bars opening from their origin (a scale from the hamburger, as on iOS). Only the fade and width expansion exist; the origin scale is not built.
+- Layout changes (bar style, Compact shrink) and tab switches still cut over without a shared transition.
+
 ### Tab management (from the Chrome and Safari comparison)
 
 - Drag one tab onto another to make a group, and drag tabs into or out of groups.
@@ -92,6 +97,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `9db59f6` (start page and web page cross-fade) | Start page fades out and the page fades in on a URL entered from the start page; the start page returns on the start address | Not checked: tablet-only pass | Typed "example.org" on the start page: Google results loaded, start page gone, sidebar closed (`start_to_web_settled.png`). Fade frames not captured mid-animation; launch screen with the start page and sidebar (`start_fade_launch.png`) |
 | 2026-11-17 | `24f1261` (quick resume) | Open tabs are kept when Ora leaves and reopen on the next start; Settings > Home page switch, on by default | Not checked: tablet-only pass | Tab on animex.one; Home, force-stop, relaunch: animex.one reopened, not the start page (`resume_relaunch.png`). Switch turned off in Settings > Home page; relaunch opened the start page (`resume_off_relaunch.png`). Switch shown under Resume (`resume_home3.png`). Left OFF on this tablet after the test |
 | 2026-11-17 | `9ca2ced` (softer corners; sidebar search clear button) | Corner radii on one scale; sidebar search × button clears the query | Not checked: tablet-only pass | Corners checked on start page, sidebar, ⋯ menu and tab overview (screenshots). Settings, error page, Downloads and changelog corners not checked. Clear button: "sta" typed, × shown, tap cleared the field and the placeholder returned (`clear_result.png`) |
 | 2026-11-17 | `20954f4` (edge-swipe strip below the toolbar) | Edge-swipe strip starts below the toolbar so the hamburger is not covered | Not checked: tablet-only pass | Hamburger tap opened the sidebar from the start page (log "Tab sidebar shown"). Swipe from the strip at (120,700) to (460,700) opened it (log "Tab sidebar shown", `swipe_result.png`). Settings switch off not checked |

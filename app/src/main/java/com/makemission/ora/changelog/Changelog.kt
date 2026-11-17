@@ -18,6 +18,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "The sidebar search has a × button that clears the text in one tap."),
             ChangeItem(ChangeKind.ADDED, "Overlays appear and disappear at once when Android's Remove animations setting is on."),
             ChangeItem(ChangeKind.CHANGED, "Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out."),
+            ChangeItem(ChangeKind.CHANGED, "Opening a page from the start page fades the start page out and the page in, instead of cutting over."),
             ChangeItem(ChangeKind.CHANGED, "Cards, menus, the address field, tiles and side panels share one set of softer rounded corners."),
             ChangeItem(ChangeKind.ADDED, "On tablet, swipe right from the left edge of a page to open the sidebar. A Settings switch turns this off if a site's own swipes get in the way."),
             ChangeItem(ChangeKind.ADDED, "On tablet, Back closes an open sidebar before it goes back through page history."),
