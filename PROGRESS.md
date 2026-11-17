@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `b5e1949`.
+Last updated: 2026-11-17, at commit `2a47c6a`.
 
 ## Done
 - Full-screen video double-tap skip (`ed85a8a`): double-tap the left or right half of a full-screen video to go back or forward 10 s; repeated taps add up in one "+N s" / "-N s" hint that fades out. Phone verified: right double-tap 0:00 to 0:10; left double-tap 0:10 back to 0:00; "-10 s" hint seen. Not checked: the "+N s" hint on screen, two quick double-taps adding to +20 s, tablet.
@@ -65,7 +65,7 @@ Last updated: 2026-11-17, at commit `b5e1949`.
 
 - Documentation set: README, CHANGELOG, PROGRESS, and the AGENTS.md rule that keeps them current.
 - In-app "What's new" page, built from the same entries as CHANGELOG.md.
-- Phone Compact fade under the status bar, bottom fade behind the floating bar, and page clipping (`01de1e1`): built and installed on the tablet; not yet seen on a phone (not connected this session). Waiting for a phone test on google.com and theverge.com, at the top, while scrolling, and at the end of a page.
+- Phone Compact top fade under the status bar, and page clipping (`01de1e1`): the bottom fade was removed (`2a47c6a`). Phone (reddit.com, portrait, not scrolled): no fade under the bar, and page text ends at the bar's top edge. Not checked: google.com and theverge.com at the top, while scrolling, and at the end of a page. An earlier google.com screenshot showed page content under the status bar; not resolved.
 - Clear history confirmation morph (`01de1e1`): Cancel verified on the tablet. Back and tap-outside not checked yet.
 
 ## Pending
@@ -178,4 +178,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | Status-bar fades merged; Extensions motion via OraMotion (`0b92ba3`) | Start page unchanged after install (screenshot). Fade over a loaded page not checked | Start page unchanged after install (screenshot). Fade over a loaded page not checked |
 | 2026-11-17 | `11f3e74` (seek bar; Back exits full screen) | Phone (CPH2745) seen. Tablet: Not checked (not connected over ADB) | Phone: seek bar shows 0:00 / 0:10 with the video full screen; dragging the thumb to the middle moved the video to 0:06; Back left full screen and stayed on the page; Settings switch turned off not checked (screenshots) |
 | 2026-11-17 | `ed85a8a` (full-screen double-tap skip) | Phone (CPH2745) seen. Tablet: Not checked (not connected over ADB) | Phone: right double-tap moved 0:00 to 0:10; left double-tap moved 0:10 back to 0:00 with the "-10 s" hint shown (screenshots `phone_skip_5_right.png`, `phone_skip_6_left.png`, `phone_skip_7_after.png`). The "+N s" hint was not captured on screen; accumulation not tested |
+| 2026-11-17 | `2a47c6a` (phone bottom fade removed) | Portrait, reddit.com, not scrolled: no gradient under the floating bar (pixel samples); page text ends at the bar's top edge (screenshot). Not checked: google.com, theverge.com, scrolling, page end | Not checked: tablet not connected over ADB this session |
 

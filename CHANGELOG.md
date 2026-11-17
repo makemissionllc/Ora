@@ -75,7 +75,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Phone tab bar layouts modeled on Safari, and a tablet tab overview. (`538cd0b`, `6734c89`, `01ac130`)
 
 **Changed**
-- On phones, the page starts below the status bar in the page's own top colour. As you scroll, it slides up under a soft fade. A soft fade behind the floating bar keeps page text from showing between its buttons, and the page ends above the bar. (`01de1e1`)
+- On phones, the floating bottom bar has no fade behind it. Only the top fades under the status bar. (`2a47c6a`)
+- On phones, the page starts below the status bar in the page's own top colour. As you scroll, it slides up under a soft fade. The page ends above the floating bar. (`01de1e1`)
 - On tablet, the Clear history confirmation grows out of its button and shrinks back into it when it closes. (`01de1e1`)
 - Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out. (`40a19c2`)
 - On a tablet, switching between Tabs and Bookmarks in the sidebar clears the search, so a filter for tabs never hides bookmarks. (`d3f1e6e`)
