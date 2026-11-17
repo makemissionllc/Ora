@@ -86,6 +86,9 @@ fun BrowserMenuSheet(
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
     onFind: () -> Unit,
+    /** Title of the tab "Reopen closed tab" would bring back, or null when no tab was closed this run. */
+    closedTabTitle: String?,
+    onReopenClosed: () -> Unit,
     /** Tablet only: the height of the bar across the top (toolbar or floating Compact row), so the side panel starts below it. */
     topInset: Dp = 0.dp,
     /** Tablet only: each increase slides an open panel closed, so the ⋯ button can toggle it. */
@@ -107,6 +110,8 @@ fun BrowserMenuSheet(
             onDownloads = { act(onDownloads) },
             onTabs = { act(onTabs) },
             onFind = { act(onFind) },
+            closedTabTitle = closedTabTitle,
+            onReopenClosed = { act(onReopenClosed) },
         )
     }
     if (isTablet) {
@@ -133,6 +138,8 @@ private fun BrowserMenuItems(
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
     onFind: () -> Unit,
+    closedTabTitle: String?,
+    onReopenClosed: () -> Unit,
 ) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
             // Two rows of three, each action sharing its row's width, so labels never run into a neighbour
@@ -163,6 +170,27 @@ private fun BrowserMenuItems(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Find in page", fontSize = 15.sp, color = browserColors().AddressBarText)
+                DisclosureChevron()
+            }
+            // Tapping with nothing closed explains itself (the screen shows a snackbar) rather than doing nothing.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onReopenClosed)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text("Reopen closed tab", fontSize = 15.sp, color = browserColors().AddressBarText)
+                    Text(
+                        text = closedTabTitle?.takeIf { it.isNotBlank() } ?: "Nothing closed yet",
+                        fontSize = 12.sp,
+                        color = browserColors().SecondaryText,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
                 DisclosureChevron()
             }
             Row(

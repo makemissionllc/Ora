@@ -305,8 +305,11 @@ private const val SCROLL_FOLD_THRESHOLD_PX = 24
 /** Load progress at which a page is faded in. Earlier than this the page is still mostly blank. */
 const val REVEAL_PROGRESS_PERCENT = 50
 
-/** A tab that was closed, kept for the undo offer. [id] is the closed tab's id, so each close can be told apart. */
-data class ClosedTab(val id: Long, val url: String)
+/**
+ * A tab that was closed, kept for the undo offer and the menu's "Reopen closed tab". [id] is the closed tab's id,
+ * [state] its saved back and forward history (null if none was saved), so a reopened tab comes back as it was.
+ */
+data class ClosedTab(val id: Long, val url: String, val title: String, val state: String?)
 
 /** A link and/or image under a long press, with the press position in page pixels. */
 data class PressTarget(val linkUri: String?, val imageUri: String?, val x: Int, val y: Int)
@@ -326,6 +329,9 @@ class BrowserTabs(
     companion object {
         /** Address of the native start page. New tabs open here. */
         const val START_URL = "ora://start"
+
+        /** How many closed tabs "Reopen closed tab" can bring back. Older ones are dropped. */
+        const val MAX_CLOSED_HISTORY = 10
     }
 
     var selectedId by mutableLongStateOf(-1L)
@@ -374,12 +380,23 @@ class BrowserTabs(
     var recentlyClosed by mutableStateOf<ClosedTab?>(null)
         private set
 
-    /** Reopens the most recently closed tab's page and clears the undo offer. */
-    fun reopenLastClosed() {
-        val closed = recentlyClosed ?: return
-        recentlyClosed = null
-        newTab(closed.url)
+    /** Closed tabs, most recent last, for "Reopen closed tab". Kept for this run only, not written to disk. */
+    private val closedHistory = mutableStateListOf<ClosedTab>()
+
+    /** Title of the tab that "Reopen closed tab" would bring back, or null when nothing was closed. */
+    val lastClosedTitle: String?
+        get() = closedHistory.lastOrNull()?.title
+
+    /**
+     * Reopens the most recently closed tab with its history, and clears the undo offer if it is showing that tab.
+     * Returns false when there is nothing to reopen.
+     */
+    fun reopenLastClosed(): Boolean {
+        val closed = closedHistory.removeLastOrNull() ?: return false
+        if (recentlyClosed?.id == closed.id) recentlyClosed = null
+        newTab(closed.url, restoreState = closed.state)
         BrowserLog.info("tabs", "Reopened closed tab ${closed.id}")
+        return true
     }
 
     fun dismissUndo() {
@@ -391,9 +408,18 @@ class BrowserTabs(
         if (index < 0) return
         UsageStats.count("tab.close")
         val closing = tabs[index]
-        // Start pages have nothing worth bringing back, so they are not offered for undo.
-        // Start pages and private tabs are not offered for undo: a private tab must not come back with its address.
-        recentlyClosed = if (closing.url == START_URL || closing.isPrivate) null else ClosedTab(closing.id, closing.url)
+        // Start pages have nothing worth bringing back, and a private tab must not come back with its address,
+        // so neither is offered for undo or kept for "Reopen closed tab".
+        val closed = if (closing.url == START_URL || closing.isPrivate) {
+            null
+        } else {
+            ClosedTab(closing.id, closing.url, closing.title, closing.sessionState)
+        }
+        recentlyClosed = closed
+        if (closed != null) {
+            closedHistory.add(closed)
+            if (closedHistory.size > MAX_CLOSED_HISTORY) closedHistory.removeAt(0)
+        }
         tabs.removeAt(index).close()
         BrowserLog.info("tabs", "Closed tab $id (${tabs.size} open)")
         if (tabs.isEmpty()) {

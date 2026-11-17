@@ -387,6 +387,11 @@ private fun BrowserContent(
         UsageStats.count("tab.new")
         tabs.newTab(BrowserTabs.START_URL)
     }
+    /** Brings back the last closed tab, or says so when there is none. */
+    val onReopenClosed: () -> Unit = {
+        UsageStats.count("tab.reopen")
+        if (!tabs.reopenLastClosed()) InAppNotices.show("No closed tabs to reopen")
+    }
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val barStyle = if (isTablet) tabletBar else phoneBar
@@ -798,6 +803,8 @@ private fun BrowserContent(
                         onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },
                         onFind = { showFind = true },
+                        closedTabTitle = tabs.lastClosedTitle,
+                        onReopenClosed = onReopenClosed,
                         desktopSite = selected.desktopSite,
                         onToggleDesktop = { enabled -> selected.applyDesktopSite(enabled) },
                         onSettings = { showSettings = true },
