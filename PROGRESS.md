@@ -48,7 +48,6 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 
 ## Pending
 
-- Auto-fill entry in the text-selection card when a login field is long-pressed (Ora's card only shows for selected text, so an empty field shows nothing).
 - Motion: Smooth still uses 260 ms enter and 200 ms exit. AGENTS.md specifies overlay enter 220 ms fade and 280 ms scale, and exit 160 ms fade and 200 ms scale. Scale and fade do not yet use separate values.
 
 ### Tab management (from the Chrome and Safari comparison)
@@ -93,6 +92,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
 | 2026-11-17 | Android autofill wired to the page view (`setAutofillEnabled`, important for autofill) | Google sign-in: tapping the email field started an Android autofill session with Bitwarden bound, but no suggestion appeared in the keyboard bar (this Bitwarden has no signed-in account). Fill and the Auto-fill selection-menu item not verified | Not checked |
+| 2026-11-17 | `4141fbd` | Auto-fill item on the card for empty text fields; card above keyboard; unselect crash fix | Long-press on the Google email field showed the card (Text field, Auto-fill, Select all). Auto-fill reached Android's service, which answered it can't auto-fill because Bitwarden has no account here. No crash after the fix. Real fill not verified | Not checked: build installed, not exercised |
 | 2026-11-17 | `e88c778` | ⋯ menu actions in two rows of three; labels no longer overlap | Not checked: phone not included in this tablet-only pass | Labels Share, Bookmark, New tab, New private tab, Tabs, Library shown on separate cells with no overlap (screenshot). Icons of the first row still clipped (known issue) |
 | 2026-11-17 | `8abb39f` | New private tab from the ⋯ menu; private start-page note | Menu opened, "New private tab" tapped; start page shows the private note (screenshot). Tab grid thumbnail not checked. Menu labels overlap in the row: "New private tab" runs into "Tabs"/"Library" (screenshot) | Menu opened, "New private tab" tapped; start page shows the private note (screenshot). Tab grid thumbnail not checked. Menu labels overlap in the row (screenshot) |
 | 2026-11-17 | `589f8ee` | Tablet Settings rail | Unchanged | Rail and centered column checked |

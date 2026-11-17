@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Auto-fill for text fields: long-press an empty text field and the card offers \"Auto-fill\", which asks your Android password app for suggestions. The card rides above the keyboard."),
+            ChangeItem(ChangeKind.FIXED, "Closing the selection card on an empty text field no longer crashes the browser."),
             ChangeItem(ChangeKind.CHANGED, "Password autofill now follows its switch fully: with it on, your Android password app offers suggestions above the keyboard on login pages; with it off, the page is hidden from Android autofill."),
             ChangeItem(ChangeKind.FIXED, "The ⋯ menu's actions sit in two rows of three, so \"New private tab\" no longer runs into \"Tabs\" and \"Library\" on tablets."),
             ChangeItem(ChangeKind.ADDED, "Saved passwords: Settings > Passwords > Saved passwords lists logins the browser has saved. Search by site or username, show or hide a password, copy it, or delete it after a confirmation. Logins are stored encrypted on the device."),
