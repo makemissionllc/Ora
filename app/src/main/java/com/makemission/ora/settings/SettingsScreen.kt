@@ -94,6 +94,7 @@ fun SettingsScreen(
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val autofillPasswords by settings.autofillPasswords.collectAsState()
+    val cookieBehavior by settings.cookieBehavior.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
@@ -338,6 +339,32 @@ fun SettingsScreen(
                                 }
                                 Switch(checked = autofillPasswords, onCheckedChange = { settings.setAutofillPasswords(it) })
                             }
+                        }
+                        SectionTitle("Cookies")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(browserColors().AddressBarBackground)
+                        ) {
+                            CookieChoice(
+                                title = "Allow all cookies",
+                                description = "Sites can store cookies, including cookies from other sites. Sign-ins and settings work everywhere.",
+                                selected = cookieBehavior == SettingsRepository.COOKIES_ALLOW_ALL,
+                                onSelect = { settings.setCookieBehavior(SettingsRepository.COOKIES_ALLOW_ALL) },
+                            )
+                            CookieChoice(
+                                title = "Block third-party cookies",
+                                description = "A site can keep its own cookies, but other sites cannot. Most sign-ins still work.",
+                                selected = cookieBehavior == SettingsRepository.COOKIES_BLOCK_THIRD_PARTY,
+                                onSelect = { settings.setCookieBehavior(SettingsRepository.COOKIES_BLOCK_THIRD_PARTY) },
+                            )
+                            CookieChoice(
+                                title = "Block all cookies",
+                                description = "No site can store cookies. Many sites will ask you to sign in on every visit.",
+                                selected = cookieBehavior == SettingsRepository.COOKIES_BLOCK_ALL,
+                                onSelect = { settings.setCookieBehavior(SettingsRepository.COOKIES_BLOCK_ALL) },
+                            )
                         }
                         SectionTitle("Network")
                         Column(
@@ -701,4 +728,22 @@ private fun SectionTitle(text: String) {
         fontWeight = FontWeight.SemiBold,
         color = browserColors().SecondaryText
     )
+}
+
+/** One cookie policy choice: a radio button, a title and a short plain-words description. Tapping the row selects it. */
+@Composable
+private fun CookieChoice(title: String, description: String, selected: Boolean, onSelect: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onSelect)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = onSelect)
+        Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
+            Text(title, fontSize = 15.sp, color = browserColors().AddressBarText)
+            Text(description, fontSize = 12.sp, color = browserColors().SecondaryText)
+        }
+    }
 }

@@ -235,6 +235,7 @@ private fun BrowserContent(
     val bookmarkList by bookmarks.bookmarks.collectAsState()
 
     val blockAds by settings.blockAds.collectAsState()
+    val cookieBehavior by settings.cookieBehavior.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val downloads = remember { DownloadsRepository(context) }
@@ -268,6 +269,10 @@ private fun BrowserContent(
             .setEnhancedTrackingProtectionCategory(
                 if (blockAds) ContentBlocking.EtpCategory.STRICT else ContentBlocking.EtpCategory.STANDARD
             )
+    }
+    // Cookie policy is a runtime setting: GeckoView enforces it for every session.
+    LaunchedEffect(cookieBehavior) {
+        GeckoEngine.runtime(context).settings.contentBlocking.setCookieBehavior(cookieBehavior)
     }
     // Secure DNS is a runtime setting: TRR_MODE_FIRST tries encrypted DNS and falls back to system DNS on failure.
     LaunchedEffect(secureDns) {
@@ -731,15 +736,26 @@ private fun BrowserContent(
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
         if (!isTablet) {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
-            if (!isTablet) {
-                // Phone: the page fades into the status bar instead of running under the icons.
+            if (!topLayout) {
+                // Phone: the status-bar band is a solid palette colour, and the page fades into it just below the
+                // status bar. No black block: the band uses the same colour as the start page, and the icons stay clear.
                 val statusTop = WindowInsets.statusBars.asPaddingValues(density).calculateTopPadding()
+                val fadeHeight = statusTop + BrowserTokens.StatusFadeExtra
+                val band = browserColors().GridBackground
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .fillMaxWidth()
-                        .height(statusTop + BrowserTokens.StatusFadeExtra)
-                        .background(Brush.verticalGradient(listOf(browserColors().Scrim, Color.Transparent)))
+                        .height(fadeHeight)
+                        .background(
+                            Brush.verticalGradient(
+                                colorStops = arrayOf(
+                                    0f to band,
+                                    (statusTop / fadeHeight).coerceIn(0f, 1f) to band,
+                                    1f to Color.Transparent,
+                                )
+                            )
+                        )
                 )
             }
         }

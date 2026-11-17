@@ -136,6 +136,21 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Password autofill ${if (enabled) "on" else "off"}")
     }
 
+    private val _cookieBehavior = MutableStateFlow(prefs.getInt(KEY_COOKIE_BEHAVIOR, COOKIES_ALLOW_ALL))
+    /** Cookie policy, as GeckoView's CookieBehavior values: [COOKIES_ALLOW_ALL], [COOKIES_BLOCK_THIRD_PARTY] or [COOKIES_BLOCK_ALL]. */
+    val cookieBehavior: StateFlow<Int> = _cookieBehavior.asStateFlow()
+
+    fun setCookieBehavior(behavior: Int) {
+        prefs.edit().putInt(KEY_COOKIE_BEHAVIOR, behavior).apply()
+        _cookieBehavior.value = behavior
+        val label = when (behavior) {
+            COOKIES_BLOCK_THIRD_PARTY -> "third-party blocked"
+            COOKIES_BLOCK_ALL -> "all blocked"
+            else -> "all allowed"
+        }
+        BrowserLog.info("settings", "Cookies: $label")
+    }
+
     private val _secureDns = MutableStateFlow(prefs.getBoolean(KEY_SECURE_DNS, true))
     /** When on, host names resolve over encrypted DNS (DNS over HTTPS), falling back to the network's DNS if that fails. */
     val secureDns: StateFlow<Boolean> = _secureDns.asStateFlow()
@@ -242,6 +257,13 @@ class SettingsRepository(context: Context) {
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"
+        private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"
+        /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_ALL. */
+        const val COOKIES_ALLOW_ALL = 0
+        /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY. */
+        const val COOKIES_BLOCK_THIRD_PARTY = 1
+        /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_NONE. */
+        const val COOKIES_BLOCK_ALL = 2
         private const val KEY_PHONE_BAR = "phone_bar_style"
         private const val KEY_TABLET_BAR = "tablet_bar_style"
         const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"
