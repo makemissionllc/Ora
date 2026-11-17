@@ -35,6 +35,8 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.CHANGED, "On tablets, Compact is a floating row at the top with back, forward, tabs and menu buttons around the address bar. Its description in Settings says so."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, Compact floats over the top of the page with no strip behind it, and shrinks as you scroll, like the phone bar."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, Compact sits above the page, not over it, so the page never runs under the address bar. No dark strip shows behind the floating controls."),
+            ChangeItem(ChangeKind.CHANGED, "On phones, the page fades into the status bar, so the clock and battery stay readable."),
+            ChangeItem(ChangeKind.CHANGED, "On tablets, the Compact address pill is narrower and sits without a background band."),
             ChangeItem(ChangeKind.CHANGED, "Menu actions run after the menu has closed, so Settings, Library and the rest open cleanly. On tablets the panel slides out first."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, the ⋯ menu slides in from the right as a panel, not up from the bottom. Tap the dimmed page or press Back to close it."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, Settings is full screen again, as before."),
