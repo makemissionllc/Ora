@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Reopen closed tab: the ⋯ menu brings back the last 10 tabs you closed, with their back and forward pages. Private tabs are not kept. With nothing closed, it says so. (`9ef0c1d`)
 - Quick resume: when you leave Ora, your open tabs are kept, and they reopen the next time you start it. Turn it off in Settings > Home page. Private tabs are never kept, and turning the switch off clears what was kept. (`24f1261`)
 - Two privacy switches in Settings > Privacy: Global Privacy Control, which asks sites not to sell or share your data (on by default), and Fingerprinting protection, which hides details sites use to recognise your device (off by default, as some pages may look different). (`d12870d`)
 - Lab: a "Device font on web pages" switch. On, web pages use your device's font instead of the fonts each site asks for. Some icons may show as boxes. It applies to pages loaded after you change it. (`a287715`)
