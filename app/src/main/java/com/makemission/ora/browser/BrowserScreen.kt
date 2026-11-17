@@ -342,6 +342,11 @@ private fun BrowserContent(
     LaunchedEffect(autofillPasswords) {
         GeckoEngine.runtime(context).settings.setLoginAutofillEnabled(autofillPasswords)
     }
+    // Lab: the device font on web pages. Turning web fonts off makes pages use the browser's default font.
+    val deviceFontWeb by settings.deviceFontWeb.collectAsState()
+    LaunchedEffect(deviceFontWeb) {
+        GeckoEngine.runtime(context).settings.setWebFontsEnabled(!deviceFontWeb)
+    }
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     /** Tablet: each tap on ⋯ while the panel is open adds one, which slides it closed. */

@@ -184,6 +184,19 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Fingerprinting protection ${if (enabled) "on" else "off"}")
     }
 
+    private val _deviceFontWeb = MutableStateFlow(prefs.getBoolean(KEY_DEVICE_FONT_WEB, false))
+    /**
+     * Lab: when on, web pages use the browser's default font, which is the device's font, instead of the
+     * fonts each site asks for. Icon fonts on some sites may show as empty boxes while this is on.
+     */
+    val deviceFontWeb: StateFlow<Boolean> = _deviceFontWeb.asStateFlow()
+
+    fun setDeviceFontWeb(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEVICE_FONT_WEB, enabled).apply()
+        _deviceFontWeb.value = enabled
+        BrowserLog.info("settings", "Lab: device font on web pages ${if (enabled) "on" else "off"}")
+    }
+
     private val _edgeSwipeSidebar = MutableStateFlow(prefs.getBoolean(KEY_EDGE_SWIPE_SIDEBAR, true))
     /**
      * Tablet only: a rightward swipe from the left edge of a page opens the sidebar. Off for sites
@@ -334,6 +347,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
+        private const val KEY_DEVICE_FONT_WEB = "device_font_web"
         private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"
         private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_ALL. */

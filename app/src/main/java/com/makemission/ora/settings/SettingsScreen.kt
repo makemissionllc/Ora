@@ -70,6 +70,7 @@ private enum class SettingsCategory(val label: String) {
     PRIVACY("Privacy"),
     SEARCH("Search"),
     HOME("Home page"),
+    LAB("Lab"),
     DIAGNOSTICS("Diagnostics"),
     ABOUT("About"),
 }
@@ -101,9 +102,10 @@ fun SettingsScreen(
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
-    val quickResume by settings.quickResume.collectAsState()
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
+    val quickResume by settings.quickResume.collectAsState()
+    val deviceFontWeb by settings.deviceFontWeb.collectAsState()
     val autofillPasswords by settings.autofillPasswords.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
@@ -660,6 +662,34 @@ fun SettingsScreen(
                         ) {
                             Text("Clear browsing data", fontSize = 15.sp, color = browserColors().AddressBarText)
                             DisclosureChevron()
+                        }
+                    }
+                    if (shown(SettingsCategory.LAB)) item {
+                        SectionTitle("Lab")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+                                .background(browserColors().AddressBarBackground)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setDeviceFontWeb(!deviceFontWeb) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Device font on web pages", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Web pages use the device's font instead of the fonts each site asks for. Some icons may show as boxes. Applies to pages loaded after you change it.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = deviceFontWeb, onCheckedChange = { settings.setDeviceFontWeb(it) })
+                            }
                         }
                     }
                     if (shown(SettingsCategory.DIAGNOSTICS)) item {
