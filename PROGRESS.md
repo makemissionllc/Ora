@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `7d758af`.
+Last updated: 2026-11-17, at commit `02b54e8`.
 
 ## Done
 
@@ -92,4 +92,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `52a68f5` | Profiles: switcher, separate tabs and bookmarks | Created "Fork", selected it, switched back to Personal; Personal showed 1 saved bookmark, Fork showed 0 saved (screenshots). Long-press removal asked for confirmation; after Remove, Fork was gone and Personal was selected (screenshots) | Switcher in the sidebar with Personal selected (screenshot). Separate bookmarks, switching and removal not checked |
 | 2026-11-17 | `1c48b60` | Export log as a text file | Export opened the save dialog; saved ora-log-20261117-094904.txt to Download with the four entries (checked on the device) | Export button in Diagnostics; saved ora-log-20261117-095032.txt to Download (screenshot and file listing) |
 | 2026-11-17 | `462778d` | Default browser row; incoming http/https links open in a new tab | Not checked: phone not connected over ADB | Row shows "Ora ✓" (already default). VIEW intent for mozilla.org opened it as a new tab (2 of 2 tabs, screenshot). "Set" dialog checked: with Ora removed as default via adb, the row showed "Set"; the dialog listed Ora, Set as default made Ora the default again and the row showed "Ora ✓" (screenshots) |
+| 2026-11-17 | `97e7682` | Menu Library label on one line; profile chips get room | Library label whole in the menu; profile chips fully drawn in the tab overview (screenshots) | Profile chips fully shown in the sidebar (screenshot). Library label in the tablet menu not re-checked |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
