@@ -48,6 +48,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 **Changed**
 - Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out. (`40a19c2`)
+- On a tablet, switching between Tabs and Bookmarks in the sidebar clears the search, so a filter for tabs never hides bookmarks. (`d3f1e6e`)
 - On tablets, the top fade under the status bar is taller, so the clock and battery stay readable over a page. (`ce7dbd1`)
 - Link menu: "Open in new tab" now switches to the new tab. (`9104c7f`)
 - GeckoView upgraded from 153 to 160. (`403206e`)
