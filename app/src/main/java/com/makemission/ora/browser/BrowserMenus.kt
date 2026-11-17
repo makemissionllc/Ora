@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -133,20 +133,24 @@ private fun BrowserMenuItems(
     onFind: () -> Unit,
 ) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                MenuAction(Icons.Filled.Share, "Share", onShare)
-                MenuAction(
-                    if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                    if (isBookmarked) "Bookmarked" else "Bookmark",
-                    onBookmark
-                )
-                MenuAction(Icons.Filled.Add, "New tab", onNewTab)
-                MenuAction(Icons.Filled.VisibilityOff, "New private tab", onNewPrivateTab)
-                MenuAction(Icons.Filled.Dashboard, "Tabs", onTabs)
-                MenuAction(Icons.Outlined.Tab, "Library", onLibrary)
+            // Two rows of three, each action sharing its row's width, so labels never run into a neighbour
+            // (the six-action row overflowed the 360 dp tablet panel).
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    MenuAction(Icons.Filled.Share, "Share", onShare, Modifier.weight(1f))
+                    MenuAction(
+                        if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                        if (isBookmarked) "Bookmarked" else "Bookmark",
+                        onBookmark,
+                        Modifier.weight(1f),
+                    )
+                    MenuAction(Icons.Filled.Add, "New tab", onNewTab, Modifier.weight(1f))
+                }
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    MenuAction(Icons.Filled.VisibilityOff, "New private tab", onNewPrivateTab, Modifier.weight(1f))
+                    MenuAction(Icons.Filled.Dashboard, "Tabs", onTabs, Modifier.weight(1f))
+                    MenuAction(Icons.Outlined.Tab, "Library", onLibrary, Modifier.weight(1f))
+                }
             }
             Row(
                 modifier = Modifier
@@ -270,9 +274,9 @@ private fun BrowserMenuSidePanel(onDismiss: () -> Unit, topInset: Dp, content: @
 }
 
 @Composable
-private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit) {
+private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
-        modifier = Modifier.clickable(onClick = onClick).padding(8.dp),
+        modifier = modifier.clickable(onClick = onClick).padding(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -285,14 +289,13 @@ private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit) {
         ) {
             Icon(icon, contentDescription = label, tint = browserColors().Accent)
         }
-        // One line only: "Library" was breaking into "Libr / ary" in the five-action row.
+        // One line only, kept inside its cell: "Library" was breaking into "Libr / ary" in the five-action row.
         Text(
             label,
             fontSize = 12.sp,
             color = browserColors().IconColor,
             maxLines = 1,
-            softWrap = false,
-            modifier = Modifier.wrapContentWidth(unbounded = true)
+            textAlign = TextAlign.Center,
         )
     }
 }
