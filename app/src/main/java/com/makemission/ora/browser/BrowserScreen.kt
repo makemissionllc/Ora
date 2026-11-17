@@ -993,6 +993,9 @@ private fun BrowserPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            // While a page is arriving the web layer is transparent. Without this, the window's white shows
+            // through as a flash; the browser's own background keeps it dark in dark modes.
+            .background(browserColors().GridBackground)
             .pullToReload(
                 canPull = { !onStart && tab.lastScrollY <= PULL_SCROLL_TOLERANCE_PX && !tab.loading },
                 onDistance = { pull = it },
