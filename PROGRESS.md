@@ -47,7 +47,6 @@ Last updated: 2026-11-17, at commit `5ddf098`.
 ### Better app usage
 
 - Keyboard autocorrect and capitals in the address bar (see Known issues).
-- Find in page, from the Search and selection menus.
 - Profiles that keep tabs and history apart (a decision is needed on storage).
 - Incognito tabs: private tabs that keep no history, cookies or thumbnails once closed.
 - Background tabs: open a link in a tab without switching to it. The page need not load right away; it can wait until the tab is selected.
@@ -82,4 +81,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | rotation fix (uncommitted) | Configuration changes handled in place | Loaded page, search and tab kept after switch to landscape; auto-rotate restored | Not checked |
 | 2026-11-17 | `6e0ddeb` | Compact pill shrinks toward centre, URL centred | Shrunk pill centred, URL centred (screenshot) | Not checked |
 | 2026-11-17 | `cf85810` | App icon | Charcoal ring-and-dot icon on the home screen (screenshot) | Charcoal ring-and-dot icon on the home screen (screenshot) |
+| 2026-11-17 | find in page (uncommitted) | Find bar from the menu; "the" gave 2/69 matches, arrows and close work | Find bar opens from the menu; page did not load, so match counting not checked |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |

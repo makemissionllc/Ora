@@ -149,6 +149,8 @@ object BrowserTokens {
     val FloatingBarShape = RoundedCornerShape(28.dp)
     val FloatingBarInset = 12.dp
     val FloatingBarElevation = 8.dp
+    /** Widest the find-in-page bar grows on a tablet. */
+    val FindBarMaxWidth = 480.dp
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */

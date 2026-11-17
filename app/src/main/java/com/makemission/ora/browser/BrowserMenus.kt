@@ -58,6 +58,7 @@ fun BrowserMenuSheet(
     onExtensions: () -> Unit,
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
+    onFind: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
@@ -74,6 +75,17 @@ fun BrowserMenuSheet(
                 MenuAction(Icons.Filled.Add, "New tab", onNewTab)
                 MenuAction(Icons.Filled.Dashboard, "Tabs", onTabs)
                 MenuAction(Icons.Outlined.Tab, "Library", onLibrary)
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onFind)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Find in page", fontSize = 15.sp, color = browserColors().AddressBarText)
+                Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
             }
             Row(
                 modifier = Modifier

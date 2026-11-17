@@ -23,6 +23,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "Phone tab bar layouts modeled on Safari, and a tab overview on tablets."),
             ChangeItem(ChangeKind.CHANGED, "The browser engine is upgraded to GeckoView 160."),
             ChangeItem(ChangeKind.CHANGED, "The load bar no longer flashes, and phone bars float above the page."),
+            ChangeItem(ChangeKind.ADDED, "Find in page, from the menu. Type to search the page, then step through the matches."),
             ChangeItem(ChangeKind.CHANGED, "The app icon uses the new charcoal design."),
             ChangeItem(ChangeKind.CHANGED, "On phones, the Compact address bar narrows toward the centre as you scroll, and its address is centred."),
             ChangeItem(ChangeKind.FIXED, "The address field clears correctly, and search stops asking which engine to use every time."),

@@ -251,6 +251,8 @@ private fun BrowserContent(
     var showLibrary by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showExtensions by remember { mutableStateOf(false) }
+    /** Find-in-page bar is open over the page. */
+    var showFind by remember { mutableStateOf(false) }
     val extensions = remember { ExtensionsRepository(GeckoEngine.runtime(context)) }
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
@@ -531,6 +533,16 @@ private fun BrowserContent(
                 ) {
                     UndoCloseOffer(visible = closed != null, onUndo = { tabs.reopenLastClosed() })
                 }
+                if (showFind) {
+                    // Keyed on the tab, so switching tabs closes the bar and clears its highlights.
+                    key(selected.id) {
+                        FindBar(
+                            session = selected.session,
+                            onClose = { showFind = false },
+                            modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp)
+                        )
+                    }
+                }
                 if (showMenu) {
                     BrowserMenuSheet(
                             isBookmarked = bookmarkList.any { it.url == selected.url },
@@ -550,6 +562,10 @@ private fun BrowserContent(
                         onLibrary = {
                             showMenu = false
                             showLibrary = true
+                        },
+                        onFind = {
+                            showMenu = false
+                            showFind = true
                         },
                         desktopSite = selected.desktopSite,
                         onToggleDesktop = { enabled ->
