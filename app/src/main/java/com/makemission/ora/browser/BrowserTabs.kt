@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.UsageStats
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
@@ -307,6 +308,7 @@ class BrowserTabs(
     fun close(id: Long) {
         val index = tabs.indexOfFirst { it.id == id }
         if (index < 0) return
+        UsageStats.count("tab.close")
         val closing = tabs[index]
         // Start pages have nothing worth bringing back, so they are not offered for undo.
         recentlyClosed = if (closing.url == START_URL) null else ClosedTab(closing.id, closing.url)

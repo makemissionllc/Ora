@@ -30,6 +30,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.UsageStats
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.browserColors
 import org.mozilla.geckoview.GeckoSession
@@ -72,6 +73,7 @@ fun FindBar(session: GeckoSession, onClose: () -> Unit, modifier: Modifier = Mod
     LaunchedEffect(query) { find(backwards = false) }
     DisposableEffect(Unit) {
         BrowserLog.info("find", "Find in page opened")
+        UsageStats.count("find.open")
         onDispose {
             session.finder.clear()
             BrowserLog.info("find", "Find in page closed")

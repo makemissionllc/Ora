@@ -46,7 +46,9 @@ import java.util.Locale
 fun DiagnosticsScreen(onDone: () -> Unit) {
     val context = LocalContext.current
     val entries by BrowserLog.entries.collectAsState()
+    val usage by UsageStats.entries.collectAsState()
     var confirmClear by remember { mutableStateOf(false) }
+    var confirmClearUsage by remember { mutableStateOf(false) }
     val timeFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.US) }
 
     // Back closes this page, not the whole Settings overlay.
@@ -66,6 +68,34 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
             Text("Diagnostics", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
             TextButton(onClick = onDone) {
                 Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Feature use", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = browserColors().AddressBarText)
+            TextButton(onClick = { confirmClearUsage = true }, enabled = usage.isNotEmpty()) {
+                Text("Clear usage", color = browserColors().CloseBadge, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        if (usage.isEmpty()) {
+            Text("No feature use counted yet", fontSize = 13.sp, color = browserColors().SecondaryText, modifier = Modifier.padding(vertical = 4.dp))
+        } else {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(browserColors().AddressBarBackground)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+            ) {
+                usage.take(8).forEach { item ->
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(item.action, fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = browserColors().AddressBarText)
+                        Text("${item.count} · ${timeFormat.format(Date(item.lastUsed))}", fontSize = 12.sp, color = browserColors().SecondaryText)
+                    }
+                }
             }
         }
         Row(
@@ -134,6 +164,28 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
                 }
             }
         }
+    }
+
+    if (confirmClearUsage) {
+        AlertDialog(
+            onDismissRequest = { confirmClearUsage = false },
+            title = { Text("Clear feature use?") },
+            text = { Text("All feature-use counts will be removed. The log is kept. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmClearUsage = false
+                    UsageStats.clear()
+                    BrowserLog.info("usage", "Feature-use counts cleared")
+                }) {
+                    Text("Clear", color = browserColors().CloseBadge, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClearUsage = false }) {
+                    Text("Cancel", color = browserColors().SecondaryText)
+                }
+            }
+        )
     }
 
     if (confirmClear) {

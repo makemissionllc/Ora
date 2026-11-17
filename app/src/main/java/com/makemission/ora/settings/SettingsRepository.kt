@@ -3,6 +3,7 @@ package com.makemission.ora.settings
 import android.content.Context
 import android.content.SharedPreferences
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.UsageStats
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -45,6 +46,21 @@ class SettingsRepository(context: Context) {
     private val prefs: SharedPreferences =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    private val _usageStats = MutableStateFlow(prefs.getBoolean(KEY_USAGE_STATS, true))
+    /** When on, the app counts which actions and settings you use, on this device only. */
+    val usageStats: StateFlow<Boolean> = _usageStats.asStateFlow()
+
+    init {
+        UsageStats.setEnabled(_usageStats.value)
+    }
+
+    fun setUsageStats(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_USAGE_STATS, enabled).apply()
+        _usageStats.value = enabled
+        UsageStats.setEnabled(enabled)
+        BrowserLog.info("settings", "Usage counting ${if (enabled) "on" else "off"}")
+    }
+
     private val _homePage = MutableStateFlow(prefs.getString(KEY_HOME_PAGE, DEFAULT_HOME_PAGE)!!)
     val homePage: StateFlow<String> = _homePage.asStateFlow()
 
@@ -63,6 +79,7 @@ class SettingsRepository(context: Context) {
     fun setAppearance(mode: AppearanceMode) {
         prefs.edit().putString(KEY_APPEARANCE, mode.key).apply()
         _appearance.value = mode
+        UsageStats.count("setting.appearance")
         BrowserLog.info("settings", "Appearance set to ${mode.label}")
     }
 
@@ -133,6 +150,7 @@ class SettingsRepository(context: Context) {
     fun setPhoneBarStyle(style: BarStyle) {
         prefs.edit().putString(KEY_PHONE_BAR, style.key).apply()
         _phoneBarStyle.value = style
+        UsageStats.count("setting.phone_bar")
         BrowserLog.info("settings", "Phone tab bar set to ${style.label}")
     }
 
@@ -143,6 +161,7 @@ class SettingsRepository(context: Context) {
     fun setTabletBarStyle(style: BarStyle) {
         prefs.edit().putString(KEY_TABLET_BAR, style.key).apply()
         _tabletBarStyle.value = style
+        UsageStats.count("setting.tablet_bar")
         BrowserLog.info("settings", "Tablet tab bar set to ${style.label}")
     }
 
@@ -153,6 +172,7 @@ class SettingsRepository(context: Context) {
     fun setAskEachSearch(enabled: Boolean) {
         prefs.edit().putBoolean(KEY_ASK_EACH_SEARCH, enabled).apply()
         _askEachSearch.value = enabled
+        UsageStats.count("setting.ask_each_search")
         BrowserLog.info("settings", "Ask engine each search ${if (enabled) "on" else "off"}")
     }
 
@@ -183,6 +203,7 @@ class SettingsRepository(context: Context) {
         if (engine !in _searchEngines.value) setSearchEngineEnabled(engine, true)
         prefs.edit().putString(KEY_SEARCH_DEFAULT, engine.key).apply()
         _defaultSearchEngine.value = engine
+        UsageStats.count("setting.default_search")
         BrowserLog.info("settings", "Default search set to ${engine.label}")
     }
 
@@ -199,6 +220,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_SEARCH_DEFAULT = "search_default"
         private const val KEY_ASK_EACH_SEARCH = "ask_each_search"
         private const val KEY_HOME_PAGE = "home_page"
+        private const val KEY_USAGE_STATS = "usage_stats"
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEBSITE_THEME = "website_theme"
         private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"

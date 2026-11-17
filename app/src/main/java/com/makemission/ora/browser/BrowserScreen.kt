@@ -147,6 +147,7 @@ import com.makemission.ora.settings.isSearchInput
 import com.makemission.ora.downloads.DownloadsRepository
 import com.makemission.ora.downloads.DownloadsSheet
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.UsageStats
 import androidx.compose.foundation.isSystemInDarkTheme
 import java.net.URLEncoder
 import org.mozilla.geckoview.ContentBlocking
@@ -248,6 +249,7 @@ private fun BrowserContent(
     }
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    LaunchedEffect(showMenu) { if (showMenu) UsageStats.count("menu.open") }
     var showLibrary by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showExtensions by remember { mutableStateOf(false) }
@@ -269,7 +271,10 @@ private fun BrowserContent(
         tabs.tabs.forEach { it.session.setActive(it.id == selectedId) }
     }
 
-    val onNewTab: () -> Unit = { tabs.newTab(BrowserTabs.START_URL) }
+    val onNewTab: () -> Unit = {
+        UsageStats.count("tab.new")
+        tabs.newTab(BrowserTabs.START_URL)
+    }
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val barStyle = if (isTablet) tabletBar else phoneBar

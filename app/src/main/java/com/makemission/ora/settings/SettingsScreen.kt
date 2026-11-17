@@ -75,6 +75,7 @@ fun SettingsScreen(
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
+    val usageStats by settings.usageStats.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
     val askEachSearch by settings.askEachSearch.collectAsState()
     // Each device gets its own options: tablets see the sidebar and tablet bar, phones see the phone bar.
@@ -445,6 +446,26 @@ fun SettingsScreen(
                         ) {
                             Text("Log and errors", fontSize = 15.sp, color = browserColors().AddressBarText)
                             Text("${logEntries.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(browserColors().AddressBarBackground)
+                                .clickable { settings.setUsageStats(!usageStats) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Count feature use", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text(
+                                    "Counts how often you use each setting and control, on this device only. No pages or searches are recorded.",
+                                    fontSize = 12.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            Switch(checked = usageStats, onCheckedChange = { settings.setUsageStats(it) })
                         }
                     }
                     if (shown(SettingsCategory.ABOUT)) item {
