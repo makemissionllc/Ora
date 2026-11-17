@@ -30,6 +30,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,6 +54,9 @@ fun StartPage(
 ) {
     val colors = browserColors()
     var query by rememberSaveable { mutableStateOf("") }
+    val keyboard = LocalSoftwareKeyboardController.current
+    val view = LocalView.current
+    val focusManager = LocalFocusManager.current
     BoxWithConstraints(modifier = modifier.fillMaxSize().background(colors.GridBackground)) {
         val columns = if (maxWidth >= BrowserTokens.StartWideBreakpoint) 6 else 4
         Column(
@@ -68,6 +74,10 @@ fun StartPage(
                 textStyle = TextStyle(color = colors.AddressBarText, fontSize = 16.sp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = {
+                    // Quality of life: the keyboard closes as the search starts, instead of staying up.
+                    view.hideKeyboard()
+                    keyboard?.hide()
+                    focusManager.clearFocus()
                     if (query.isNotBlank()) onSubmit(query)
                 }),
                 decorationBox = { inner ->
