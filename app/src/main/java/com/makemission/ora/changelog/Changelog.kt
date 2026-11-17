@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Feature use is counted on this device, so Diagnostics can show which controls you use most. Clear it there any time. Turn counting off in Settings > Diagnostics. No pages or searches are recorded."),
             ChangeItem(ChangeKind.ADDED, "Pages fade in once they are half loaded, instead of showing their pieces as they arrive. Turn it off in Settings > Appearance."),
             ChangeItem(ChangeKind.ADDED, "Secure DNS looks up site addresses over encrypted DNS, and falls back to your network's DNS if that fails. Turn it on or off in Settings > Privacy."),
             ChangeItem(ChangeKind.ADDED, "Tablet Settings has a category list beside one centered column."),

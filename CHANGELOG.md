@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Feature use is counted on this device: new tabs, menus, find, settings and bar styles. Diagnostics shows the counts and Clear usage removes them. A "Count feature use" switch in Settings > Diagnostics turns it off. No pages or searches are recorded. (`fd47d98`)
 - Pages fade in once they are half loaded, rather than showing their pieces as they arrive. A "Fade pages in" switch in Settings > Appearance turns it off. (`c7b6cb6`)
 - Secure DNS: site addresses look up over encrypted DNS, and fall back to the network's own DNS if that fails. A Network card in Settings > Privacy turns it on or off. (`1f865d2`)
 - Tablet Settings: a category rail sits beside one centered column. (`589f8ee`)

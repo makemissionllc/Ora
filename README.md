@@ -37,7 +37,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `browser/`: the browser screen, tabs (`BrowserTabs.kt`), the GeckoView engine (`GeckoEngine.kt`), the tab grid and sidebar, the start page, menus, downloads and extensions.
 - `settings/`: `SettingsRepository.kt` holds every persisted setting. `SettingsScreen.kt` is the Settings page, with a category rail on tablet.
 - `ui/theme/`: `Theme.kt` holds `BrowserTokens` (dimensions) and `browserColors()` (palettes for Light, Dark and Pure dark). `Motion.kt` holds the shared `OraMotion` values.
-- `log/`: `BrowserLog`, which every error and browser event goes through. It shows on Settings > Diagnostics.
+- `log/`: `BrowserLog`, which every error and browser event goes through. It shows on Settings > Diagnostics. `UsageStats` counts feature use (action names only) on the same page.
 - `bookmarks/`: the bookmark store.
 
 ## Design sources

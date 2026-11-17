@@ -19,6 +19,7 @@ Last updated: 2026-11-17, at commit `5ddf098`.
 - App icon uses the charcoal ring-and-dot design (`cf85810`).
 - Phone Compact pill narrows toward the centre as you scroll, with the URL centred (`6e0ddeb`).
 - Find in page from the browser menu, with match count and previous/next (`1ab7996`).
+- Feature-use counts on this device, shown on Diagnostics with a switch and Clear usage (`fd47d98`).
 - Keeps tabs, the page and the search when the screen rotates (`configChanges` in the manifest, so the activity is not recreated).
 - Clears the link menu when a new page starts.
 
@@ -83,4 +84,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `6e0ddeb` | Compact pill shrinks toward centre, URL centred | Shrunk pill centred, URL centred (screenshot) | Not checked |
 | 2026-11-17 | `cf85810` | App icon | Charcoal ring-and-dot icon on the home screen (screenshot) | Charcoal ring-and-dot icon on the home screen (screenshot) |
 | 2026-11-17 | `1ab7996` | Find in page bar from the menu; match count, arrows and close | "the" gave 2/69 matches; arrows and close work (screenshot) | "the" gave 1/43 matches; close works (screenshot) |
+| 2026-11-17 | `fd47d98` | Feature-use counts, Diagnostics section, Count switch | Feature use showed menu.open 1 after a menu tap; switch in Settings > Diagnostics (screenshots) | Same list and switch shown in Diagnostics (screenshots); the Log page shows the counts too |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
