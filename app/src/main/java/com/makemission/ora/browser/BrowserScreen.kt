@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TextButton
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.combinedClickable
 import android.content.Context
 import android.content.Intent
@@ -935,20 +936,9 @@ private fun BrowserPage(
     // The start page's content starts below the status bar on phones. Web pages run up under it: the strip behind
     // the bar takes the page's top colour, so the page reads as starting below it.
     val statusInset = if (belowStatusBar) Modifier.statusBarsPadding() else Modifier
-    if (tab.url == BrowserTabs.START_URL) {
-        // The background fills the whole window, so a floating Compact row sits over the start page, not a white strip.
-        // The inset moves only the content, clear of the row.
-        Box(modifier = Modifier.fillMaxSize().then(statusInset).background(browserColors().GridBackground)) {
-            StartPage(
-                bookmarks = bookmarks,
-                blockAds = blockAds,
-                onSubmit = onSubmit,
-                isPrivate = tab.isPrivate,
-                modifier = Modifier.fillMaxSize().padding(top = topInset),
-            )
-        }
-        return
-    }
+    // The start page and a web page cross-fade instead of cutting over. The web layer stays composed, so the
+    // GeckoView keeps its session while the start page is shown on top of it.
+    val onStart = tab.url == BrowserTabs.START_URL
     // The page stays transparent while it arrives, then fades in with the shared enter motion.
     // With the setting off it is always fully shown, as before.
     val pageAlpha by animateFloatAsState(
@@ -964,7 +954,7 @@ private fun BrowserPage(
         modifier = Modifier
             .fillMaxSize()
             .pullToReload(
-                canPull = { tab.lastScrollY <= PULL_SCROLL_TOLERANCE_PX && !tab.loading },
+                canPull = { !onStart && tab.lastScrollY <= PULL_SCROLL_TOLERANCE_PX && !tab.loading },
                 onDistance = { pull = it },
                 onRefresh = {
                     BrowserLog.info("page", "Pull to refresh: ${tab.url}")
@@ -989,6 +979,36 @@ private fun BrowserPage(
                 }
             }
         )
+        // The start page fades in on the start address and out as a page starts, on the shared enter and exit timings.
+        val startAlpha by animateFloatAsState(
+            targetValue = if (onStart) 1f else 0f,
+            animationSpec = if (onStart) OraMotion.enter<Float>() else OraMotion.exit<Float>(),
+            label = "start page fade",
+        )
+        if (startAlpha > 0f) {
+            // The background fills the whole window, so a floating Compact row sits over the start page, not a white strip.
+            // The inset moves only the content, clear of the row. The layer takes taps so they do not reach the hidden page.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(statusInset)
+                    .graphicsLayer { alpha = startAlpha }
+                    .background(browserColors().GridBackground)
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {},
+                    )
+            ) {
+                StartPage(
+                    bookmarks = bookmarks,
+                    blockAds = blockAds,
+                    onSubmit = onSubmit,
+                    isPrivate = tab.isPrivate,
+                    modifier = Modifier.fillMaxSize().padding(top = topInset),
+                )
+            }
+        }
         AnimatedVisibility(
             visible = indicatorVisible,
             modifier = Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.statusBars).padding(top = 12.dp),
