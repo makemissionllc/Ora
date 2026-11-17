@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `0c35a28`.
+Last updated: 2026-11-17, at commit `451f542`.
 
 ## Done
 
