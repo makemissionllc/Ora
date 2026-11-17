@@ -56,6 +56,8 @@ import com.makemission.ora.changelog.Changelog
 import com.makemission.ora.changelog.ChangelogScreen
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.DiagnosticsScreen
+import com.makemission.ora.passwords.PasswordStore
+import com.makemission.ora.passwords.PasswordsScreen
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.MotionStyle
 import com.makemission.ora.ui.theme.browserColors
@@ -104,11 +106,17 @@ fun SettingsScreen(
     var homeDraft by remember(homePage) { mutableStateOf(homePage) }
     var confirmClear by remember { mutableStateOf(false) }
     var showDiagnostics by remember { mutableStateOf(false) }
+    var showPasswords by remember { mutableStateOf(false) }
     var showChangelog by remember { mutableStateOf(false) }
     var category by rememberSaveable { mutableStateOf(SettingsCategory.APPEARANCE) }
+    val savedLogins by PasswordStore.logins.collectAsState()
 
     if (showDiagnostics) {
         DiagnosticsScreen(onDone = { showDiagnostics = false })
+        return
+    }
+    if (showPasswords) {
+        PasswordsScreen(onDone = { showPasswords = false })
         return
     }
     if (showChangelog) {
@@ -368,6 +376,17 @@ fun SettingsScreen(
                                     )
                                 }
                                 Switch(checked = autofillPasswords, onCheckedChange = { settings.setAutofillPasswords(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { showPasswords = true }
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("Saved passwords", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("${savedLogins.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                             }
                         }
                         SectionTitle("Cookies")
