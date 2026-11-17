@@ -70,6 +70,7 @@ Last updated: 2026-11-17, at commit `e3ebbf3`.
 
 ## Known issues
 
+- Phone Settings: the "Fade pages in" description runs into its switch (seen on the phone after `e3ebbf3`).
 - Typing "mozilla.org" in the address bar can produce a search instead of a page, if the keyboard inserts spaces or capitals.
 - Tablet: when a page scrolls inside its own element, Ora's bars may not return with a scroll up. Seen on a Fandom wiki page.
 
@@ -94,4 +95,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `462778d` | Default browser row; incoming http/https links open in a new tab | Not checked: phone not connected over ADB | Row shows "Ora ✓" (already default). VIEW intent for mozilla.org opened it as a new tab (2 of 2 tabs, screenshot). "Set" dialog checked: with Ora removed as default via adb, the row showed "Set"; the dialog listed Ora, Set as default made Ora the default again and the row showed "Ora ✓" (screenshots) |
 | 2026-11-17 | `97e7682` | Menu Library label on one line; profile chips get room | Library label whole in the menu; profile chips fully drawn in the tab overview (screenshots) | Profile chips fully shown in the sidebar (screenshot). Library label in the tablet menu not re-checked |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
-| 2026-11-17 | `e3ebbf3` | Tablet Settings as a side panel; tap the dimmed page to close | Not checked: phone disconnected from ADB after the build | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |
+| 2026-11-17 | `e3ebbf3` | Tablet Settings as a side panel; tap the dimmed page to close | Settings still full screen (screenshot); the "Fade pages in" description touches its switch | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |
