@@ -26,9 +26,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - On tablet, Back closes an open sidebar before it goes back through page history. (`fbaf6de`)
 - Address bar swipe: swipe sideways on the address bar to move through open tabs, the pages of the current tab, or profiles. Choose the target and the motion in Settings > Address bar swipe. (`01de1e1`)
 - Full-screen video: swipe up or down on the left for brightness and on the right for volume. Turn this off in Settings > Video. (`01de1e1`)
+- Full-screen video: a seek bar along the bottom shows where the video is and lets you drag to another point. (`11f3e74`)
 - On phones, tapping the shrunk address pill brings the full bar back, instead of opening the address for editing. (`01de1e1`)
 
 **Fixed**
+- Back leaves a full-screen video instead of going back a page. A Settings switch, Back exits full screen (Settings > Video), turns this off. (`11f3e74`)
 - On phone, a site's permission card appears below the status bar, so its title is no longer cut off. (`982a384`)
 - On tablet, the sidebar no longer shows a white strip behind the profile chips or beside the tab list. The profile chips scroll sideways when they do not fit.
 - On tablet, the ⋯ menu's Share, Bookmark and New tab icons show again. The floating Compact bar no longer covers them. (`1deea80`)
