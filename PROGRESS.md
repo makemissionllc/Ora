@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `b2ef99d`.
+Last updated: 2026-11-17, at commit `23346d7`.
 
 ## Done
+- Quick resume keeps each tab's history (`23346d7`): a tab saves its GeckoView session state, so it reopens with back and forward pages after Ora is closed or force-stopped, not only its address. Verified on phone and tablet: a second page loaded, HOME, force-stop, relaunch; the tab came back and Back returned to the earlier page. Limits: a page still loading when Ora is left is not kept as committed history, state is saved when Ora leaves the screen (not on every navigation), and private tabs are never kept.
 - Material colours switch in Settings > Appearance (`b2ef99d`): on, buttons, the accent and icons take Material colours; off keeps the original blue design. Verified on phone and tablet: the switch turned off and on in both; with it off, the start page accent and menu icons turned blue (on: grey). Light mode and Android below 12 not checked.
 - In-app messages replace system toasts: one snackbar above the bottom bar, and a new message replaces the one on screen (`a14acf0`). Verified on the build only: the tablet sidebar and its open-edge corners were checked (bottom corner round). Snackbar display not yet seen on the device. Phone not checked.
 - Tablet sidebar has rounded corners on its open edge, and starts below the status bar so the top corners show (`a14acf0`, `cca4c20`). Checked on tablet in dark mode: top and bottom corners round, notch filled with the browser colour. Light mode not checked.
@@ -100,6 +101,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `23346d7` (tab history kept across restarts) | Quick resume restores each tab's history: a second page loaded, HOME, force-stop, relaunch; the tab came back and Back returned to the earlier page (seen on phone earlier in this session) | Quick resume switched on in Settings > Home page. Example.org, then a Google result to example.com loaded; HOME, force-stop, relaunch: example.com tab reopened with back enabled; Back went to the Google results page (screenshots `t_s10.png`, `t_s11.png`). Left on |
 | 2026-11-17 | `b2ef99d` (Material colours switch) | Settings switch recolours buttons, accent and icons; off keeps original blue | Switch turned off and on in Settings > Appearance; with it off, the start page accent and menu icons were blue (on: grey) (`v_phone_*.png`). Left on. Light mode not checked | Switch turned off and on in Settings > Appearance; with it off, the tab bar accent, Appearance tab and toggles turned blue (on: dark navy toggles, Material accent). Left on (`v_tab_*.png`). Light mode not checked |
 | 2026-11-17 | `cca4c20` (sidebar starts below the status bar; corner notch filled) | Not checked: tablet-only pass | Sidebar opened from the hamburger: top-right and bottom-right corners rounded, no white notch (screenshots `sidebar_notch_check_launch.png`, `sidebar_status_pad2_topright.png`). Light mode not checked |
 | 2026-11-17 | `9db59f6` (start page and web page cross-fade) | Start page fades out and the page fades in on a URL entered from the start page; the start page returns on the start address | Not checked: tablet-only pass | Typed "example.org" on the start page: Google results loaded, start page gone, sidebar closed (`start_to_web_settled.png`). Fade frames not captured mid-animation; launch screen with the start page and sidebar (`start_fade_launch.png`) |
