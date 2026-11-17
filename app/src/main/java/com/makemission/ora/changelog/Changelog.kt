@@ -17,6 +17,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "Quick resume: when you leave Ora, your open tabs are kept, and they reopen the next time you start it. Turn it off in Settings > Home page. Private tabs are never kept, and turning the switch off clears what was kept."),
             ChangeItem(ChangeKind.ADDED, "The sidebar search has a × button that clears the text in one tap."),
             ChangeItem(ChangeKind.ADDED, "Overlays appear and disappear at once when Android's Remove animations setting is on."),
+            ChangeItem(ChangeKind.ADDED, "A Material colours switch in Settings > Appearance. When it is on, buttons, the accent and icons take colours from your theme. Turn it off to keep the original blue design."),
             ChangeItem(ChangeKind.CHANGED, "Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out."),
             ChangeItem(ChangeKind.CHANGED, "Opening a page from the start page fades the start page out and the page in, instead of cutting over."),
             ChangeItem(ChangeKind.CHANGED, "Messages appear as a snackbar inside the app instead of system toasts. A new message replaces the one on screen."),
