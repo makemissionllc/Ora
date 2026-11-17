@@ -690,7 +690,12 @@ private fun BrowserContent(
                             onRemove = { url -> bookmarks.remove(url) },
                             onDone = { showLibrary = false }
                         )
-                        PhoneOverlay.TABS -> Column(modifier = Modifier.fillMaxSize()) {
+                        PhoneOverlay.TABS -> Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(browserColors().GridBackground)
+                                .statusBarsPadding()
+                        ) {
                             ProfileSwitcher(
                                 profiles = profileList,
                                 activeId = profileId,
