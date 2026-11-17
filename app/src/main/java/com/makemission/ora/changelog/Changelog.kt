@@ -16,6 +16,10 @@ val Changelog: List<ChangeDay> = listOf(
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "Overlays appear and disappear at once when Android's Remove animations setting is on."),
             ChangeItem(ChangeKind.CHANGED, "Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out."),
+            ChangeItem(ChangeKind.ADDED, "On tablet, swipe right from the left edge of a page to open the sidebar. A Settings switch turns this off if a site's own swipes get in the way."),
+            ChangeItem(ChangeKind.ADDED, "On tablet, Back closes an open sidebar before it goes back through page history."),
+            ChangeItem(ChangeKind.FIXED, "A page that cannot load shows a plain reason and a Try again button, in place of a blank error page."),
+            ChangeItem(ChangeKind.FIXED, "On tablet, the profile chips in the sidebar scroll to the edge instead of being cut off partway."),
             ChangeItem(ChangeKind.CHANGED, "On a tablet, switching between Tabs and Bookmarks in the sidebar clears the search, so a filter for tabs never hides bookmarks."),
             ChangeItem(ChangeKind.ADDED, "Tapping ⋯ again closes the tablet menu, with the same slide-out as Back and a tap on the dimmed page."),
             ChangeItem(ChangeKind.FIXED, "On tablet, the sidebar no longer shows a white strip behind the profile chips or beside the tab list. The profile chips scroll sideways when they do not fit."),
