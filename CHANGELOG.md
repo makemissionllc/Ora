@@ -28,7 +28,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Password autofill now follows its switch fully: with it on, your Android password app offers suggestions above the keyboard on login pages; with it off, the page is hidden from Android autofill. The Settings text says where suggestions appear.
 
 **Fixed**
-- On tablet, a web page starts below the floating top bar, so the site's own header and links are no longer hidden under it. (`bc85e07`)
 - On tablet, the edge-swipe area starts below the toolbar, so the sidebar button opens the sidebar when tapped. (`20954f4`)
 - The ⋯ menu's actions sit in two rows of three, so "New private tab" no longer runs into "Tabs" and "Library" on tablets. (`e88c778`)
 

@@ -20,7 +20,6 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.CHANGED, "Cards, menus, the address field, tiles and side panels share one set of softer rounded corners."),
             ChangeItem(ChangeKind.ADDED, "On tablet, swipe right from the left edge of a page to open the sidebar. A Settings switch turns this off if a site's own swipes get in the way."),
             ChangeItem(ChangeKind.ADDED, "On tablet, Back closes an open sidebar before it goes back through page history."),
-            ChangeItem(ChangeKind.FIXED, "On tablet, a web page starts below the floating top bar, so the site's own header and links are no longer hidden under it."),
             ChangeItem(ChangeKind.FIXED, "On tablet, the edge-swipe area starts below the toolbar, so the sidebar button opens the sidebar when tapped."),
             ChangeItem(ChangeKind.FIXED, "A page that cannot load shows a plain reason and a Try again button, in place of a blank error page."),
             ChangeItem(ChangeKind.FIXED, "On tablet, the profile chips in the sidebar scroll to the edge instead of being cut off partway."),
