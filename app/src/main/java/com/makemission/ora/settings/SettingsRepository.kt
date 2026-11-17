@@ -126,6 +126,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Ad and tracker blocking ${if (enabled) "on" else "off"}")
     }
 
+    private val _autofillPasswords = MutableStateFlow(prefs.getBoolean(KEY_AUTOFILL_PASSWORDS, true))
+    /** When on, login fields fill from saved passwords: GeckoView's saved logins, and the Android autofill service (Bitwarden, Google Password Manager and others). */
+    val autofillPasswords: StateFlow<Boolean> = _autofillPasswords.asStateFlow()
+
+    fun setAutofillPasswords(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_AUTOFILL_PASSWORDS, enabled).apply()
+        _autofillPasswords.value = enabled
+        BrowserLog.info("settings", "Password autofill ${if (enabled) "on" else "off"}")
+    }
+
     private val _secureDns = MutableStateFlow(prefs.getBoolean(KEY_SECURE_DNS, true))
     /** When on, host names resolve over encrypted DNS (DNS over HTTPS), falling back to the network's DNS if that fails. */
     val secureDns: StateFlow<Boolean> = _secureDns.asStateFlow()
@@ -231,6 +241,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
         private const val KEY_SECURE_DNS = "secure_dns"
+        private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"
         private const val KEY_PHONE_BAR = "phone_bar_style"
         private const val KEY_TABLET_BAR = "tablet_bar_style"
         const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"

@@ -275,6 +275,11 @@ private fun BrowserContent(
             if (secureDns) GeckoRuntimeSettings.TRR_MODE_FIRST else GeckoRuntimeSettings.TRR_MODE_OFF
         )
     }
+    // Password autofill is a runtime setting: GeckoView fills login forms from saved logins when it is on.
+    val autofillPasswords by settings.autofillPasswords.collectAsState()
+    LaunchedEffect(autofillPasswords) {
+        GeckoEngine.runtime(context).settings.setLoginAutofillEnabled(autofillPasswords)
+    }
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     LaunchedEffect(showMenu) { if (showMenu) UsageStats.count("menu.open") }
@@ -549,6 +554,8 @@ private fun BrowserContent(
                     bookmarks = bookmarkList,
                     blockAds = blockAds,
                     fadePagesIn = fadePagesIn,
+                    // Phone Compact and Bottom let the page run up under the status bar; push it below, as the fade ends there.
+                    belowStatusBar = !isTablet && !topLayout,
                     onSubmit = { input -> submitAddress(input) }
                 )
                 if (showDownloads) {
@@ -786,10 +793,13 @@ private fun BrowserPage(
     bookmarks: List<Bookmark>,
     blockAds: Boolean,
     fadePagesIn: Boolean,
+    belowStatusBar: Boolean,
     onSubmit: (String) -> Unit,
 ) {
+    // On phones the page starts under the status bar; this keeps its top controls clear of the status icons.
+    val statusInset = if (belowStatusBar) Modifier.statusBarsPadding() else Modifier
     if (tab.url == BrowserTabs.START_URL) {
-        StartPage(bookmarks = bookmarks, blockAds = blockAds, onSubmit = onSubmit, modifier = Modifier.fillMaxSize())
+        StartPage(bookmarks = bookmarks, blockAds = blockAds, onSubmit = onSubmit, modifier = Modifier.fillMaxSize().then(statusInset))
         return
     }
     // The page stays transparent while it arrives, then fades in with the shared enter motion.
@@ -806,6 +816,7 @@ private fun BrowserPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .then(statusInset)
             .pullToReload(
                 canPull = { tab.lastScrollY <= PULL_SCROLL_TOLERANCE_PX && !tab.loading },
                 onDistance = { pull = it },

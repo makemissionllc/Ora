@@ -93,6 +93,7 @@ fun SettingsScreen(
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
+    val autofillPasswords by settings.autofillPasswords.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
@@ -310,6 +311,32 @@ fun SettingsScreen(
                                     )
                                 }
                                 Switch(checked = blockAds, onCheckedChange = { settings.setBlockAds(it) })
+                            }
+                        }
+                        SectionTitle("Passwords")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(browserColors().AddressBarBackground)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setAutofillPasswords(!autofillPasswords) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Password autofill", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Login fields fill from the password app you chose in Android's Autofill settings, such as Bitwarden or Google Password Manager.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = autofillPasswords, onCheckedChange = { settings.setAutofillPasswords(it) })
                             }
                         }
                         SectionTitle("Network")
