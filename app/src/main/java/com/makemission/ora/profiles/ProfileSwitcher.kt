@@ -47,10 +47,11 @@ fun ProfileSwitcher(
     var newName by remember { mutableStateOf("") }
     var removing by remember { mutableStateOf<Profile?>(null) }
 
+    // The scroll area spans the full width and the padding sits inside it. Chips scroll to the
+    // edge rather than being cut 16 dp in from it, and the last chip keeps its margin at the end.
+    Box(modifier = modifier.horizontalScroll(rememberScrollState())) {
     Row(
-        modifier = modifier
-            .padding(BrowserTokens.ProfileSwitcherPadding)
-            .horizontalScroll(rememberScrollState()),
+        modifier = Modifier.padding(BrowserTokens.ProfileSwitcherPadding),
         horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(BrowserTokens.ProfileChipSpacing),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -73,6 +74,7 @@ fun ProfileSwitcher(
             onClick = { newName = ""; adding = true },
             onLongClick = null,
         )
+    }
     }
 
     if (adding) {
