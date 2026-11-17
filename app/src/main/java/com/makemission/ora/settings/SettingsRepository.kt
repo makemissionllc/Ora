@@ -176,6 +176,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Edge swipe for the sidebar ${if (enabled) "on" else "off"}")
     }
 
+    private val _quickResume = MutableStateFlow(prefs.getBoolean(KEY_QUICK_RESUME, true))
+    /** When on, the open tabs of each profile are saved as the app leaves the screen and reopened on the next launch. */
+    val quickResume: StateFlow<Boolean> = _quickResume.asStateFlow()
+
+    fun setQuickResume(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_QUICK_RESUME, enabled).apply()
+        _quickResume.value = enabled
+        BrowserLog.info("settings", "Quick resume ${if (enabled) "on" else "off"}")
+    }
+
     private val _fadePagesIn = MutableStateFlow(prefs.getBoolean(KEY_FADE_PAGES_IN, true))
     /** When on, a page fades in once it is half loaded instead of showing its pieces as they arrive. */
     val fadePagesIn: StateFlow<Boolean> = _fadePagesIn.asStateFlow()
@@ -285,6 +295,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_POPUPS = "block_popups"
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
+        private const val KEY_QUICK_RESUME = "quick_resume"
         private const val KEY_EDGE_SWIPE_SIDEBAR = "edge_swipe_sidebar"
         private const val KEY_MOTION_STYLE = "motion_style"
         private const val KEY_SECURE_DNS = "secure_dns"

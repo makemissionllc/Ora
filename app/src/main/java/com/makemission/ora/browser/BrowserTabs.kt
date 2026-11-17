@@ -290,6 +290,8 @@ class BrowserTabs(
     private val popupsBlocked: () -> Boolean,
     private val onDownload: (WebResponse, String) -> Unit,
     private val desktopByDefault: Boolean = false,
+    /** Tabs saved by quick resume, reopened in place of a single start page. Null starts fresh. */
+    private val restore: SessionStore.Saved? = null,
 ) {
     private var nextId = 0L
     val tabs = mutableStateListOf<BrowserTab>()
@@ -303,7 +305,24 @@ class BrowserTabs(
         private set
 
     init {
-        newTab(START_URL)
+        val saved = restore
+        if (saved != null && saved.urls.isNotEmpty()) {
+            val reopened = saved.urls.map { newTab(it, select = false) }
+            select(reopened[saved.selected.coerceIn(0, reopened.lastIndex)].id)
+            BrowserLog.info("session", "Quick resume reopened ${reopened.size} tabs")
+        } else {
+            newTab(START_URL)
+        }
+    }
+
+    /**
+     * The addresses of the tabs quick resume may keep (private tabs are left out), and the position
+     * of the selected tab among them. A private selection falls back to the first tab.
+     */
+    fun savableSnapshot(): Pair<List<String>, Int> {
+        val kept = tabs.filterNot { it.isPrivate }
+        val selectedIndex = kept.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
+        return kept.map { it.url } to selectedIndex
     }
 
     val selected: BrowserTab?

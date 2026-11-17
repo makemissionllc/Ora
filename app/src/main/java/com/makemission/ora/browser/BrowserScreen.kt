@@ -112,6 +112,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.style.TextAlign
@@ -245,15 +249,38 @@ private fun BrowserContent(
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
     val tabsByProfile = remember { HashMap<String, BrowserTabs>() }
+    val sessionStore = remember { SessionStore(context) }
+    val quickResume by settings.quickResume.collectAsState()
     val tabs = remember(profileId) {
         tabsByProfile.getOrPut(profileId) {
             BrowserTabs(
                 context,
                 { settings.blockPopups.value },
                 { response, pageUrl -> downloads.start(response, pageUrl) },
-                desktopByDefault = isTablet
+                desktopByDefault = isTablet,
+                // Quick resume: a profile's tabs reopen from the last time they were saved, when the setting is on.
+                restore = if (settings.quickResume.value) sessionStore.load(profileId) else null,
             )
         }
+    }
+    // Quick resume: when the app leaves the screen, every profile open this session has its tabs saved.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP && settings.quickResume.value) {
+                tabsByProfile.forEach { (id, profileTabs) ->
+                    val (urls, selected) = profileTabs.savableSnapshot()
+                    sessionStore.save(id, urls, selected)
+                }
+                BrowserLog.info("session", "Saved tabs for ${tabsByProfile.size} profile(s)")
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    // With quick resume off, nothing is kept on disk: forget any saved tabs.
+    LaunchedEffect(quickResume) {
+        if (!quickResume) sessionStore.clear()
     }
     // A web link handed to Ora by another app opens in a new tab and becomes the selected one.
     val incomingLink by ExternalLinks.pending.collectAsState()

@@ -99,6 +99,7 @@ fun SettingsScreen(
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
+    val quickResume by settings.quickResume.collectAsState()
     val autofillPasswords by settings.autofillPasswords.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
@@ -483,6 +484,30 @@ fun SettingsScreen(
                                     Text("Save", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
                                 }
                             }
+                        }
+                    }
+                    if (shown(SettingsCategory.HOME)) item {
+                        SectionTitle("Resume")
+                        // Quick resume: the open tabs are kept when Ora is left, and reopen on the next start.
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+                                .background(browserColors().AddressBarBackground)
+                                .clickable { settings.setQuickResume(!quickResume) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text("Quick resume", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text(
+                                    "When you leave Ora, your open tabs are kept and reopen the next time you start it. Private tabs are never kept.",
+                                    fontSize = 12.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            Switch(checked = quickResume, onCheckedChange = { settings.setQuickResume(it) })
                         }
                     }
                     if (shown(SettingsCategory.SEARCH)) item {
