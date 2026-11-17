@@ -28,7 +28,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Find in page: open it from the menu, type to search the page, and step through matches. (`1ab7996`)
 - On phones, the Compact address pill narrows toward the centre as you scroll, with its URL centred. (`6e0ddeb`)
 - Tablet Compact: the address bar is a floating row at the top with back, forward, tabs and menu buttons, and it no longer runs across the full width. Its description in Settings says so. (`ecff87e`)
-- Tablet Compact floats over the top of the page with no strip behind it, and shrinks as you scroll, like the phone bar. (uncommitted)
+- Tablet Compact floats over the top of the page with no strip behind it, and shrinks as you scroll, like the phone bar. (`b635b95`)
 - Menu actions run after the menu has closed, so Settings, Library and the rest open cleanly. On tablets the panel slides out first. (`2d2e8a1`)
 - On tablets, the ⋯ menu slides in from the right as a panel, not up from the bottom. Tap the dimmed page or press Back to close it. (`5b89721`)
 - On tablets, Settings is full screen again, as before. The side panel was reverted. (`5b89721`)
