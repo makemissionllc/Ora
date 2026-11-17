@@ -8,6 +8,7 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 - Theme colour: a built-in WebExtension reads each page's meta theme-color and the status bar uses it (`be8efc6`). Tablet pages start below the floating top row (`be8efc6`). Smooth enter 220 ms and exit 160 ms, the fade values in AGENTS.md (`be8efc6`).
 - Status bar tints from the page's top colour, pages run under it, and a soft fade replaces the solid band once the page scrolls; icons switch light and dark (`2cadb19`). Diagnostics logs the sampled colour per page (`bd2c82e`). Verified on phone and tablet with the start page; a scrolled phone page was seen (see verification log).
 - Status-bar fades merged into one StatusBarFade composable; Extensions search results use the shared motion values (`0b92ba3`). Start page checked on both devices after the change.
+- Private tabs from the ⋯ menu (`8abb39f`): a private-mode session, no thumbnail, not kept for reopen, and a private note on the start page. Verified on phone and tablet (see verification log); tab grid thumbnail check on the phone not done.
 - Motion style setting: Settings > Appearance > Motion with Smooth, Elegant, Fast and Premium (`67c0218`). Verified on phone and tablet; Fast applied on both, Smooth restored.
 
 - GeckoView browser with phone and tablet layouts. Tabs, tab grid, sidebar, start page, link menu, downloads, extensions, desktop site, Back handling, bookmarks.
@@ -67,7 +68,6 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 
 - Keyboard autocorrect and capitals in the address bar (see Known issues).
 - Profiles: history, cookies and logins are still shared between profiles. Keeping them apart needs a storage decision.
-- Incognito tabs: private tabs that keep no history, cookies or thumbnails once closed.
 - Built-in ad blocking beyond tracking protection: Privacy already has "Block ads and trackers" (GeckoView strict tracking protection). A fuller blocker would need a filter-list design, a choice of lists, and per-site exceptions before any work.
 
 ### Carried over
@@ -82,6 +82,7 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 
 ## Known issues
 
+- Menu action row: the labels of the icon row in the ⋯ menu overlap on both phone and tablet ("New private tab" runs into the next label). Not fixed yet.
 - Password autofill: Bitwarden is installed on both devices but reports "Did you add an account?" (no logged-in vault), so no login fill has been offered yet. Sign in to Bitwarden, then retest on a login page.
 - Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
 - Typing "mozilla.org" in the address bar can produce a search instead of a page, if the keyboard inserts spaces or capitals.
@@ -93,6 +94,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `8abb39f` | New private tab from the ⋯ menu; private start-page note | Menu opened, "New private tab" tapped; start page shows the private note and no tab thumbnail check (screenshots). Menu labels overlap in the row: "New private tab" runs into "Tabs"/"Library" (screenshot) | Menu opened, "New private tab" tapped; start page shows the private note and the sidebar lists 2 of 2 tabs (screenshot). Menu labels overlap in the row (screenshot) |
 | 2026-11-17 | `589f8ee` | Tablet Settings rail | Unchanged | Rail and centered column checked |
 | 2026-11-17 | `c7b6cb6` | Page fade-in | Loaded page visible | Loaded page visible after relaunch |
 | 2026-11-17 | `403206e` | GeckoView 160 | Start page and mozilla.org loaded | Start page loaded; a search page loaded after a retype |
