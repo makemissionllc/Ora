@@ -314,6 +314,11 @@ private fun BrowserContent(
         tabs.tabs.forEach { it.session.setActive(it.id == selectedId) }
     }
 
+    /** A private tab: GeckoView keeps no history, cookies or thumbnails for it. */
+    val onNewPrivateTab: () -> Unit = {
+        UsageStats.count("tab.new.private")
+        tabs.newTab(BrowserTabs.START_URL, isPrivate = true)
+    }
     val onNewTab: () -> Unit = {
         UsageStats.count("tab.new")
         tabs.newTab(BrowserTabs.START_URL)
@@ -694,6 +699,7 @@ private fun BrowserContent(
                         onShare = { shareUrl(context, selected.url) },
                         onBookmark = toggleSelectedBookmark,
                         onNewTab = { onNewTab() },
+                        onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },
                         onFind = { showFind = true },
                         desktopSite = selected.desktopSite,
@@ -877,7 +883,13 @@ private fun BrowserPage(
         // The background fills the whole window, so a floating Compact row sits over the start page, not a white strip.
         // The inset moves only the content, clear of the row.
         Box(modifier = Modifier.fillMaxSize().then(statusInset).background(browserColors().GridBackground)) {
-            StartPage(bookmarks = bookmarks, blockAds = blockAds, onSubmit = onSubmit, modifier = Modifier.fillMaxSize().padding(top = topInset))
+            StartPage(
+                bookmarks = bookmarks,
+                blockAds = blockAds,
+                onSubmit = onSubmit,
+                isPrivate = tab.isPrivate,
+                modifier = Modifier.fillMaxSize().padding(top = topInset),
+            )
         }
         return
     }
@@ -947,6 +959,8 @@ private fun BrowserPage(
 
 /** Captures the visible page into the tab's thumbnail. Failures keep the previous preview. */
 private fun captureThumbnail(pageView: PageView, tab: BrowserTab) {
+    // Private tabs keep no picture of their pages, so the tab grid shows a placeholder for them.
+    if (tab.isPrivate) return
     pageView.view?.capturePixels()?.accept(
         { bitmap -> if (bitmap != null) tab.thumbnail = bitmap.asImageBitmap() },
         { }

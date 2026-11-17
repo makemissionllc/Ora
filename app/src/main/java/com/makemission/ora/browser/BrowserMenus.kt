@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Tab
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -76,6 +77,7 @@ fun BrowserMenuSheet(
     onShare: () -> Unit,
     onBookmark: () -> Unit,
     onNewTab: () -> Unit,
+    onNewPrivateTab: () -> Unit,
     onLibrary: () -> Unit,
     desktopSite: Boolean,
     onToggleDesktop: (Boolean) -> Unit,
@@ -94,6 +96,7 @@ fun BrowserMenuSheet(
             onShare = { act(onShare) },
             onBookmark = { act(onBookmark) },
             onNewTab = { act(onNewTab) },
+            onNewPrivateTab = { act(onNewPrivateTab) },
             onLibrary = { act(onLibrary) },
             desktopSite = desktopSite,
             onToggleDesktop = { enabled -> act { onToggleDesktop(enabled) } },
@@ -119,6 +122,7 @@ private fun BrowserMenuItems(
     onShare: () -> Unit,
     onBookmark: () -> Unit,
     onNewTab: () -> Unit,
+    onNewPrivateTab: () -> Unit,
     onLibrary: () -> Unit,
     desktopSite: Boolean,
     onToggleDesktop: (Boolean) -> Unit,
@@ -140,6 +144,7 @@ private fun BrowserMenuItems(
                     onBookmark
                 )
                 MenuAction(Icons.Filled.Add, "New tab", onNewTab)
+                MenuAction(Icons.Filled.VisibilityOff, "New private tab", onNewPrivateTab)
                 MenuAction(Icons.Filled.Dashboard, "Tabs", onTabs)
                 MenuAction(Icons.Outlined.Tab, "Library", onLibrary)
             }
