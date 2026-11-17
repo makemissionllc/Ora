@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `b1fa65a`.
+Last updated: 2026-11-17, at commit `c3d1857`.
 
 ## Done
 
@@ -23,6 +23,7 @@ Last updated: 2026-11-17, at commit `b1fa65a`.
 - Feature-use counts on this device, shown on Diagnostics with a switch and Clear usage (`fd47d98`).
 - Profiles with their own tabs and bookmarks, switched at the top of the tab overview (phone) and the tab sidebar (tablet) (`52a68f5`).
 - Log export from Diagnostics, as a text file chosen in the save dialog (`1c48b60`).
+- Cookie policy card in Settings > Privacy: allow all, block third-party, or block all (`c3d1857`). Phone check: the card and its radio choices shown (screenshot). Tablet not checked. Cookie blocking on a live site not yet checked.
 - Password autofill switch in Settings > Privacy, which turns on Android password apps for login fields (`b1fa65a`). Filling from Bitwarden or Google Password Manager on a login page is not yet checked.
 - Default browser row in Settings > About, and web links from other apps open in a new tab (`462778d`). The system request dialog is not yet checked on a device.
 - Keeps tabs, the page and the search when the screen rotates (`configChanges` in the manifest, so the activity is not recreated).
@@ -104,5 +105,6 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | Menu actions run after the menu closes (`2d2e8a1`) | "Find in page" from the sheet: the find bar opened after the sheet closed (screenshots) | Settings from the panel opened after the panel slid out (screenshots) |
 | 2026-11-17 | fade text fix (`8c762ca`) | "Fade pages in" text keeps a gap from its switch | Text wraps clear of the switch (screenshot). Tablet not checked | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |
 | 2026-11-17 | Tablet Compact in the top bar layout, sidebar toggle (`762bf4e`) | Bottom Compact bar unchanged (screenshot) | Compact row sits above the page with no dark strip; sidebar toggle shows the sidebar (screenshots). Shrink on scroll and the side panel below the bar not checked |
+| 2026-11-17 | Cookie card; solid status band with page fade (`c3d1857`) | Status band blends into the start page, icons clear (screenshot). Cookies card and Passwords switch shown in Settings > Privacy (screenshot) | Start page captured after the change (screenshot). Settings card not checked |
 | 2026-11-17 | Password autofill switch; phone page below the status bar (`b1fa65a`) | Start page and the Google sign-in page sit below the status bar, with the fade kept (screenshots). Autofill fill not checked on a login page | Start page captured with the Passwords card not seen after the text change; autofill fill not checked |
 | 2026-11-17 | Phone status-bar fade; tablet Compact pill narrower, no band (`6acf4de`) | Status fade: clock and battery readable over the page (screenshot). Bottom Compact bar unchanged | Pill narrower and centred (screenshot). Gap above the page is the window's white background, not yet matched to the page; shrink and side panel not checked |
