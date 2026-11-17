@@ -82,7 +82,7 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 
 ## Known issues
 
-- Menu action row: the labels of the icon row in the ⋯ menu overlap on both phone and tablet ("New private tab" runs into the next label). Not fixed yet.
+- Tablet ⋯ menu: the first row's icons (Share, Bookmark, New tab) are drawn above the panel's top edge and clipped, so only their labels show. Cause not found; a 40 dp top padding moved the labels but not the clipping.
 - Password autofill: Bitwarden is installed on both devices but reports "Did you add an account?" (no logged-in vault), so no login fill has been offered yet. Sign in to Bitwarden, then retest on a login page.
 - Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
 - Typing "mozilla.org" in the address bar can produce a search instead of a page, if the keyboard inserts spaces or capitals.
@@ -94,6 +94,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `e88c778` | ⋯ menu actions in two rows of three; labels no longer overlap | Not checked: phone not included in this tablet-only pass | Labels Share, Bookmark, New tab, New private tab, Tabs, Library shown on separate cells with no overlap (screenshot). Icons of the first row still clipped (known issue) |
 | 2026-11-17 | `8abb39f` | New private tab from the ⋯ menu; private start-page note | Menu opened, "New private tab" tapped; start page shows the private note (screenshot). Tab grid thumbnail not checked. Menu labels overlap in the row: "New private tab" runs into "Tabs"/"Library" (screenshot) | Menu opened, "New private tab" tapped; start page shows the private note and the sidebar lists 2 of 2 tabs (screenshot). Menu labels overlap in the row (screenshot) |
 | 2026-11-17 | `589f8ee` | Tablet Settings rail | Unchanged | Rail and centered column checked |
 | 2026-11-17 | `c7b6cb6` | Page fade-in | Loaded page visible | Loaded page visible after relaunch |

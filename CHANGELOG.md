@@ -8,6 +8,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-17
 
+**Fixed**
+- The ⋯ menu's actions sit in two rows of three, so "New private tab" no longer runs into "Tabs" and "Library" on tablets. (`e88c778`)
+
 **Added**
 - New private tab: the ⋯ menu has "New private tab". A private tab keeps no history, cookies or thumbnails, and it cannot be reopened after it closes. Its start page says so. (`8abb39f`)
 - Diagnostics records the colour the status bar took from each page, to help check it when it looks wrong. (`bd2c82e`)
