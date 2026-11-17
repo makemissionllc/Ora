@@ -45,6 +45,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.CHANGED, "On tablets, the ⋯ menu slides in from the right as a panel, not up from the bottom. Tap the dimmed page or press Back to close it."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, Settings is full screen again, as before."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, the tab overview covers the whole window, with no toolbar or sidebar."),
+            ChangeItem(ChangeKind.FIXED, "On tablets, the floating Compact row no longer sits on a white strip over the start page. The row floats over the page, and the start page content sits clear of it."),
             ChangeItem(ChangeKind.FIXED, "Profile names in the tab overview and sidebar are centred in their chips."),
             ChangeItem(ChangeKind.FIXED, "The \"Fade pages in\" description no longer runs into its switch in Settings > Appearance."),
             ChangeItem(ChangeKind.FIXED, "The Library label in the phone menu stays on one line and is no longer cut off. Profile chips have more room below them."),

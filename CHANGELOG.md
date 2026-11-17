@@ -44,6 +44,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Load bar no longer flashes, and phone bars float above the page. (`205a2d6`)
 
 **Fixed**
+- On tablets, the floating Compact row no longer sits on a white strip over the start page. The row floats over the page, and the start page content sits clear of it. (`0c35a28`)
 - Profile names in the tab overview and sidebar are centred in their chips. (`98ba017`)
 - The "Fade pages in" description no longer runs into its switch in Settings > Appearance.
 - The Library label in the phone menu stays on one line and is no longer cut off. Profile chips have more room below them.
