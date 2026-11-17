@@ -259,7 +259,7 @@ fun SettingsScreen(
                     }
                     if (isTablet && shown(SettingsCategory.TABS)) item {
                         SectionTitle("Tablet tab bar")
-                        BarStyleList(selected = tabletBar, onSelect = { settings.setTabletBarStyle(it) })
+                        BarStyleList(selected = tabletBar, onSelect = { settings.setTabletBarStyle(it) }, tablet = true)
                         Text(
                             "Swipe the address bar up to open all tabs, or sideways to switch between open tabs.",
                             modifier = Modifier.padding(start = 4.dp, top = 6.dp),
@@ -639,7 +639,7 @@ private fun AppearanceSegments(selected: AppearanceMode, onSelect: (AppearanceMo
 }
 
 @Composable
-private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit) {
+private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit, tablet: Boolean = false) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -657,7 +657,7 @@ private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(style.label, fontSize = 15.sp, color = browserColors().AddressBarText)
-                    Text(style.detail, fontSize = 12.sp, color = browserColors().SecondaryText)
+                    Text(if (tablet) style.tabletDetail else style.detail, fontSize = 12.sp, color = browserColors().SecondaryText)
                 }
                 RadioButton(selected = style == selected, onClick = { onSelect(style) })
             }

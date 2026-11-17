@@ -471,13 +471,21 @@ private fun BrowserContent(
                         onTabs = openTabs,
                         tabCount = tabs.tabs.size
                     )
+                } else if (isTablet) {
+                    // Tablet Compact: a floating row at the top, like the phone Compact bar but wider.
+                    TabletCompactBar(
+                        tab = selected,
+                        onSubmit = { input -> submitAddress(input) },
+                        candidates = addressCandidates,
+                        onTabs = openTabs,
+                        onMore = { showMenu = true },
+                        onSwipeUp = openTabs,
+                        onSwitchTab = switchTab
+                    )
                 } else {
-                    // Compact at the top (tablet, and phone Top): only the address bar and the menu.
+                    // Phone Top: the address bar and the menu.
                     CompactToolbar(
                         tab = selected,
-                        showSidebarToggle = false,
-                        showSidebar = showSidebar,
-                        onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
                         onSubmit = { input -> submitAddress(input) },
                         candidates = addressCandidates,
                         onMore = { showMenu = true },
@@ -1080,13 +1088,75 @@ private fun TabletToolbar(
     }
 }
 
-/** Compact layout: the address bar with a menu button. Tabs open from the menu or a swipe up. */
+/**
+ * Tablet Compact bar: a floating row at the top, modeled on the phone Compact bar. Round back,
+ * forward, tabs and menu buttons sit either side of a pill that is capped in width and centred.
+ */
+@Composable
+private fun TabletCompactBar(
+    tab: BrowserTab,
+    onSubmit: (String) -> Unit,
+    candidates: List<AddressSuggestion>,
+    onTabs: () -> Unit,
+    onMore: () -> Unit,
+    onSwipeUp: () -> Unit,
+    onSwitchTab: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))
+            .padding(BrowserTokens.PhoneCompactPadding),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(BrowserTokens.PhoneCompactGap)
+    ) {
+        FloatingCircleButton(
+            onClick = { tab.stepBack() },
+            enabled = tab.canStepBack,
+            description = "Back",
+            // Quality of life: a long press on Back jumps straight to the start page.
+            onLongClick = {
+                BrowserLog.info("nav", "Long-press Back: opened start page from ${tab.url}")
+                tab.url = BrowserTabs.START_URL
+            }
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+        }
+        FloatingCircleButton(
+            onClick = { tab.session.goForward() },
+            enabled = tab.canGoForward,
+            description = "Forward"
+        ) {
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+        }
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            AddressBar(
+                currentUrl = tab.url,
+                loading = tab.loading,
+                onSubmit = onSubmit,
+                candidates = candidates,
+                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
+                onStop = { tab.session.stop() },
+                modifier = Modifier.widthIn(max = BrowserTokens.TabletCompactPillMaxWidth).fillMaxWidth(),
+                onSwipeUp = onSwipeUp,
+                onSwitchTab = onSwitchTab,
+                shape = BrowserTokens.PhoneCompactPill,
+                centered = true
+            )
+        }
+        FloatingCircleButton(onClick = onTabs, enabled = true, description = "Tabs") {
+            Icon(Icons.Outlined.Tab, contentDescription = null)
+        }
+        FloatingCircleButton(onClick = onMore, enabled = true, description = "More") {
+            Icon(Icons.Filled.MoreVert, contentDescription = null)
+        }
+    }
+}
+
+/** Compact layout for phone Top: the address bar with a menu button. Tabs open from the menu or a swipe up. */
 @Composable
 private fun CompactToolbar(
     tab: BrowserTab,
-    showSidebarToggle: Boolean,
-    showSidebar: Boolean,
-    onToggleSidebar: () -> Unit,
     onSubmit: (String) -> Unit,
     candidates: List<AddressSuggestion>,
     onMore: () -> Unit,
@@ -1110,11 +1180,6 @@ private fun CompactToolbar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BrowserTokens.ToolbarRowSpacing)
         ) {
-            if (showSidebarToggle) {
-                ToolbarButton(onClick = onToggleSidebar, enabled = true, description = if (showSidebar) "Hide sidebar" else "Show sidebar") {
-                    Icon(Icons.Filled.Menu, contentDescription = null)
-                }
-            }
             AddressBar(
                 currentUrl = tab.url,
                 loading = tab.loading,

@@ -12,6 +12,7 @@ Last updated: 2026-11-17, at commit `e3ebbf3`.
 - Search: several engines, choice per search, address suggestions.
 - Privacy: pop-up blocking, ad and tracker blocking (strict tracking protection), clear browsing data.
 - Load feedback: load bar in the address field, failed-load message, page fade-in at 50% load.
+- Tablet Compact tab bar: a floating row at the top (back, forward, address bar, tabs, menu), modeled on the phone Compact bar.
 - Tablet Settings: category rail with one centered column, full screen. Tablet ⋯ menu opens as a side panel from the right, closed by tapping the dimmed page or Back.
 - GeckoView 160, with Kotlin 2.4.21 and compileSdk 37.2.
 - Secure DNS (DNS over HTTPS, with fallback).
@@ -97,5 +98,6 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `e3ebbf3` | Tablet Settings as a side panel; tap the dimmed page to close | Settings still full screen (screenshot); the "Fade pages in" description touches its switch (fixed in the next row) |
 | 2026-11-17 | tablet overview full screen; profile chip centring; phone overview backdrop (uncommitted) | Overview shows no page behind its profile row; profile name centred; only the Personal profile exists on this phone (screenshots) | Overview covers the whole window, no toolbar or sidebar; profile names centred in chips (screenshots) |
 | 2026-11-17 | Tablet ⋯ menu as a right side panel; tablet Settings reverted to full screen (uncommitted) | ⋯ menu still a bottom sheet (screenshot) | ⋯ menu slides in from the right; Back closed it (screenshots); Settings opens full screen with its category list (screenshot) |
+| 2026-11-17 | Tablet Compact floating top row (uncommitted) | Phone Compact bottom bar unchanged (screenshot) | Top row shows back, forward, pill, tabs and menu; Settings description updated; Tabs button opens the overview; Done closes it (screenshots) |
 | 2026-11-17 | Menu actions run after the menu closes (uncommitted) | "Find in page" from the sheet: the find bar opened after the sheet closed (screenshots) | Settings from the panel opened after the panel slid out (screenshots) |
 | 2026-11-17 | fade text fix (uncommitted) | "Fade pages in" text keeps a gap from its switch | Text wraps clear of the switch (screenshot). Tablet not checked | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |

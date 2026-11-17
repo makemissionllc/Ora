@@ -25,10 +25,13 @@ enum class AppearanceMode(val key: String, val label: String) {
  * [BOTTOM] keeps the bottom toolbar with a tab row; [COMPACT] keeps only the address bar and a
  * menu button; [TOP] moves the whole toolbar to the top.
  */
-enum class BarStyle(val key: String, val label: String, val detail: String) {
+enum class BarStyle(val key: String, val label: String, val detail: String, val tabletDetail: String = detail) {
     TOP("top", "Top", "The address bar and every control sit at the top."),
     BOTTOM("bottom", "Bottom", "A larger bar at the bottom with tabs, bookmarks and menu."),
-    COMPACT("compact", "Compact", "Only the address bar at the bottom, with a ⋯ menu for tabs.");
+    COMPACT(
+        "compact", "Compact", "Only the address bar at the bottom, with a ⋯ menu for tabs.",
+        tabletDetail = "A floating row at the top: back, forward, the address bar, tabs and menu."
+    );
 
     companion object {
         fun fromKey(key: String?, default: BarStyle): BarStyle = entries.firstOrNull { it.key == key } ?: default
