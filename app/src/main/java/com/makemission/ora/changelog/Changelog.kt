@@ -32,6 +32,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.CHANGED, "The app icon uses the new charcoal design."),
             ChangeItem(ChangeKind.CHANGED, "On phones, the Compact address bar narrows toward the centre as you scroll, and its address is centred."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, Compact is a floating row at the top with back, forward, tabs and menu buttons around the address bar. Its description in Settings says so."),
+            ChangeItem(ChangeKind.CHANGED, "On tablets, Compact floats over the top of the page with no strip behind it, and shrinks as you scroll, like the phone bar."),
             ChangeItem(ChangeKind.CHANGED, "Menu actions run after the menu has closed, so Settings, Library and the rest open cleanly. On tablets the panel slides out first."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, the ⋯ menu slides in from the right as a panel, not up from the bottom. Tap the dimmed page or press Back to close it."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, Settings is full screen again, as before."),

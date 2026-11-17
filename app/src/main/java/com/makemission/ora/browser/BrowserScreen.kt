@@ -318,7 +318,9 @@ private fun BrowserContent(
         }
     }
     // Where the bar sits. Tablet Compact sits at the top like a desktop address bar; phone Compact stays at the bottom.
-    val topLayout = barStyle == BarStyle.TOP || (isTablet && barStyle == BarStyle.COMPACT)
+    val topLayout = barStyle == BarStyle.TOP
+    /** Tablet Compact floats over the top of the page, the way the phone Compact bar floats at the bottom. */
+    val tabletCompact = isTablet && barStyle == BarStyle.COMPACT
     /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
     val showSidebar by settings.tabletSidebar.collectAsState()
     /** Bookmarks and open tabs, offered as address bar suggestions. */
@@ -403,7 +405,7 @@ private fun BrowserContent(
                     tabCount = tabs.tabs.size
                 )
             }
-        } else if (!topLayout) {
+        } else if (!topLayout && !tabletCompact) {
             // The bar folds down into its bottom edge while an overlay grows out of the tabs button.
             // Phone Compact never leaves while a page is open: scrolling only shrinks it, as in iOS Safari.
             AnimatedVisibility(
@@ -427,9 +429,10 @@ private fun BrowserContent(
                     )
                 } else {
                     // Phone Compact: a floating row like iOS Safari's compact bar.
-                    PhoneCompactBar(
+                    FloatingCompactRow(
                         tab = selected,
                         shrunk = selected.chromeHidden,
+                        top = false,
                         onSubmit = { input -> submitAddress(input) },
                         candidates = addressCandidates,
                         onMore = { showMenu = true },
@@ -470,17 +473,6 @@ private fun BrowserContent(
                         onSwitchTab = switchTab,
                         onTabs = openTabs,
                         tabCount = tabs.tabs.size
-                    )
-                } else if (isTablet) {
-                    // Tablet Compact: a floating row at the top, like the phone Compact bar but wider.
-                    TabletCompactBar(
-                        tab = selected,
-                        onSubmit = { input -> submitAddress(input) },
-                        candidates = addressCandidates,
-                        onTabs = openTabs,
-                        onMore = { showMenu = true },
-                        onSwipeUp = openTabs,
-                        onSwitchTab = switchTab
                     )
                 } else {
                     // Phone Top: the address bar and the menu.
@@ -702,6 +694,23 @@ private fun BrowserContent(
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
         if (!isTablet) {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
+        }
+        // Tablet Compact floats at the top the same way: no strip, so the page runs under it.
+        if (tabletCompact) {
+            Box(modifier = Modifier.align(Alignment.TopCenter)) {
+                FloatingCompactRow(
+                    tab = selected,
+                    shrunk = selected.chromeHidden,
+                    top = true,
+                    onSubmit = { input -> submitAddress(input) },
+                    candidates = addressCandidates,
+                    onMore = { showMenu = true },
+                    onSwipeUp = openTabs,
+                    onSwitchTab = switchTab,
+                    onTabs = openTabs,
+                    pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth
+                )
+            }
         }
         }
     }
@@ -1088,71 +1097,6 @@ private fun TabletToolbar(
     }
 }
 
-/**
- * Tablet Compact bar: a floating row at the top, modeled on the phone Compact bar. Round back,
- * forward, tabs and menu buttons sit either side of a pill that is capped in width and centred.
- */
-@Composable
-private fun TabletCompactBar(
-    tab: BrowserTab,
-    onSubmit: (String) -> Unit,
-    candidates: List<AddressSuggestion>,
-    onTabs: () -> Unit,
-    onMore: () -> Unit,
-    onSwipeUp: () -> Unit,
-    onSwitchTab: (Int) -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout))
-            .padding(BrowserTokens.PhoneCompactPadding),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(BrowserTokens.PhoneCompactGap)
-    ) {
-        FloatingCircleButton(
-            onClick = { tab.stepBack() },
-            enabled = tab.canStepBack,
-            description = "Back",
-            // Quality of life: a long press on Back jumps straight to the start page.
-            onLongClick = {
-                BrowserLog.info("nav", "Long-press Back: opened start page from ${tab.url}")
-                tab.url = BrowserTabs.START_URL
-            }
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
-        }
-        FloatingCircleButton(
-            onClick = { tab.session.goForward() },
-            enabled = tab.canGoForward,
-            description = "Forward"
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
-        }
-        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            AddressBar(
-                currentUrl = tab.url,
-                loading = tab.loading,
-                onSubmit = onSubmit,
-                candidates = candidates,
-                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
-                onStop = { tab.session.stop() },
-                modifier = Modifier.widthIn(max = BrowserTokens.TabletCompactPillMaxWidth).fillMaxWidth(),
-                onSwipeUp = onSwipeUp,
-                onSwitchTab = onSwitchTab,
-                shape = BrowserTokens.PhoneCompactPill,
-                centered = true
-            )
-        }
-        FloatingCircleButton(onClick = onTabs, enabled = true, description = "Tabs") {
-            Icon(Icons.Outlined.Tab, contentDescription = null)
-        }
-        FloatingCircleButton(onClick = onMore, enabled = true, description = "More") {
-            Icon(Icons.Filled.MoreVert, contentDescription = null)
-        }
-    }
-}
-
 /** Compact layout for phone Top: the address bar with a menu button. Tabs open from the menu or a swipe up. */
 @Composable
 private fun CompactToolbar(
@@ -1199,19 +1143,27 @@ private fun CompactToolbar(
 }
 
 /**
- * Phone Compact bar, modeled on iOS Safari: a floating row with a round back button, the address
- * pill in the middle, and a round menu button. No full-width strip sits behind it.
+ * Floating Compact row, modeled on iOS Safari: round buttons either side of an address pill, with
+ * no strip behind them. The phone puts it at the bottom with Back and ⋯. The tablet puts it at the top
+ * and adds Forward and Tabs ([onTabs] set). Scrolling shrinks it: the round buttons fold away and the
+ * pill gets shorter.
  */
 @Composable
-private fun PhoneCompactBar(
+private fun FloatingCompactRow(
     tab: BrowserTab,
     /** True once the page has scrolled down: the round buttons fold away and the pill gets shorter. */
     shrunk: Boolean,
+    /** Tablet sits at the top edge; phone sits at the bottom edge. */
+    top: Boolean,
     onSubmit: (String) -> Unit,
     candidates: List<AddressSuggestion>,
     onMore: () -> Unit,
     onSwipeUp: () -> Unit,
     onSwitchTab: (Int) -> Unit,
+    /** Tablet only: when set, Forward and Tabs sit beside the pill and this opens the tab overview. */
+    onTabs: (() -> Unit)? = null,
+    /** Caps the pill width on wide screens, so the row stays a compact floating control. */
+    pillMaxWidth: Dp? = null,
 ) {
     // 0 = full bar, 1 = shrunk. Shrinking uses the exit easing, growing back the enter easing.
     val shrink by animateFloatAsState(
@@ -1219,21 +1171,29 @@ private fun PhoneCompactBar(
         animationSpec = if (shrunk) OraMotion.exit<Float>() else OraMotion.enter<Float>(),
         label = "compactShrink"
     )
+    val insets = if (top) {
+        WindowInsets.statusBars.union(WindowInsets.displayCutout)
+    } else {
+        WindowInsets.navigationBars.union(WindowInsets.ime)
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
+            .windowInsetsPadding(insets)
             .padding(
                 start = BrowserTokens.PhoneCompactPadding,
                 end = BrowserTokens.PhoneCompactPadding,
                 top = BrowserTokens.PhoneCompactPadding,
-                bottom = lerp(BrowserTokens.PhoneCompactFloatBottom, BrowserTokens.PhoneCompactShrunkBottom, shrink)
+                bottom = if (top) {
+                    lerp(BrowserTokens.PhoneCompactPadding, BrowserTokens.PhoneCompactShrunkBottom, shrink)
+                } else {
+                    lerp(BrowserTokens.PhoneCompactFloatBottom, BrowserTokens.PhoneCompactShrunkBottom, shrink)
+                }
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(lerp(BrowserTokens.PhoneCompactGap, 0.dp, shrink))
     ) {
-        // Each round button sits in a box that narrows to nothing, so it folds away instead of vanishing.
-        Box(modifier = Modifier.width(lerp(BrowserTokens.PhoneCompactCircle, 0.dp, shrink)).clipToBounds()) {
+        CompactSlot(shrink) {
             FloatingCircleButton(
                 onClick = { tab.stepBack() },
                 enabled = tab.canStepBack && shrink < 0.5f,
@@ -1245,7 +1205,18 @@ private fun PhoneCompactBar(
                     tab.url = BrowserTabs.START_URL
                 }
             ) {
-                Icon(Icons.Filled.ArrowBack, contentDescription = null)
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
+            }
+        }
+        if (onTabs != null) {
+            CompactSlot(shrink) {
+                FloatingCircleButton(
+                    onClick = { tab.session.goForward() },
+                    enabled = tab.canGoForward && shrink < 0.5f,
+                    description = "Forward"
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null)
+                }
             }
         }
         // The middle slot takes the free width and centres the pill. Shrinking narrows the pill around the
@@ -1258,7 +1229,9 @@ private fun PhoneCompactBar(
                 candidates = candidates,
                 onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
                 onStop = { tab.session.stop() },
-                modifier = Modifier.fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink),
+                modifier = Modifier
+                    .fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink)
+                    .then(if (pillMaxWidth != null) Modifier.widthIn(max = pillMaxWidth) else Modifier),
                 height = lerp(BrowserTokens.AddressBarHeight, BrowserTokens.PhoneCompactShrunkHeight, shrink),
                 onSwipeUp = onSwipeUp,
                 onSwitchTab = onSwitchTab,
@@ -1266,11 +1239,26 @@ private fun PhoneCompactBar(
                 centered = true
             )
         }
-        Box(modifier = Modifier.width(lerp(BrowserTokens.PhoneCompactCircle, 0.dp, shrink)).clipToBounds()) {
+        if (onTabs != null) {
+            CompactSlot(shrink) {
+                FloatingCircleButton(onClick = onTabs, enabled = shrink < 0.5f, description = "Tabs") {
+                    Icon(Icons.Outlined.Tab, contentDescription = null)
+                }
+            }
+        }
+        CompactSlot(shrink) {
             FloatingCircleButton(onClick = onMore, enabled = shrink < 0.5f, description = "More") {
                 Icon(Icons.Filled.MoreVert, contentDescription = null)
             }
         }
+    }
+}
+
+/** A slot for one round button. It narrows to nothing as the row shrinks, so the button folds away instead of vanishing. */
+@Composable
+private fun CompactSlot(shrink: Float, content: @Composable () -> Unit) {
+    Box(modifier = Modifier.width(lerp(BrowserTokens.PhoneCompactCircle, 0.dp, shrink)).clipToBounds()) {
+        content()
     }
 }
 
