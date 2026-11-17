@@ -637,10 +637,14 @@ private fun BrowserContent(
             ) {
                 // The whole column is sidebar-coloured and fixed to the sidebar width, so no white
                 // window background shows behind the profile chips or beside the list.
+                // It starts below the status bar, so its rounded top corners are not hidden under the bar.
                 Column(
                     modifier = Modifier
                         .width(BrowserTokens.SidebarWidth)
                         .fillMaxHeight()
+                        .windowInsetsPadding(WindowInsets.statusBars)
+                        // The grid colour fills the rounded corners, so they show the browser colour, not the white window.
+                        .background(browserColors().GridBackground)
                         .clip(BrowserTokens.SidebarShape)
                         .background(browserColors().SidebarBackground)
                 ) {
