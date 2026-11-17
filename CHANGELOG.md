@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Overlays appear and disappear at once when Android's Remove animations setting is on. (`40a19c2`)
 - Tapping ⋯ again closes the tablet menu, with the same slide-out as Back and a tap on the dimmed page. (`1deea80`)
 - Auto-fill for text fields: long-press an empty text field and the selection card offers "Auto-fill", which asks your Android password app for suggestions. The card rides above the keyboard. (`4141fbd`)
 
@@ -45,6 +46,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Phone tab bar layouts modeled on Safari, and a tablet tab overview. (`538cd0b`, `6734c89`, `01ac130`)
 
 **Changed**
+- Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out. (`40a19c2`)
 - On tablets, the top fade under the status bar is taller, so the clock and battery stay readable over a page. (`ce7dbd1`)
 - Link menu: "Open in new tab" now switches to the new tab. (`9104c7f`)
 - GeckoView upgraded from 153 to 160. (`403206e`)

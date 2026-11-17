@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `1deea80`.
+Last updated: 2026-11-17, at commit `40a19c2`.
 
 ## Done
+- Overlays use one set of motion timings from AGENTS.md rule 11: on Smooth, fade in 220 ms, scale in 280 ms, fade out 160 ms and scale out 200 ms. Overlays appear at once when the system's Remove animations is on (`40a19c2`). Verified on tablet: the tab overview and the ⋯ panel open and close. Phone not checked; timings not measured frame by frame.
 - Tablet ⋯ menu: its panel starts below the floating Compact row, so Share, Bookmark and New tab show their icons again. Tapping ⋯ again closes it (`1deea80`). Verified on tablet in landscape; portrait not checked.
 - Status-bar fades merged into one StatusBarFade composable; Extensions search results use the shared motion values (`0b92ba3`). Start page checked on both devices after the change.
 - Private tabs from the ⋯ menu (`8abb39f`): a private-mode session, no thumbnail, not kept for reopen, and a private note on the start page. Verified on phone and tablet (see verification log); tab grid thumbnail check on the phone not done.
@@ -49,8 +50,6 @@ Last updated: 2026-11-17, at commit `1deea80`.
 
 ## Pending
 
-- Motion: Smooth still uses 260 ms enter and 200 ms exit. AGENTS.md specifies overlay enter 220 ms fade and 280 ms scale, and exit 160 ms fade and 200 ms scale. Scale and fade do not yet use separate values.
-
 ### Tab management (from the Chrome and Safari comparison)
 
 - Drag one tab onto another to make a group, and drag tabs into or out of groups.
@@ -91,6 +90,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `40a19c2` | Overlays on shared timings (fade and scale in and out); Remove animations respected | Not checked: tablet-only pass | Tab overview opened full window and closed with Done; start page returned (screenshots). ⋯ panel slid in from the right, and a second ⋯ tap closed it (screenshots). Timings not measured frame by frame; the Remove animations path not checked on the device |
 | 2026-11-17 | `1deea80` | Tablet ⋯ menu below the Compact row; ⋯ again closes it | Not checked: tablet-only pass | Compact top row with the menu open: Share, Bookmark and New tab icons visible (screenshot). ⋯ tapped again: panel slid closed; tapped again: reopened (screenshots). Landscape only; portrait not checked |
 | 2026-11-17 | Android autofill wired to the page view (`setAutofillEnabled`, important for autofill) | Google sign-in: tapping the email field started an Android autofill session with Bitwarden bound, but no suggestion appeared in the keyboard bar (this Bitwarden has no signed-in account). Fill and the Auto-fill selection-menu item not verified | Not checked |
 | 2026-11-17 | Auto-fill debugging with Bitwarden unlocked (logging added to the Auto-fill request) | accounts.google.com and the-internet.herokua... login page: focused field reports domain, username hint and correct bounds; request reaches Bitwarden, which returns no dataset (system says contents can't be auto-filled). Whether Bitwarden has a saved login for these sites is not confirmed | Not checked |
