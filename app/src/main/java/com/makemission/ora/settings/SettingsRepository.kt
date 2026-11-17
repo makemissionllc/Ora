@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
 import com.makemission.ora.ui.theme.MotionStyle
+import com.makemission.ora.ui.theme.PaletteStyle
 import com.makemission.ora.ui.theme.OraMotion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -211,6 +212,17 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Motion style ${style.label}")
     }
 
+    private val _paletteStyle = MutableStateFlow(PaletteStyle.fromKey(prefs.getString(KEY_PALETTE_STYLE, null)))
+    /** Original blue controls, or controls in Material colours from the theme. Backgrounds never change. */
+    val paletteStyle: StateFlow<PaletteStyle> = _paletteStyle.asStateFlow()
+
+    fun setPaletteStyle(style: PaletteStyle) {
+        prefs.edit().putString(KEY_PALETTE_STYLE, style.key).apply()
+        _paletteStyle.value = style
+        UsageStats.count("setting.palette")
+        BrowserLog.info("settings", "Control colours set to ${style.label}")
+    }
+
     private val _phoneBarStyle = MutableStateFlow(BarStyle.fromKey(prefs.getString(KEY_PHONE_BAR, null), BarStyle.BOTTOM))
     /** Phone tab bar layout. */
     val phoneBarStyle: StateFlow<BarStyle> = _phoneBarStyle.asStateFlow()
@@ -298,6 +310,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_QUICK_RESUME = "quick_resume"
         private const val KEY_EDGE_SWIPE_SIDEBAR = "edge_swipe_sidebar"
         private const val KEY_MOTION_STYLE = "motion_style"
+        private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"
         private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"

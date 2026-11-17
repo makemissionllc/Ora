@@ -160,6 +160,9 @@ import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.DarkBrowserColors
 import com.makemission.ora.ui.theme.LightBrowserColors
 import com.makemission.ora.ui.theme.LocalBrowserColors
+import com.makemission.ora.ui.theme.PaletteStyle
+import com.makemission.ora.ui.theme.materialBrowserColors
+import com.makemission.ora.ui.theme.oraColorScheme
 import com.makemission.ora.ui.theme.PureDarkBrowserColors
 import com.makemission.ora.ui.theme.browserColors
 import com.makemission.ora.settings.AppearanceMode
@@ -207,15 +210,24 @@ fun BrowserScreen(
     modifier: Modifier = Modifier
 ) {
     val appearance by settings.appearance.collectAsState()
-    val palette = when (appearance) {
+    val paletteStyle by settings.paletteStyle.collectAsState()
+    val original = when (appearance) {
         AppearanceMode.PURE_DARK -> PureDarkBrowserColors
         AppearanceMode.DARK -> DarkBrowserColors
         AppearanceMode.LIGHT -> LightBrowserColors
         AppearanceMode.AUTO -> if (isSystemInDarkTheme()) DarkBrowserColors else LightBrowserColors
     }
+    val isDark = original == DarkBrowserColors || original == PureDarkBrowserColors
+    // Material controls use the Material scheme for the same light or dark mode as the chosen appearance.
+    val context = LocalContext.current
+    val materialScheme = remember(isDark) { oraColorScheme(context, isDark) }
+    val palette = if (paletteStyle == PaletteStyle.MATERIAL) {
+        materialBrowserColors(materialScheme, original)
+    } else {
+        original
+    }
     // Web pages follow the app's light or dark palette (or the system setting when the toggle is off).
     val websiteTheme by settings.websiteTheme.collectAsState()
-    val isDark = palette == DarkBrowserColors || palette == PureDarkBrowserColors
     val runtimeSettings = GeckoEngine.runtime(LocalContext.current).settings
     LaunchedEffect(websiteTheme, isDark) {
         runtimeSettings.preferredColorScheme = when {

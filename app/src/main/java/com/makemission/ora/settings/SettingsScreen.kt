@@ -60,6 +60,7 @@ import com.makemission.ora.passwords.PasswordStore
 import com.makemission.ora.passwords.PasswordsScreen
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.MotionStyle
+import com.makemission.ora.ui.theme.PaletteStyle
 import com.makemission.ora.ui.theme.browserColors
 
 /** Categories shown in the tablet rail. Phones show every section in one list instead. */
@@ -89,6 +90,7 @@ fun SettingsScreen(
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val edgeSwipeSidebar by settings.edgeSwipeSidebar.collectAsState()
     val motionStyle by settings.motionStyle.collectAsState()
+    val paletteStyle by settings.paletteStyle.collectAsState()
     val usageStats by settings.usageStats.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
     val askEachSearch by settings.askEachSearch.collectAsState()
@@ -254,6 +256,32 @@ fun SettingsScreen(
                                     )
                                 }
                                 Switch(checked = edgeSwipeSidebar, onCheckedChange = { settings.setEdgeSwipeSidebar(it) })
+                            }
+                            // Quality of life: the whole row is tappable, and the description says what stays the same.
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        settings.setPaletteStyle(
+                                            if (paletteStyle == PaletteStyle.MATERIAL) PaletteStyle.ORIGINAL else PaletteStyle.MATERIAL
+                                        )
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Text("Material colours", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Buttons, the accent and icons take Material colours from your theme. Off keeps the original blue design. Backgrounds stay the same.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText,
+                                    )
+                                }
+                                Switch(
+                                    checked = paletteStyle == PaletteStyle.MATERIAL,
+                                    onCheckedChange = { on -> settings.setPaletteStyle(if (on) PaletteStyle.MATERIAL else PaletteStyle.ORIGINAL) },
+                                )
                             }
                             Text(
                                 "Motion",

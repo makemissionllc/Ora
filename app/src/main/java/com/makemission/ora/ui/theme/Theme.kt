@@ -1,7 +1,9 @@
 package com.makemission.ora.ui.theme
 
 import android.app.Activity
+import android.content.Context
 import android.os.Build
+import androidx.compose.material3.ColorScheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -46,15 +48,7 @@ fun OraTheme(
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = oraColorScheme(LocalContext.current, darkTheme, dynamicColor)
 
     MaterialTheme(
         colorScheme = colorScheme,
@@ -258,6 +252,39 @@ val PureDarkBrowserColors = BrowserColors(
     SidebarSelected = Color(0x1F6C93FF),
     Surface = Color(0xFF121212),
     Scrim = Color(0x80000000),
+)
+
+/** The Material colour scheme for one mode: wallpaper-based on Android 12+, otherwise the fixed Ora scheme. */
+fun oraColorScheme(context: Context, dark: Boolean, dynamicColor: Boolean = true): ColorScheme = when {
+    dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+        if (dark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    dark -> DarkColorScheme
+    else -> LightColorScheme
+}
+
+/** Which colours the browser's controls use: the original blue design, or Material colours from the theme. */
+enum class PaletteStyle(val key: String, val label: String) {
+    ORIGINAL("original", "Original"),
+    MATERIAL("material", "Material");
+
+    companion object {
+        fun fromKey(key: String?): PaletteStyle = entries.firstOrNull { it.key == key } ?: ORIGINAL
+    }
+}
+
+/**
+ * The original palette, with its controls (accent, icons, text, address bar, selected sidebar tab) taken from the
+ * Material colour scheme. Backgrounds, the sidebar fill, the top bar and the status strip keep their original colours,
+ * so the page look and the frozen status bar do not change.
+ */
+fun materialBrowserColors(scheme: ColorScheme, base: BrowserColors): BrowserColors = base.copy(
+    Accent = scheme.primary,
+    AddressBarBackground = scheme.surfaceContainerHigh,
+    AddressBarText = scheme.onSurface,
+    SecondaryText = scheme.onSurfaceVariant,
+    IconColor = scheme.onSurfaceVariant,
+    DisabledIcon = scheme.onSurface.copy(alpha = 0.38f),
+    SidebarSelected = scheme.primary.copy(alpha = 0.16f),
 )
 
 /** Active browser palette, provided by the browser screen. Light by default. */
