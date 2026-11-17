@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.OraMotion
 import com.makemission.ora.ui.theme.browserColors
@@ -104,11 +105,13 @@ fun LinkQuickMenu(
                         close()
                         BrowserLog.info("page", "Opened link in new tab: $link")
                         tabs.newTab(link, select = true)
+                        InAppNotices.show("Opened in a new tab")
                     }
                     QuickMenuRow("Open in background tab") {
                         close()
                         BrowserLog.info("page", "Opened link in background tab: $link")
                         tabs.newTab(link, select = false)
+                        InAppNotices.show("Opened in a background tab. Your current page stays put.")
                     }
                     QuickMenuRow("Copy link address") {
                         close()
@@ -125,6 +128,7 @@ fun LinkQuickMenu(
                         close()
                         BrowserLog.info("page", "Opened image in new tab: $image")
                         tabs.newTab(image, select = false)
+                        InAppNotices.show("Image opened in a background tab")
                     }
                     QuickMenuRow("Copy image address") {
                         close()
@@ -146,6 +150,7 @@ private fun QuickMenuRow(label: String, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.QuickMenuRowHeight)
+            .pressFeedback()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.CenterStart

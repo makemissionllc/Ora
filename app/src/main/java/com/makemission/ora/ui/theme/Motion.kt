@@ -7,6 +7,8 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 
 /** The motion character the user picks in Settings > Appearance. Each one sets the timing and easing of every transition. */
@@ -107,4 +109,17 @@ object OraMotion {
     /** Overlay scale out: 200 ms on Smooth. Shrinks back to [MORPH_SCALE] at the trigger. */
     fun <T> overlayScaleOut(): FiniteAnimationSpec<T> =
         overlayTween(OVERLAY_SCALE_OUT_MS * EXIT_MS / SMOOTH_EXIT_MS, exitEasing())
+
+    /** Scale a pressed element sinks to while the finger is down. */
+    const val PRESS_SCALE = 0.94f
+
+    /** Sinking into a press: quick, with no overshoot, so the touch registers at once. */
+    fun <T> pressDown(): FiniteAnimationSpec<T> =
+        if (ValueAnimator.areAnimatorsEnabled()) tween(durationMillis = 90, easing = FastOutSlowInEasing)
+        else tween(durationMillis = 0)
+
+    /** Springing back on release. A little overshoot gives the small jiggle; Remove animations makes it instant. */
+    fun <T> pressRelease(): FiniteAnimationSpec<T> =
+        if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow)
+        else tween(durationMillis = 0)
 }

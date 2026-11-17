@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Touch feedback: toolbar buttons and link-menu rows sink slightly when pressed and spring back on release, so a tap feels answered. With Remove animations on, the change is instant.
+- Opening a link in a background tab, or an image, now says so with a message, and the tab count swells. A link sent from another app says it opened in a new tab.
 - Site permissions: when a site asks for your location, camera, microphone or notifications, a card asks Allow, Not now or Block. Allow and Block are remembered for that site; change or clear them in Settings > Privacy > Site permissions, where clearing asks first. In a private tab nothing is remembered. If Android has not yet allowed the app, it asks first. (`d47a696`)
 - Browsing history: the tablet sidebar and the phone Library list the pages you opened, newest first and grouped by day. Search by title or address, remove one page, or clear all after a confirmation. Each profile keeps its own. Turn saving off in Settings > Privacy; private tabs are never saved. (`b5e1949`)
 - Reopen closed tab: the ⋯ menu brings back the last 10 tabs you closed, with their back and forward pages. Private tabs are not kept. With nothing closed, it says so. (`9ef0c1d`)

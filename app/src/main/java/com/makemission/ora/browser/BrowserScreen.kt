@@ -186,6 +186,7 @@ import com.makemission.ora.notice.InAppNotices
 import com.makemission.ora.permissions.SitePermissionStore
 import com.makemission.ora.permissions.SitePromptOverlay
 import com.makemission.ora.permissions.SitePrompts
+import com.makemission.ora.ui.pressFeedback
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 
@@ -326,7 +327,9 @@ private fun BrowserContent(
     LaunchedEffect(incomingLink) {
         val url = incomingLink ?: return@LaunchedEffect
         ExternalLinks.consume()
+        BrowserLog.info("page", "Opened link from another app: $url")
         tabs.newTab(url)
+        InAppNotices.show("Link opened from another app, in a new tab")
     }
     // A removed profile's tabs are closed, so their pages stop running.
     LaunchedEffect(profileList) {
@@ -1907,7 +1910,9 @@ private fun ToolbarButton(
     IconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.size(BrowserTokens.ToolbarButtonSize)
+        modifier = Modifier
+            .size(BrowserTokens.ToolbarButtonSize)
+            .then(if (enabled) Modifier.pressFeedback() else Modifier)
     ) {
         CompositionLocalProvider(
             LocalContentColor provides if (enabled) browserColors().Accent else browserColors().DisabledIcon

@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Touch feedback: toolbar buttons and link-menu rows sink slightly when pressed and spring back on release, so a tap feels answered. With Remove animations on, the change is instant."),
+            ChangeItem(ChangeKind.ADDED, "Opening a link in a background tab, or an image, now says so with a message, and the tab count swells. A link sent from another app says it opened in a new tab."),
             ChangeItem(ChangeKind.ADDED, "Site permissions: when a site asks for your location, camera, microphone or notifications, a card asks Allow, Not now or Block. Allow and Block are remembered for that site; change or clear them in Settings > Privacy > Site permissions, where clearing asks first. In a private tab nothing is remembered. If Android has not yet allowed the app, it asks first."),
             ChangeItem(ChangeKind.ADDED, "Browsing history: the tablet sidebar and the phone Library list the pages you opened, newest first and grouped by day. Search by title or address, remove one page, or clear all after a confirmation. Each profile keeps its own. Turn saving off in Settings > Privacy; private tabs are never saved."),
             ChangeItem(ChangeKind.ADDED, "Quick resume: when you leave Ora, your open tabs are kept, and they reopen the next time you start it. Turn it off in Settings > Home page. Private tabs are never kept, and turning the switch off clears what was kept."),
