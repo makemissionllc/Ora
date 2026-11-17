@@ -20,6 +20,7 @@ Last updated: 2026-11-17, at commit `5ddf098`.
 - Phone Compact pill narrows toward the centre as you scroll, with the URL centred (`6e0ddeb`).
 - Find in page from the browser menu, with match count and previous/next (`1ab7996`).
 - Feature-use counts on this device, shown on Diagnostics with a switch and Clear usage (`fd47d98`).
+- Profiles with their own tabs and bookmarks, switched at the top of the tab overview (phone) and the tab sidebar (tablet) (`52a68f5`).
 - Keeps tabs, the page and the search when the screen rotates (`configChanges` in the manifest, so the activity is not recreated).
 - Clears the link menu when a new page starts.
 
@@ -49,7 +50,7 @@ Last updated: 2026-11-17, at commit `5ddf098`.
 ### Better app usage
 
 - Keyboard autocorrect and capitals in the address bar (see Known issues).
-- Profiles that keep tabs and history apart (a decision is needed on storage).
+- Profiles: history, cookies and logins are still shared between profiles. Keeping them apart needs a storage decision.
 - Incognito tabs: private tabs that keep no history, cookies or thumbnails once closed.
 - Background tabs: open a link in a tab without switching to it. The page need not load right away; it can wait until the tab is selected.
 - Open in a new tab: opens the link in a new tab and switches to it immediately.
@@ -85,4 +86,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `cf85810` | App icon | Charcoal ring-and-dot icon on the home screen (screenshot) | Charcoal ring-and-dot icon on the home screen (screenshot) |
 | 2026-11-17 | `1ab7996` | Find in page bar from the menu; match count, arrows and close | "the" gave 2/69 matches; arrows and close work (screenshot) | "the" gave 1/43 matches; close works (screenshot) |
 | 2026-11-17 | `fd47d98` | Feature-use counts, Diagnostics section, Count switch | Feature use showed menu.open 1 after a menu tap; switch in Settings > Diagnostics (screenshots) | Same list and switch shown in Diagnostics (screenshots); the Log page shows the counts too |
+| 2026-11-17 | `52a68f5` | Profiles: switcher, separate tabs and bookmarks | Created "Fork", selected it, switched back to Personal; Personal showed 1 saved bookmark, Fork showed 0 saved (screenshots). Removal not checked | Switcher in the sidebar with Personal selected (screenshot). Separate bookmarks, switching and removal not checked |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
