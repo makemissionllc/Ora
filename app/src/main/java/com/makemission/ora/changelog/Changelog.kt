@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "The ⋯ menu's actions sit in two rows of three, so \"New private tab\" no longer runs into \"Tabs\" and \"Library\" on tablets."),
             ChangeItem(ChangeKind.CHANGED, "Pages that set a theme colour tint the status bar with it. Otherwise the bar takes the colour of the page's top edge."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, pages start below the floating top bar instead of running under its buttons."),
             ChangeItem(ChangeKind.CHANGED, "Smooth motion is a little quicker: overlays fade in and out faster."),
