@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Link menu: "Open in background tab" opens a link without switching to it. (`9104c7f`)
 - Cookies: Settings > Privacy has a Cookies card. Allow all cookies, block third-party cookies, or block all cookies. (`c3d1857`)
 - Password autofill: a Passwords switch in Settings > Privacy lets Android password apps, such as Bitwarden or Google Password Manager, fill login fields. (`b1fa65a`)
 - Default browser: Settings > About has a row that asks Android to make Ora your default browser. Web links opened from other apps open in a new Ora tab. (`462778d`)
@@ -26,6 +27,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Phone tab bar layouts modeled on Safari, and a tablet tab overview. (`538cd0b`, `6734c89`, `01ac130`)
 
 **Changed**
+- Link menu: "Open in new tab" now switches to the new tab. (`9104c7f`)
 - GeckoView upgraded from 153 to 160. (`403206e`)
 - The app icon uses the new charcoal design. (`cf85810`)
 - Find in page: open it from the menu, type to search the page, and step through matches. (`1ab7996`)
