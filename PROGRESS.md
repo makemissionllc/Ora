@@ -2,9 +2,11 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `9db59f6`.
+Last updated: 2026-11-17, at commit `a14acf0`.
 
 ## Done
+- In-app messages replace system toasts: one snackbar above the bottom bar, and a new message replaces the one on screen (`a14acf0`). Verified on the build only: the tablet sidebar and its open-edge corners were checked (bottom corner round). Snackbar display not yet seen on the device. Phone not checked.
+- Tablet sidebar has rounded corners on its open edge (`a14acf0`). Top corners are hidden under the frozen status-bar strip, so they are not yet round on screen; see Pending.
 - Start page and web pages cross-fade (`9db59f6`): opening a page from the start page fades the start page out and the page in, on the shared motion values, instead of cutting over. The web layer stays composed, so its session is kept. Verified on tablet: address typed on the start page, Google results loaded and the start page gone. Phone not checked; the fade itself was not captured mid-animation.
 - Quick resume (`24f1261`): each profile's open tabs (addresses and the selected one) are saved when Ora leaves the screen and reopened on the next start. Private tabs are never saved. Switch in Settings > Home page under Resume, on by default; turning it off clears the saved tabs. Verified on tablet: after a force-stop, animex.one reopened instead of the start page; with the switch off, the start page opened. Phone not checked.
 - Softer corner radii on one scale (12, 16 and 20 dp tokens in `BrowserTokens`) across cards, menus, the address field, tiles and side panels (`9ca2ced`). Verified on tablet: start page, sidebar, ⋯ menu and tab overview. Settings, error page, Downloads and changelog corners not checked on tablet; phone not checked.
@@ -56,6 +58,7 @@ Last updated: 2026-11-17, at commit `9db59f6`.
 ## Pending
 
 ### Motion
+- Tablet sidebar top corners: the sidebar starts at the top of the window under the frozen status-bar strip, which hides them. Fixing it means moving the sidebar below the status bar, a status-bar area change that needs your yes first (AGENTS rule 23).
 - Sidebar and bars opening from their origin (a scale from the hamburger, as on iOS). Only the fade and width expansion exist; the origin scale is not built.
 - Layout changes (bar style, Compact shrink) and tab switches still cut over without a shared transition.
 
