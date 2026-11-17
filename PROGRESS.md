@@ -20,6 +20,7 @@ Last updated: 2026-11-17, at commit `9104c7f`.
 - App icon uses the charcoal ring-and-dot design (`cf85810`).
 - Phone Compact pill narrows toward the centre as you scroll, with the URL centred (`6e0ddeb`).
 - Find in page from the browser menu, with match count and previous/next (`1ab7996`).
+- Link menu: "Open in new tab" switches to the new tab; "Open in background tab" opens one without switching (`9104c7f`).
 - Feature-use counts on this device, shown on Diagnostics with a switch and Clear usage (`fd47d98`).
 - Profiles with their own tabs and bookmarks, switched at the top of the tab overview (phone) and the tab sidebar (tablet) (`52a68f5`).
 - Log export from Diagnostics, as a text file chosen in the save dialog (`1c48b60`).
@@ -57,7 +58,6 @@ Last updated: 2026-11-17, at commit `9104c7f`.
 - Keyboard autocorrect and capitals in the address bar (see Known issues).
 - Profiles: history, cookies and logins are still shared between profiles. Keeping them apart needs a storage decision.
 - Incognito tabs: private tabs that keep no history, cookies or thumbnails once closed.
-- Background tabs: open a link in a tab without switching to it. The page need not load right away; it can wait until the tab is selected.
 - Open in a new tab: opens the link in a new tab and switches to it immediately.
 - Built-in ad blocking beyond tracking protection: Privacy already has "Block ads and trackers" (GeckoView strict tracking protection). A fuller blocker would need a filter-list design, a choice of lists, and per-site exceptions before any work.
 
@@ -112,4 +112,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | Password autofill switch; phone page below the status bar (`b1fa65a`) | Start page and the Google sign-in page sit below the status bar, with the fade kept (screenshots). Autofill fill not checked on a login page | Start page captured with the Passwords card not seen after the text change; autofill fill not checked |
 | 2026-11-17 | Tablet Compact row transparent over the start page (`0c35a28`) | Bottom Compact bar unchanged (not re-checked this change) | Start page shows behind the floating row; no white strip; search field clear below the row (screenshot). theverge.com shows behind the row, with the pill over the page (screenshot). Shrink on scroll and side panel not re-checked |
 | 2026-11-17 | Refactor: shared disclosure chevron; bookmark state computed once (`451f542`) | Start page unchanged after install (screenshot). Menu chevrons show on Find in page, Downloads and Extensions (screenshot) | Start page unchanged after install (screenshot). Tablet menu chevron not checked |
+| 2026-11-17 | Link menu: new-tab and background-tab rows (`9104c7f`) | Both rows shown in the long-press menu on a link (screenshot). Opening the background tab not checked | Both rows shown in the long-press menu on a link (screenshot). Opening the background tab not checked |
 | 2026-11-17 | Phone status-bar fade; tablet Compact pill narrower, no band (`6acf4de`) | Status fade: clock and battery readable over the page (screenshot). Bottom Compact bar unchanged | Pill narrower and centred (screenshot). Gap above the page is the window's white background, not yet matched to the page; shrink and side panel not checked |
