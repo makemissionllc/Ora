@@ -114,6 +114,10 @@ object BrowserTokens {
     val SettingsContentMaxWidth = 720.dp
     /** Width of the Theme segmented control. Wider than the mockup's 220 dp so every mode label fits. */
     val SettingsSegmentWidth = 280.dp
+    /** Tablet Settings opens as a panel on the right: the share of the width it takes, capped at the max. */
+    const val SettingsPanelFraction = 0.62f
+    val SettingsPanelMaxWidth = 780.dp
+    val SettingsPanelRadius = 16.dp
 
     // Link quick menu (long press on a link or image)
     val QuickMenuWidth = 260.dp
@@ -174,6 +178,8 @@ data class BrowserColors(
     val SidebarSelected: Color,
     /** Page background behind the tab sidebar and grid chrome. */
     val Surface: Color,
+    /** Dims the page behind an open side panel. Tapping it closes the panel. */
+    val Scrim: Color,
 )
 
 /** Light palette from the "Android Browser Mockups" design. */
@@ -191,6 +197,7 @@ val LightBrowserColors = BrowserColors(
     SidebarBackground = Color(0xFFF2F2F6),
     SidebarSelected = Color(0x1F0B6BDE),
     Surface = Color(0xFFFFFFFF),
+    Scrim = Color(0x33000000),
 )
 
 /** Dark palette from the "Dark" browser mockups. */
@@ -208,6 +215,7 @@ val DarkBrowserColors = BrowserColors(
     SidebarBackground = Color(0xFF1A1B1F),
     SidebarSelected = Color(0x1F6C93FF),
     Surface = Color(0xFF23252B),
+    Scrim = Color(0x66000000),
 )
 
 /** Pure (OLED) black variant: same layout as dark, with true black chrome and surfaces. */
@@ -225,6 +233,7 @@ val PureDarkBrowserColors = BrowserColors(
     SidebarBackground = Color(0xFF000000),
     SidebarSelected = Color(0x1F6C93FF),
     Surface = Color(0xFF121212),
+    Scrim = Color(0x80000000),
 )
 
 /** Active browser palette, provided by the browser screen. Light by default. */

@@ -339,23 +339,32 @@ private fun BrowserContent(
         }
     }
 
-    // Full-screen phone overlay currently open (tablets never use one).
+    // Full-screen phone overlay currently open (tablets never use one). Tablet Settings is a side panel instead.
+    val tabletSettingsOpen = isTablet && showSettings
     val phoneOverlay = when {
         showTabGrid -> PhoneOverlay.TABS
         showLibrary -> PhoneOverlay.LIBRARY
-        showSettings -> PhoneOverlay.SETTINGS
+        showSettings && !isTablet -> PhoneOverlay.SETTINGS
         showExtensions -> PhoneOverlay.EXTENSIONS
         else -> PhoneOverlay.NONE
     }
+    val clearBrowsingData: () -> Unit = {
+        GeckoEngine.runtime(context).storageController
+            .clearData(StorageController.ClearFlags.ALL)
+            .accept(
+                { Toast.makeText(context, "Browsing data cleared", Toast.LENGTH_SHORT).show() },
+                { Toast.makeText(context, "Could not clear browsing data", Toast.LENGTH_SHORT).show() }
+            )
+    }
 
     // Back closes the open overlay first, then steps back through page history, and only then exits.
-    BackHandler(enabled = phoneOverlay != PhoneOverlay.NONE) {
+    BackHandler(enabled = phoneOverlay != PhoneOverlay.NONE || tabletSettingsOpen) {
         showTabGrid = false
         showLibrary = false
         showSettings = false
         showExtensions = false
     }
-    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && selected.canStepBack) {
+    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && !tabletSettingsOpen && selected.canStepBack) {
         selected.stepBack()
     }
 
@@ -569,6 +578,13 @@ private fun BrowserContent(
                 ) {
                     UndoCloseOffer(visible = closed != null, onUndo = { tabs.reopenLastClosed() })
                 }
+                // Tablet Settings: a panel slides in from the right over the page. Tapping the dimmed page closes it.
+                TabletSettingsPanel(
+                    visible = isTablet && showSettings,
+                    settings = settings,
+                    onClose = { showSettings = false },
+                    onClearData = clearBrowsingData,
+                )
                 if (showFind) {
                     // Keyed on the tab, so switching tabs closes the bar and clears its highlights.
                     key(selected.id) {
@@ -659,14 +675,7 @@ private fun BrowserContent(
                         PhoneOverlay.SETTINGS -> SettingsScreen(
                             settings = settings,
                             onDone = { showSettings = false },
-                            onClearData = {
-                                GeckoEngine.runtime(context).storageController
-                                    .clearData(StorageController.ClearFlags.ALL)
-                                    .accept(
-                                        { Toast.makeText(context, "Browsing data cleared", Toast.LENGTH_SHORT).show() },
-                                        { Toast.makeText(context, "Could not clear browsing data", Toast.LENGTH_SHORT).show() }
-                                    )
-                            }
+                            onClearData = clearBrowsingData
                         )
                         PhoneOverlay.LIBRARY -> BookmarksLibrary(
                             bookmarks = bookmarkList,
@@ -713,6 +722,44 @@ private fun BrowserContent(
         if (!isTablet) {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
         }
+        }
+    }
+}
+
+/** Tablet Settings: a panel that slides in from the right over the page, with a scrim that closes it when tapped. */
+@Composable
+private fun TabletSettingsPanel(
+    visible: Boolean,
+    settings: SettingsRepository,
+    onClose: () -> Unit,
+    onClearData: () -> Unit,
+) {
+    AnimatedVisibility(visible = visible, enter = fadeIn(OraMotion.enter()), exit = fadeOut(OraMotion.exit())) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(browserColors().Scrim)
+                .clickable { onClose() }
+        )
+    }
+    AnimatedVisibility(
+        visible = visible,
+        modifier = Modifier.fillMaxSize(),
+        enter = slideInHorizontally(OraMotion.enter()) { it } + fadeIn(OraMotion.enter()),
+        exit = slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit()),
+    ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .fillMaxWidth(BrowserTokens.SettingsPanelFraction)
+                    .widthIn(max = BrowserTokens.SettingsPanelMaxWidth)
+                    .shadow(BrowserTokens.FloatingBarElevation, RoundedCornerShape(topStart = BrowserTokens.SettingsPanelRadius, bottomStart = BrowserTokens.SettingsPanelRadius))
+                    .clip(RoundedCornerShape(topStart = BrowserTokens.SettingsPanelRadius, bottomStart = BrowserTokens.SettingsPanelRadius))
+                    .background(browserColors().GridBackground)
+            ) {
+                SettingsScreen(settings = settings, onDone = onClose, onClearData = onClearData)
+            }
         }
     }
 }
