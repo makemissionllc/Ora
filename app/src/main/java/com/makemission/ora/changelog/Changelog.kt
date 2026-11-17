@@ -40,6 +40,8 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "Full-screen video: a seek bar along the bottom shows where the video is and lets you drag to another point."),
             ChangeItem(ChangeKind.ADDED, "Full-screen video: double-tap the left half to go back 10 seconds, or the right half to go forward 10. Repeated taps add up in one \"+N s\" hint."),
             ChangeItem(ChangeKind.ADDED, "On phones, tapping the shrunk address pill brings the full bar back, instead of opening the address for editing."),
+            ChangeItem(ChangeKind.ADDED, "On phones, while the address bar is folded, a tap on the band beside the address pill brings the full bar back."),
+            ChangeItem(ChangeKind.FIXED, "On phones, a folded address bar clips the page above it, as the expanded bar does. Page text no longer shows under the folded bar, and the expanded bar no longer shows a cut-off line of footer text below it."),
             ChangeItem(ChangeKind.FIXED, "Back leaves a full-screen video instead of going back a page. A Settings switch, Back exits full screen (Settings > Video), turns this off."),
             ChangeItem(ChangeKind.FIXED, "Pages no longer flash white while they load in dark modes. The page area takes the browser's own dark background until the page appears."),
             ChangeItem(ChangeKind.FIXED, "Quick resume keeps each tab's back and forward pages, not only its address. After you leave Ora and start it again, a tab comes back where you left it."),
