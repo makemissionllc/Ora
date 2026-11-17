@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Set Ora as your default browser from Settings > About. Web links opened from other apps open in a new Ora tab."),
             ChangeItem(ChangeKind.ADDED, "Export the log from Diagnostics as a text file, to send when something goes wrong. Choose where to save it."),
             ChangeItem(ChangeKind.ADDED, "Profiles keep their own open tabs and bookmarks. Switch them at the top of the tab overview or the tab sidebar. Long-press a profile to remove it, which also deletes its bookmarks."),
             ChangeItem(ChangeKind.ADDED, "Feature use is counted on this device, so Diagnostics can show which controls you use most. Clear it there any time. Turn counting off in Settings > Diagnostics. No pages or searches are recorded."),

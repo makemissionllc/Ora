@@ -35,7 +35,8 @@ adb shell monkey -p com.makemission.ora -c android.intent.category.LAUNCHER 1
 All paths are under `app/src/main/java/com/makemission/ora/`.
 
 - `browser/`: the browser screen, tabs (`BrowserTabs.kt`), the GeckoView engine (`GeckoEngine.kt`), the tab grid and sidebar, the start page, menus, downloads and extensions.
-- `settings/`: `SettingsRepository.kt` holds every persisted setting. `SettingsScreen.kt` is the Settings page, with a category rail on tablet.
+- `settings/`: `SettingsRepository.kt` holds every persisted setting. `SettingsScreen.kt` is the Settings page, with a category rail on tablet. `DefaultBrowser.kt` checks and requests the system browser role.
+- `browser/ExternalLinks.kt` holds a web link sent to Ora by another app, until the browser opens it in a new tab. `MainActivity` fills it.
 - `ui/theme/`: `Theme.kt` holds `BrowserTokens` (dimensions) and `browserColors()` (palettes for Light, Dark and Pure dark). `Motion.kt` holds the shared `OraMotion` values.
 - `profiles/`: `ProfilesRepository` keeps the profile list and the active one; `ProfileSwitcher` is the chip row shown in the tab overview and sidebar. Each profile's bookmarks are stored under its own key.
 - `log/`: `BrowserLog`, which every error and browser event goes through. It shows on Settings > Diagnostics. `UsageStats` counts feature use (action names only) on the same page.
