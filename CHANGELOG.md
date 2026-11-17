@@ -12,6 +12,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The ⋯ menu's actions sit in two rows of three, so "New private tab" no longer runs into "Tabs" and "Library" on tablets. (`e88c778`)
 
 **Added**
+- Saved passwords: Settings > Passwords > Saved passwords lists logins the browser has saved. Search by site or username, show or hide a password, copy it, or delete it after a confirmation. Logins are stored encrypted on the device.
 - New private tab: the ⋯ menu has "New private tab". A private tab keeps no history, cookies or thumbnails, and it cannot be reopened after it closes. Its start page says so. (`8abb39f`)
 - Motion style: Settings > Appearance has a Motion section with Smooth, Elegant, Fast and Premium. It sets how quickly pages, menus and panels move. (`67c0218`)
 - Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match. (`ce7dbd1`)
