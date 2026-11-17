@@ -61,9 +61,7 @@ Last updated: 2026-11-17, at commit `40a19c2`.
 
 ### Better app usage
 
-- Keyboard autocorrect and capitals in the address bar (see Known issues).
 - Profiles: history, cookies and logins are still shared between profiles. Keeping them apart needs a storage decision.
-- Open in a new tab: opens the link in a new tab and switches to it immediately.
 - Built-in ad blocking beyond tracking protection: Privacy already has "Block ads and trackers" (GeckoView strict tracking protection). A fuller blocker would need a filter-list design, a choice of lists, and per-site exceptions before any work.
 
 ### Carried over
@@ -74,14 +72,13 @@ Last updated: 2026-11-17, at commit `40a19c2`.
 - Tablet Tabs section in Settings, not re-checked since the rail change.
 - Preloading (for example, prefetching a link on long press). Needs a design, and it must not load pages the user did not ask for.
 - Network: GeckoView 160 has no public DNS prefetch or preconnect control. Those options are internal and would need a decision before any work.
-- Typing in the tablet address bar with the on-screen keyboard can insert spaces and capitals, so the address becomes a search. Not yet investigated. Possibly a keyboard issue, possibly the app.
+- Typing in the tablet address bar with the on-screen keyboard can insert spaces and capitals, so the address becomes a search. Not reproduced on 2026-11-17 (landscape, Gboard): "mozilla.org" typed letter by letter, with no inserted spaces or capitals, loaded mozilla.org on Go. An earlier search came from a keyboard that had dropped mid-typing. Reopen if it recurs.
 
 ## Known issues
 
 - Saved passwords: tapping into a password (type=password) field on the local login page (http://localhost:8765/login.html, adb reverse) makes GeckoView's surface stop drawing (black screen). It also happens with Password autofill off, and on the build before the Passwords commit (50a4983), so it predates the Passwords change and is not caused by it. Cause not found. Saving and autofilling a login stay unverified until this is fixed. Password autofill was left OFF on the phone by this test; turn it back on in Settings > Passwords.
 - Password autofill: Bitwarden is installed on both devices but reports "Did you add an account?" (no logged-in vault), so no login fill has been offered yet. Sign in to Bitwarden, then retest on a login page.
 - Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
-- Typing "mozilla.org" in the address bar can produce a search instead of a page, if the keyboard inserts spaces or capitals.
 - Tablet: when a page scrolls inside its own element, Ora's bars may not return with a scroll up. Seen on a Fandom wiki page.
 
 ## Verification log
@@ -90,6 +87,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | address bar check (no code change) | Typing "mozilla.org" with the on-screen keyboard, one key at a time | Not checked: tablet-only pass | Landscape, Gboard. Field read "mozill", "mozilla.", "mozilla.o", "mozilla.or", "mozilla.org" with no inserted spaces or capitals (screenshots). Go loaded mozilla.org. Not reproduced |
 | 2026-11-17 | `40a19c2` | Overlays on shared timings (fade and scale in and out); Remove animations respected | Not checked: tablet-only pass | Tab overview opened full window and closed with Done; start page returned (screenshots). ⋯ panel slid in from the right, and a second ⋯ tap closed it (screenshots). Timings not measured frame by frame; the Remove animations path not checked on the device |
 | 2026-11-17 | `1deea80` | Tablet ⋯ menu below the Compact row; ⋯ again closes it | Not checked: tablet-only pass | Compact top row with the menu open: Share, Bookmark and New tab icons visible (screenshot). ⋯ tapped again: panel slid closed; tapped again: reopened (screenshots). Landscape only; portrait not checked |
 | 2026-11-17 | Android autofill wired to the page view (`setAutofillEnabled`, important for autofill) | Google sign-in: tapping the email field started an Android autofill session with Bitwarden bound, but no suggestion appeared in the keyboard bar (this Bitwarden has no signed-in account). Fill and the Auto-fill selection-menu item not verified | Not checked |

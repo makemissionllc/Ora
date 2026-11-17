@@ -114,7 +114,6 @@ object BrowserTokens {
     val SettingsContentMaxWidth = 720.dp
     /** Width of the Theme segmented control. Wider than the mockup's 220 dp so every mode label fits. */
     val SettingsSegmentWidth = 280.dp
-    /** Tablet Settings opens as a panel on the right: the share of the width it takes, capped at the max. */
     /** Tablet side panels (the ⋯ menu) slide in from the right edge at this width. */
     val SidePanelWidth = 360.dp
     val SidePanelRadius = 16.dp
