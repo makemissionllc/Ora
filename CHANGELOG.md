@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Quick resume: when you leave Ora, your open tabs are kept, and they reopen the next time you start it. Turn it off in Settings > Home page. Private tabs are never kept, and turning the switch off clears what was kept. (`24f1261`)
 - The sidebar search has a × button that clears the text in one tap. (`9ca2ced`)
 - Overlays appear and disappear at once when Android's Remove animations setting is on. (`40a19c2`)
 - Tapping ⋯ again closes the tablet menu, with the same slide-out as Back and a tap on the dimmed page. (`1deea80`)

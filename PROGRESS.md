@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `20954f4`.
+Last updated: 2026-11-17, at commit `24f1261`.
 
 ## Done
+- Quick resume (`24f1261`): each profile's open tabs (addresses and the selected one) are saved when Ora leaves the screen and reopened on the next start. Private tabs are never saved. Switch in Settings > Home page under Resume, on by default; turning it off clears the saved tabs. Verified on tablet: after a force-stop, animex.one reopened instead of the start page; with the switch off, the start page opened. Phone not checked.
 - Softer corner radii on one scale (12, 16 and 20 dp tokens in `BrowserTokens`) across cards, menus, the address field, tiles and side panels (`9ca2ced`). Verified on tablet: start page, sidebar, ⋯ menu and tab overview. Settings, error page, Downloads and changelog corners not checked on tablet; phone not checked.
 - Sidebar search has a × button that clears the text, shown only while the field has text (`9ca2ced`). Verified on tablet: text cleared and the placeholder returned.
 - Tablet edge-swipe strip starts below the toolbar, so the sidebar button is no longer covered (`20954f4`). Verified on tablet: hamburger tap opened the sidebar; swipe from the strip opened it. The Settings switch that turns the swipe off is not checked.
@@ -91,6 +92,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `24f1261` (quick resume) | Open tabs are kept when Ora leaves and reopen on the next start; Settings > Home page switch, on by default | Not checked: tablet-only pass | Tab on animex.one; Home, force-stop, relaunch: animex.one reopened, not the start page (`resume_relaunch.png`). Switch turned off in Settings > Home page; relaunch opened the start page (`resume_off_relaunch.png`). Switch shown under Resume (`resume_home3.png`). Left OFF on this tablet after the test |
 | 2026-11-17 | `9ca2ced` (softer corners; sidebar search clear button) | Corner radii on one scale; sidebar search × button clears the query | Not checked: tablet-only pass | Corners checked on start page, sidebar, ⋯ menu and tab overview (screenshots). Settings, error page, Downloads and changelog corners not checked. Clear button: "sta" typed, × shown, tap cleared the field and the placeholder returned (`clear_result.png`) |
 | 2026-11-17 | `20954f4` (edge-swipe strip below the toolbar) | Edge-swipe strip starts below the toolbar so the hamburger is not covered | Not checked: tablet-only pass | Hamburger tap opened the sidebar from the start page (log "Tab sidebar shown"). Swipe from the strip at (120,700) to (460,700) opened it (log "Tab sidebar shown", `swipe_result.png`). Settings switch off not checked |
 | 2026-11-17 | `fbaf6de` (edge swipe, Settings switch, Back closes sidebar); `9597b05` (load-error page); `db79a5a` (profile chip scroll) | Edge swipe: a rightward drag from the left edge opens the sidebar; Settings switch added. Back closes an open sidebar. Failed loads show a reason and Try again. Profile chips scroll to the sidebar edge | Not checked: tablet-only pass | Swipe from x=120 px opened the sidebar with focus kept in Ora and no keyboard (screenshot). A swipe from x=16 px was taken by Android and the Claude app came forward, so the strip now starts 28 dp in. Back closed the sidebar (screenshot). "nosuchsite.invalid" opened via intent shows "The address could not be found" with Try again (screenshot). Chips start at the edge after the sidebar opens, with no offset (screenshot). Settings switch turned off and the swipe ignored: not checked. Compact row over the page nav: not fixed |

@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Quick resume: when you leave Ora, your open tabs are kept, and they reopen the next time you start it. Turn it off in Settings > Home page. Private tabs are never kept, and turning the switch off clears what was kept."),
             ChangeItem(ChangeKind.ADDED, "The sidebar search has a × button that clears the text in one tap."),
             ChangeItem(ChangeKind.ADDED, "Overlays appear and disappear at once when Android's Remove animations setting is on."),
             ChangeItem(ChangeKind.CHANGED, "Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out."),
