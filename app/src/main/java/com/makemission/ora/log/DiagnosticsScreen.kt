@@ -4,6 +4,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -50,6 +52,21 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
     var confirmClear by remember { mutableStateOf(false) }
     var confirmClearUsage by remember { mutableStateOf(false) }
     val timeFormat = remember { SimpleDateFormat("HH:mm:ss", Locale.US) }
+    val fileStamp = remember { SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US) }
+
+    // Writes the log to a file the user picks, so it can be sent for debugging.
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        try {
+            context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(BrowserLog.asText()) }
+                ?: error("Could not open the file")
+            BrowserLog.info("log", "Exported ${BrowserLog.entries.value.size} entries")
+            Toast.makeText(context, "Log exported", Toast.LENGTH_SHORT).show()
+        } catch (e: Exception) {
+            BrowserLog.error("log", "Log export failed", e)
+            Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // Back closes this page, not the whole Settings overlay.
     BackHandler(onBack = onDone)
@@ -118,6 +135,9 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
                     enabled = entries.isNotEmpty()
                 ) {
                     Text("Copy", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+                }
+                TextButton(onClick = { exportLauncher.launch("ora-log-${fileStamp.format(Date())}.txt") }, enabled = entries.isNotEmpty()) {
+                    Text("Export", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
                 }
                 TextButton(onClick = { confirmClear = true }, enabled = entries.isNotEmpty()) {
                     Text("Clear", color = browserColors().CloseBadge, fontWeight = FontWeight.SemiBold)
