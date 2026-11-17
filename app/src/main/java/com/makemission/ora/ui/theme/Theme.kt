@@ -168,10 +168,6 @@ object BrowserTokens {
     val StatusFadeExtra = 16.dp
     /** Total height of the soft fade behind the status bar once a page scrolls under it (design: SB-Scroll). */
     val StatusScrollFade = 84.dp
-    /** Height of the soft fade behind the phone Compact row, in the page's colour, so page text never shows between its buttons. */
-    val PhoneBottomFade = 150.dp
-    /** The bottom fade once the page scrolls and the Compact row shrinks. */
-    val PhoneBottomFadeShrunk = 90.dp
     val PhoneCompactPill = RoundedCornerShape(percent = 50)
     /** Phone Bottom and Top control bars float above the page as rounded cards, like iOS Safari. */
     val FloatingBarShape = RoundedCornerShape(28.dp)

@@ -7,7 +7,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import android.app.Activity
 import androidx.compose.animation.animateColorAsState
@@ -1038,15 +1037,6 @@ private fun BrowserContent(
             )
         }
         if (!isTablet) {
-            // Phone Compact: a soft fade in the page's colour sits behind the floating row, drawn first so the row stays on top.
-            AnimatedVisibility(
-                visible = phoneCompact && !toolbarHidden,
-                modifier = Modifier.align(Alignment.BottomCenter),
-                enter = fadeIn(OraMotion.enter()),
-                exit = fadeOut(OraMotion.exit()),
-            ) {
-                BottomFade(color = barColor, shrunk = selected.chromeHidden)
-            }
             // The measured height is kept while a full-screen panel is open, as the tablet's top row is.
             Box(
                 modifier = Modifier
@@ -1751,33 +1741,6 @@ private fun FloatingCompactRow(
             }
         }
     }
-}
-
-/**
- * The soft fade behind the phone Compact row: clear at its top edge, then the page colour at about 85% halfway and 96%
- * at the bottom, so page text never shows between the row's buttons. It shortens once the row shrinks.
- */
-@Composable
-private fun BottomFade(color: Color, shrunk: Boolean) {
-    val shrink by animateFloatAsState(
-        targetValue = if (shrunk) 1f else 0f,
-        animationSpec = if (shrunk) OraMotion.exit<Float>() else OraMotion.enter<Float>(),
-        label = "bottomFadeShrink"
-    )
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(lerp(BrowserTokens.PhoneBottomFade, BrowserTokens.PhoneBottomFadeShrunk, shrink))
-            .background(
-                Brush.verticalGradient(
-                    colorStops = arrayOf(
-                        0f to color.copy(alpha = 0f),
-                        0.5f to color.copy(alpha = 0.85f),
-                        1f to color.copy(alpha = 0.96f),
-                    )
-                )
-            )
-    )
 }
 
 /** A slot for one round button. It narrows to nothing as the row shrinks, so the button folds away instead of vanishing. */
