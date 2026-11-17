@@ -717,18 +717,18 @@ private fun BrowserContent(
                             // Pages slide in from the right edge and leave the same way.
                             intoSlide -> (slideInHorizontally(OraMotion.enter()) { it } + fadeIn(OraMotion.enter())) togetherWith
                                 if (outOfSlide) slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit())
-                                else scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.exit(), transformOrigin = MORPH_ORIGIN) + fadeOut(OraMotion.exit())
+                                else scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleOut(), transformOrigin = MORPH_ORIGIN) + fadeOut(OraMotion.overlayFadeOut())
                             // Returning to the page: the slide pages leave to the right.
                             outOfSlide -> (fadeIn(OraMotion.enter())) togetherWith
                                 (slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit()))
                             // The tab grid grows out of the tabs button and shrinks back into it.
-                            else -> (fadeIn(OraMotion.enter()) + scaleIn(
+                            else -> (fadeIn(OraMotion.overlayFadeIn()) + scaleIn(
                                 initialScale = OraMotion.MORPH_SCALE,
-                                animationSpec = OraMotion.enter(),
+                                animationSpec = OraMotion.overlayScaleIn(),
                                 transformOrigin = MORPH_ORIGIN
-                            )) togetherWith (fadeOut(OraMotion.exit()) + scaleOut(
+                            )) togetherWith (fadeOut(OraMotion.overlayFadeOut()) + scaleOut(
                                 targetScale = OraMotion.MORPH_SCALE,
-                                animationSpec = OraMotion.exit(),
+                                animationSpec = OraMotion.overlayScaleOut(),
                                 transformOrigin = MORPH_ORIGIN
                             ))
                         }
@@ -819,8 +819,8 @@ private fun BrowserContent(
     AnimatedVisibility(
         visible = tabletTabsOpen,
         modifier = Modifier.fillMaxSize(),
-        enter = fadeIn(OraMotion.enter()) + scaleIn(initialScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.enter(), transformOrigin = MORPH_ORIGIN),
-        exit = fadeOut(OraMotion.exit()) + scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.exit(), transformOrigin = MORPH_ORIGIN),
+        enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(initialScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleIn(), transformOrigin = MORPH_ORIGIN),
+        exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleOut(), transformOrigin = MORPH_ORIGIN),
     ) {
         Column(
             modifier = Modifier
@@ -928,8 +928,8 @@ private fun BrowserPage(
         AnimatedVisibility(
             visible = indicatorVisible,
             modifier = Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.statusBars).padding(top = 12.dp),
-            enter = fadeIn(OraMotion.enter()) + scaleIn(OraMotion.enter(), initialScale = OraMotion.MORPH_SCALE),
-            exit = fadeOut(OraMotion.exit()) + scaleOut(OraMotion.exit(), targetScale = OraMotion.MORPH_SCALE),
+            enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE),
+            exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE),
         ) {
             Box(
                 modifier = Modifier
@@ -1751,8 +1751,8 @@ private const val PULL_SCROLL_TOLERANCE_PX = 4
 private fun UndoCloseOffer(visible: Boolean, onUndo: () -> Unit) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(OraMotion.enter()) + scaleIn(OraMotion.enter(), initialScale = OraMotion.MORPH_SCALE),
-        exit = fadeOut(OraMotion.exit()) + scaleOut(OraMotion.exit(), targetScale = OraMotion.MORPH_SCALE),
+        enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE),
+        exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE),
     ) {
         Row(
             modifier = Modifier

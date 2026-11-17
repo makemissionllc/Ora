@@ -80,14 +80,14 @@ fun LinkQuickMenu(
         AnimatedVisibility(
             visibleState = visibleState,
             modifier = Modifier.offset(x = left, y = top),
-            enter = fadeIn(OraMotion.enter()) + scaleIn(
+            enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(
                 initialScale = OraMotion.MORPH_SCALE,
-                animationSpec = OraMotion.enter(),
+                animationSpec = OraMotion.overlayScaleIn(),
                 transformOrigin = origin
             ),
-            exit = fadeOut(OraMotion.exit()) + scaleOut(
+            exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(
                 targetScale = OraMotion.MORPH_SCALE,
-                animationSpec = OraMotion.exit(),
+                animationSpec = OraMotion.overlayScaleOut(),
                 transformOrigin = origin
             )
         ) {

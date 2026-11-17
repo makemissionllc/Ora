@@ -173,11 +173,11 @@ private fun SelectionChip(label: String, onClick: () -> Unit) {
 fun SelectionMenuOverlay(visible: Boolean, content: @Composable () -> Unit) {
     AnimatedVisibility(
         visible = visible,
-        enter = fadeIn(OraMotion.enter()) + scaleIn(
-            OraMotion.enter(), initialScale = OraMotion.MORPH_SCALE, transformOrigin = TransformOrigin(0.5f, 1f)
+        enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(
+            OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE, transformOrigin = TransformOrigin(0.5f, 1f)
         ),
-        exit = fadeOut(OraMotion.exit()) + scaleOut(
-            OraMotion.exit(), targetScale = OraMotion.MORPH_SCALE, transformOrigin = TransformOrigin(0.5f, 1f)
+        exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(
+            OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE, transformOrigin = TransformOrigin(0.5f, 1f)
         ),
     ) { content() }
 }

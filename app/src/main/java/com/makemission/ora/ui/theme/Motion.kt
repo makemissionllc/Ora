@@ -1,5 +1,6 @@
 package com.makemission.ora.ui.theme
 
+import android.animation.ValueAnimator
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutLinearInEasing
@@ -75,4 +76,35 @@ object OraMotion {
     fun <T> enterAfterLoadDelay(): FiniteAnimationSpec<T> =
         tween(durationMillis = ENTER_MS, delayMillis = LOAD_BAR_DELAY_MS, easing = enterEasing())
     fun <T> exit(): FiniteAnimationSpec<T> = tween(durationMillis = EXIT_MS, easing = exitEasing())
+
+    /** Overlay timings on Smooth, from AGENTS.md rule 11. The other styles scale them by their own tempo. */
+    private const val OVERLAY_FADE_IN_MS = 220
+    private const val OVERLAY_SCALE_IN_MS = 280
+    private const val OVERLAY_FADE_OUT_MS = 160
+    private const val OVERLAY_SCALE_OUT_MS = 200
+    private const val SMOOTH_ENTER_MS = 260
+    private const val SMOOTH_EXIT_MS = 200
+
+    /**
+     * A tween for overlays. When the system has animations turned off (Remove animations, or a zero
+     * animator scale), the duration is 0 so overlays appear and disappear at once instead of moving.
+     */
+    private fun <T> overlayTween(ms: Int, easing: Easing): FiniteAnimationSpec<T> =
+        tween(durationMillis = if (ValueAnimator.areAnimatorsEnabled()) ms else 0, easing = easing)
+
+    /** Overlay fade in: 220 ms on Smooth. Same easing as the scale in, so the two move as one. */
+    fun <T> overlayFadeIn(): FiniteAnimationSpec<T> =
+        overlayTween(OVERLAY_FADE_IN_MS * ENTER_MS / SMOOTH_ENTER_MS, enterEasing())
+
+    /** Overlay scale in: 280 ms on Smooth. Starts from [MORPH_SCALE] at the trigger. */
+    fun <T> overlayScaleIn(): FiniteAnimationSpec<T> =
+        overlayTween(OVERLAY_SCALE_IN_MS * ENTER_MS / SMOOTH_ENTER_MS, enterEasing())
+
+    /** Overlay fade out: 160 ms on Smooth. */
+    fun <T> overlayFadeOut(): FiniteAnimationSpec<T> =
+        overlayTween(OVERLAY_FADE_OUT_MS * EXIT_MS / SMOOTH_EXIT_MS, exitEasing())
+
+    /** Overlay scale out: 200 ms on Smooth. Shrinks back to [MORPH_SCALE] at the trigger. */
+    fun <T> overlayScaleOut(): FiniteAnimationSpec<T> =
+        overlayTween(OVERLAY_SCALE_OUT_MS * EXIT_MS / SMOOTH_EXIT_MS, exitEasing())
 }
