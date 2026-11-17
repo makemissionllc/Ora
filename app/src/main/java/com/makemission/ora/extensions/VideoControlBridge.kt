@@ -46,6 +46,17 @@ object VideoControlBridge {
         current.postMessage(JSONObject().put("type", "seek").put("time", seconds))
     }
 
+    /** Moves the full-screen video by [seconds] from where the page last reported it, clamped to its length. */
+    fun skip(seconds: Double) {
+        val now = _state.value
+        if (now == null || !now.hasVideo) {
+            BrowserLog.error("video", "Skip skipped: no full-screen video is reported")
+            return
+        }
+        val end = if (now.duration > 0.0) now.duration else now.seconds + seconds
+        seek((now.seconds + seconds).coerceIn(0.0, end))
+    }
+
     private val delegate = object : WebExtension.MessageDelegate {
         override fun onConnect(connected: WebExtension.Port) {
             port = connected

@@ -10,6 +10,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -47,6 +49,7 @@ import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.OraMotion
 import com.makemission.ora.ui.theme.browserColors
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 
 /**
@@ -87,6 +90,23 @@ fun VideoGestureLayer(modifier: Modifier) {
     // The last readout stays in place while it fades out, so the text does not blank during the exit.
     var lastShown by remember { mutableStateOf<Readout?>(null) }
     LaunchedEffect(readout) { readout?.let { lastShown = it } }
+    // A double-tap skip shows a short hint ("+10 s") that fades out on its own.
+    var skipCount by remember { mutableIntStateOf(0) }
+    var skipTotal by remember { mutableIntStateOf(0) }
+    var skipShown by remember { mutableStateOf(false) }
+    LaunchedEffect(skipCount) {
+        if (skipCount > 0) {
+            skipShown = true
+            delay(SKIP_HINT_MS)
+            skipShown = false
+        }
+    }
+    // Quality of life: quick double-taps add up inside the hint ("+20 s"), so a second tap is not lost.
+    val onSkip: (Double) -> Unit = { seconds ->
+        VideoControlBridge.skip(seconds)
+        skipTotal = (if (skipShown) skipTotal else 0) + seconds.toInt()
+        skipCount++
+    }
 
     DisposableEffect(activity) {
         onDispose {
@@ -105,6 +125,7 @@ fun VideoGestureLayer(modifier: Modifier) {
                 activity = activity,
                 audio = audio,
                 onReadout = { readout = it },
+                onSkip = onSkip,
             )
             GestureHalf(
                 modifier = Modifier.weight(1f),
@@ -112,6 +133,7 @@ fun VideoGestureLayer(modifier: Modifier) {
                 activity = activity,
                 audio = audio,
                 onReadout = { readout = it },
+                onSkip = onSkip,
             )
         }
         AnimatedVisibility(
@@ -120,7 +142,15 @@ fun VideoGestureLayer(modifier: Modifier) {
             enter = fadeIn(OraMotion.enter()),
             exit = fadeOut(OraMotion.exit()),
         ) {
-            lastShown?.let { ReadoutPill(it) }
+            lastShown?.let { ReadoutPill("${it.label} ${it.percent}%") }
+        }
+        AnimatedVisibility(
+            visible = skipShown,
+            modifier = Modifier.align(Alignment.Center),
+            enter = fadeIn(OraMotion.enter()),
+            exit = fadeOut(OraMotion.exit()),
+        ) {
+            ReadoutPill(if (skipTotal < 0) "${skipTotal} s" else "+${skipTotal} s")
         }
     }
 }
@@ -132,6 +162,7 @@ private fun GestureHalf(
     activity: Activity?,
     audio: AudioManager,
     onReadout: (Readout?) -> Unit,
+    onSkip: (Double) -> Unit,
 ) {
     var height by remember { mutableFloatStateOf(1f) }
     var level by remember { mutableFloatStateOf(0f) }
@@ -139,6 +170,12 @@ private fun GestureHalf(
         modifier = modifier
             .fillMaxSize()
             .onSizeChanged { height = it.height.toFloat().coerceAtLeast(1f) }
+            // Double-tap: the left half skips back, the right half skips forward.
+            .pointerInput(brightness) {
+                detectTapGestures(
+                    onDoubleTap = { onSkip(if (brightness) -SKIP_SECONDS.toDouble() else SKIP_SECONDS.toDouble()) },
+                )
+            }
             .pointerInput(brightness) {
                 detectVerticalDragGestures(
                     onDragStart = {
@@ -159,9 +196,9 @@ private fun GestureHalf(
 }
 
 @Composable
-private fun ReadoutPill(readout: Readout) {
+private fun ReadoutPill(text: String) {
     Text(
-        text = "${readout.label} ${readout.percent}%",
+        text = text,
         fontSize = 16.sp,
         color = browserColors().AddressBarText,
         modifier = Modifier
@@ -171,6 +208,9 @@ private fun ReadoutPill(readout: Readout) {
 }
 
 private data class Readout(val label: String, val percent: Int)
+
+private const val SKIP_SECONDS = 10
+private const val SKIP_HINT_MS = 700L
 
 private fun readoutFor(brightness: Boolean, level: Float) =
     Readout(label = if (brightness) "Brightness" else "Volume", percent = (level * 100).roundToInt())
