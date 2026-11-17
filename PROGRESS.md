@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `23346d7`.
+Last updated: 2026-11-17, at commit `d8d0615`.
 
 ## Done
 - Quick resume keeps each tab's history (`23346d7`): a tab saves its GeckoView session state, so it reopens with back and forward pages after Ora is closed or force-stopped, not only its address. Verified on phone and tablet: a second page loaded, HOME, force-stop, relaunch; the tab came back and Back returned to the earlier page. Limits: a page still loading when Ora is left is not kept as committed history, state is saved when Ora leaves the screen (not on every navigation), and private tabs are never kept.
@@ -101,6 +101,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `d8d0615` (page area background while loading) | Not checked: the white flash was not captured. Frames during navigation were taken too late to show the transition | Not checked: the white flash was not captured. Only a frame before navigation was taken, with the keyboard up (screenshot `w_pl_1.png`). The loaded dark page showed no white (`w_p2.png`) | Built and installed; a frame after load showed the page. Mid-load frames were too late to show the transition; not verified. Light mode not checked |
 | 2026-11-17 | `23346d7` (tab history kept across restarts) | Quick resume restores each tab's history: a second page loaded, HOME, force-stop, relaunch; the tab came back and Back returned to the earlier page (seen on phone earlier in this session) | Quick resume switched on in Settings > Home page. Example.org, then a Google result to example.com loaded; HOME, force-stop, relaunch: example.com tab reopened with back enabled; Back went to the Google results page (screenshots `t_s10.png`, `t_s11.png`). Left on |
 | 2026-11-17 | `b2ef99d` (Material colours switch) | Settings switch recolours buttons, accent and icons; off keeps original blue | Switch turned off and on in Settings > Appearance; with it off, the start page accent and menu icons were blue (on: grey) (`v_phone_*.png`). Left on. Light mode not checked | Switch turned off and on in Settings > Appearance; with it off, the tab bar accent, Appearance tab and toggles turned blue (on: dark navy toggles, Material accent). Left on (`v_tab_*.png`). Light mode not checked |
 | 2026-11-17 | `cca4c20` (sidebar starts below the status bar; corner notch filled) | Not checked: tablet-only pass | Sidebar opened from the hamburger: top-right and bottom-right corners rounded, no white notch (screenshots `sidebar_notch_check_launch.png`, `sidebar_status_pad2_topright.png`). Light mode not checked |

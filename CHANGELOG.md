@@ -24,6 +24,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Closing the selection card on an empty text field no longer crashes the browser. (`4141fbd`)
 - A page that cannot load shows a plain reason and a Try again button, in place of a blank error page. (`9597b05`)
 - On tablet, the profile chips in the sidebar scroll to the edge instead of being cut off partway. (`db79a5a`)
+- Pages no longer flash white while they load in dark modes. The page area takes the browser's own dark background until the page appears. (`d8d0615`)
 - Quick resume keeps each tab's back and forward pages, not only its address. After you leave Ora and start it again, a tab comes back where you left it. (`23346d7`)
 
 **Changed**
