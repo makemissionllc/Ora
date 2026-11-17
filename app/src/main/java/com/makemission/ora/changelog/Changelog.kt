@@ -12,6 +12,13 @@ data class ChangeDay(val date: String, val items: List<ChangeItem>)
 /** Newest first. Keep in step with CHANGELOG.md, per AGENTS.md rule 20. */
 val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
+        date = "18 Nov 2026",
+        items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Auto-fill on a login page now reaches your password app. It no longer stops with \"Contents can't be auto-filled\"."),
+            ChangeItem(ChangeKind.CHANGED, "When Auto-fill cannot help, the message says why: turn on a password app in your phone's settings, or tap a login field first, then reload the page if it still fails."),
+        ),
+    ),
+    ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "Touch feedback: toolbar buttons and link-menu rows sink slightly when pressed and spring back on release, so a tap feels answered. With Remove animations on, the change is instant."),

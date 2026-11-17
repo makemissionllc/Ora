@@ -6,6 +6,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ## Unreleased
 
+### 2026-11-18
+
+**Fixed**
+- Auto-fill on a login page now reaches your password app. It no longer stops with "Contents can't be auto-filled". (`55c62be`)
+
+**Changed**
+- When Auto-fill cannot help, the message says why: turn on a password app in your phone's settings, or tap a login field first, then reload the page if it still fails. (`55c62be`)
+
 ### 2026-11-17
 
 **Added**

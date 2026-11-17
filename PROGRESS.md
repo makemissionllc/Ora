@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `2a47c6a`.
+Last updated: 2026-11-18, at commit `55c62be`.
 
 ## Done
+- Auto-fill reaches the system password app (`55c62be`): field focus and the Auto-fill card now pass the page's login fields to Android's autofill framework through a hidden 1 px view beside Compose (`browser/AutofillBridge.kt`). Auto-fill no longer stops with "Contents can't be auto-filled", and its messages now say why they cannot fill. Phone verified on the login page at 127.0.0.1: Bitwarden received the request and its inline strip showed "Vault is locked" (screenshots `af2_2_focus.png`, `af2_4_autofill.png`; the Auto-fill screenshot had no toast). Not checked: a fill (the vault is locked and has no entry for 127.0.0.1); the two new messages on the phone; the tablet.
 - Full-screen video double-tap skip (`ed85a8a`): double-tap the left or right half of a full-screen video to go back or forward 10 s; repeated taps add up in one "+N s" / "-N s" hint that fades out. Phone verified: right double-tap 0:00 to 0:10; left double-tap 0:10 back to 0:00; "-10 s" hint seen. Not checked: the "+N s" hint on screen, two quick double-taps adding to +20 s, tablet.
 - Full-screen video seek bar and Back (`11f3e74`): a bundled WebExtension (`assets/videoctl`) reports the full-screen video's time and seeks it, through a native port that Android allows only with the `geckoViewAddons` permission. The seek bar sits along the bottom of the full-screen video. Back leaves full screen; Settings > Video > "Back exits full screen" turns that off. Phone verified (screenshots). Not checked: tablet, the Settings switch turned off, a video inside a frame.
 - Touch feedback and open notices (`8d3c3fe`): toolbar buttons and link-menu rows sink to 94% on press and spring back (`ui/PressFeedback.kt`, timings in `OraMotion`). The link menu's "Open in new tab", "Open in background tab" and "Open image in new tab" show a message; a link from another app shows "Link opened from another app, in a new tab" and is logged. Build passes. Not checked on either device: the phone link menu did not open under adb long-press, so the messages were not seen; the press effect was not seen; the tablet was not connected.
@@ -67,6 +68,7 @@ Last updated: 2026-11-17, at commit `2a47c6a`.
 - In-app "What's new" page, built from the same entries as CHANGELOG.md.
 - Phone Compact top fade under the status bar, and page clipping (`01de1e1`): the bottom fade was removed (`2a47c6a`). Phone (reddit.com, portrait, not scrolled): no fade under the bar, and page text ends at the bar's top edge. Phone (google.com and theverge.com, portrait): the page starts below the status bar at the top, and content fades under the status bar while scrolled. The page under the folded bar at the page end is open; see Known issues. Not checked: tablet; scrolling back up. The earlier google.com screenshot with page content under the status bar was not seen again at the top.
 - Clear history confirmation morph (`01de1e1`): Cancel verified on the tablet. Back and tap-outside not checked yet.
+- Auto-fill fill check (`55c62be`): not done. Bitwarden's vault must be unlocked, and a login entry for 127.0.0.1 must exist, before a fill can be seen. Waiting on the user.
 
 ## Pending
 
@@ -91,6 +93,7 @@ Last updated: 2026-11-17, at commit `2a47c6a`.
 
 ### Carried over
 
+- Auto-fill on the tablet (`55c62be`): not checked. The phone-only test was requested.
 - Tablet check for the Secure DNS row in Settings > Privacy (see verification log).
 - Reader mode. The approach is undecided. GeckoView `about:reader` has not been tested.
 - Shrink-on-scroll on tablet: bars currently hide completely. The design calls for shrinking to smaller controls.
@@ -102,7 +105,8 @@ Last updated: 2026-11-17, at commit `2a47c6a`.
 ## Known issues
 
 - Saved passwords: tapping into a password (type=password) field on the local login page (http://localhost:8765/login.html, adb reverse) makes GeckoView's surface stop drawing (black screen). It also happens with Password autofill off, and on the build before the Passwords commit (50a4983), so it predates the Passwords change and is not caused by it. Cause not found. Saving and autofilling a login stay unverified until this is fixed. Password autofill was left OFF on the phone by this test; turn it back on in Settings > Passwords.
-- Password autofill: Bitwarden is installed on both devices but reports "Did you add an account?" (no logged-in vault), so no login fill has been offered yet. Sign in to Bitwarden, then retest on a login page.
+- Password autofill, phone: Bitwarden now has an account but reports "Vault is locked", so a fill needs the vault unlocked first. The request reaches Bitwarden (checked 2026-11-18). Unlock it and retest on a login page with a matching entry. The tablet's Bitwarden state was not checked.
+- Auto-fill follows one page at a time: GeckoView 160 keeps one autofill session for all tabs, so the tab loaded last is the only one that can autofill. Seen on the phone on 2026-11-18: a tap on a field logged "Disregarding old session" until the page was loaded again, which restored it. A full fix needs a newer GeckoView with one autofill session per tab.
 - Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
 - Tablet: when a page scrolls inside its own element, Ora's bars may not return with a scroll up. Seen on a Fandom wiki page.
 - Tablet: the Compact floating row overlaps the page's navigation links. Open; not fixed.
@@ -115,6 +119,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-18 | `55c62be` (Auto-fill passes login fields to the system password app; clearer Auto-fill messages) | Phone (CPH2745, Android 17, USB, serial `3C15C5000LM00000`): login page at 127.0.0.1. Focusing Email showed Bitwarden's inline strip reading "Vault is locked" (`af2_2_focus.png`). A long-press on Email showed the card with Auto-fill and Select all. Auto-fill closed the card with no "Contents can't be auto-filled" toast, and the strip still read "Vault is locked" (`af2_4_autofill.png`). Logs: the framework sent the request to Bitwarden's AutofillService and got a fill response with 2 fields; Ora logged "Focused field" and "Auto-fill requested for the focused field". Not checked: the fill itself (vault locked, no matching entry); the no-service and no-focus messages | Not checked: the phone-only test was requested |
 | 2026-11-17 | `01de1e1` (phone Compact fade, bottom fade and page clipping; pill tap restores the bar; address bar swipe; full-screen video; Clear history card morph) | Not checked: the phone was not connected over ADB this session, so none of the phone changes were seen | Not checked: no phone | Tablet (7ba8e294): build installed with `-r`; the launch screenshot showed the Compact row with Ora in focus, on about:blank, and no crash. Not checked: a real page (google.com, theverge.com); Back and tap-outside on the Clear history card; address bar swipe; full-screen video |
 | 2026-11-17 | `b5e1949` (browsing history and the Save browsing history switch) | Not checked: phone not connected over ADB | Tablet (25091RP04G, USB): History segment in the sidebar lists 3 visits under Today (Anime profile). The × removed the google.com row (log "Removed one history entry"). Search "animex" showed only animex.one. Clear history: Cancel kept both rows; Clear emptied the list to "No history yet" (log "Cleared 2 history entries"). Save browsing history off: "Saving is off" note shown; on again: note gone (logs "Save browsing history off" and "on"). Not checked: visits not recorded while saving is off; private tabs; the Personal profile; the 1000-entry cap; the phone Library |
 | 2026-11-17 | `9ef0c1d` (Reopen closed tab in the ⋯ menu) | Not checked: the phone was showing another app with a half-typed message, so no taps were made on it | Tablet (25091RP04G, USB): empty state shows "Nothing closed yet" and a tap shows "No closed tabs to reopen" (screenshot `tab_empty_tap.png`). Closed iana.org from the tab overview; the menu row showed "Internet Assigned Numbers Authority"; tap reopened iana.org with back enabled (`tab_reopened.png`). Logs: "Closed tab 0", "Reopened closed tab 0", "Restored history". One tab only; the 10-tab limit not tested |
