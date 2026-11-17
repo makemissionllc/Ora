@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Motion style: choose Smooth, Elegant, Fast or Premium in Settings > Appearance. It sets how quickly pages, menus and panels move."),
             ChangeItem(ChangeKind.ADDED, "Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match."),
             ChangeItem(ChangeKind.ADDED, "Link menu: \"Open in background tab\" opens a link without switching to it."),
             ChangeItem(ChangeKind.ADDED, "Cookies: choose to allow all cookies, block third-party cookies, or block all cookies, in Settings > Privacy."),

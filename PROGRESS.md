@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `ce7dbd1`.
+Last updated: 2026-11-17, at commit `67c0218`.
 
 ## Done
+- Motion style setting: Settings > Appearance > Motion with Smooth, Elegant, Fast and Premium (`67c0218`). Verified on phone and tablet; Fast applied on both, Smooth restored.
 
 - GeckoView browser with phone and tablet layouts. Tabs, tab grid, sidebar, start page, link menu, downloads, extensions, desktop site, Back handling, bookmarks.
 - Appearance: Auto, Light, Dark and Pure dark, plus website theme matching.
@@ -44,6 +45,7 @@ Last updated: 2026-11-17, at commit `ce7dbd1`.
 - In-app "What's new" page, built from the same entries as CHANGELOG.md.
 
 ## Pending
+- Motion: Smooth still uses 260 ms enter and 200 ms exit. AGENTS.md specifies overlay enter 220 ms fade and 280 ms scale, and exit 160 ms fade and 200 ms scale. Scale and fade do not yet use separate values.
 
 ### Tab management (from the Chrome and Safari comparison)
 
@@ -116,3 +118,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | Tab overview search; tablet top fade taller (`ce7dbd1`) | Search field shown; typing "start" left only the Start page tile (screenshots) | Search field shown in the overview (screenshot); filter not typed on the tablet |
 | 2026-11-17 | Link menu: new-tab and background-tab rows (`9104c7f`) | Both rows shown in the long-press menu on a link (screenshot). Opening the background tab not checked | Both rows shown in the long-press menu on a link (screenshot). Opening the background tab not checked |
 | 2026-11-17 | Phone status-bar fade; tablet Compact pill narrower, no band (`6acf4de`) | Status fade: clock and battery readable over the page (screenshot). Bottom Compact bar unchanged | Pill narrower and centred (screenshot). Gap above the page is the window's white background, not yet matched to the page; shrink and side panel not checked |
+| 2026-11-17 | Motion style setting (`67c0218`) | Motion section shows four styles; Fast selected and its description updated; Smooth restored (screenshots). Elegant showed as selected before any tap; cause not traced | Motion section shows four styles; Fast selected and description updated; Smooth restored (screenshots) |

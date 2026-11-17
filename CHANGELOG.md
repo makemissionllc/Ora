@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Motion style: Settings > Appearance has a Motion section with Smooth, Elegant, Fast and Premium. It sets how quickly pages, menus and panels move. (`67c0218`)
 - Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match. (`ce7dbd1`)
 - Link menu: "Open in background tab" opens a link without switching to it. (`9104c7f`)
 - Cookies: Settings > Privacy has a Cookies card. Allow all cookies, block third-party cookies, or block all cookies. (`c3d1857`)
