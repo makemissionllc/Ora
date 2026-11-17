@@ -4,8 +4,9 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.animation.core.Animatable
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.graphics.Color
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.ui.graphics.Brush
+import android.app.Activity
+import androidx.compose.animation.animateColorAsState
+import androidx.core.view.WindowCompat
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
@@ -345,6 +346,33 @@ private fun BrowserContent(
     var topBarHeight by remember { mutableStateOf(0.dp) }
     // Tablet Compact floats over the page, so the sidebar reserves this much room at its top.
     var compactRowHeight by remember { mutableStateOf(0.dp) }
+    /**
+     * The colour behind the status bar: the start page's grey on the start page, otherwise the page's own top colour
+     * once it has loaded, and the theme background until one is known. It eases between colours with the shared enter motion.
+     */
+    val stripColor = if (selected.url == BrowserTabs.START_URL) {
+        browserColors().GridBackground
+    } else {
+        selected.topColor ?: MaterialTheme.colorScheme.background
+    }
+    val barColor by animateColorAsState(stripColor, OraMotion.enter(), label = "status strip")
+    // Dark icons on a light strip, light icons on a dark one. Set on the window so the system bar follows the page.
+    val statusWindow = (context as? Activity)?.window
+    LaunchedEffect(stripColor, statusWindow) {
+        statusWindow?.let { window ->
+            WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars =
+                isLightStatusStrip(stripColor)
+        }
+    }
+    // Read the page's top row once it has loaded and is not scrolled; a scrolled page no longer shows its header colour.
+    LaunchedEffect(selected.id, selected.loading, selected.scrolled) {
+        if (selected.url != BrowserTabs.START_URL && !selected.loading && !selected.scrolled) {
+            pageView.view?.capturePixels()?.accept(
+                { bitmap -> if (bitmap != null) selected.topColor = sampleTopRow(bitmap) },
+                { }
+            )
+        }
+    }
     /** Bookmarks and open tabs, offered as address bar suggestions. */
     val addressCandidates = (
         bookmarkList.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) } +
@@ -741,11 +769,10 @@ private fun BrowserContent(
         }
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
         if (tabletCompact) {
-            // The page runs up under the status bar; a soft fade keeps the icons readable, with no solid band.
-            StatusBarFade(
-                color = browserColors().Scrim,
-                solidBand = false,
-                extra = BrowserTokens.StatusFadeExtra * 2,
+            // The page runs up under the status bar: a solid strip in the page's colour at the top, a soft fade once it scrolls.
+            StatusBarOverlay(
+                color = barColor,
+                scrolled = selected.scrolled,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
             // Transparent around the pill: the page shows through, so the row seems to float over it.
@@ -758,12 +785,10 @@ private fun BrowserContent(
         if (!isTablet) {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
             if (!topLayout) {
-                // Phone: the status-bar band is a solid palette colour, and the page fades into it just below the
-                // status bar. No black block: the band uses the same colour as the start page, and the icons stay clear.
-                StatusBarFade(
-                    color = browserColors().GridBackground,
-                    solidBand = true,
-                    extra = BrowserTokens.StatusFadeExtra,
+                // Phone: the strip behind the status bar matches the page's top colour, and fades once the page scrolls.
+                StatusBarOverlay(
+                    color = barColor,
+                    scrolled = selected.scrolled,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
             }
@@ -811,34 +836,6 @@ private fun BrowserContent(
 }
 
 /** Shows the selected tab's page. The single GeckoView is re-pointed at whichever session is selected. */
-/**
- * The strip under the status bar that the page fades into. [solidBand] holds a solid colour over the status bar
- * itself and fades only below it; without it the colour fades from the top edge. One composable serves both
- * the phone band and the tablet scrim, so the two stay in step.
- */
-@Composable
-private fun StatusBarFade(
-    color: Color,
-    solidBand: Boolean,
-    extra: Dp,
-    modifier: Modifier = Modifier,
-) {
-    val density = LocalDensity.current
-    val statusTop = WindowInsets.statusBars.asPaddingValues(density).calculateTopPadding()
-    val height = statusTop + extra
-    val stops = if (solidBand) {
-        arrayOf(0f to color, (statusTop / height).coerceIn(0f, 1f) to color, 1f to Color.Transparent)
-    } else {
-        arrayOf(0f to color, 1f to Color.Transparent)
-    }
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(height)
-            .background(Brush.verticalGradient(colorStops = stops))
-    )
-}
-
 @Composable
 private fun BrowserPage(
     tab: BrowserTab,
@@ -850,7 +847,8 @@ private fun BrowserPage(
     topInset: Dp,
     onSubmit: (String) -> Unit,
 ) {
-    // On phones the page starts under the status bar; this keeps its top controls clear of the status icons.
+    // The start page's content starts below the status bar on phones. Web pages run up under it: the strip behind
+    // the bar takes the page's top colour, so the page reads as starting below it.
     val statusInset = if (belowStatusBar) Modifier.statusBarsPadding() else Modifier
     if (tab.url == BrowserTabs.START_URL) {
         // The background fills the whole window, so a floating Compact row sits over the start page, not a white strip.
@@ -874,7 +872,6 @@ private fun BrowserPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .then(statusInset)
             .pullToReload(
                 canPull = { tab.lastScrollY <= PULL_SCROLL_TOLERANCE_PX && !tab.loading },
                 onDistance = { pull = it },
@@ -891,7 +888,7 @@ private fun BrowserPage(
         )
         AnimatedVisibility(
             visible = indicatorVisible,
-            modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
+            modifier = Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.statusBars).padding(top = 12.dp),
             enter = fadeIn(OraMotion.enter()) + scaleIn(OraMotion.enter(), initialScale = OraMotion.MORPH_SCALE),
             exit = fadeOut(OraMotion.exit()) + scaleOut(OraMotion.exit(), targetScale = OraMotion.MORPH_SCALE),
         ) {

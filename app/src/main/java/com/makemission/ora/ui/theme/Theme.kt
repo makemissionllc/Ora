@@ -155,6 +155,8 @@ object BrowserTokens {
     val TabletCompactPillMaxWidth = 440.dp
     /** Extra height of the status-bar fade below the status bar, so the page softens into it. */
     val StatusFadeExtra = 16.dp
+    /** Total height of the soft fade behind the status bar once a page scrolls under it (design: SB-Scroll). */
+    val StatusScrollFade = 84.dp
     val PhoneCompactPill = RoundedCornerShape(percent = 50)
     /** Phone Bottom and Top control bars float above the page as rounded cards, like iOS Safari. */
     val FloatingBarShape = RoundedCornerShape(28.dp)

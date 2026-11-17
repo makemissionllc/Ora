@@ -54,6 +54,11 @@ class BrowserTab(
     var chromeHidden by mutableStateOf(false)
         private set
     var lastScrollY = 0
+    /** True once the page has scrolled away from its top. The status bar then fades instead of showing a solid strip. */
+    var scrolled by mutableStateOf(false)
+        private set
+    /** Colour of the page's top row, sampled while the page sits at its top. Null until a page has been sampled. */
+    var topColor by mutableStateOf<androidx.compose.ui.graphics.Color?>(null)
     /** Scroll distance added up since the last change of direction; decides when the chrome folds. */
     private var foldDistance = 0
 
@@ -140,6 +145,7 @@ class BrowserTab(
             override fun onScrollChanged(session: GeckoSession, scrollX: Int, scrollY: Int) {
                 val delta = scrollY - lastScrollY
                 lastScrollY = scrollY
+                scrolled = scrollY > 0
                 // GeckoView reports small steps (1 to 2 px per event), so add them up in one direction
                 // and fold once the total passes the threshold. A change of direction starts over.
                 foldDistance = if (delta == 0 || (foldDistance >= 0) == (delta >= 0)) foldDistance + delta else delta
@@ -171,6 +177,9 @@ class BrowserTab(
                 pageRevealed = false
                 chromeHidden = false
                 lastScrollY = 0
+                scrolled = false
+                // The new page's colour is sampled once it stops loading; the old one must not linger.
+                topColor = null
                 // A link menu belongs to the page it was opened on; a new page clears it.
                 pressTarget = null
                 selection = null
