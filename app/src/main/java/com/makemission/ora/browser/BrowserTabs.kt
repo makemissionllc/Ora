@@ -236,6 +236,9 @@ private const val SCROLL_FOLD_THRESHOLD_PX = 24
 /** Load progress at which a page is faded in. Earlier than this the page is still mostly blank. */
 const val REVEAL_PROGRESS_PERCENT = 50
 
+/** A tab that was closed, kept for the undo offer. [id] is the closed tab's id, so each close can be told apart. */
+data class ClosedTab(val id: Long, val url: String)
+
 /** A link and/or image under a long press, with the press position in page pixels. */
 data class PressTarget(val linkUri: String?, val imageUri: String?, val x: Int, val y: Int)
 
@@ -277,9 +280,28 @@ class BrowserTabs(
         selectedId = id
     }
 
+    /** The tab closed most recently, kept so the user can undo the close for a few seconds. */
+    var recentlyClosed by mutableStateOf<ClosedTab?>(null)
+        private set
+
+    /** Reopens the most recently closed tab's page and clears the undo offer. */
+    fun reopenLastClosed() {
+        val closed = recentlyClosed ?: return
+        recentlyClosed = null
+        newTab(closed.url)
+        BrowserLog.info("tabs", "Reopened closed tab ${closed.id}")
+    }
+
+    fun dismissUndo() {
+        recentlyClosed = null
+    }
+
     fun close(id: Long) {
         val index = tabs.indexOfFirst { it.id == id }
         if (index < 0) return
+        val closing = tabs[index]
+        // Start pages have nothing worth bringing back, so they are not offered for undo.
+        recentlyClosed = if (closing.url == START_URL) null else ClosedTab(closing.id, closing.url)
         tabs.removeAt(index).close()
         BrowserLog.info("tabs", "Closed tab $id (${tabs.size} open)")
         if (tabs.isEmpty()) {

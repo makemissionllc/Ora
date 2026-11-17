@@ -6,7 +6,11 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.TextButton
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import android.content.Context
@@ -506,6 +510,21 @@ private fun BrowserContent(
                         }
                     }
                 }
+                // Quality of life: a closed tab can be brought back for a few seconds, instead of being lost.
+                val closed = tabs.recentlyClosed
+                LaunchedEffect(closed?.id) {
+                    if (closed != null) {
+                        delay(UNDO_CLOSE_MS)
+                        tabs.dismissUndo()
+                    }
+                }
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = BrowserTokens.SelectionMenuBottomInset)
+                ) {
+                    UndoCloseOffer(visible = closed != null, onUndo = { tabs.reopenLastClosed() })
+                }
                 if (showMenu) {
                     BrowserMenuSheet(
                             isBookmarked = bookmarkList.any { it.url == selected.url },
@@ -863,7 +882,20 @@ private fun BottomControls(
 /** The Tabs icon with the number of open tabs on top, so the count is visible without opening the overview. */
 @Composable
 private fun TabsIcon(tabCount: Int) {
-    Box(contentAlignment = Alignment.Center) {
+    // A new tab makes the icon swell and settle, so the user sees the tab was added even with the grid closed.
+    val bump = remember { Animatable(1f) }
+    var previous by remember { mutableIntStateOf(tabCount) }
+    LaunchedEffect(tabCount) {
+        if (tabCount > previous) {
+            bump.snapTo(TAB_BUMP_SCALE)
+            bump.animateTo(1f, OraMotion.enter<Float>())
+        }
+        previous = tabCount
+    }
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier.graphicsLayer { scaleX = bump.value; scaleY = bump.value }
+    ) {
         Icon(Icons.Outlined.Tab, contentDescription = null)
         Text(
             text = tabCount.toString(),
@@ -1405,3 +1437,35 @@ private fun shareUrl(context: Context, url: String) {
 
 /** GeckoView can report a scroll of a pixel or two at the very top; that still counts as the top for a pull. */
 private const val PULL_SCROLL_TOLERANCE_PX = 4
+
+/** "Tab closed · Undo" card shown after a tab is closed. Grows in and shrinks back, like the other overlays. */
+@Composable
+private fun UndoCloseOffer(visible: Boolean, onUndo: () -> Unit) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(OraMotion.enter()) + scaleIn(OraMotion.enter(), initialScale = OraMotion.MORPH_SCALE),
+        exit = fadeOut(OraMotion.exit()) + scaleOut(OraMotion.exit(), targetScale = OraMotion.MORPH_SCALE),
+    ) {
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+                .background(browserColors().Surface)
+                .padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Tab closed", color = browserColors().AddressBarText, fontSize = 15.sp)
+            TextButton(onClick = {
+                BrowserLog.info("tabs", "Undo close from the tab grid")
+                onUndo()
+            }) {
+                Text("Undo", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+            }
+        }
+    }
+}
+
+/** Scale the tabs icon jumps to when a tab opens, before settling back to normal. */
+private const val TAB_BUMP_SCALE = 1.25f
+
+/** How long the "Tab closed · Undo" offer stays up. */
+private const val UNDO_CLOSE_MS = 5000L
