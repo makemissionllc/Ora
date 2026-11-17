@@ -103,6 +103,11 @@ fun LinkQuickMenu(
                     QuickMenuRow("Open in new tab") {
                         close()
                         BrowserLog.info("page", "Opened link in new tab: $link")
+                        tabs.newTab(link, select = true)
+                    }
+                    QuickMenuRow("Open in background tab") {
+                        close()
+                        BrowserLog.info("page", "Opened link in background tab: $link")
                         tabs.newTab(link, select = false)
                     }
                     QuickMenuRow("Copy link address") {
