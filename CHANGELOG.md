@@ -26,6 +26,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The app icon uses the new charcoal design. (`cf85810`)
 - Find in page: open it from the menu, type to search the page, and step through matches. (`1ab7996`)
 - On phones, the Compact address pill narrows toward the centre as you scroll, with its URL centred. (`6e0ddeb`)
+- Menu actions run after the menu has closed, so Settings, Library and the rest open cleanly. On tablets the panel slides out first. (uncommitted)
 - On tablets, the ⋯ menu slides in from the right as a panel, not up from the bottom. Tap the dimmed page or press Back to close it. (uncommitted)
 - On tablets, Settings is full screen again, as before. The side panel was reverted. (uncommitted)
 - On tablets, the tab overview covers the whole window, with no toolbar or sidebar. (uncommitted)

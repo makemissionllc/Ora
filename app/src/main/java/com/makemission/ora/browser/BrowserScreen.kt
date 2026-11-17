@@ -596,47 +596,18 @@ private fun BrowserContent(
                         isTablet = isTablet,
                         isBookmarked = bookmarkList.any { it.url == selected.url },
                         onDismiss = { showMenu = false },
-                        onShare = {
-                            showMenu = false
-                            shareUrl(context, selected.url)
-                        },
-                        onBookmark = {
-                            bookmarks.toggle(selected.url, selected.title)
-                            showMenu = false
-                        },
-                        onNewTab = {
-                            showMenu = false
-                            onNewTab()
-                        },
-                        onLibrary = {
-                            showMenu = false
-                            showLibrary = true
-                        },
-                        onFind = {
-                            showMenu = false
-                            showFind = true
-                        },
+                        // The menu closes itself before each action runs, so actions only do their work.
+                        onShare = { shareUrl(context, selected.url) },
+                        onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                        onNewTab = { onNewTab() },
+                        onLibrary = { showLibrary = true },
+                        onFind = { showFind = true },
                         desktopSite = selected.desktopSite,
-                        onToggleDesktop = { enabled ->
-                            selected.applyDesktopSite(enabled)
-                            showMenu = false
-                        },
-                        onSettings = {
-                            showMenu = false
-                            showSettings = true
-                        },
-                        onExtensions = {
-                            showMenu = false
-                            showExtensions = true
-                        },
-                        onDownloads = {
-                            showMenu = false
-                            showDownloads = true
-                        },
-                        onTabs = {
-                            showMenu = false
-                            openTabs()
-                        }
+                        onToggleDesktop = { enabled -> selected.applyDesktopSite(enabled) },
+                        onSettings = { showSettings = true },
+                        onExtensions = { showExtensions = true },
+                        onDownloads = { showDownloads = true },
+                        onTabs = { openTabs() }
                     )
                 }
                 // Overlays grow out of the tabs button's corner and shrink back into it.

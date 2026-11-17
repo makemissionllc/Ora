@@ -83,27 +83,28 @@ fun BrowserMenuSheet(
     onTabs: () -> Unit,
     onFind: () -> Unit,
 ) {
-    val items: @Composable () -> Unit = {
+    // Each action first closes the menu, then runs. The tablet panel animates out before the action runs.
+    val items: @Composable ((() -> Unit) -> Unit) -> Unit = { act ->
         BrowserMenuItems(
             isBookmarked = isBookmarked,
-            onShare = onShare,
-            onBookmark = onBookmark,
-            onNewTab = onNewTab,
-            onLibrary = onLibrary,
+            onShare = { act(onShare) },
+            onBookmark = { act(onBookmark) },
+            onNewTab = { act(onNewTab) },
+            onLibrary = { act(onLibrary) },
             desktopSite = desktopSite,
-            onToggleDesktop = onToggleDesktop,
-            onSettings = onSettings,
-            onExtensions = onExtensions,
-            onDownloads = onDownloads,
-            onTabs = onTabs,
-            onFind = onFind,
+            onToggleDesktop = { enabled -> act { onToggleDesktop(enabled) } },
+            onSettings = { act(onSettings) },
+            onExtensions = { act(onExtensions) },
+            onDownloads = { act(onDownloads) },
+            onTabs = { act(onTabs) },
+            onFind = { act(onFind) },
         )
     }
     if (isTablet) {
         BrowserMenuSidePanel(onDismiss = onDismiss, content = items)
     } else {
         ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
-            items()
+            items { action -> onDismiss(); action() }
         }
     }
 }
@@ -201,19 +202,28 @@ private fun BrowserMenuItems(
  * Tapping the scrim or pressing Back slides it out first, then closes it.
  */
 @Composable
-private fun BrowserMenuSidePanel(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+private fun BrowserMenuSidePanel(onDismiss: () -> Unit, content: @Composable ((() -> Unit) -> Unit) -> Unit) {
     val visibleState = remember { MutableTransitionState(false) }
     var dismissing by remember { mutableStateOf(false) }
+    // An action chosen from the menu waits until the panel has slid out, then runs.
+    var pendingAction by remember { mutableStateOf<(() -> Unit)?>(null) }
     LaunchedEffect(Unit) { visibleState.targetState = true }
-    // Once the exit has finished, tell the screen to remove the panel.
+    // Once the exit has finished, run any chosen action and remove the panel.
     LaunchedEffect(dismissing, visibleState.isIdle) {
-        if (dismissing && visibleState.isIdle && !visibleState.currentState) onDismiss()
+        if (dismissing && visibleState.isIdle && !visibleState.currentState) {
+            pendingAction?.invoke()
+            onDismiss()
+        }
     }
     fun dismiss() {
         if (!dismissing) {
             dismissing = true
             visibleState.targetState = false
         }
+    }
+    val act: (() -> Unit) -> Unit = { action ->
+        pendingAction = action
+        dismiss()
     }
     BackHandler(enabled = !dismissing) { dismiss() }
 
@@ -243,7 +253,7 @@ private fun BrowserMenuSidePanel(onDismiss: () -> Unit, content: @Composable () 
                     .statusBarsPadding()
                     .navigationBarsPadding()
             ) {
-                content()
+                content(act)
             }
         }
     }
