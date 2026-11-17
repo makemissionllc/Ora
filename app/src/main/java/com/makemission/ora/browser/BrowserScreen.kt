@@ -1783,6 +1783,8 @@ private fun requestAutofill(context: android.content.Context, view: GeckoView?) 
         Toast.makeText(context, "No autofill service available for this field", Toast.LENGTH_SHORT).show()
         return
     }
+    val node = autofill.focused
+    BrowserLog.info("autofill", "Focused field: domain=${node?.domain} hint=${node?.hint} inputType=${node?.inputType} tag=${node?.tag} attrs=${node?.attributes} rect=$rect id=${data.id}")
     manager.requestAutofill(view, data.id, rect)
     BrowserLog.info("autofill", "Auto-fill requested for the focused field")
 }
