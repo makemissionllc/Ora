@@ -742,13 +742,11 @@ private fun BrowserContent(
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
         if (tabletCompact) {
             // The page runs up under the status bar; a soft fade keeps the icons readable, with no solid band.
-            val statusTop = WindowInsets.statusBars.asPaddingValues(density).calculateTopPadding()
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(statusTop + BrowserTokens.StatusFadeExtra * 2)
-                    .background(Brush.verticalGradient(listOf(browserColors().Scrim, Color.Transparent)))
+            StatusBarFade(
+                color = browserColors().Scrim,
+                solidBand = false,
+                extra = BrowserTokens.StatusFadeExtra * 2,
+                modifier = Modifier.align(Alignment.TopCenter),
             )
             // Transparent around the pill: the page shows through, so the row seems to float over it.
             Box(
@@ -762,23 +760,11 @@ private fun BrowserContent(
             if (!topLayout) {
                 // Phone: the status-bar band is a solid palette colour, and the page fades into it just below the
                 // status bar. No black block: the band uses the same colour as the start page, and the icons stay clear.
-                val statusTop = WindowInsets.statusBars.asPaddingValues(density).calculateTopPadding()
-                val fadeHeight = statusTop + BrowserTokens.StatusFadeExtra
-                val band = browserColors().GridBackground
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .fillMaxWidth()
-                        .height(fadeHeight)
-                        .background(
-                            Brush.verticalGradient(
-                                colorStops = arrayOf(
-                                    0f to band,
-                                    (statusTop / fadeHeight).coerceIn(0f, 1f) to band,
-                                    1f to Color.Transparent,
-                                )
-                            )
-                        )
+                StatusBarFade(
+                    color = browserColors().GridBackground,
+                    solidBand = true,
+                    extra = BrowserTokens.StatusFadeExtra,
+                    modifier = Modifier.align(Alignment.TopCenter),
                 )
             }
         }
@@ -825,6 +811,34 @@ private fun BrowserContent(
 }
 
 /** Shows the selected tab's page. The single GeckoView is re-pointed at whichever session is selected. */
+/**
+ * The strip under the status bar that the page fades into. [solidBand] holds a solid colour over the status bar
+ * itself and fades only below it; without it the colour fades from the top edge. One composable serves both
+ * the phone band and the tablet scrim, so the two stay in step.
+ */
+@Composable
+private fun StatusBarFade(
+    color: Color,
+    solidBand: Boolean,
+    extra: Dp,
+    modifier: Modifier = Modifier,
+) {
+    val density = LocalDensity.current
+    val statusTop = WindowInsets.statusBars.asPaddingValues(density).calculateTopPadding()
+    val height = statusTop + extra
+    val stops = if (solidBand) {
+        arrayOf(0f to color, (statusTop / height).coerceIn(0f, 1f) to color, 1f to Color.Transparent)
+    } else {
+        arrayOf(0f to color, 1f to Color.Transparent)
+    }
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(height)
+            .background(Brush.verticalGradient(colorStops = stops))
+    )
+}
+
 @Composable
 private fun BrowserPage(
     tab: BrowserTab,

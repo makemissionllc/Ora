@@ -5,7 +5,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,6 +46,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.OraMotion
 import com.makemission.ora.ui.theme.browserColors
 import kotlinx.coroutines.launch
 
@@ -158,8 +158,8 @@ fun ExtensionsScreen(
             item {
                 AnimatedVisibility(
                     visible = results.isNotEmpty(),
-                    enter = fadeIn(tween(220)) + expandVertically(tween(260)),
-                    exit = fadeOut(tween(160)) + shrinkVertically(tween(200))
+                    enter = fadeIn(OraMotion.enter()) + expandVertically(OraMotion.enter()),
+                    exit = fadeOut(OraMotion.exit()) + shrinkVertically(OraMotion.exit())
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
