@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `e3ebbf3`.
+Last updated: 2026-11-17, at commit `ecff87e`.
 
 ## Done
 
@@ -85,7 +85,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `403206e` | GeckoView 160 | Start page and mozilla.org loaded | Start page loaded; a search page loaded after a retype |
 | 2026-11-17 | `1f865d2` | Secure DNS row | Network card with the switch on | Not checked: toolbar hidden on a wiki page, Settings unreachable |
 | 2026-11-17 | `5ddf098` | Selection card | Card shown for a selected word; Close cleared the card and handles. Phone number and date actions not checked | Card shown for a selected word; Close cleared the card and handles. Phone number and date actions not checked |
-| 2026-11-17 | rotation fix (uncommitted) | Configuration changes handled in place | Loaded page, search and tab kept after switch to landscape; auto-rotate restored | Not checked |
+| 2026-11-17 | rotation fix (`ecff87e`) | Configuration changes handled in place | Loaded page, search and tab kept after switch to landscape; auto-rotate restored | Not checked |
 | 2026-11-17 | `6e0ddeb` | Compact pill shrinks toward centre, URL centred | Shrunk pill centred, URL centred (screenshot) | Not checked |
 | 2026-11-17 | `cf85810` | App icon | Charcoal ring-and-dot icon on the home screen (screenshot) | Charcoal ring-and-dot icon on the home screen (screenshot) |
 | 2026-11-17 | `1ab7996` | Find in page bar from the menu; match count, arrows and close | "the" gave 2/69 matches; arrows and close work (screenshot) | "the" gave 1/43 matches; close works (screenshot) |
@@ -96,8 +96,8 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `97e7682` | Menu Library label on one line; profile chips get room | Library label whole in the menu; profile chips fully drawn in the tab overview (screenshots) | Profile chips fully shown in the sidebar (screenshot). Library label in the tablet menu not re-checked |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
 | 2026-11-17 | `e3ebbf3` | Tablet Settings as a side panel; tap the dimmed page to close | Settings still full screen (screenshot); the "Fade pages in" description touches its switch (fixed in the next row) |
-| 2026-11-17 | tablet overview full screen; profile chip centring; phone overview backdrop (uncommitted) | Overview shows no page behind its profile row; profile name centred; only the Personal profile exists on this phone (screenshots) | Overview covers the whole window, no toolbar or sidebar; profile names centred in chips (screenshots) |
-| 2026-11-17 | Tablet ⋯ menu as a right side panel; tablet Settings reverted to full screen (uncommitted) | ⋯ menu still a bottom sheet (screenshot) | ⋯ menu slides in from the right; Back closed it (screenshots); Settings opens full screen with its category list (screenshot) |
-| 2026-11-17 | Tablet Compact floating top row (uncommitted) | Phone Compact bottom bar unchanged (screenshot) | Top row shows back, forward, pill, tabs and menu; Settings description updated; Tabs button opens the overview; Done closes it (screenshots) |
-| 2026-11-17 | Menu actions run after the menu closes (uncommitted) | "Find in page" from the sheet: the find bar opened after the sheet closed (screenshots) | Settings from the panel opened after the panel slid out (screenshots) |
-| 2026-11-17 | fade text fix (uncommitted) | "Fade pages in" text keeps a gap from its switch | Text wraps clear of the switch (screenshot). Tablet not checked | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |
+| 2026-11-17 | tablet overview full screen; profile chip centring; phone overview backdrop (`ecff87e`) | Overview shows no page behind its profile row; profile name centred; only the Personal profile exists on this phone (screenshots) | Overview covers the whole window, no toolbar or sidebar; profile names centred in chips (screenshots) |
+| 2026-11-17 | Tablet ⋯ menu as a right side panel; tablet Settings reverted to full screen (`ecff87e`) | ⋯ menu still a bottom sheet (screenshot) | ⋯ menu slides in from the right; Back closed it (screenshots); Settings opens full screen with its category list (screenshot) |
+| 2026-11-17 | Tablet Compact floating top row (`ecff87e`) | Phone Compact bottom bar unchanged (screenshot) | Top row shows back, forward, pill, tabs and menu; Settings description updated; Tabs button opens the overview; Done closes it (screenshots) |
+| 2026-11-17 | Menu actions run after the menu closes (`ecff87e`) | "Find in page" from the sheet: the find bar opened after the sheet closed (screenshots) | Settings from the panel opened after the panel slid out (screenshots) |
+| 2026-11-17 | fade text fix (`ecff87e`) | "Fade pages in" text keeps a gap from its switch | Text wraps clear of the switch (screenshot). Tablet not checked | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |
