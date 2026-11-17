@@ -20,7 +20,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 **Changed**
 - GeckoView upgraded from 153 to 160. (`403206e`)
 - The app icon uses the new charcoal design. (`cf85810`)
-- Find in page: open it from the menu, type to search the page, and step through matches. (pending commit)
+- Find in page: open it from the menu, type to search the page, and step through matches. (`1ab7996`)
 - On phones, the Compact address pill narrows toward the centre as you scroll, with its URL centred. (`6e0ddeb`)
 - Load bar no longer flashes, and phone bars float above the page. (`205a2d6`)
 
