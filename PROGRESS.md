@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `9ef0c1d`.
+Last updated: 2026-11-17, at commit `b5e1949`.
 
 ## Done
+- Browsing history (`b5e1949`): a History segment in the tablet sidebar and the phone Library lists the pages you opened, newest first, grouped by day. Search by title or address, remove one entry with its ×, or clear all after a confirmation. Each profile keeps its own history. Saving can be turned off in Settings > Privacy, and private tabs are never saved. Verified on tablet (Anime profile): 3 visits listed under Today; the × removed the google.com row (log "Removed one history entry"); search "animex" showed only animex.one; Clear history: Cancel kept both rows, Clear emptied the list to "No history yet" (log "Cleared 2 history entries"); with saving off the "Saving is off" note appeared, and on again it went (logs "Save browsing history off" and "on"). Not checked: the phone (not connected over ADB); that a visit is not recorded while saving is off; private tabs; the Personal profile's history; the 1000-entry cap.
 - Reopen closed tab in the ⋯ menu (`9ef0c1d`): the last 10 closed tabs (not private tabs or start pages) are kept with their back and forward pages. The row under Find in page shows the title of the tab it would reopen. With nothing closed it says "Nothing closed yet", and tapping it shows "No closed tabs to reopen". Verified on tablet: the empty-state snackbar; closing iana.org from the tab overview; the row then showed its title; tapping it reopened iana.org with back enabled; logs "Closed tab 0", "Reopened closed tab 0" and "Restored history". Not checked: the phone (not tapped, see the verification log); closing and reopening more than one tab; the 10-tab limit.
 - Lab: device font on web pages (`a287715`): Settings > Lab switch, off by default. Verified on tablet: the switch shows, turned on, and the log shows "[settings] Lab: device font on web pages on"; the page was reloaded and animex.one still showed its icons. Not checked: the icon problem on a font-icon site (fonts.google.com showed stray glyph text on the phone with the switch on); the phone; switching back off.
 - Settings layout fix (`bb3d99b`): the privacy switch rows had been inserted inside the Home page section, so `d12870d` did not compile. Moved back above it; the build passes.
@@ -66,6 +67,7 @@ Last updated: 2026-11-17, at commit `9ef0c1d`.
 ### Motion
 - Sidebar and bars opening from their origin (a scale from the hamburger, as on iOS). Only the fade and width expansion exist; the origin scale is not built.
 - Layout changes (bar style, Compact shrink) and tab switches still cut over without a shared transition.
+- The History "Clear history" confirmation is a standard dialog. It does not morph from its button yet (AGENTS.md rule 10).
 
 ### Tab management (from the Chrome and Safari comparison)
 
@@ -74,11 +76,11 @@ Last updated: 2026-11-17, at commit `9ef0c1d`.
 - Mini tab switcher at the bottom for quick switching within a group.
 - Inactive tabs: move unused tabs to a separate collection after a chosen time.
 - Recent tabs: list tabs open on other devices signed into the same account. Needs a sync design first.
-- Search bookmarks and history from one search field. Open-tab search is done (see Done).
+- Search bookmarks and history from one search field. Open-tab and history search are done (see Done); a single field across bookmarks and history is still open.
 
 ### Better app usage
 
-- Profiles: history, cookies and logins are still shared between profiles. Keeping them apart needs a storage decision.
+- Profiles: cookies and logins are still shared between profiles. Bookmarks and history are kept per profile. Keeping cookies and logins apart needs a storage decision.
 - Built-in ad blocking beyond tracking protection: Privacy already has "Block ads and trackers" (GeckoView strict tracking protection). A fuller blocker would need a filter-list design, a choice of lists, and per-site exceptions before any work.
 
 ### Carried over
@@ -105,6 +107,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `b5e1949` (browsing history and the Save browsing history switch) | Not checked: phone not connected over ADB | Tablet (25091RP04G, USB): History segment in the sidebar lists 3 visits under Today (Anime profile). The × removed the google.com row (log "Removed one history entry"). Search "animex" showed only animex.one. Clear history: Cancel kept both rows; Clear emptied the list to "No history yet" (log "Cleared 2 history entries"). Save browsing history off: "Saving is off" note shown; on again: note gone (logs "Save browsing history off" and "on"). Not checked: visits not recorded while saving is off; private tabs; the Personal profile; the 1000-entry cap; the phone Library |
 | 2026-11-17 | `9ef0c1d` (Reopen closed tab in the ⋯ menu) | Not checked: the phone was showing another app with a half-typed message, so no taps were made on it | Tablet (25091RP04G, USB): empty state shows "Nothing closed yet" and a tap shows "No closed tabs to reopen" (screenshot `tab_empty_tap.png`). Closed iana.org from the tab overview; the menu row showed "Internet Assigned Numbers Authority"; tap reopened iana.org with back enabled (`tab_reopened.png`). Logs: "Closed tab 0", "Reopened closed tab 0", "Restored history". One tab only; the 10-tab limit not tested |
 | 2026-11-17 | `d8d0615` (page area background while loading) | Not checked: the white flash was not captured. Frames during navigation were taken too late to show the transition | Not checked: the white flash was not captured. Only a frame before navigation was taken, with the keyboard up (screenshot `w_pl_1.png`). The loaded dark page showed no white (`w_p2.png`) | Built and installed; a frame after load showed the page. Mid-load frames were too late to show the transition; not verified. Light mode not checked |
 | 2026-11-17 | `23346d7` (tab history kept across restarts) | Quick resume restores each tab's history: a second page loaded, HOME, force-stop, relaunch; the tab came back and Back returned to the earlier page (seen on phone earlier in this session) | Quick resume switched on in Settings > Home page. Example.org, then a Google result to example.com loaded; HOME, force-stop, relaunch: example.com tab reopened with back enabled; Back went to the Google results page (screenshots `t_s10.png`, `t_s11.png`). Left on |
