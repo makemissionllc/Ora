@@ -286,8 +286,8 @@ private fun BrowserContent(
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP && settings.quickResume.value) {
                 tabsByProfile.forEach { (id, profileTabs) ->
-                    val (urls, selected) = profileTabs.savableSnapshot()
-                    sessionStore.save(id, urls, selected)
+                    val saved = profileTabs.savableSnapshot()
+                    sessionStore.save(id, saved.tabs, saved.selected)
                 }
                 BrowserLog.info("session", "Saved tabs for ${tabsByProfile.size} profile(s)")
             }

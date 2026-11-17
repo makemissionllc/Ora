@@ -29,6 +29,8 @@ class BrowserTab(
     private val desktopByDefault: Boolean = false,
     /** A private tab runs in GeckoView private mode: no history, cookies or stored logins are kept for it. */
     val isPrivate: Boolean = false,
+    /** Session state saved by quick resume. Restores the page's history; null loads the address instead. */
+    restoreState: String? = null,
 ) {
     val session: GeckoSession = if (isPrivate) {
         GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build())
@@ -38,6 +40,8 @@ class BrowserTab(
     private val appContext: Context = context.applicationContext
 
     var url by mutableStateOf(initialUrl)
+    /** Latest session state from GeckoView, kept so quick resume can save this tab's history. */
+    var sessionState: String? = null
     var title by mutableStateOf("")
     /** Last captured picture of the page, shown as the tab's preview in the tab grid. */
     var thumbnail by mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
@@ -195,6 +199,10 @@ class BrowserTab(
             }
         }
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
+            override fun onSessionStateChange(session: GeckoSession, state: GeckoSession.SessionState) {
+                sessionState = state.toString()
+            }
+
             override fun onPageStart(session: GeckoSession, url: String) {
                 loading = true
                 progress = 0
@@ -266,7 +274,26 @@ class BrowserTab(
         }
         session.open(GeckoEngine.runtime(context))
         // The start page is drawn natively, so it never goes to GeckoView.
-        if (initialUrl != BrowserTabs.START_URL) session.loadUri(initialUrl)
+        if (initialUrl != BrowserTabs.START_URL) {
+            val restored = restoreState != null && restoreHistory(restoreState)
+            if (!restored) session.loadUri(initialUrl)
+        }
+    }
+
+    /** Puts a saved history back into the session. Returns false if the saved state cannot be read. */
+    private fun restoreHistory(state: String): Boolean = try {
+        val parsed = GeckoSession.SessionState.fromString(state)
+        if (parsed == null) {
+            BrowserLog.warn("session", "Saved history for $url is not valid. Loading the address instead.")
+            false
+        } else {
+            session.restoreState(parsed)
+            BrowserLog.info("session", "Restored history for $url")
+            true
+        }
+    } catch (e: Exception) {
+        BrowserLog.error("session", "Could not restore the history for $url. Loading the address instead.", e)
+        false
     }
 
     fun close() = session.close()
@@ -306,8 +333,8 @@ class BrowserTabs(
 
     init {
         val saved = restore
-        if (saved != null && saved.urls.isNotEmpty()) {
-            val reopened = saved.urls.map { newTab(it, select = false) }
+        if (saved != null && saved.tabs.isNotEmpty()) {
+            val reopened = saved.tabs.map { newTab(it.url, select = false, restoreState = it.state) }
             select(reopened[saved.selected.coerceIn(0, reopened.lastIndex)].id)
             BrowserLog.info("session", "Quick resume reopened ${reopened.size} tabs")
         } else {
@@ -319,17 +346,17 @@ class BrowserTabs(
      * The addresses of the tabs quick resume may keep (private tabs are left out), and the position
      * of the selected tab among them. A private selection falls back to the first tab.
      */
-    fun savableSnapshot(): Pair<List<String>, Int> {
+    fun savableSnapshot(): SessionStore.Saved {
         val kept = tabs.filterNot { it.isPrivate }
         val selectedIndex = kept.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
-        return kept.map { it.url } to selectedIndex
+        return SessionStore.Saved(kept.map { SessionStore.SavedTab(it.url, it.sessionState) }, selectedIndex)
     }
 
     val selected: BrowserTab?
         get() = tabs.firstOrNull { it.id == selectedId }
 
-    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate)
+    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null): BrowserTab {
+        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState)
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.
