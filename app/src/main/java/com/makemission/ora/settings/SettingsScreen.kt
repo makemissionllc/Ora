@@ -17,6 +17,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.DisposableEffect
+import android.content.ActivityNotFoundException
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -470,6 +478,57 @@ fun SettingsScreen(
                     }
                     if (shown(SettingsCategory.ABOUT)) item {
                         SectionTitle("About")
+                        val context = LocalContext.current
+                        var isDefaultBrowser by remember { mutableStateOf(DefaultBrowser.isDefault(context)) }
+                        val lifecycleOwner = LocalLifecycleOwner.current
+                        DisposableEffect(lifecycleOwner) {
+                            // Re-check when returning from the system settings, in case the role changed there.
+                            val observer = LifecycleEventObserver { _, event ->
+                                if (event == Lifecycle.Event.ON_RESUME) isDefaultBrowser = DefaultBrowser.isDefault(context)
+                            }
+                            lifecycleOwner.lifecycle.addObserver(observer)
+                            onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                        }
+                        val defaultLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                            isDefaultBrowser = DefaultBrowser.isDefault(context)
+                            BrowserLog.info("settings", if (isDefaultBrowser) "Ora is the default browser" else "Default browser unchanged")
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(browserColors().AddressBarBackground)
+                                .clickable(enabled = !isDefaultBrowser) {
+                                    val intent = DefaultBrowser.requestIntent(context)
+                                    if (intent == null) {
+                                        BrowserLog.error("settings", "Default browser role is not available on this device")
+                                        return@clickable
+                                    }
+                                    BrowserLog.info("settings", "Asked to set Ora as the default browser")
+                                    try {
+                                        defaultLauncher.launch(intent)
+                                    } catch (e: ActivityNotFoundException) {
+                                        BrowserLog.error("settings", "No system screen to set the default browser: ${e.message}")
+                                    }
+                                }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Default browser", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text(
+                                    "Open web links from other apps in Ora.",
+                                    fontSize = 12.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            Text(
+                                if (isDefaultBrowser) "Ora ✓" else "Set",
+                                fontSize = 14.sp,
+                                color = if (isDefaultBrowser) browserColors().SecondaryText else browserColors().Accent
+                            )
+                        }
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()

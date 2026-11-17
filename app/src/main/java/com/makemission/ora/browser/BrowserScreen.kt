@@ -244,6 +244,13 @@ private fun BrowserContent(
             )
         }
     }
+    // A web link handed to Ora by another app opens in a new tab and becomes the selected one.
+    val incomingLink by ExternalLinks.pending.collectAsState()
+    LaunchedEffect(incomingLink) {
+        val url = incomingLink ?: return@LaunchedEffect
+        ExternalLinks.consume()
+        tabs.newTab(url)
+    }
     // A removed profile's tabs are closed, so their pages stop running.
     LaunchedEffect(profileList) {
         val ids = profileList.map { it.id }.toSet()
