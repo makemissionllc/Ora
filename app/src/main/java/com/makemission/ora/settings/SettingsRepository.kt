@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
+import com.makemission.ora.ui.theme.MotionStyle
+import com.makemission.ora.ui.theme.OraMotion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -171,6 +173,21 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Page fade-in ${if (enabled) "on" else "off"}")
     }
 
+    private val _motionStyle = MutableStateFlow(MotionStyle.fromKey(prefs.getString(KEY_MOTION_STYLE, null)))
+    /** How transitions are timed and eased: Smooth, Elegant, Fast or Premium. */
+    val motionStyle: StateFlow<MotionStyle> = _motionStyle.asStateFlow()
+
+    init {
+        OraMotion.style = _motionStyle.value
+    }
+
+    fun setMotionStyle(style: MotionStyle) {
+        prefs.edit().putString(KEY_MOTION_STYLE, style.key).apply()
+        _motionStyle.value = style
+        OraMotion.style = style
+        BrowserLog.info("settings", "Motion style ${style.label}")
+    }
+
     private val _phoneBarStyle = MutableStateFlow(BarStyle.fromKey(prefs.getString(KEY_PHONE_BAR, null), BarStyle.BOTTOM))
     /** Phone tab bar layout. */
     val phoneBarStyle: StateFlow<BarStyle> = _phoneBarStyle.asStateFlow()
@@ -255,6 +272,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_POPUPS = "block_popups"
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
+        private const val KEY_MOTION_STYLE = "motion_style"
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"
         private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"

@@ -57,6 +57,7 @@ import com.makemission.ora.changelog.ChangelogScreen
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.DiagnosticsScreen
 import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.MotionStyle
 import com.makemission.ora.ui.theme.browserColors
 
 /** Categories shown in the tablet rail. Phones show every section in one list instead. */
@@ -84,6 +85,7 @@ fun SettingsScreen(
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
+    val motionStyle by settings.motionStyle.collectAsState()
     val usageStats by settings.usageStats.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
     val askEachSearch by settings.askEachSearch.collectAsState()
@@ -224,6 +226,33 @@ fun SettingsScreen(
                                     )
                                 }
                                 Switch(checked = fadePagesIn, onCheckedChange = { settings.setFadePagesIn(it) })
+                            }
+                            Text(
+                                "Motion",
+                                fontSize = 15.sp,
+                                color = browserColors().AddressBarText,
+                                modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                            )
+                            Text(
+                                motionStyle.description,
+                                fontSize = 12.sp,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+                            )
+                            MotionStyle.values().forEach { style ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { settings.setMotionStyle(style) }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(style.label, fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    if (style == motionStyle) {
+                                        Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
+                                    }
+                                }
                             }
                         }
                     }
