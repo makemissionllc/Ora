@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Password autofill: a switch in Settings > Privacy lets Android password apps, such as Bitwarden or Google Password Manager, fill login fields."),
             ChangeItem(ChangeKind.ADDED, "Set Ora as your default browser from Settings > About. Web links opened from other apps open in a new Ora tab."),
             ChangeItem(ChangeKind.ADDED, "Export the log from Diagnostics as a text file, to send when something goes wrong. Choose where to save it."),
             ChangeItem(ChangeKind.ADDED, "Profiles keep their own open tabs and bookmarks. Switch them at the top of the tab overview or the tab sidebar. Long-press a profile to remove it, which also deletes its bookmarks."),
@@ -36,6 +37,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.CHANGED, "On tablets, Compact floats over the top of the page with no strip behind it, and shrinks as you scroll, like the phone bar."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, Compact sits above the page, not over it, so the page never runs under the address bar. No dark strip shows behind the floating controls."),
             ChangeItem(ChangeKind.CHANGED, "On phones, the page fades into the status bar, so the clock and battery stay readable."),
+            ChangeItem(ChangeKind.CHANGED, "On phones, pages begin below the status bar, so buttons at the top, such as sign-in, can be tapped."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, the Compact address pill is narrower and sits without a background band."),
             ChangeItem(ChangeKind.CHANGED, "Menu actions run after the menu has closed, so Settings, Library and the rest open cleanly. On tablets the panel slides out first."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, the ⋯ menu slides in from the right as a panel, not up from the bottom. Tap the dimmed page or press Back to close it."),

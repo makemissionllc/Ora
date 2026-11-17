@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Password autofill: a Passwords switch in Settings > Privacy lets Android password apps, such as Bitwarden or Google Password Manager, fill login fields. (`b1fa65a`)
 - Default browser: Settings > About has a row that asks Android to make Ora your default browser. Web links opened from other apps open in a new Ora tab. (`462778d`)
 - Export the log from Settings > Diagnostics as a text file, to send for debugging. Export saves it wherever you choose. (`1c48b60`)
 - Profiles: a profile switcher at the top of the tab overview (phone) and the tab sidebar (tablet). Each profile keeps its own open tabs and bookmarks. Long-press a profile to remove it, which also deletes its bookmarks. (`52a68f5`)
@@ -32,6 +33,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Tablet Compact floats over the top of the page with no strip behind it, and shrinks as you scroll, like the phone bar. (`b635b95`)
 - Tablet Compact sits above the page, not over it, so the page never runs under the address bar. No dark strip shows behind the floating controls. (`762bf4e`)
 - Phones: the page fades into the status bar, so the clock and battery stay readable. (`6acf4de`)
+- Phones: pages and the start page begin below the status bar, so buttons at the top, such as sign-in, can be tapped. (`b1fa65a`)
 - Tablet Compact address pill is narrower, and it has no background band. (`6acf4de`)
 - Menu actions run after the menu has closed, so Settings, Library and the rest open cleanly. On tablets the panel slides out first. (`2d2e8a1`)
 - On tablets, the ⋯ menu slides in from the right as a panel, not up from the bottom. Tap the dimmed page or press Back to close it. (`5b89721`)
