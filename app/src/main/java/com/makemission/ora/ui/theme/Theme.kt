@@ -141,6 +141,8 @@ object BrowserTokens {
     /** Pill height and bottom gap once the page scrolls and the Compact bar shrinks, as in iOS Safari. */
     val PhoneCompactShrunkHeight = 34.dp
     val PhoneCompactShrunkBottom = 6.dp
+    /** Share of the free width the pill keeps once shrunk; it stays centred between the folded buttons. */
+    val PhoneCompactShrunkWidthFraction = 0.6f
     val PhoneCompactCircle = 44.dp
     val PhoneCompactPill = RoundedCornerShape(percent = 50)
     /** Phone Bottom and Top control bars float above the page as rounded cards, like iOS Safari. */

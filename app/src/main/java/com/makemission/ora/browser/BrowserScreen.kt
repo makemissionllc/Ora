@@ -105,6 +105,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
@@ -1101,19 +1102,24 @@ private fun PhoneCompactBar(
                 Icon(Icons.Filled.ArrowBack, contentDescription = null)
             }
         }
-        AddressBar(
-            currentUrl = tab.url,
-            loading = tab.loading,
-            onSubmit = onSubmit,
-            candidates = candidates,
-            onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
-            onStop = { tab.session.stop() },
-            modifier = Modifier.weight(1f),
-            height = lerp(BrowserTokens.AddressBarHeight, BrowserTokens.PhoneCompactShrunkHeight, shrink),
-            onSwipeUp = onSwipeUp,
-            onSwitchTab = onSwitchTab,
-            shape = BrowserTokens.PhoneCompactPill
-        )
+        // The middle slot takes the free width and centres the pill. Shrinking narrows the pill around the
+        // centre, as Safari does, instead of letting it widen into the space the round buttons leave.
+        Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            AddressBar(
+                currentUrl = tab.url,
+                loading = tab.loading,
+                onSubmit = onSubmit,
+                candidates = candidates,
+                onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
+                onStop = { tab.session.stop() },
+                modifier = Modifier.fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink),
+                height = lerp(BrowserTokens.AddressBarHeight, BrowserTokens.PhoneCompactShrunkHeight, shrink),
+                onSwipeUp = onSwipeUp,
+                onSwitchTab = onSwitchTab,
+                shape = BrowserTokens.PhoneCompactPill,
+                centered = true
+            )
+        }
         Box(modifier = Modifier.width(lerp(BrowserTokens.PhoneCompactCircle, 0.dp, shrink)).clipToBounds()) {
             FloatingCircleButton(onClick = onMore, enabled = shrink < 0.5f, description = "More") {
                 Icon(Icons.Filled.MoreVert, contentDescription = null)
@@ -1209,6 +1215,8 @@ private fun AddressBar(
     onSwipeUp: () -> Unit = {},
     onSwitchTab: (Int) -> Unit = {},
     shape: androidx.compose.ui.graphics.Shape = BrowserTokens.AddressBarShape,
+    /** Centres the URL in the pill (phone Compact bar). */
+    centered: Boolean = false,
 ) {
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
@@ -1298,7 +1306,8 @@ private fun AddressBar(
                 textStyle = TextStyle(
                     color = browserColors().AddressBarText,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.Medium,
+                    textAlign = if (centered) TextAlign.Center else TextAlign.Start
                 ),
                 cursorBrush = SolidColor(browserColors().Accent),
                 keyboardOptions = KeyboardOptions(
