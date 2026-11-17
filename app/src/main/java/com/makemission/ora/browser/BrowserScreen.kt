@@ -4,6 +4,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.animation.core.Animatable
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
@@ -453,7 +455,7 @@ private fun BrowserContent(
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         // Tablet Compact floats over the browser grid colour, so no strip shows behind the row or beside the sidebar.
-        containerColor = if (tabletCompact) browserColors().GridBackground else MaterialTheme.colorScheme.background,
+        containerColor = if (tabletCompact) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.fillMaxWidth().onSizeChanged { topBarHeight = with(density) { it.height.toDp() } }) {
             if (tabletCompact) {
@@ -722,6 +724,17 @@ private fun BrowserContent(
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
         if (!isTablet) {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
+            if (!isTablet) {
+                // Phone: the page fades into the status bar instead of running under the icons.
+                val statusTop = WindowInsets.statusBars.asPaddingValues(density).calculateTopPadding()
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .fillMaxWidth()
+                        .height(statusTop + BrowserTokens.StatusFadeExtra)
+                        .background(Brush.verticalGradient(listOf(browserColors().Scrim, Color.Transparent)))
+                )
+            }
         }
         }
     }
@@ -1254,9 +1267,8 @@ private fun FloatingCompactRow(
                 candidates = candidates,
                 onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
                 onStop = { tab.session.stop() },
-                modifier = Modifier
-                    .fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink)
-                    .then(if (pillMaxWidth != null) Modifier.widthIn(max = pillMaxWidth) else Modifier),
+                modifier = (if (pillMaxWidth != null) Modifier.widthIn(max = pillMaxWidth) else Modifier)
+                    .fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink),
                 height = lerp(BrowserTokens.AddressBarHeight, if (top) BrowserTokens.TabletCompactShrunkHeight else BrowserTokens.PhoneCompactShrunkHeight, shrink),
                 onSwipeUp = onSwipeUp,
                 onSwitchTab = onSwitchTab,

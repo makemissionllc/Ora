@@ -152,7 +152,9 @@ object BrowserTokens {
     val PhoneCompactShrunkWidthFraction = 0.6f
     val PhoneCompactCircle = 44.dp
     /** Widest the tablet Compact address pill grows before it stops and the row centres it. */
-    val TabletCompactPillMaxWidth = 600.dp
+    val TabletCompactPillMaxWidth = 440.dp
+    /** Extra height of the status-bar fade below the status bar, so the page softens into it. */
+    val StatusFadeExtra = 16.dp
     val PhoneCompactPill = RoundedCornerShape(percent = 50)
     /** Phone Bottom and Top control bars float above the page as rounded cards, like iOS Safari. */
     val FloatingBarShape = RoundedCornerShape(28.dp)
