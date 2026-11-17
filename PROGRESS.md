@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `20954f4`.
+Last updated: 2026-11-17, at commit `bc85e07`.
 
 ## Done
+- Tablet Compact: web pages start below the floating top row, so a site's own header and links are no longer hidden under it. The band above the page takes the page's top colour, and the page does not reflow as the row shrinks on scroll (`bc85e07`). Verified on tablet on animex.one: header and search fully visible; after one scroll the row shrank to its pill and the page did not jump. Phone not checked.
 - Softer corner radii on one scale (12, 16 and 20 dp tokens in `BrowserTokens`) across cards, menus, the address field, tiles and side panels (`9ca2ced`). Verified on tablet: start page, sidebar, ⋯ menu and tab overview. Settings, error page, Downloads and changelog corners not checked on tablet; phone not checked.
 - Sidebar search has a × button that clears the text, shown only while the field has text (`9ca2ced`). Verified on tablet: text cleared and the placeholder returned.
 - Tablet edge-swipe strip starts below the toolbar, so the sidebar button is no longer covered (`20954f4`). Verified on tablet: hamburger tap opened the sidebar; swipe from the strip opened it. The Settings switch that turns the swipe off is not checked.
@@ -83,7 +84,6 @@ Last updated: 2026-11-17, at commit `20954f4`.
 - Password autofill: Bitwarden is installed on both devices but reports "Did you add an account?" (no logged-in vault), so no login fill has been offered yet. Sign in to Bitwarden, then retest on a login page.
 - Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
 - Tablet: when a page scrolls inside its own element, Ora's bars may not return with a scroll up. Seen on a Fandom wiki page.
-- Tablet: the Compact floating row overlaps the page's navigation links. Open; not fixed.
 
 ## Verification log
 
@@ -91,6 +91,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `bc85e07` (web page starts below the Compact row) | The tablet Compact row no longer covers a site's own header and links | Not checked: tablet-only pass | animex.one: before, the site's logo, search and avatar sat under the row (`overlap_before.png`); after, they are fully visible below it (`overlap_after2.png`). After one scroll the row shrank to its pill and the page did not jump (`overlap_scroll.png`). Portrait and other sites not checked |
 | 2026-11-17 | `9ca2ced` (softer corners; sidebar search clear button) | Corner radii on one scale; sidebar search × button clears the query | Not checked: tablet-only pass | Corners checked on start page, sidebar, ⋯ menu and tab overview (screenshots). Settings, error page, Downloads and changelog corners not checked. Clear button: "sta" typed, × shown, tap cleared the field and the placeholder returned (`clear_result.png`) |
 | 2026-11-17 | `20954f4` (edge-swipe strip below the toolbar) | Edge-swipe strip starts below the toolbar so the hamburger is not covered | Not checked: tablet-only pass | Hamburger tap opened the sidebar from the start page (log "Tab sidebar shown"). Swipe from the strip at (120,700) to (460,700) opened it (log "Tab sidebar shown", `swipe_result.png`). Settings switch off not checked |
 | 2026-11-17 | `fbaf6de` (edge swipe, Settings switch, Back closes sidebar); `9597b05` (load-error page); `db79a5a` (profile chip scroll) | Edge swipe: a rightward drag from the left edge opens the sidebar; Settings switch added. Back closes an open sidebar. Failed loads show a reason and Try again. Profile chips scroll to the sidebar edge | Not checked: tablet-only pass | Swipe from x=120 px opened the sidebar with focus kept in Ora and no keyboard (screenshot). A swipe from x=16 px was taken by Android and the Claude app came forward, so the strip now starts 28 dp in. Back closed the sidebar (screenshot). "nosuchsite.invalid" opened via intent shows "The address could not be found" with Try again (screenshot). Chips start at the edge after the sidebar opens, with no offset (screenshot). Settings switch turned off and the swipe ignored: not checked. Compact row over the page nav: not fixed |
