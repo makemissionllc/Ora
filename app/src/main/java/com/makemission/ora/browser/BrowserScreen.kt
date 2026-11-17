@@ -92,10 +92,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -323,6 +325,9 @@ private fun BrowserContent(
     val tabletCompact = isTablet && barStyle == BarStyle.COMPACT
     /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
     val showSidebar by settings.tabletSidebar.collectAsState()
+    val density = LocalDensity.current
+    /** Height of the top bar, measured so the tablet side panel starts below it. */
+    var topBarHeight by remember { mutableStateOf(0.dp) }
     /** Bookmarks and open tabs, offered as address bar suggestions. */
     val addressCandidates = (
         bookmarkList.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) } +
@@ -447,7 +452,28 @@ private fun BrowserContent(
     Box(modifier = modifier.fillMaxSize()) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        // Tablet Compact floats over the browser grid colour, so no strip shows behind the row or beside the sidebar.
+        containerColor = if (tabletCompact) browserColors().GridBackground else MaterialTheme.colorScheme.background,
         topBar = {
+            Column(modifier = Modifier.fillMaxWidth().onSizeChanged { topBarHeight = with(density) { it.height.toDp() } }) {
+            if (tabletCompact) {
+                // Tablet Compact is part of the layout: the page starts below it and is never drawn under it.
+                // It shrinks on scroll instead of hiding, so the address bar and tabs stay within reach.
+                FloatingCompactRow(
+                    tab = selected,
+                    shrunk = selected.chromeHidden,
+                    top = true,
+                    onSubmit = { input -> submitAddress(input) },
+                    candidates = addressCandidates,
+                    onMore = { showMenu = true },
+                    onSwipeUp = openTabs,
+                    onSwitchTab = switchTab,
+                    onTabs = openTabs,
+                    onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
+                    showSidebar = showSidebar,
+                    pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth
+                )
+            }
             // Adaptive shrink: the top bar folds up while the page is scrolled down, and returns on scroll up.
             AnimatedVisibility(
                 visible = topLayout && !selected.chromeHidden,
@@ -485,6 +511,7 @@ private fun BrowserContent(
                         onSwitchTab = switchTab
                     )
                 }
+            }
             }
         },
         bottomBar = { if (isTablet) bottomBarContent() }
@@ -594,6 +621,7 @@ private fun BrowserContent(
                 if (showMenu) {
                     BrowserMenuSheet(
                         isTablet = isTablet,
+                        topInset = topBarHeight,
                         isBookmarked = bookmarkList.any { it.url == selected.url },
                         onDismiss = { showMenu = false },
                         // The menu closes itself before each action runs, so actions only do their work.
@@ -694,23 +722,6 @@ private fun BrowserContent(
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
         if (!isTablet) {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
-        }
-        // Tablet Compact floats at the top the same way: no strip, so the page runs under it.
-        if (tabletCompact) {
-            Box(modifier = Modifier.align(Alignment.TopCenter)) {
-                FloatingCompactRow(
-                    tab = selected,
-                    shrunk = selected.chromeHidden,
-                    top = true,
-                    onSubmit = { input -> submitAddress(input) },
-                    candidates = addressCandidates,
-                    onMore = { showMenu = true },
-                    onSwipeUp = openTabs,
-                    onSwitchTab = switchTab,
-                    onTabs = openTabs,
-                    pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth
-                )
-            }
         }
         }
     }
@@ -1164,6 +1175,9 @@ private fun FloatingCompactRow(
     onTabs: (() -> Unit)? = null,
     /** Caps the pill width on wide screens, so the row stays a compact floating control. */
     pillMaxWidth: Dp? = null,
+    /** Tablet only: a button that shows or hides the tab sidebar, placed before Back. */
+    onToggleSidebar: (() -> Unit)? = null,
+    showSidebar: Boolean = false,
 ) {
     // 0 = full bar, 1 = shrunk. Shrinking uses the exit easing, growing back the enter easing.
     val shrink by animateFloatAsState(
@@ -1183,9 +1197,9 @@ private fun FloatingCompactRow(
             .padding(
                 start = BrowserTokens.PhoneCompactPadding,
                 end = BrowserTokens.PhoneCompactPadding,
-                top = BrowserTokens.PhoneCompactPadding,
+                top = if (top) lerp(BrowserTokens.PhoneCompactPadding, BrowserTokens.TabletCompactShrunkPadding, shrink) else BrowserTokens.PhoneCompactPadding,
                 bottom = if (top) {
-                    lerp(BrowserTokens.PhoneCompactPadding, BrowserTokens.PhoneCompactShrunkBottom, shrink)
+                    lerp(BrowserTokens.PhoneCompactPadding, BrowserTokens.TabletCompactShrunkPadding, shrink)
                 } else {
                     lerp(BrowserTokens.PhoneCompactFloatBottom, BrowserTokens.PhoneCompactShrunkBottom, shrink)
                 }
@@ -1193,6 +1207,17 @@ private fun FloatingCompactRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(lerp(BrowserTokens.PhoneCompactGap, 0.dp, shrink))
     ) {
+        if (onToggleSidebar != null) {
+            CompactSlot(shrink) {
+                FloatingCircleButton(
+                    onClick = onToggleSidebar,
+                    enabled = shrink < 0.5f,
+                    description = if (showSidebar) "Hide sidebar" else "Show sidebar"
+                ) {
+                    Icon(Icons.Filled.Menu, contentDescription = null)
+                }
+            }
+        }
         CompactSlot(shrink) {
             FloatingCircleButton(
                 onClick = { tab.stepBack() },
@@ -1232,7 +1257,7 @@ private fun FloatingCompactRow(
                 modifier = Modifier
                     .fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink)
                     .then(if (pillMaxWidth != null) Modifier.widthIn(max = pillMaxWidth) else Modifier),
-                height = lerp(BrowserTokens.AddressBarHeight, BrowserTokens.PhoneCompactShrunkHeight, shrink),
+                height = lerp(BrowserTokens.AddressBarHeight, if (top) BrowserTokens.TabletCompactShrunkHeight else BrowserTokens.PhoneCompactShrunkHeight, shrink),
                 onSwipeUp = onSwipeUp,
                 onSwitchTab = onSwitchTab,
                 shape = BrowserTokens.PhoneCompactPill,

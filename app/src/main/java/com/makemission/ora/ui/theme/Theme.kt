@@ -144,6 +144,9 @@ object BrowserTokens {
     val PhoneCompactGap = 8.dp
     /** Pill height and bottom gap once the page scrolls and the Compact bar shrinks, as in iOS Safari. */
     val PhoneCompactShrunkHeight = 34.dp
+    /** Tablet Compact shrinks further than the phone bar, so the page keeps more room on scroll. */
+    val TabletCompactShrunkHeight = 30.dp
+    val TabletCompactShrunkPadding = 4.dp
     val PhoneCompactShrunkBottom = 6.dp
     /** Share of the free width the pill keeps once shrunk; it stays centred between the folded buttons. */
     val PhoneCompactShrunkWidthFraction = 0.6f

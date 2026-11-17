@@ -57,6 +57,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
@@ -82,6 +83,8 @@ fun BrowserMenuSheet(
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
     onFind: () -> Unit,
+    /** Tablet only: the height of the top bar, so the side panel starts below it. */
+    topInset: Dp = 0.dp,
 ) {
     // Each action first closes the menu, then runs. The tablet panel animates out before the action runs.
     val items: @Composable ((() -> Unit) -> Unit) -> Unit = { act ->
@@ -101,7 +104,7 @@ fun BrowserMenuSheet(
         )
     }
     if (isTablet) {
-        BrowserMenuSidePanel(onDismiss = onDismiss, content = items)
+        BrowserMenuSidePanel(onDismiss = onDismiss, topInset = topInset, content = items)
     } else {
         ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
             items { action -> onDismiss(); action() }
@@ -202,7 +205,7 @@ private fun BrowserMenuItems(
  * Tapping the scrim or pressing Back slides it out first, then closes it.
  */
 @Composable
-private fun BrowserMenuSidePanel(onDismiss: () -> Unit, content: @Composable ((() -> Unit) -> Unit) -> Unit) {
+private fun BrowserMenuSidePanel(onDismiss: () -> Unit, topInset: Dp, content: @Composable ((() -> Unit) -> Unit) -> Unit) {
     val visibleState = remember { MutableTransitionState(false) }
     var dismissing by remember { mutableStateOf(false) }
     // An action chosen from the menu waits until the panel has slid out, then runs.
@@ -245,12 +248,13 @@ private fun BrowserMenuSidePanel(onDismiss: () -> Unit, content: @Composable (((
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
+                    .padding(top = topInset)
                     .width(BrowserTokens.SidePanelWidth)
                     .shadow(BrowserTokens.FloatingBarElevation, RoundedCornerShape(topStart = BrowserTokens.SidePanelRadius, bottomStart = BrowserTokens.SidePanelRadius))
                     .clip(RoundedCornerShape(topStart = BrowserTokens.SidePanelRadius, bottomStart = BrowserTokens.SidePanelRadius))
                     .background(browserColors().AddressBarBackground)
                     .verticalScroll(rememberScrollState())
-                    .statusBarsPadding()
+                    .then(if (topInset == 0.dp) Modifier.statusBarsPadding() else Modifier)
                     .navigationBarsPadding()
             ) {
                 content(act)
