@@ -9,7 +9,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
-- On phones, while the address bar is folded, a tap on the band beside the address pill brings the full bar back. (`4fc898a`)
 - Touch feedback: toolbar buttons and link-menu rows sink slightly when pressed and spring back on release, so a tap feels answered. With Remove animations on, the change is instant. (`8d3c3fe`)
 - Opening a link in a background tab, or an image, now says so with a message, and the tab count swells. A link sent from another app says it opened in a new tab.
 - Site permissions: when a site asks for your location, camera, microphone or notifications, a card asks Allow, Not now or Block. Allow and Block are remembered for that site; change or clear them in Settings > Privacy > Site permissions, where clearing asks first. In a private tab nothing is remembered. If Android has not yet allowed the app, it asks first. (`d47a696`)
@@ -32,7 +31,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - On phones, tapping the shrunk address pill brings the full bar back, instead of opening the address for editing. (`01de1e1`)
 
 **Fixed**
-- On phones, a folded address bar clips the page above it, as the expanded bar does. Page text no longer shows under the folded bar, and the expanded bar no longer shows a cut-off line of footer text below it. (`4fc898a`)
 - Back leaves a full-screen video instead of going back a page. A Settings switch, Back exits full screen (Settings > Video), turns this off. (`11f3e74`)
 - On phone, a site's permission card appears below the status bar, so its title is no longer cut off. (`982a384`)
 - On tablet, the sidebar no longer shows a white strip behind the profile chips or beside the tab list. The profile chips scroll sideways when they do not fit.
