@@ -286,6 +286,7 @@ private fun BrowserContent(
 
     val blockAds by settings.blockAds.collectAsState()
     val videoGestures by settings.videoGestures.collectAsState()
+    val videoBackExits by settings.videoBackExits.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
@@ -551,7 +552,10 @@ private fun BrowserContent(
     // A full-screen video hides the bars too, so only the video is on screen.
     val toolbarHidden = phoneOverlay != PhoneOverlay.NONE || showDownloads || tabletTabsOpen || selected.videoFullScreen
     VideoFullScreenEffect(active = selected.videoFullScreen)
-    BackHandler(enabled = selected.videoFullScreen) {
+    // Back leaves a full-screen video when the setting is on. The other Back handlers below stand down then,
+    // so this one is the one that runs.
+    val backExitsVideo = selected.videoFullScreen && videoBackExits
+    BackHandler(enabled = backExitsVideo) {
         BrowserLog.info("page", "Back leaves full screen")
         selected.session.exitFullScreen()
     }
@@ -582,17 +586,17 @@ private fun BrowserContent(
         androidPermissionRequest?.let { androidPermissionLauncher.launch(it.permissions) }
     }
 
-    BackHandler(enabled = phoneOverlay != PhoneOverlay.NONE || tabletTabsOpen) {
+    BackHandler(enabled = (phoneOverlay != PhoneOverlay.NONE || tabletTabsOpen) && !backExitsVideo) {
         showTabGrid = false
         showLibrary = false
         showSettings = false
         showExtensions = false
     }
-    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen && selected.canStepBack) {
+    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen && selected.canStepBack && !backExitsVideo) {
         selected.stepBack()
     }
     // Quality of life: on tablet, Back closes an open sidebar before it steps back through history.
-    BackHandler(enabled = isTablet && showSidebar && phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen) {
+    BackHandler(enabled = isTablet && showSidebar && phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen && !backExitsVideo) {
         settings.setTabletSidebar(false)
     }
 
@@ -826,6 +830,10 @@ private fun BrowserContent(
                 // Brightness and volume swipes sit over the page while its video is full screen.
                 if (selected.videoFullScreen && videoGestures) {
                     VideoGestureLayer(modifier = Modifier.fillMaxSize())
+                }
+                // Seek bar along the bottom of a full-screen video, drawn above the gesture halves.
+                if (selected.videoFullScreen) {
+                    VideoSeekBar(modifier = Modifier.align(Alignment.BottomCenter))
                 }
                 if (showDownloads) {
                     DownloadsSheet(repository = downloads, onDismiss = { showDownloads = false })

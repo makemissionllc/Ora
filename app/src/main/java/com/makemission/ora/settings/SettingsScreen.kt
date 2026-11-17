@@ -93,6 +93,7 @@ fun SettingsScreen(
 ) {
     val appearance by settings.appearance.collectAsState()
     val videoGestures by settings.videoGestures.collectAsState()
+    val videoBackExits by settings.videoBackExits.collectAsState()
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
@@ -477,6 +478,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 Switch(checked = videoGestures, onCheckedChange = { settings.setVideoGestures(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setVideoBackExits(!videoBackExits) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Back exits full screen", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "When a video is full screen, Back returns to the normal page instead of going back a page.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = videoBackExits, onCheckedChange = { settings.setVideoBackExits(it) })
                             }
                         }
                     }

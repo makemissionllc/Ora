@@ -1,6 +1,7 @@
 package com.makemission.ora.browser
 
 import android.content.Context
+import com.makemission.ora.extensions.VideoControlBridge
 import com.makemission.ora.passwords.PasswordStore
 import com.makemission.ora.passwords.PasswordStorageDelegate
 import org.mozilla.geckoview.GeckoRuntime
@@ -18,5 +19,7 @@ object GeckoEngine {
             // Saved logins: GeckoView asks this delegate for logins to fill and hands back submitted ones.
             PasswordStore.init(context.applicationContext)
             it.setAutocompleteStorageDelegate(PasswordStorageDelegate)
+            // Bundled helper that lets the full-screen video seek bar read and move the page's video.
+            VideoControlBridge.install(it)
         }
 }

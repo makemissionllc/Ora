@@ -161,6 +161,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Video brightness and volume swipes ${if (enabled) "on" else "off"}")
     }
 
+    private val _videoBackExits = MutableStateFlow(prefs.getBoolean(KEY_VIDEO_BACK_EXITS, true))
+    /** When on, Back leaves a full-screen video instead of going back a page. */
+    val videoBackExits: StateFlow<Boolean> = _videoBackExits.asStateFlow()
+
+    fun setVideoBackExits(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_VIDEO_BACK_EXITS, enabled).apply()
+        _videoBackExits.value = enabled
+        BrowserLog.info("settings", "Back leaves full-screen video ${if (enabled) "on" else "off"}")
+    }
+
     private val _autofillPasswords = MutableStateFlow(prefs.getBoolean(KEY_AUTOFILL_PASSWORDS, true))
     /** When on, login fields fill from saved passwords: GeckoView's saved logins, and the Android autofill service (Bitwarden, Google Password Manager and others). */
     val autofillPasswords: StateFlow<Boolean> = _autofillPasswords.asStateFlow()
@@ -404,6 +414,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_POPUPS = "block_popups"
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_VIDEO_GESTURES = "video_gestures"
+        private const val KEY_VIDEO_BACK_EXITS = "video_back_exits"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
         private const val KEY_QUICK_RESUME = "quick_resume"
         private const val KEY_SAVE_HISTORY = "save_history"

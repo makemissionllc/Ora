@@ -12,14 +12,20 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -36,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import com.makemission.ora.extensions.VideoControlBridge
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.OraMotion
@@ -202,4 +209,70 @@ private tailrec fun Context.findActivity(): Activity? = when (this) {
     is Activity -> this
     is ContextWrapper -> baseContext.findActivity()
     else -> null
+}
+
+/**
+ * Seek bar along the bottom of a full-screen video, with the current time and the length.
+ * It follows the page's video through [VideoControlBridge]. A seek is sent when the finger lifts,
+ * so dragging does not jump the video on every frame.
+ */
+@Composable
+fun VideoSeekBar(modifier: Modifier) {
+    val current by VideoControlBridge.state.collectAsState()
+    // The last known position stays while the bar fades out, so the labels do not blank during the exit.
+    var lastShown by remember { mutableStateOf<VideoControlBridge.State?>(null) }
+    LaunchedEffect(current) { current?.takeIf { it.hasVideo }?.let { lastShown = it } }
+    var dragging by remember { mutableStateOf<Float?>(null) }
+
+    AnimatedVisibility(
+        visible = current?.hasVideo == true,
+        modifier = modifier,
+        enter = fadeIn(OraMotion.enter()),
+        exit = fadeOut(OraMotion.exit()),
+    ) {
+        val shown = lastShown ?: return@AnimatedVisibility
+        val duration = shown.duration.coerceAtLeast(0.0)
+        val fraction = if (duration > 0.0) (shown.seconds / duration).toFloat().coerceIn(0f, 1f) else 0f
+        val position = dragging?.let { it * duration } ?: shown.seconds
+        val colors = browserColors()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(colors.Surface)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            Slider(
+                value = dragging ?: fraction,
+                onValueChange = { dragging = it },
+                onValueChangeFinished = {
+                    dragging?.let { VideoControlBridge.seek(it * duration) }
+                    dragging = null
+                },
+                valueRange = 0f..1f,
+                enabled = duration > 0.0,
+                colors = SliderDefaults.colors(
+                    thumbColor = colors.AddressBarText,
+                    activeTrackColor = colors.AddressBarText,
+                    inactiveTrackColor = colors.AddressBarText.copy(alpha = 0.3f),
+                ),
+            )
+            Row {
+                Text(text = formatSeconds(position), fontSize = 13.sp, color = colors.AddressBarText)
+                Spacer(modifier = Modifier.weight(1f))
+                Text(text = formatSeconds(duration), fontSize = 13.sp, color = colors.AddressBarText)
+            }
+        }
+    }
+}
+
+private fun formatSeconds(value: Double): String {
+    val total = value.roundToInt().coerceAtLeast(0)
+    val hours = total / 3600
+    val minutes = (total % 3600) / 60
+    val seconds = total % 60
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, minutes, seconds)
+    } else {
+        "%d:%02d".format(minutes, seconds)
+    }
 }
