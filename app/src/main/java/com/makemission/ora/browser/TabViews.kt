@@ -51,6 +51,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
+import com.makemission.ora.history.HistoryEntry
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.browserColors
 
@@ -234,10 +235,15 @@ private fun TabTile(
 fun TabSidebar(
     tabs: BrowserTabs,
     bookmarks: List<Bookmark>,
+    history: List<HistoryEntry>,
+    historyOff: Boolean,
     onNewTab: () -> Unit,
     onOpenBookmark: (String) -> Unit,
+    onOpenHistory: (String) -> Unit,
+    onRemoveHistory: (String) -> Unit,
+    onClearHistory: () -> Unit,
 ) {
-    var showBookmarks by remember { mutableStateOf(false) }
+    var panel by remember { mutableStateOf(SidebarPanel.TABS) }
     var query by remember { mutableStateOf("") }
     val needle = query.trim()
     val shownTabs = tabs.tabs.filter {
@@ -255,7 +261,7 @@ fun TabSidebar(
             .padding(BrowserTokens.SidebarPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Tabs and Bookmarks switch, like the segmented control in the design (D-Sidebar).
+        // Tabs, Bookmarks and History switch, like the segmented control in the design (D-Sidebar).
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -265,13 +271,18 @@ fun TabSidebar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Quality of life: switching lists clears the search, so a filter for tabs does not hide bookmarks.
-            SegmentLabel("Tabs", selected = !showBookmarks, modifier = Modifier.weight(1f)) { showBookmarks = false; query = "" }
-            SegmentLabel("Bookmarks", selected = showBookmarks, modifier = Modifier.weight(1f)) { showBookmarks = true; query = "" }
+            SegmentLabel("Tabs", selected = panel == SidebarPanel.TABS, modifier = Modifier.weight(1f)) { panel = SidebarPanel.TABS; query = "" }
+            SegmentLabel("Bookmarks", selected = panel == SidebarPanel.BOOKMARKS, modifier = Modifier.weight(1f)) { panel = SidebarPanel.BOOKMARKS; query = "" }
+            SegmentLabel("History", selected = panel == SidebarPanel.HISTORY, modifier = Modifier.weight(1f)) { panel = SidebarPanel.HISTORY; query = "" }
         }
         // Filters the list below by title or address.
         SidebarSearch(
             query = query,
-            placeholder = if (showBookmarks) "Search bookmarks" else "Search open tabs",
+            placeholder = when (panel) {
+                SidebarPanel.TABS -> "Search open tabs"
+                SidebarPanel.BOOKMARKS -> "Search bookmarks"
+                SidebarPanel.HISTORY -> "Search history"
+            },
             onQueryChange = { query = it }
         )
         Row(
@@ -280,50 +291,69 @@ fun TabSidebar(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                if (showBookmarks) "Bookmarks" else "${shownTabs.size} of ${tabs.tabs.size} tabs",
+                when (panel) {
+                    SidebarPanel.TABS -> "${shownTabs.size} of ${tabs.tabs.size} tabs"
+                    SidebarPanel.BOOKMARKS -> "Bookmarks"
+                    SidebarPanel.HISTORY -> "History"
+                },
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = browserColors().SecondaryText
             )
-            if (!showBookmarks) {
+            if (panel == SidebarPanel.TABS) {
                 IconButton(onClick = onNewTab) {
                     Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
                 }
             }
         }
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp)
-        ) {
-            if (showBookmarks) {
-                if (shownBookmarks.isEmpty()) {
-                    item { EmptySidebarText(if (bookmarks.isEmpty()) "No bookmarks yet. Use the bookmark button to save a page." else "No bookmarks match \"$needle\"") }
-                }
-                items(shownBookmarks, key = { it.url }) { bookmark ->
-                    SidebarRow(
-                        label = bookmark.title,
-                        selected = false,
-                        onClick = { onOpenBookmark(bookmark.url) }
-                    )
-                }
-            } else {
-                if (shownTabs.isEmpty()) {
-                    item { EmptySidebarText("No tabs match \"$needle\"") }
-                }
-                items(shownTabs, key = { it.id }) { tab ->
-                    SidebarRow(
-                        label = tab.title.ifBlank { displayUrl(tab.url) },
-                        selected = tab.id == tabs.selectedId,
-                        onClick = { tabs.select(tab.id) }
-                    )
+        if (panel == SidebarPanel.HISTORY) {
+            HistoryList(
+                entries = history,
+                query = query,
+                historyOff = historyOff,
+                onOpen = onOpenHistory,
+                onRemove = onRemoveHistory,
+                onClear = onClearHistory,
+                modifier = Modifier.weight(1f),
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                if (panel == SidebarPanel.BOOKMARKS) {
+                    if (shownBookmarks.isEmpty()) {
+                        item { EmptySidebarText(if (bookmarks.isEmpty()) "No bookmarks yet. Use the bookmark button to save a page." else "No bookmarks match \"$needle\"") }
+                    }
+                    items(shownBookmarks, key = { it.url }) { bookmark ->
+                        SidebarRow(
+                            label = bookmark.title,
+                            selected = false,
+                            onClick = { onOpenBookmark(bookmark.url) }
+                        )
+                    }
+                } else {
+                    if (shownTabs.isEmpty()) {
+                        item { EmptySidebarText("No tabs match \"$needle\"") }
+                    }
+                    items(shownTabs, key = { it.id }) { tab ->
+                        SidebarRow(
+                            label = tab.title.ifBlank { displayUrl(tab.url) },
+                            selected = tab.id == tabs.selectedId,
+                            onClick = { tabs.select(tab.id) }
+                        )
+                    }
                 }
             }
         }
     }
 }
 
+/** Which list the tablet sidebar shows. */
+private enum class SidebarPanel { TABS, BOOKMARKS, HISTORY }
+
 @Composable
-private fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -342,7 +372,7 @@ private fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, on
 }
 
 @Composable
-private fun SidebarSearch(query: String, placeholder: String, onQueryChange: (String) -> Unit) {
+internal fun SidebarSearch(query: String, placeholder: String, onQueryChange: (String) -> Unit) {
     BasicTextField(
         value = query,
         onValueChange = onQueryChange,

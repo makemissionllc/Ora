@@ -149,6 +149,7 @@ import android.view.View
 import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.bookmarks.BookmarksRepository
+import com.makemission.ora.history.HistoryRepository
 import com.makemission.ora.profiles.Profile
 import com.makemission.ora.profiles.ProfileSwitcher
 import com.makemission.ora.profiles.ProfilesRepository
@@ -258,6 +259,12 @@ private fun BrowserContent(
     val profileList by profiles.profiles.collectAsState()
     val bookmarks = remember(profileId) { BookmarksRepository(context, profileId) }
     val bookmarkList by bookmarks.bookmarks.collectAsState()
+    // History is per profile as well. One list per profile is shared by its tabs and its views, so they never disagree.
+    val historyByProfile = remember { HashMap<String, HistoryRepository>() }
+    fun historyFor(id: String): HistoryRepository = historyByProfile.getOrPut(id) { HistoryRepository(context, id) }
+    val history = remember(profileId) { historyFor(profileId) }
+    val historyList by history.entries.collectAsState()
+    val saveHistory by settings.saveHistory.collectAsState()
 
     val blockAds by settings.blockAds.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
@@ -279,6 +286,8 @@ private fun BrowserContent(
                 desktopByDefault = isTablet,
                 // Quick resume: a profile's tabs reopen from the last time they were saved, when the setting is on.
                 restore = if (settings.quickResume.value) sessionStore.load(profileId) else null,
+                // Finished pages are listed in this profile's history, when saving is on.
+                onVisited = { url, title -> if (settings.saveHistory.value) historyFor(profileId).record(url, title) },
             )
         }
     }
@@ -694,8 +703,13 @@ private fun BrowserContent(
                         TabSidebar(
                             tabs = tabs,
                             bookmarks = bookmarkList,
+                            history = historyList,
+                            historyOff = !saveHistory,
                             onNewTab = onNewTab,
-                            onOpenBookmark = { url -> selected.session.loadUri(url) }
+                            onOpenBookmark = { url -> selected.session.loadUri(url) },
+                            onOpenHistory = { url -> selected.session.loadUri(url) },
+                            onRemoveHistory = { url -> history.remove(url) },
+                            onClearHistory = { history.clear() },
                         )
                     }
                 }
@@ -848,13 +862,17 @@ private fun BrowserContent(
                             onDone = { showSettings = false },
                             onClearData = clearBrowsingData
                         )
-                        PhoneOverlay.LIBRARY -> BookmarksLibrary(
+                        PhoneOverlay.LIBRARY -> LibraryScreen(
                             bookmarks = bookmarkList,
+                            history = historyList,
+                            historyOff = !saveHistory,
                             onOpen = { url ->
                                 selected.session.loadUri(url)
                                 showLibrary = false
                             },
-                            onRemove = { url -> bookmarks.remove(url) },
+                            onRemoveBookmark = { url -> bookmarks.remove(url) },
+                            onRemoveHistory = { url -> history.remove(url) },
+                            onClearHistory = { history.clear() },
                             onDone = { showLibrary = false }
                         )
                         PhoneOverlay.TABS -> TabOverviewContent(

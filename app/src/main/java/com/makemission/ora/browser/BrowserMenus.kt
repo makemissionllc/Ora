@@ -51,6 +51,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +64,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
+import com.makemission.ora.history.HistoryEntry
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.OraMotion
 import com.makemission.ora.ui.theme.browserColors
@@ -341,14 +343,27 @@ private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit, mo
     }
 }
 
-/** Phone bookmark library: full-screen list with open and remove (design: M-Bookmarks). */
+/**
+ * Phone library: bookmarks and browsing history in one full-screen list, with open, remove and search
+ * (design: M-Bookmarks, whose Library shows Bookmarks, Reading and History).
+ */
 @Composable
-fun BookmarksLibrary(
+fun LibraryScreen(
     bookmarks: List<Bookmark>,
+    history: List<HistoryEntry>,
+    historyOff: Boolean,
     onOpen: (String) -> Unit,
-    onRemove: (String) -> Unit,
+    onRemoveBookmark: (String) -> Unit,
+    onRemoveHistory: (String) -> Unit,
+    onClearHistory: () -> Unit,
     onDone: () -> Unit,
 ) {
+    var showHistory by rememberSaveable { mutableStateOf(false) }
+    var query by rememberSaveable { mutableStateOf("") }
+    val needle = query.trim()
+    val shownBookmarks = bookmarks.filter {
+        needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true)
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -360,20 +375,56 @@ fun BookmarksLibrary(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Bookmarks", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
+            Text("Library", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
             TextButton(onClick = onDone) {
                 Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
             }
         }
         Spacer(Modifier.height(12.dp))
-        if (bookmarks.isEmpty()) {
-            Text("No bookmarks yet. Use the bookmark button to save a page.", color = browserColors().SecondaryText, fontSize = 14.sp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BrowserTokens.SidebarSegmentHeight)
+                .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+                .background(browserColors().AddressBarBackground),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Switching lists clears the search, as the tablet sidebar does.
+            SegmentLabel("Bookmarks", selected = !showHistory, modifier = Modifier.weight(1f)) { showHistory = false; query = "" }
+            SegmentLabel("History", selected = showHistory, modifier = Modifier.weight(1f)) { showHistory = true; query = "" }
+        }
+        Spacer(Modifier.height(8.dp))
+        SidebarSearch(
+            query = query,
+            placeholder = if (showHistory) "Search history" else "Search bookmarks",
+            onQueryChange = { query = it }
+        )
+        Spacer(Modifier.height(8.dp))
+        if (showHistory) {
+            HistoryList(
+                entries = history,
+                query = query,
+                historyOff = historyOff,
+                onOpen = onOpen,
+                onRemove = onRemoveHistory,
+                onClear = onClearHistory,
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            )
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.weight(1f).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(bookmarks, key = { it.url }) { bookmark ->
+                if (shownBookmarks.isEmpty()) {
+                    item {
+                        Text(
+                            if (bookmarks.isEmpty()) "No bookmarks yet. Use the bookmark button to save a page." else "No bookmarks match \"$needle\"",
+                            color = browserColors().SecondaryText,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+                items(shownBookmarks, key = { it.url }) { bookmark ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -400,7 +451,7 @@ fun BookmarksLibrary(
                                 color = browserColors().SecondaryText
                             )
                         }
-                        IconButton(onClick = { onRemove(bookmark.url) }) {
+                        IconButton(onClick = { onRemoveBookmark(bookmark.url) }) {
                             Icon(Icons.Filled.Close, contentDescription = "Remove bookmark", tint = browserColors().SecondaryText)
                         }
                     }

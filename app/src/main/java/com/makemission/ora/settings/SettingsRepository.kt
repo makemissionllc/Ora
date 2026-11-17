@@ -220,6 +220,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Quick resume ${if (enabled) "on" else "off"}")
     }
 
+    private val _saveHistory = MutableStateFlow(prefs.getBoolean(KEY_SAVE_HISTORY, true))
+    /** When on, pages that finish loading in a normal tab are listed in the History of the profile. */
+    val saveHistory: StateFlow<Boolean> = _saveHistory.asStateFlow()
+
+    fun setSaveHistory(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SAVE_HISTORY, enabled).apply()
+        _saveHistory.value = enabled
+        BrowserLog.info("settings", "Save browsing history ${if (enabled) "on" else "off"}")
+    }
+
     private val _fadePagesIn = MutableStateFlow(prefs.getBoolean(KEY_FADE_PAGES_IN, true))
     /** When on, a page fades in once it is half loaded instead of showing its pieces as they arrive. */
     val fadePagesIn: StateFlow<Boolean> = _fadePagesIn.asStateFlow()
@@ -341,6 +351,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
         private const val KEY_QUICK_RESUME = "quick_resume"
+        private const val KEY_SAVE_HISTORY = "save_history"
         private const val KEY_EDGE_SWIPE_SIDEBAR = "edge_swipe_sidebar"
         private const val KEY_MOTION_STYLE = "motion_style"
         private const val KEY_PALETTE_STYLE = "palette_style"

@@ -31,6 +31,8 @@ class BrowserTab(
     val isPrivate: Boolean = false,
     /** Session state saved by quick resume. Restores the page's history; null loads the address instead. */
     restoreState: String? = null,
+    /** Called with the address and title of a page that finished loading. Private tabs never report. */
+    private val onVisited: (String, String) -> Unit = { _, _ -> },
 ) {
     val session: GeckoSession = if (isPrivate) {
         GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build())
@@ -232,6 +234,7 @@ class BrowserTab(
                 // Progress stays where it is: the bar fades out in place instead of sweeping to full first.
                 if (success) {
                     BrowserLog.info("page", "Loaded ${this@BrowserTab.url}")
+                    if (!isPrivate) onVisited(this@BrowserTab.url, this@BrowserTab.title)
                 } else {
                     BrowserLog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")
                     // Quality of life: say so, instead of leaving a half-drawn page with no explanation.
@@ -322,6 +325,8 @@ class BrowserTabs(
     private val desktopByDefault: Boolean = false,
     /** Tabs saved by quick resume, reopened in place of a single start page. Null starts fresh. */
     private val restore: SessionStore.Saved? = null,
+    /** Receives each page a tab finishes loading, for the profile's history. */
+    private val onVisited: (String, String) -> Unit = { _, _ -> },
 ) {
     private var nextId = 0L
     val tabs = mutableStateListOf<BrowserTab>()
@@ -362,7 +367,7 @@ class BrowserTabs(
         get() = tabs.firstOrNull { it.id == selectedId }
 
     fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState)
+        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited)
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.

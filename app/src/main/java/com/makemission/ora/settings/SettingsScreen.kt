@@ -105,6 +105,7 @@ fun SettingsScreen(
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val quickResume by settings.quickResume.collectAsState()
+    val saveHistory by settings.saveHistory.collectAsState()
     val deviceFontWeb by settings.deviceFontWeb.collectAsState()
     val autofillPasswords by settings.autofillPasswords.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
@@ -358,6 +359,30 @@ fun SettingsScreen(
                             fontSize = 12.sp,
                             color = browserColors().SecondaryText
                         )
+                    }
+                    if (shown(SettingsCategory.PRIVACY)) item {
+                        SectionTitle("History")
+                        // Saving history: finished pages are listed in the Library (phone) or the sidebar (tablet).
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+                                .background(browserColors().AddressBarBackground)
+                                .clickable { settings.setSaveHistory(!saveHistory) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text("Save browsing history", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text(
+                                    "Pages you open are listed newest first, in the Library on phone or the sidebar on tablet. Private tabs are never saved.",
+                                    fontSize = 12.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            Switch(checked = saveHistory, onCheckedChange = { settings.setSaveHistory(it) })
+                        }
                     }
                     if (shown(SettingsCategory.PRIVACY)) item {
                         SectionTitle("Pop-ups and ads")
