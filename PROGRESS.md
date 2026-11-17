@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `ecff87e`.
+Last updated: 2026-11-17, at commit `762bf4e`.
 
 ## Done
 
@@ -102,3 +102,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | Tablet Compact floats over the page and shrinks on scroll (`b635b95`) | Bottom Compact bar unchanged (screenshot). A card from another source appeared over the start page in later captures; not traced to Ora yet | Compact row over theverge.com shrank with the buttons folded (screenshot). Clean start-page capture with the row unshrunk not taken |
 | 2026-11-17 | Menu actions run after the menu closes (`2d2e8a1`) | "Find in page" from the sheet: the find bar opened after the sheet closed (screenshots) | Settings from the panel opened after the panel slid out (screenshots) |
 | 2026-11-17 | fade text fix (`8c762ca`) | "Fade pages in" text keeps a gap from its switch | Text wraps clear of the switch (screenshot). Tablet not checked | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |
+| 2026-11-17 | Tablet Compact in the top bar layout, sidebar toggle (`762bf4e`) | Bottom Compact bar unchanged (screenshot) | Compact row sits above the page with no dark strip; sidebar toggle shows the sidebar (screenshots). Shrink on scroll and the side panel below the bar not checked |
