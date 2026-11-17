@@ -803,10 +803,13 @@ private fun BrowserContent(
             ) { tabletCompactRow() }
         }
         // Tablet: a rightward swipe from the left edge of the page opens the sidebar, when the setting is on.
+        // The strip starts below the toolbar (or the Compact row), so it never takes taps meant for the buttons.
         if (isTablet && !showSidebar && edgeSwipeSidebar) {
             SidebarEdgeSwipe(
                 onOpen = { settings.setTabletSidebar(true) },
-                modifier = Modifier.padding(innerPadding),
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(top = if (tabletCompact) compactRowHeight else topBarHeight),
             )
         }
         if (!isTablet) {
