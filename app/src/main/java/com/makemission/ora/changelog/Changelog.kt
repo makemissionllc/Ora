@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match."),
             ChangeItem(ChangeKind.ADDED, "Link menu: \"Open in background tab\" opens a link without switching to it."),
             ChangeItem(ChangeKind.ADDED, "Cookies: choose to allow all cookies, block third-party cookies, or block all cookies, in Settings > Privacy."),
             ChangeItem(ChangeKind.ADDED, "Password autofill: a switch in Settings > Privacy lets Android password apps, such as Bitwarden or Google Password Manager, fill login fields."),
@@ -30,6 +31,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "Tablet Compact has forward and tabs buttons beside the address bar. Long-press Back to go to the start page."),
             ChangeItem(ChangeKind.ADDED, "Tablet Compact has a button that shows or hides the sidebar."),
             ChangeItem(ChangeKind.ADDED, "Phone tab bar layouts modeled on Safari, and a tab overview on tablets."),
+            ChangeItem(ChangeKind.CHANGED, "On tablets, the top fade under the status bar is taller, so the clock and battery stay readable over a page."),
             ChangeItem(ChangeKind.CHANGED, "Link menu: \"Open in new tab\" now switches to the new tab."),
             ChangeItem(ChangeKind.CHANGED, "The browser engine is upgraded to GeckoView 160."),
             ChangeItem(ChangeKind.CHANGED, "The load bar no longer flashes, and phone bars float above the page."),

@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `9104c7f`.
+Last updated: 2026-11-17, at commit `ce7dbd1`.
 
 ## Done
 
@@ -20,6 +20,7 @@ Last updated: 2026-11-17, at commit `9104c7f`.
 - App icon uses the charcoal ring-and-dot design (`cf85810`).
 - Phone Compact pill narrows toward the centre as you scroll, with the URL centred (`6e0ddeb`).
 - Find in page from the browser menu, with match count and previous/next (`1ab7996`).
+- Tab overview search: open tabs are filtered by title or address on phone and tablet (`ce7dbd1`).
 - Link menu: "Open in new tab" switches to the new tab; "Open in background tab" opens one without switching (`9104c7f`).
 - Feature-use counts on this device, shown on Diagnostics with a switch and Clear usage (`fd47d98`).
 - Profiles with their own tabs and bookmarks, switched at the top of the tab overview (phone) and the tab sidebar (tablet) (`52a68f5`).
@@ -51,7 +52,7 @@ Last updated: 2026-11-17, at commit `9104c7f`.
 - Mini tab switcher at the bottom for quick switching within a group.
 - Inactive tabs: move unused tabs to a separate collection after a chosen time.
 - Recent tabs: list tabs open on other devices signed into the same account. Needs a sync design first.
-- Search open tabs, bookmarks and history from one search field.
+- Search bookmarks and history from one search field. Open-tab search is done (see Done).
 
 ### Better app usage
 
@@ -112,5 +113,6 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | Password autofill switch; phone page below the status bar (`b1fa65a`) | Start page and the Google sign-in page sit below the status bar, with the fade kept (screenshots). Autofill fill not checked on a login page | Start page captured with the Passwords card not seen after the text change; autofill fill not checked |
 | 2026-11-17 | Tablet Compact row transparent over the start page (`0c35a28`) | Bottom Compact bar unchanged (not re-checked this change) | Start page shows behind the floating row; no white strip; search field clear below the row (screenshot). theverge.com shows behind the row, with the pill over the page (screenshot). Shrink on scroll and side panel not re-checked |
 | 2026-11-17 | Refactor: shared disclosure chevron; bookmark state computed once (`451f542`) | Start page unchanged after install (screenshot). Menu chevrons show on Find in page, Downloads and Extensions (screenshot) | Start page unchanged after install (screenshot). Tablet menu chevron not checked |
+| 2026-11-17 | Tab overview search; tablet top fade taller (`ce7dbd1`) | Search field shown; typing "start" left only the Start page tile (screenshots) | Search field shown in the overview (screenshot); filter not typed on the tablet |
 | 2026-11-17 | Link menu: new-tab and background-tab rows (`9104c7f`) | Both rows shown in the long-press menu on a link (screenshot). Opening the background tab not checked | Both rows shown in the long-press menu on a link (screenshot). Opening the background tab not checked |
 | 2026-11-17 | Phone status-bar fade; tablet Compact pill narrower, no band (`6acf4de`) | Status fade: clock and battery readable over the page (screenshot). Bottom Compact bar unchanged | Pill narrower and centred (screenshot). Gap above the page is the window's white background, not yet matched to the page; shrink and side panel not checked |

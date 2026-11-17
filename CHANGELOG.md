@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match. (`ce7dbd1`)
 - Link menu: "Open in background tab" opens a link without switching to it. (`9104c7f`)
 - Cookies: Settings > Privacy has a Cookies card. Allow all cookies, block third-party cookies, or block all cookies. (`c3d1857`)
 - Password autofill: a Passwords switch in Settings > Privacy lets Android password apps, such as Bitwarden or Google Password Manager, fill login fields. (`b1fa65a`)
@@ -27,6 +28,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Phone tab bar layouts modeled on Safari, and a tablet tab overview. (`538cd0b`, `6734c89`, `01ac130`)
 
 **Changed**
+- On tablets, the top fade under the status bar is taller, so the clock and battery stay readable over a page. (`ce7dbd1`)
 - Link menu: "Open in new tab" now switches to the new tab. (`9104c7f`)
 - GeckoView upgraded from 153 to 160. (`403206e`)
 - The app icon uses the new charcoal design. (`cf85810`)
