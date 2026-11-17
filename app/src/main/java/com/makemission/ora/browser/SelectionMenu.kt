@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.CalendarContract
-import android.widget.Toast
+import com.makemission.ora.notice.InAppNotices
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -188,6 +188,6 @@ private fun launch(context: Context?, intent: Intent) {
     runCatching { context.startActivity(intent) }
         .onFailure {
             BrowserLog.warn("select", "No app for ${intent.action}: ${it.message}")
-            Toast.makeText(context, "No app can open that.", Toast.LENGTH_SHORT).show()
+            InAppNotices.show("No app can open that.")
         }
 }

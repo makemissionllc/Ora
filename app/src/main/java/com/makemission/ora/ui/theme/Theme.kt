@@ -110,6 +110,8 @@ object BrowserTokens {
 
     // Sidebar (tablet)
     val SidebarWidth = 272.dp
+    // The sidebar is a panel with rounded edges on its open (right) side, so it reads as a surface, not a stripe.
+    val SidebarShape = RoundedCornerShape(topEnd = RadiusLarge, bottomEnd = RadiusLarge)
     val SidebarPadding = PaddingValues(horizontal = 12.dp, vertical = 20.dp)
     val SidebarRowHeight = 44.dp
     /** Widest the centered address pill grows on tablet (design: D-Browse). */

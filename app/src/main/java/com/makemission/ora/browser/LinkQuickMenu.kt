@@ -3,7 +3,7 @@ package com.makemission.ora.browser
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.widget.Toast
+import com.makemission.ora.notice.InAppNotices
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -158,5 +158,5 @@ private fun copyToClipboard(context: Context, what: String, value: String, messa
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText(what, value))
     BrowserLog.info("page", "$message: $value")
-    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    InAppNotices.show(message)
 }

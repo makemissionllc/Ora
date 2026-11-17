@@ -3,7 +3,7 @@ package com.makemission.ora.log
 import com.makemission.ora.ui.theme.BrowserTokens
 import android.content.ClipData
 import android.content.ClipboardManager
-import android.widget.Toast
+import com.makemission.ora.notice.InAppNotices
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -62,10 +62,10 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
             context.contentResolver.openOutputStream(uri)?.bufferedWriter()?.use { it.write(BrowserLog.asText()) }
                 ?: error("Could not open the file")
             BrowserLog.info("log", "Exported ${BrowserLog.entries.value.size} entries")
-            Toast.makeText(context, "Log exported", Toast.LENGTH_SHORT).show()
+            InAppNotices.show("Log exported")
         } catch (e: Exception) {
             BrowserLog.error("log", "Log export failed", e)
-            Toast.makeText(context, "Export failed", Toast.LENGTH_SHORT).show()
+            InAppNotices.show("Export failed")
         }
     }
 
@@ -131,7 +131,7 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
                     onClick = {
                         val clipboard = context.getSystemService(ClipboardManager::class.java)
                         clipboard.setPrimaryClip(ClipData.newPlainText("Ora log", BrowserLog.asText()))
-                        Toast.makeText(context, "Log copied", Toast.LENGTH_SHORT).show()
+                        InAppNotices.show("Log copied")
                     },
                     enabled = entries.isNotEmpty()
                 ) {

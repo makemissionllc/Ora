@@ -2,6 +2,10 @@ package com.makemission.ora.browser
 
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.animation.core.Animatable
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.graphics.Color
 import android.app.Activity
@@ -173,7 +177,7 @@ import org.mozilla.geckoview.GeckoRuntimeSettings
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.StorageController
-import android.widget.Toast
+import com.makemission.ora.notice.InAppNotices
 
 /** Screens narrower than this use the phone layout (tab grid); wider ones use the sidebar layout. */
 /** Screens at least this wide use the tablet layout. Shared with Settings so each device sees its own options. */
@@ -447,8 +451,8 @@ private fun BrowserContent(
         GeckoEngine.runtime(context).storageController
             .clearData(StorageController.ClearFlags.ALL)
             .accept(
-                { Toast.makeText(context, "Browsing data cleared", Toast.LENGTH_SHORT).show() },
-                { Toast.makeText(context, "Could not clear browsing data", Toast.LENGTH_SHORT).show() }
+                { InAppNotices.show("Browsing data cleared") },
+                { InAppNotices.show("Could not clear browsing data") }
             )
     }
 
@@ -555,11 +559,30 @@ private fun BrowserContent(
             pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth
         )
     }
+    // In-app messages (formerly toasts) show as a snackbar. A new message replaces the one on screen, so a
+    // burst of feedback never queues up behind a stale line.
+    val notices = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        InAppNotices.messages.collect { message ->
+            notices.currentSnackbarData?.dismiss()
+            notices.showSnackbar(message, duration = SnackbarDuration.Short)
+        }
+    }
     Box(modifier = modifier.fillMaxSize()) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         // Tablet Compact floats over the browser grid colour, so no strip shows behind the row or beside the sidebar.
         containerColor = if (tabletCompact) Color.Transparent else MaterialTheme.colorScheme.background,
+        snackbarHost = {
+            SnackbarHost(hostState = notices) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    shape = RoundedCornerShape(BrowserTokens.RadiusMedium),
+                    containerColor = browserColors().Surface,
+                    contentColor = browserColors().AddressBarText,
+                )
+            }
+        },
         topBar = {
             Column(modifier = Modifier.fillMaxWidth().onSizeChanged { topBarHeight = with(density) { it.height.toDp() } }) {
             // Adaptive shrink: the top bar folds up while the page is scrolled down, and returns on scroll up.
@@ -618,6 +641,7 @@ private fun BrowserContent(
                     modifier = Modifier
                         .width(BrowserTokens.SidebarWidth)
                         .fillMaxHeight()
+                        .clip(BrowserTokens.SidebarShape)
                         .background(browserColors().SidebarBackground)
                 ) {
                     if (tabletCompact) Spacer(Modifier.height(compactRowHeight))
@@ -689,7 +713,7 @@ private fun BrowserContent(
                                 onCopy = {
                                     picked.copy()
                                     BrowserLog.info("select", "Copied selected text")
-                                    Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                    InAppNotices.show("Copied")
                                 },
                                 onSelectAll = { picked.selectAll() },
                                 onShare = { selectedText ->
@@ -1870,7 +1894,7 @@ private fun requestAutofill(context: android.content.Context, view: GeckoView?) 
     val manager = context.getSystemService(android.view.autofill.AutofillManager::class.java)
     if (data == null || rect == null || manager == null || !manager.isEnabled) {
         BrowserLog.warn("autofill", "Auto-fill requested but no field or autofill service is available")
-        Toast.makeText(context, "No autofill service available for this field", Toast.LENGTH_SHORT).show()
+        InAppNotices.show("No autofill service available for this field")
         return
     }
     val node = autofill.focused

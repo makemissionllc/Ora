@@ -1,7 +1,7 @@
 package com.makemission.ora.browser
 
 import android.content.Context
-import android.widget.Toast
+import com.makemission.ora.notice.InAppNotices
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -227,7 +227,7 @@ class BrowserTab(
                 } else {
                     BrowserLog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")
                     // Quality of life: say so, instead of leaving a half-drawn page with no explanation.
-                    Toast.makeText(appContext, "Page didn't finish loading. Tap reload to try again.", Toast.LENGTH_SHORT).show()
+                    InAppNotices.show("Page didn't finish loading. Tap reload to try again.")
                 }
             }
         }

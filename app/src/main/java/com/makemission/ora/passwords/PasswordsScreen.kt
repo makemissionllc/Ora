@@ -4,7 +4,7 @@ import com.makemission.ora.ui.theme.BrowserTokens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.widget.Toast
+import com.makemission.ora.notice.InAppNotices
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -127,10 +127,10 @@ fun PasswordsScreen(onDone: () -> Unit) {
                 TextButton(onClick = {
                     val deleted = PasswordStore.delete(login.guid)
                     if (deleted) {
-                        Toast.makeText(context, "Password deleted", Toast.LENGTH_SHORT).show()
+                        InAppNotices.show("Password deleted")
                     } else {
                         BrowserLog.error("passwords", "Deleting a saved login failed")
-                        Toast.makeText(context, "Could not delete the password", Toast.LENGTH_SHORT).show()
+                        InAppNotices.show("Could not delete the password")
                     }
                     pendingDelete = null
                 }) {
@@ -211,5 +211,5 @@ private fun PasswordRow(
 private fun copyPassword(context: Context, login: PasswordStore.Login) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("Password", login.password))
-    Toast.makeText(context, "Password copied", Toast.LENGTH_SHORT).show()
+    InAppNotices.show("Password copied")
 }
