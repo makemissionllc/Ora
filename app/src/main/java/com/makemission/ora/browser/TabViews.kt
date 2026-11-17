@@ -264,8 +264,9 @@ fun TabSidebar(
                 .background(browserColors().AddressBarBackground),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            SegmentLabel("Tabs", selected = !showBookmarks, modifier = Modifier.weight(1f)) { showBookmarks = false }
-            SegmentLabel("Bookmarks", selected = showBookmarks, modifier = Modifier.weight(1f)) { showBookmarks = true }
+            // Quality of life: switching lists clears the search, so a filter for tabs does not hide bookmarks.
+            SegmentLabel("Tabs", selected = !showBookmarks, modifier = Modifier.weight(1f)) { showBookmarks = false; query = "" }
+            SegmentLabel("Bookmarks", selected = showBookmarks, modifier = Modifier.weight(1f)) { showBookmarks = true; query = "" }
         }
         // Filters the list below by title or address.
         SidebarSearch(
