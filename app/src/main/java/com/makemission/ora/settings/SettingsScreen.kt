@@ -87,6 +87,7 @@ fun SettingsScreen(
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
+    val edgeSwipeSidebar by settings.edgeSwipeSidebar.collectAsState()
     val motionStyle by settings.motionStyle.collectAsState()
     val usageStats by settings.usageStats.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
@@ -234,6 +235,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 Switch(checked = fadePagesIn, onCheckedChange = { settings.setFadePagesIn(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setEdgeSwipeSidebar(!edgeSwipeSidebar) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Text("Swipe right to open the sidebar", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Tablet only. Swipe right from the left edge of a page. Turn this off if a site's own swipes get in the way.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = edgeSwipeSidebar, onCheckedChange = { settings.setEdgeSwipeSidebar(it) })
                             }
                             Text(
                                 "Motion",

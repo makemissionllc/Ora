@@ -163,6 +163,19 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Secure DNS ${if (enabled) "on" else "off"}")
     }
 
+    private val _edgeSwipeSidebar = MutableStateFlow(prefs.getBoolean(KEY_EDGE_SWIPE_SIDEBAR, true))
+    /**
+     * Tablet only: a rightward swipe from the left edge of a page opens the sidebar. Off for sites
+     * whose own swipes (carousels, drawers) conflict with it.
+     */
+    val edgeSwipeSidebar: StateFlow<Boolean> = _edgeSwipeSidebar.asStateFlow()
+
+    fun setEdgeSwipeSidebar(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_EDGE_SWIPE_SIDEBAR, enabled).apply()
+        _edgeSwipeSidebar.value = enabled
+        BrowserLog.info("settings", "Edge swipe for the sidebar ${if (enabled) "on" else "off"}")
+    }
+
     private val _fadePagesIn = MutableStateFlow(prefs.getBoolean(KEY_FADE_PAGES_IN, true))
     /** When on, a page fades in once it is half loaded instead of showing its pieces as they arrive. */
     val fadePagesIn: StateFlow<Boolean> = _fadePagesIn.asStateFlow()
@@ -272,6 +285,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_POPUPS = "block_popups"
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
+        private const val KEY_EDGE_SWIPE_SIDEBAR = "edge_swipe_sidebar"
         private const val KEY_MOTION_STYLE = "motion_style"
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"

@@ -353,6 +353,7 @@ private fun BrowserContent(
     val tabletCompact = isTablet && barStyle == BarStyle.COMPACT
     /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
     val showSidebar by settings.tabletSidebar.collectAsState()
+    val edgeSwipeSidebar by settings.edgeSwipeSidebar.collectAsState()
     val density = LocalDensity.current
     /** Height of the top bar, measured so the tablet side panel starts below it. */
     var topBarHeight by remember { mutableStateOf(0.dp) }
@@ -432,6 +433,10 @@ private fun BrowserContent(
     }
     BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen && selected.canStepBack) {
         selected.stepBack()
+    }
+    // Quality of life: on tablet, Back closes an open sidebar before it steps back through history.
+    BackHandler(enabled = isTablet && showSidebar && phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen) {
+        settings.setTabletSidebar(false)
     }
 
     pendingSearch?.let { query ->
@@ -796,6 +801,13 @@ private fun BrowserContent(
                     .align(Alignment.TopCenter)
                     .onSizeChanged { compactRowHeight = with(density) { it.height.toDp() } }
             ) { tabletCompactRow() }
+        }
+        // Tablet: a rightward swipe from the left edge of the page opens the sidebar, when the setting is on.
+        if (isTablet && !showSidebar && edgeSwipeSidebar) {
+            SidebarEdgeSwipe(
+                onOpen = { settings.setTabletSidebar(true) },
+                modifier = Modifier.padding(innerPadding),
+            )
         }
         if (!isTablet) {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }

@@ -107,6 +107,12 @@ object BrowserTokens {
     /** Widest the centered address pill grows on tablet (design: D-Browse). */
     val TabletAddressMaxWidth = 520.dp
     val SidebarSegmentHeight = 32.dp
+    /** Gap from the screen edge to the swipe strip, so Android's own back gesture keeps the very edge. */
+    val EdgeSwipeInset = 28.dp
+    /** Width of the strip a rightward swipe starts from to open the sidebar. */
+    val EdgeSwipeWidth = 40.dp
+    /** How far a rightward drag from the edge must travel before the sidebar opens. */
+    val EdgeSwipeDistance = 56.dp
 
     // Settings (tablet): a category rail beside one centered column, as in the Settings mockup.
     val SettingsRailWidth = 260.dp
