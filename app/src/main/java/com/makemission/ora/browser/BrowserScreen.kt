@@ -1194,6 +1194,12 @@ private fun BrowserPage(
                 .height(zoneHeight * zoneFraction)
                 .background(zoneColor)
         )
+        // Hands the page's login fields to Android's autofill framework. See AutofillBridge.kt.
+        val context = LocalContext.current
+        DisposableEffect(context) {
+            val detach = attachAutofillBridge(context) { pageView.view }
+            onDispose { detach?.invoke() }
+        }
         AndroidView(
             modifier = Modifier
                 .fillMaxSize()
@@ -2127,13 +2133,19 @@ private const val UNDO_CLOSE_MS = 5000L
 
 /** Asks Android's autofill service for suggestions for the focused page field, as the system "Auto-fill" menu item does. */
 private fun requestAutofill(context: android.content.Context, view: GeckoView?) {
+    val manager = context.getSystemService(android.view.autofill.AutofillManager::class.java)
+    if (manager == null || !manager.isEnabled) {
+        BrowserLog.warn("autofill", "Auto-fill requested but no autofill service is turned on")
+        InAppNotices.show("No autofill service is turned on. Choose one in your phone's settings.")
+        return
+    }
     val autofill = view?.session?.autofillSession
     val data = autofill?.focusedData
     val rect = autofill?.focused?.screenRect
-    val manager = context.getSystemService(android.view.autofill.AutofillManager::class.java)
-    if (data == null || rect == null || manager == null || !manager.isEnabled) {
-        BrowserLog.warn("autofill", "Auto-fill requested but no field or autofill service is available")
-        InAppNotices.show("No autofill service available for this field")
+    if (data == null || rect == null) {
+        // GeckoView follows one page's fields at a time, so after another tab loads the focus can be lost; a reload restores it.
+        BrowserLog.warn("autofill", "Auto-fill requested but no page field has focus")
+        InAppNotices.show("Tap a login field on this page, then try again. If it still fails, reload the page.")
         return
     }
     val node = autofill.focused
