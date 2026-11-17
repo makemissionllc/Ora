@@ -6,6 +6,7 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 
 ## Done
 - Status-bar fades merged into one StatusBarFade composable; Extensions search results use the shared motion values (`0b92ba3`). Start page checked on both devices after the change.
+- Private tabs from the ⋯ menu (`8abb39f`): a private-mode session, no thumbnail, not kept for reopen, and a private note on the start page. Verified on phone and tablet (see verification log); tab grid thumbnail check on the phone not done.
 - Motion style setting: Settings > Appearance > Motion with Smooth, Elegant, Fast and Premium (`67c0218`). Verified on phone and tablet; Fast applied on both, Smooth restored.
 
 - GeckoView browser with phone and tablet layouts. Tabs, tab grid, sidebar, start page, link menu, downloads, extensions, desktop site, Back handling, bookmarks.
@@ -61,7 +62,6 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 
 - Keyboard autocorrect and capitals in the address bar (see Known issues).
 - Profiles: history, cookies and logins are still shared between profiles. Keeping them apart needs a storage decision.
-- Incognito tabs: private tabs that keep no history, cookies or thumbnails once closed.
 - Open in a new tab: opens the link in a new tab and switches to it immediately.
 - Built-in ad blocking beyond tracking protection: Privacy already has "Block ads and trackers" (GeckoView strict tracking protection). A fuller blocker would need a filter-list design, a choice of lists, and per-site exceptions before any work.
 
