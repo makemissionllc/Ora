@@ -65,7 +65,7 @@ Last updated: 2026-11-17, at commit `2a47c6a`.
 
 - Documentation set: README, CHANGELOG, PROGRESS, and the AGENTS.md rule that keeps them current.
 - In-app "What's new" page, built from the same entries as CHANGELOG.md.
-- Phone Compact top fade under the status bar, and page clipping (`01de1e1`): the bottom fade was removed (`2a47c6a`). Phone (reddit.com, portrait, not scrolled): no fade under the bar, and page text ends at the bar's top edge. Not checked: google.com and theverge.com at the top, while scrolling, and at the end of a page. An earlier google.com screenshot showed page content under the status bar; not resolved.
+- Phone Compact top fade under the status bar, and page clipping (`01de1e1`): the bottom fade was removed (`2a47c6a`). Phone (reddit.com, portrait, not scrolled): no fade under the bar, and page text ends at the bar's top edge. Phone (google.com and theverge.com, portrait): the page starts below the status bar at the top, and content fades under the status bar while scrolled. The page under the folded bar at the page end is open; see Known issues. Not checked: tablet; scrolling back up. The earlier google.com screenshot with page content under the status bar was not seen again at the top.
 - Clear history confirmation morph (`01de1e1`): Cancel verified on the tablet. Back and tap-outside not checked yet.
 
 ## Pending
@@ -107,6 +107,7 @@ Last updated: 2026-11-17, at commit `2a47c6a`.
 - Tablet: when a page scrolls inside its own element, Ora's bars may not return with a scroll up. Seen on a Fandom wiki page.
 - Tablet: the Compact floating row overlaps the page's navigation links. Open; not fixed.
 - Site permissions: during tests a card was answered with no tap recorded (tablet about 18:21, phone about 18:24, both on the test page). Cause not found. On the phone, an older saved camera choice from test data could explain an automatic Allow. Not reproduced.
+- Phone Compact bar, page clip (`01de1e1`, `2a47c6a`): on google.com the expanded bar shows a cut-off sliver of footer text just below its bottom edge at the page end. With the bar folded on theverge.com, page text and the 'OUR SITES' box show under and below the floating pill while scrolled and at the page end. Not decided whether the folded bar should clip above itself as the expanded bar does.
 
 ## Verification log
 
@@ -179,4 +180,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `11f3e74` (seek bar; Back exits full screen) | Phone (CPH2745) seen. Tablet: Not checked (not connected over ADB) | Phone: seek bar shows 0:00 / 0:10 with the video full screen; dragging the thumb to the middle moved the video to 0:06; Back left full screen and stayed on the page; Settings switch turned off not checked (screenshots) |
 | 2026-11-17 | `ed85a8a` (full-screen double-tap skip) | Phone (CPH2745) seen. Tablet: Not checked (not connected over ADB) | Phone: right double-tap moved 0:00 to 0:10; left double-tap moved 0:10 back to 0:00 with the "-10 s" hint shown (screenshots `phone_skip_5_right.png`, `phone_skip_6_left.png`, `phone_skip_7_after.png`). The "+N s" hint was not captured on screen; accumulation not tested |
 | 2026-11-17 | `2a47c6a` (phone bottom fade removed) | Portrait, reddit.com, not scrolled: no gradient under the floating bar (pixel samples); page text ends at the bar's top edge (screenshot). Not checked: google.com, theverge.com, scrolling, page end | Not checked: tablet not connected over ADB this session |
+| 2026-11-17 | `2a47c6a` (checks on the same build; no new code) | Portrait, phone (CPH2745). google.com: at the top the page starts below the status bar (`gcom-top-1.png`); scrolled, content fades under the status bar and the footer ends above the folded pill (`gcom-scroll-1.png`); at the page end the folded bar shows the URL only (`gcom-end-1.png`). With the bar expanded at the end, footer text shows as a cut-off sliver just below the bar (`theverge-after-pill-tap.png`, cropped). theverge.com: at the top the header starts below the status bar (`theverge-top-2.png`); scrolled, page content runs under and below the folded pill (`theverge-scroll-1.png`, `theverge-scroll-2.png`); at the page end the 'OUR SITES' box sits under the folded pill (`theverge-end-2.png`). Not checked: scrolling back up; the bar's behaviour on a page with a keyboard open | Not checked: tablet not connected over ADB this session |
 
