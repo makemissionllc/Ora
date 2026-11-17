@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- Diagnostics records the colour the status bar took from each page, to help check it when it looks wrong. (`bd2c82e`)
 - Motion style: Settings > Appearance has a Motion section with Smooth, Elegant, Fast and Premium. It sets how quickly pages, menus and panels move. (`67c0218`)
 - Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match. (`ce7dbd1`)
 - Link menu: "Open in background tab" opens a link without switching to it. (`9104c7f`)
@@ -29,6 +30,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Phone tab bar layouts modeled on Safari, and a tablet tab overview. (`538cd0b`, `6734c89`, `01ac130`)
 
 **Changed**
+- The strip behind the status bar takes the colour of the page's top edge, and pages run under it. Once a page scrolls, the bar softly fades instead of showing a solid band. The status icons switch between light and dark to stay readable. (`2cadb19`)
 - On tablets, the top fade under the status bar is taller, so the clock and battery stay readable over a page. (`ce7dbd1`)
 - Link menu: "Open in new tab" now switches to the new tab. (`9104c7f`)
 - GeckoView upgraded from 153 to 160. (`403206e`)
@@ -49,6 +51,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Load bar no longer flashes, and phone bars float above the page. (`205a2d6`)
 
 **Fixed**
+- Pull to refresh: the indicator sits below the status icons when the page runs under the bar. (`2cadb19`)
 - On tablets, the floating Compact row no longer sits on a white strip over the start page. The row floats over the page, and the start page content sits clear of it. (`0c35a28`)
 - Profile names in the tab overview and sidebar are centred in their chips. (`98ba017`)
 - The "Fade pages in" description no longer runs into its switch in Settings > Appearance.

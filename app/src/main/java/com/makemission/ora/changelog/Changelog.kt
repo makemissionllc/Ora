@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Diagnostics records the colour the status bar took from each page, to help check it when it looks wrong."),
             ChangeItem(ChangeKind.ADDED, "Motion style: choose Smooth, Elegant, Fast or Premium in Settings > Appearance. It sets how quickly pages, menus and panels move."),
             ChangeItem(ChangeKind.ADDED, "Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match."),
             ChangeItem(ChangeKind.ADDED, "Link menu: \"Open in background tab\" opens a link without switching to it."),
@@ -31,7 +32,9 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "A floating Compact bar on phones, which folds away as you scroll. Back returns to the start page from pages opened there."),
             ChangeItem(ChangeKind.ADDED, "Tablet Compact has forward and tabs buttons beside the address bar. Long-press Back to go to the start page."),
             ChangeItem(ChangeKind.ADDED, "Tablet Compact has a button that shows or hides the sidebar."),
+            ChangeItem(ChangeKind.FIXED, "Pull to refresh: the indicator sits below the status icons when the page runs under the bar."),
             ChangeItem(ChangeKind.ADDED, "Phone tab bar layouts modeled on Safari, and a tab overview on tablets."),
+            ChangeItem(ChangeKind.CHANGED, "The strip behind the status bar takes the colour of the page's top edge, and pages run under it. Once a page scrolls, the bar fades softly instead of showing a solid band. The status icons switch between light and dark to stay readable."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, the top fade under the status bar is taller, so the clock and battery stay readable over a page."),
             ChangeItem(ChangeKind.CHANGED, "Link menu: \"Open in new tab\" now switches to the new tab."),
             ChangeItem(ChangeKind.CHANGED, "The browser engine is upgraded to GeckoView 160."),
