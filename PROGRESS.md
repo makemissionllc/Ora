@@ -94,7 +94,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
-| 2026-11-17 | `8abb39f` | New private tab from the ⋯ menu; private start-page note | Menu opened, "New private tab" tapped; start page shows the private note and no tab thumbnail check (screenshots). Menu labels overlap in the row: "New private tab" runs into "Tabs"/"Library" (screenshot) | Menu opened, "New private tab" tapped; start page shows the private note and the sidebar lists 2 of 2 tabs (screenshot). Menu labels overlap in the row (screenshot) |
+| 2026-11-17 | `8abb39f` | New private tab from the ⋯ menu; private start-page note | Menu opened, "New private tab" tapped; start page shows the private note (screenshot). Tab grid thumbnail not checked. Menu labels overlap in the row: "New private tab" runs into "Tabs"/"Library" (screenshot) | Menu opened, "New private tab" tapped; start page shows the private note and the sidebar lists 2 of 2 tabs (screenshot). Menu labels overlap in the row (screenshot) |
 | 2026-11-17 | `589f8ee` | Tablet Settings rail | Unchanged | Rail and centered column checked |
 | 2026-11-17 | `c7b6cb6` | Page fade-in | Loaded page visible | Loaded page visible after relaunch |
 | 2026-11-17 | `403206e` | GeckoView 160 | Start page and mozilla.org loaded | Start page loaded; a search page loaded after a retype |
