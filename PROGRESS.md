@@ -18,6 +18,7 @@ Last updated: 2026-11-17, at commit `5ddf098`.
 - Selection card for selected page text: Search, Copy, Select all, Share with highlight, and Call, Message or Add to calendar for phone numbers and dates (`5ddf098`).
 - App icon uses the charcoal ring-and-dot design (`cf85810`).
 - Phone Compact pill narrows toward the centre as you scroll, with the URL centred (`6e0ddeb`).
+- Find in page from the browser menu, with match count and previous/next (`1ab7996`).
 - Keeps tabs, the page and the search when the screen rotates (`configChanges` in the manifest, so the activity is not recreated).
 - Clears the link menu when a new page starts.
 
@@ -81,5 +82,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | rotation fix (uncommitted) | Configuration changes handled in place | Loaded page, search and tab kept after switch to landscape; auto-rotate restored | Not checked |
 | 2026-11-17 | `6e0ddeb` | Compact pill shrinks toward centre, URL centred | Shrunk pill centred, URL centred (screenshot) | Not checked |
 | 2026-11-17 | `cf85810` | App icon | Charcoal ring-and-dot icon on the home screen (screenshot) | Charcoal ring-and-dot icon on the home screen (screenshot) |
-| 2026-11-17 | find in page (uncommitted) | Find bar from the menu; "the" gave 2/69 matches, arrows and close work | Find bar opens from the menu; page did not load, so match counting not checked |
+| 2026-11-17 | `1ab7996` | Find in page bar from the menu; match count, arrows and close | "the" gave 2/69 matches; arrows and close work (screenshot) | "the" gave 1/43 matches; close works (screenshot) |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
