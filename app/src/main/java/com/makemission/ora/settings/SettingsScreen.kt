@@ -58,6 +58,8 @@ import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.DiagnosticsScreen
 import com.makemission.ora.passwords.PasswordStore
 import com.makemission.ora.passwords.PasswordsScreen
+import com.makemission.ora.notice.InAppNotices
+import com.makemission.ora.permissions.SitePermissionStore
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.MotionStyle
 import com.makemission.ora.ui.theme.PaletteStyle
@@ -84,6 +86,7 @@ fun SettingsScreen(
     settings: SettingsRepository,
     onDone: () -> Unit,
     onClearData: () -> Unit,
+    sitePermissions: SitePermissionStore,
 ) {
     val appearance by settings.appearance.collectAsState()
     val homePage by settings.homePage.collectAsState()
@@ -114,6 +117,10 @@ fun SettingsScreen(
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
     var homeDraft by remember(homePage) { mutableStateOf(homePage) }
     var confirmClear by remember { mutableStateOf(false) }
+    var confirmClearSites by remember { mutableStateOf(false) }
+    val siteChoices by sitePermissions.choices.collectAsState()
+    val siteCount = SitePermissionStore.countSites(siteChoices)
+    val siteLabel = if (siteCount == 1) "1 site" else "$siteCount sites"
     var showDiagnostics by remember { mutableStateOf(false) }
     var showPasswords by remember { mutableStateOf(false) }
     var showChangelog by remember { mutableStateOf(false) }
@@ -680,6 +687,33 @@ fun SettingsScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
+                                .clickable {
+                                    // Quality of life: with nothing saved, say so instead of opening an empty confirmation.
+                                    if (siteCount > 0) {
+                                        confirmClearSites = true
+                                    } else {
+                                        InAppNotices.show("No site permissions are saved")
+                                    }
+                                }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text("Site permissions", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text(
+                                    if (siteCount == 0) "No saved choices yet" else "Saved for $siteLabel. Tap to clear.",
+                                    fontSize = 13.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            DisclosureChevron()
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+                                .background(browserColors().AddressBarBackground)
                                 .clickable { confirmClear = true }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -827,6 +861,28 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (confirmClearSites) {
+        AlertDialog(
+            onDismissRequest = { confirmClearSites = false },
+            title = { Text("Clear site permissions?") },
+            text = { Text("Saved Allow and Block choices for $siteLabel will be forgotten. Each site will ask again.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmClearSites = false
+                    sitePermissions.clear()
+                    InAppNotices.show("Site permissions cleared")
+                }) {
+                    Text("Clear", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmClearSites = false }) {
+                    Text("Cancel", color = browserColors().SecondaryText)
+                }
+            }
+        )
     }
 
     if (confirmClear) {

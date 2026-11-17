@@ -42,6 +42,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `log/`: `BrowserLog`, which every error and browser event goes through. It shows on Settings > Diagnostics. `UsageStats` counts feature use (action names only) on the same page.
 - `bookmarks/`: the bookmark store.
 - `history/`: `HistoryRepository`, the browsing history store. Each profile has its own list, and a page is recorded when it finishes loading (never in a private tab). `browser/HistoryViews.kt` draws the list in the tablet sidebar and the phone Library.
+- `permissions/`: site permission prompts. `SitePermissionDelegate` answers GeckoView's permission requests (location, camera, microphone, notifications) from saved choices, or asks. `SitePrompts` queues the questions and `SitePromptCard.kt` draws the Allow / Not now / Block card. `SitePermissionStore` keeps the choices per profile in `ora_site_permissions` (private tabs save nothing). `AndroidManifest.xml` declares the matching Android permissions.
 
 ## Design sources
 

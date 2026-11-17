@@ -182,6 +182,11 @@ import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoView
 import org.mozilla.geckoview.StorageController
 import com.makemission.ora.notice.InAppNotices
+import com.makemission.ora.permissions.SitePermissionStore
+import com.makemission.ora.permissions.SitePromptOverlay
+import com.makemission.ora.permissions.SitePrompts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 
 /** Screens narrower than this use the phone layout (tab grid); wider ones use the sidebar layout. */
 /** Screens at least this wide use the tablet layout. Shared with Settings so each device sees its own options. */
@@ -265,6 +270,10 @@ private fun BrowserContent(
     val history = remember(profileId) { historyFor(profileId) }
     val historyList by history.entries.collectAsState()
     val saveHistory by settings.saveHistory.collectAsState()
+    // Site permission answers are per profile too, the same as history.
+    val sitePermissionStores = remember { HashMap<String, SitePermissionStore>() }
+    fun sitePermissionsFor(id: String): SitePermissionStore =
+        sitePermissionStores.getOrPut(id) { SitePermissionStore(context, id) }
 
     val blockAds by settings.blockAds.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
@@ -288,6 +297,7 @@ private fun BrowserContent(
                 restore = if (settings.quickResume.value) sessionStore.load(profileId) else null,
                 // Finished pages are listed in this profile's history, when saving is on.
                 onVisited = { url, title -> if (settings.saveHistory.value) historyFor(profileId).record(url, title) },
+                sitePermissions = sitePermissionsFor(profileId),
             )
         }
     }
@@ -497,6 +507,15 @@ private fun BrowserContent(
     }
 
     // Back closes the open overlay first, then steps back through page history, and only then exits.
+    // Android's own permissions (location, camera, microphone, notifications) that a page needs before it can use them.
+    val androidPermissionRequest by SitePrompts.androidRequest.collectAsState()
+    val androidPermissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+        SitePrompts.finishAndroid(results)
+    }
+    LaunchedEffect(androidPermissionRequest) {
+        androidPermissionRequest?.let { androidPermissionLauncher.launch(it.permissions) }
+    }
+
     BackHandler(enabled = phoneOverlay != PhoneOverlay.NONE || tabletTabsOpen) {
         showTabGrid = false
         showLibrary = false
@@ -860,7 +879,8 @@ private fun BrowserContent(
                         PhoneOverlay.SETTINGS -> SettingsScreen(
                             settings = settings,
                             onDone = { showSettings = false },
-                            onClearData = clearBrowsingData
+                            onClearData = clearBrowsingData,
+                            sitePermissions = sitePermissionsFor(profileId),
                         )
                         PhoneOverlay.LIBRARY -> LibraryScreen(
                             bookmarks = bookmarkList,
@@ -932,6 +952,11 @@ private fun BrowserContent(
         }
         }
     }
+    // A site's permission prompt, under the address bar. The tablet tab overview below covers it.
+    SitePromptOverlay(
+        topOffset = if (tabletCompact) compactRowHeight else topBarHeight,
+        modifier = Modifier.align(Alignment.TopCenter),
+    )
     // Tablet tab overview covers the whole window, toolbar and sidebar included. It grows out of the tabs button.
     AnimatedVisibility(
         visible = tabletTabsOpen,

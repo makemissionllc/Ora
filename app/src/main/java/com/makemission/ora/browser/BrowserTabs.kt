@@ -9,6 +9,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
+import com.makemission.ora.permissions.SitePermissionDelegate
+import com.makemission.ora.permissions.SitePermissionStore
+import com.makemission.ora.permissions.SitePrompts
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
@@ -33,6 +36,8 @@ class BrowserTab(
     restoreState: String? = null,
     /** Called with the address and title of a page that finished loading. Private tabs never report. */
     private val onVisited: (String, String) -> Unit = { _, _ -> },
+    /** The profile's saved answers to site permission prompts. Private tabs read and write none of it. */
+    private val sitePermissions: SitePermissionStore,
 ) {
     val session: GeckoSession = if (isPrivate) {
         GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build())
@@ -268,6 +273,8 @@ class BrowserTab(
                 BrowserLog.error("page", "Renderer crashed for ${this@BrowserTab.url}")
             }
         }
+        // Location, camera, microphone and notification requests go to the prompt, or to the saved answer for the site.
+        session.permissionDelegate = SitePermissionDelegate(id, isPrivate, sitePermissions)
         // Set the user agent before the session opens so the first page already uses it.
         desktopSite = desktopByDefault
         session.settings.userAgentMode = if (desktopByDefault) {
@@ -299,7 +306,11 @@ class BrowserTab(
         false
     }
 
-    fun close() = session.close()
+    fun close() {
+        // A prompt still waiting for this tab is released as "not now", so nothing is saved for a closed page.
+        SitePrompts.cancelFor(id)
+        session.close()
+    }
 }
 
 /** Scroll distance in pixels before the bars fold or reappear, so small jitters do not flicker them. */
@@ -327,6 +338,8 @@ class BrowserTabs(
     private val restore: SessionStore.Saved? = null,
     /** Receives each page a tab finishes loading, for the profile's history. */
     private val onVisited: (String, String) -> Unit = { _, _ -> },
+    /** The profile's saved site permission answers, handed to each tab. */
+    private val sitePermissions: SitePermissionStore,
 ) {
     private var nextId = 0L
     val tabs = mutableStateListOf<BrowserTab>()
@@ -367,7 +380,7 @@ class BrowserTabs(
         get() = tabs.firstOrNull { it.id == selectedId }
 
     fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited)
+        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions)
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.
