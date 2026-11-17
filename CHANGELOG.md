@@ -24,6 +24,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Auto-fill for text fields: long-press an empty text field and the selection card offers "Auto-fill", which asks your Android password app for suggestions. The card rides above the keyboard. (`4141fbd`)
 - On tablet, swipe right from the left edge of a page to open the sidebar. A Settings switch turns this off if a site's own swipes get in the way. (`fbaf6de`)
 - On tablet, Back closes an open sidebar before it goes back through page history. (`fbaf6de`)
+- Address bar swipe: swipe sideways on the address bar to move through open tabs, the pages of the current tab, or profiles. Choose the target and the motion in Settings > Address bar swipe. (`01de1e1`)
+- Full-screen video: swipe up or down on the left for brightness and on the right for volume. Turn this off in Settings > Video. (`01de1e1`)
+- On phones, tapping the shrunk address pill brings the full bar back, instead of opening the address for editing. (`01de1e1`)
 
 **Fixed**
 - On phone, a site's permission card appears below the status bar, so its title is no longer cut off. (`982a384`)
@@ -69,6 +72,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Phone tab bar layouts modeled on Safari, and a tablet tab overview. (`538cd0b`, `6734c89`, `01ac130`)
 
 **Changed**
+- On phones, the page starts below the status bar in the page's own top colour. As you scroll, it slides up under a soft fade. A soft fade behind the floating bar keeps page text from showing between its buttons, and the page ends above the bar. (`01de1e1`)
+- On tablet, the Clear history confirmation grows out of its button and shrinks back into it when it closes. (`01de1e1`)
 - Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out. (`40a19c2`)
 - On a tablet, switching between Tabs and Bookmarks in the sidebar clears the search, so a filter for tabs never hides bookmarks. (`d3f1e6e`)
 - On tablets, the top fade under the status bar is taller, so the clock and battery stay readable over a page. (`ce7dbd1`)

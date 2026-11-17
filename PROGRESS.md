@@ -63,6 +63,8 @@ Last updated: 2026-11-17, at commit `b5e1949`.
 
 - Documentation set: README, CHANGELOG, PROGRESS, and the AGENTS.md rule that keeps them current.
 - In-app "What's new" page, built from the same entries as CHANGELOG.md.
+- Phone Compact fade under the status bar, bottom fade behind the floating bar, and page clipping (`01de1e1`): built and installed on the tablet; not yet seen on a phone (not connected this session). Waiting for a phone test on google.com and theverge.com, at the top, while scrolling, and at the end of a page.
+- Clear history confirmation morph (`01de1e1`): Cancel verified on the tablet. Back and tap-outside not checked yet.
 
 ## Pending
 
@@ -110,6 +112,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `01de1e1` (phone Compact fade, bottom fade and page clipping; pill tap restores the bar; address bar swipe; full-screen video; Clear history card morph) | Not checked: the phone was not connected over ADB this session, so none of the phone changes were seen | Not checked: no phone | Tablet (7ba8e294): build installed with `-r`; the launch screenshot showed the Compact row with Ora in focus, on about:blank, and no crash. Not checked: a real page (google.com, theverge.com); Back and tap-outside on the Clear history card; address bar swipe; full-screen video |
 | 2026-11-17 | `b5e1949` (browsing history and the Save browsing history switch) | Not checked: phone not connected over ADB | Tablet (25091RP04G, USB): History segment in the sidebar lists 3 visits under Today (Anime profile). The × removed the google.com row (log "Removed one history entry"). Search "animex" showed only animex.one. Clear history: Cancel kept both rows; Clear emptied the list to "No history yet" (log "Cleared 2 history entries"). Save browsing history off: "Saving is off" note shown; on again: note gone (logs "Save browsing history off" and "on"). Not checked: visits not recorded while saving is off; private tabs; the Personal profile; the 1000-entry cap; the phone Library |
 | 2026-11-17 | `9ef0c1d` (Reopen closed tab in the ⋯ menu) | Not checked: the phone was showing another app with a half-typed message, so no taps were made on it | Tablet (25091RP04G, USB): empty state shows "Nothing closed yet" and a tap shows "No closed tabs to reopen" (screenshot `tab_empty_tap.png`). Closed iana.org from the tab overview; the menu row showed "Internet Assigned Numbers Authority"; tap reopened iana.org with back enabled (`tab_reopened.png`). Logs: "Closed tab 0", "Reopened closed tab 0", "Restored history". One tab only; the 10-tab limit not tested |
 | 2026-11-17 | `d8d0615` (page area background while loading) | Not checked: the white flash was not captured. Frames during navigation were taken too late to show the transition | Not checked: the white flash was not captured. Only a frame before navigation was taken, with the keyboard up (screenshot `w_pl_1.png`). The loaded dark page showed no white (`w_p2.png`) | Built and installed; a frame after load showed the page. Mid-load frames were too late to show the transition; not verified. Light mode not checked |
