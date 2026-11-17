@@ -2,9 +2,12 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `40a19c2`.
+Last updated: 2026-11-17, at commit `20954f4`.
 
 ## Done
+- Softer corner radii on one scale (12, 16 and 20 dp tokens in `BrowserTokens`) across cards, menus, the address field, tiles and side panels (`9ca2ced`). Verified on tablet: start page, sidebar, ⋯ menu and tab overview. Settings, error page, Downloads and changelog corners not checked on tablet; phone not checked.
+- Sidebar search has a × button that clears the text, shown only while the field has text (`9ca2ced`). Verified on tablet: text cleared and the placeholder returned.
+- Tablet edge-swipe strip starts below the toolbar, so the sidebar button is no longer covered (`20954f4`). Verified on tablet: hamburger tap opened the sidebar; swipe from the strip opened it. The Settings switch that turns the swipe off is not checked.
 - Overlays use one set of motion timings from AGENTS.md rule 11: on Smooth, fade in 220 ms, scale in 280 ms, fade out 160 ms and scale out 200 ms. Overlays appear at once when the system's Remove animations is on (`40a19c2`). Verified on tablet: the tab overview and the ⋯ panel open and close. Phone not checked; timings not measured frame by frame.
 - Tablet ⋯ menu: its panel starts below the floating Compact row, so Share, Bookmark and New tab show their icons again. Tapping ⋯ again closes it (`1deea80`). Verified on tablet in landscape; portrait not checked.
 - Status-bar fades merged into one StatusBarFade composable; Extensions search results use the shared motion values (`0b92ba3`). Start page checked on both devices after the change.
@@ -80,6 +83,7 @@ Last updated: 2026-11-17, at commit `40a19c2`.
 - Password autofill: Bitwarden is installed on both devices but reports "Did you add an account?" (no logged-in vault), so no login fill has been offered yet. Sign in to Bitwarden, then retest on a login page.
 - Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
 - Tablet: when a page scrolls inside its own element, Ora's bars may not return with a scroll up. Seen on a Fandom wiki page.
+- Tablet: the Compact floating row overlaps the page's navigation links. Open; not fixed.
 
 ## Verification log
 
@@ -87,6 +91,8 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `9ca2ced` (softer corners; sidebar search clear button) | Corner radii on one scale; sidebar search × button clears the query | Not checked: tablet-only pass | Corners checked on start page, sidebar, ⋯ menu and tab overview (screenshots). Settings, error page, Downloads and changelog corners not checked. Clear button: "sta" typed, × shown, tap cleared the field and the placeholder returned (`clear_result.png`) |
+| 2026-11-17 | `20954f4` (edge-swipe strip below the toolbar) | Edge-swipe strip starts below the toolbar so the hamburger is not covered | Not checked: tablet-only pass | Hamburger tap opened the sidebar from the start page (log "Tab sidebar shown"). Swipe from the strip at (120,700) to (460,700) opened it (log "Tab sidebar shown", `swipe_result.png`). Settings switch off not checked |
 | 2026-11-17 | `fbaf6de` (edge swipe, Settings switch, Back closes sidebar); `9597b05` (load-error page); `db79a5a` (profile chip scroll) | Edge swipe: a rightward drag from the left edge opens the sidebar; Settings switch added. Back closes an open sidebar. Failed loads show a reason and Try again. Profile chips scroll to the sidebar edge | Not checked: tablet-only pass | Swipe from x=120 px opened the sidebar with focus kept in Ora and no keyboard (screenshot). A swipe from x=16 px was taken by Android and the Claude app came forward, so the strip now starts 28 dp in. Back closed the sidebar (screenshot). "nosuchsite.invalid" opened via intent shows "The address could not be found" with Try again (screenshot). Chips start at the edge after the sidebar opens, with no offset (screenshot). Settings switch turned off and the swipe ignored: not checked. Compact row over the page nav: not fixed |
 | 2026-11-17 | `d3f1e6e` (sidebar search clears on switch); `e6e8ac5` (shared tab overview) | Tab overview: phone and tablet share one body (profile row and grid). Tablet sidebar: switching Tabs and Bookmarks clears the search | Not checked: tablet-only pass; the shared overview also drives the phone TABS overlay | Tablet overview: profile chips, search, grid and New tab shown; Done closes it (screenshots). Sidebar: "sta" cleared on switch to Bookmarks, placeholder "Search bookmarks", 4 bookmarks listed (screenshot). Sidebar hid after Done in one run and was shown again by the Compact toggle; cause not found, not reproduced |
 | 2026-11-17 | `3ef3a0f` | Tablet sidebar column: fixed sidebar width and sidebar colour behind profile chips; chips scroll sideways; list takes the height below the chips | Not checked: tablet-only pass | Landscape, sidebar open: no white strip; column dark to the bottom; "+ New profile" clipped at the edge and reached by scrolling (screenshot). Sidebar hide not re-checked. Portrait not checked |

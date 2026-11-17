@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Added**
+- The sidebar search has a × button that clears the text in one tap. (`9ca2ced`)
 - Overlays appear and disappear at once when Android's Remove animations setting is on. (`40a19c2`)
 - Tapping ⋯ again closes the tablet menu, with the same slide-out as Back and a tap on the dimmed page. (`1deea80`)
 - Auto-fill for text fields: long-press an empty text field and the selection card offers "Auto-fill", which asks your Android password app for suggestions. The card rides above the keyboard. (`4141fbd`)
@@ -23,9 +24,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - On tablet, the profile chips in the sidebar scroll to the edge instead of being cut off partway. (`db79a5a`)
 
 **Changed**
+- Cards, menus, the address field, tiles and side panels share one set of softer rounded corners. (`9ca2ced`)
 - Password autofill now follows its switch fully: with it on, your Android password app offers suggestions above the keyboard on login pages; with it off, the page is hidden from Android autofill. The Settings text says where suggestions appear.
 
 **Fixed**
+- On tablet, the edge-swipe area starts below the toolbar, so the sidebar button opens the sidebar when tapped. (`20954f4`)
 - The ⋯ menu's actions sit in two rows of three, so "New private tab" no longer runs into "Tabs" and "Library" on tablets. (`e88c778`)
 
 **Added**
