@@ -20,6 +20,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Tablet tabs open in desktop mode. Long-press reload. (`a248e8e`)
 - A floating phone Compact bar, adaptive fold on scroll, and Back to the start page from a page opened from it. (`a4d6906`)
 - Tablet Compact: a long-press on Back opens the start page, and forward and tabs buttons sit beside the address bar. (`ecff87e`)
+- Tablet Compact has a Show or Hide sidebar button at its start. (`762bf4e`)
 - Phone tab bar layouts modeled on Safari, and a tablet tab overview. (`538cd0b`, `6734c89`, `01ac130`)
 
 **Changed**
