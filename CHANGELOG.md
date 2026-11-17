@@ -29,6 +29,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Load bar no longer flashes, and phone bars float above the page. (`205a2d6`)
 
 **Fixed**
+- The Library label in the phone menu stays on one line and is no longer cut off. Profile chips have more room below them.
 - Settings text no longer runs into the switches on Appearance, Tabs and Search, and the Count feature use row has space above it. (`7d758af`)
 - Address field clears correctly, and search no longer asks which engine to use every time. (`67b6619`)
 
