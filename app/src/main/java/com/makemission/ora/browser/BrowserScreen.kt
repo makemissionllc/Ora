@@ -340,6 +340,8 @@ private fun BrowserContent(
     val density = LocalDensity.current
     /** Height of the top bar, measured so the tablet side panel starts below it. */
     var topBarHeight by remember { mutableStateOf(0.dp) }
+    // Tablet Compact floats over the page, so the sidebar reserves this much room at its top.
+    var compactRowHeight by remember { mutableStateOf(0.dp) }
     /** Bookmarks and open tabs, offered as address bar suggestions. */
     val addressCandidates = (
         bookmarkList.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) } +
@@ -461,6 +463,22 @@ private fun BrowserContent(
         }
     }
 
+    val tabletCompactRow: @Composable () -> Unit = {
+        FloatingCompactRow(
+            tab = selected,
+            shrunk = selected.chromeHidden,
+            top = true,
+            onSubmit = { input -> submitAddress(input) },
+            candidates = addressCandidates,
+            onMore = { showMenu = true },
+            onSwipeUp = openTabs,
+            onSwitchTab = switchTab,
+            onTabs = openTabs,
+            onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
+            showSidebar = showSidebar,
+            pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth
+        )
+    }
     Box(modifier = modifier.fillMaxSize()) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -468,24 +486,6 @@ private fun BrowserContent(
         containerColor = if (tabletCompact) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
             Column(modifier = Modifier.fillMaxWidth().onSizeChanged { topBarHeight = with(density) { it.height.toDp() } }) {
-            if (tabletCompact) {
-                // Tablet Compact is part of the layout: the page starts below it and is never drawn under it.
-                // It shrinks on scroll instead of hiding, so the address bar and tabs stay within reach.
-                FloatingCompactRow(
-                    tab = selected,
-                    shrunk = selected.chromeHidden,
-                    top = true,
-                    onSubmit = { input -> submitAddress(input) },
-                    candidates = addressCandidates,
-                    onMore = { showMenu = true },
-                    onSwipeUp = openTabs,
-                    onSwitchTab = switchTab,
-                    onTabs = openTabs,
-                    onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
-                    showSidebar = showSidebar,
-                    pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth
-                )
-            }
             // Adaptive shrink: the top bar folds up while the page is scrolled down, and returns on scroll up.
             AnimatedVisibility(
                 visible = topLayout && !selected.chromeHidden,
@@ -537,6 +537,7 @@ private fun BrowserContent(
                 exit = fadeOut(OraMotion.exit()) + shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = OraMotion.exit())
             ) {
                 Column(modifier = Modifier.fillMaxHeight()) {
+                    if (tabletCompact) Spacer(Modifier.height(compactRowHeight))
                     ProfileSwitcher(
                         profiles = profileList,
                         activeId = profileId,
@@ -561,6 +562,8 @@ private fun BrowserContent(
                     fadePagesIn = fadePagesIn,
                     // Phone Compact and Bottom let the page run up under the status bar; push it below, as the fade ends there.
                     belowStatusBar = !isTablet && !topLayout,
+                    // Tablet Compact floats over the page; the start page keeps its content clear of the row.
+                    topInset = if (tabletCompact) compactRowHeight else 0.dp,
                     onSubmit = { input -> submitAddress(input) }
                 )
                 if (showDownloads) {
@@ -734,6 +737,23 @@ private fun BrowserContent(
             }
         }
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
+        if (tabletCompact) {
+            // The page runs up under the status bar; a soft fade keeps the icons readable, with no solid band.
+            val statusTop = WindowInsets.statusBars.asPaddingValues(density).calculateTopPadding()
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .height(statusTop + BrowserTokens.StatusFadeExtra)
+                    .background(Brush.verticalGradient(listOf(browserColors().Scrim, Color.Transparent)))
+            )
+            // Transparent around the pill: the page shows through, so the row seems to float over it.
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .onSizeChanged { compactRowHeight = with(density) { it.height.toDp() } }
+            ) { tabletCompactRow() }
+        }
         if (!isTablet) {
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
             if (!topLayout) {
@@ -810,12 +830,17 @@ private fun BrowserPage(
     blockAds: Boolean,
     fadePagesIn: Boolean,
     belowStatusBar: Boolean,
+    topInset: Dp,
     onSubmit: (String) -> Unit,
 ) {
     // On phones the page starts under the status bar; this keeps its top controls clear of the status icons.
     val statusInset = if (belowStatusBar) Modifier.statusBarsPadding() else Modifier
     if (tab.url == BrowserTabs.START_URL) {
-        StartPage(bookmarks = bookmarks, blockAds = blockAds, onSubmit = onSubmit, modifier = Modifier.fillMaxSize().then(statusInset))
+        // The background fills the whole window, so a floating Compact row sits over the start page, not a white strip.
+        // The inset moves only the content, clear of the row.
+        Box(modifier = Modifier.fillMaxSize().then(statusInset).background(browserColors().GridBackground)) {
+            StartPage(bookmarks = bookmarks, blockAds = blockAds, onSubmit = onSubmit, modifier = Modifier.fillMaxSize().padding(top = topInset))
+        }
         return
     }
     // The page stays transparent while it arrives, then fades in with the shared enter motion.
