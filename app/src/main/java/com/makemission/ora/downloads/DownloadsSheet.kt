@@ -1,5 +1,6 @@
 package com.makemission.ora.downloads
 
+import com.makemission.ora.ui.theme.BrowserTokens
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.background
@@ -134,7 +135,7 @@ private fun DownloadRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
             .background(browserColors().Surface)
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)

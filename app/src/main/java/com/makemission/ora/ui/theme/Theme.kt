@@ -68,6 +68,14 @@ fun OraTheme(
  * "Android Browser Mockups" design. Change values here to restyle the browser.
  */
 object BrowserTokens {
+    // Corner radii: one scale for every rounded surface. Pills and the floating bars keep their own shapes.
+    /** Small surfaces inside a card: thumbnails, inner rows, badges, chips in lists. */
+    val RadiusSmall = 12.dp
+    /** Medium surfaces: cards, the address field, tab tiles, settings sections. */
+    val RadiusMedium = 16.dp
+    /** Large surfaces: menus, side panels, the link menu, start-page tiles. */
+    val RadiusLarge = 20.dp
+
     // Dimensions
     val ToolbarPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 10.dp)
     val ToolbarRowSpacing = 6.dp
@@ -81,13 +89,13 @@ object BrowserTokens {
     val PullRefreshIndicatorSize = 36.dp
     /** Space kept above the floating bottom bar, so the selection card sits clear of it. */
     val SelectionMenuBottomInset = 96.dp
-    val AddressBarShape = RoundedCornerShape(14.dp)
+    val AddressBarShape = RoundedCornerShape(BrowserTokens.RadiusMedium)
     val AddressBarElevation = 4.dp
     val AddressBarInnerPadding = 4.dp
     val AddressBarTextStart = 8.dp
     val LockIconSize = 13.dp
     /** Corner radius for cards on Settings, Extensions and the library. */
-    val CardRadius = 12.dp
+    val CardRadius = RadiusMedium
 
     // Tab grid (phone)
     val GridPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 12.dp)
@@ -95,7 +103,7 @@ object BrowserTokens {
     /** Tablet tab overview header: sits above the grid, same side insets. */
     val TabHeaderPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp)
     val TabTileHeight = 196.dp
-    val TabTileShape = RoundedCornerShape(14.dp)
+    val TabTileShape = RoundedCornerShape(BrowserTokens.RadiusMedium)
     val TabTileElevation = 2.dp
     val SelectionWidth = 3.dp
     val CloseBadgeSize = 28.dp
@@ -122,11 +130,11 @@ object BrowserTokens {
     val SettingsSegmentWidth = 280.dp
     /** Tablet side panels (the ⋯ menu) slide in from the right edge at this width. */
     val SidePanelWidth = 360.dp
-    val SidePanelRadius = 16.dp
+    val SidePanelRadius = RadiusLarge
 
     // Link quick menu (long press on a link or image)
     val QuickMenuWidth = 260.dp
-    val QuickMenuRadius = 16.dp
+    val QuickMenuRadius = RadiusLarge
     val QuickMenuRowHeight = 48.dp
     val QuickMenuEdgeGap = 8.dp
 
@@ -135,7 +143,7 @@ object BrowserTokens {
     val StartWideBreakpoint = 600.dp
     val StartSearchPadding = 16.dp
     val StartTileSize = 64.dp
-    val StartTileRadius = 16.dp
+    val StartTileRadius = RadiusLarge
     val StartTileSlot = 84.dp
     val StartCardPadding = 16.dp
     val StartCardSpacing = 12.dp

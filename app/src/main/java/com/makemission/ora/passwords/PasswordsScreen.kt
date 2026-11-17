@@ -1,5 +1,6 @@
 package com.makemission.ora.passwords
 
+import com.makemission.ora.ui.theme.BrowserTokens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -172,7 +173,7 @@ private fun PasswordRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .background(browserColors().AddressBarBackground)
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {

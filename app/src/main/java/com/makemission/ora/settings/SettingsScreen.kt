@@ -167,7 +167,7 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                         ) {
                             if (isTablet) {
@@ -288,7 +288,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                                 .clickable { settings.setTabletSidebar(!tabletSidebar) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -331,7 +331,7 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                         ) {
                             Row(
@@ -375,7 +375,7 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                         ) {
                             Row(
@@ -412,7 +412,7 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                         ) {
                             CookieChoice(
@@ -438,7 +438,7 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                         ) {
                             Row(
@@ -466,7 +466,7 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -490,7 +490,7 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                         ) {
                             SearchEngine.entries.forEach { engine ->
@@ -528,7 +528,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                                 .clickable { settings.setAskEachSearch(!askEachSearch) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -551,7 +551,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                                 .clickable { confirmClear = true }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -567,7 +567,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                                 .clickable { showDiagnostics = true }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -581,7 +581,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                                 .clickable { settings.setUsageStats(!usageStats) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -619,7 +619,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                                 .clickable(enabled = !isDefaultBrowser) {
                                     val intent = DefaultBrowser.requestIntent(context)
@@ -655,7 +655,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(12.dp))
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                                 .background(browserColors().AddressBarBackground)
                                 .clickable {
                                     BrowserLog.info("settings", "Opened What's new")
@@ -734,7 +734,7 @@ private fun AppearanceSegments(selected: AppearanceMode, onSelect: (AppearanceMo
         modifier = Modifier
             .width(BrowserTokens.SettingsSegmentWidth)
             .height(32.dp)
-            .clip(RoundedCornerShape(8.dp))
+            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .background(browserColors().GridBackground)
             .padding(2.dp),
     ) {
@@ -744,7 +744,7 @@ private fun AppearanceSegments(selected: AppearanceMode, onSelect: (AppearanceMo
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                     .background(if (on) browserColors().Surface else Color.Transparent)
                     .clickable { onSelect(mode) },
                 contentAlignment = Alignment.Center,
@@ -765,7 +765,7 @@ private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit, table
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
             .background(browserColors().AddressBarBackground)
     ) {
         BarStyle.entries.forEach { style ->

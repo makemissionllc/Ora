@@ -1,5 +1,6 @@
 package com.makemission.ora.log
 
+import com.makemission.ora.ui.theme.BrowserTokens
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.widget.Toast
@@ -103,7 +104,7 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(10.dp))
+                    .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                     .background(browserColors().AddressBarBackground)
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
@@ -164,7 +165,7 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                             .background(browserColors().AddressBarBackground)
                             .padding(horizontal = 12.dp, vertical = 8.dp)
                     ) {

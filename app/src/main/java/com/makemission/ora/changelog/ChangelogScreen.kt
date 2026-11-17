@@ -1,5 +1,6 @@
 package com.makemission.ora.changelog
 
+import com.makemission.ora.ui.theme.BrowserTokens
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -61,7 +62,7 @@ fun ChangelogScreen(onDone: () -> Unit) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                         .background(browserColors().AddressBarBackground)
                         .padding(horizontal = 16.dp, vertical = 14.dp)
                 ) {

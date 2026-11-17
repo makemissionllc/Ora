@@ -296,7 +296,7 @@ private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit, mo
         Row(
             modifier = Modifier
                 .size(56.dp)
-                .background(browserColors().AddressBarBackground.copy(alpha = 1f), RoundedCornerShape(14.dp)),
+                .background(browserColors().AddressBarBackground.copy(alpha = 1f), RoundedCornerShape(BrowserTokens.RadiusMedium)),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -349,7 +349,7 @@ fun BookmarksLibrary(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
                             .background(browserColors().AddressBarBackground)
                             .clickable { onOpen(bookmark.url) }
                             .padding(start = 14.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),

@@ -128,7 +128,7 @@ fun TabGrid(
             ) {
                 TextButton(
                     onClick = onNewTab,
-                    modifier = Modifier.background(browserColors().AddressBarBackground, RoundedCornerShape(10.dp))
+                    modifier = Modifier.background(browserColors().AddressBarBackground, RoundedCornerShape(BrowserTokens.RadiusSmall))
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = null, tint = browserColors().Accent)
                     Spacer(modifier = Modifier.width(6.dp))
@@ -260,7 +260,7 @@ fun TabSidebar(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(BrowserTokens.SidebarSegmentHeight)
-                .clip(RoundedCornerShape(10.dp))
+                .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                 .background(browserColors().AddressBarBackground),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -327,7 +327,7 @@ private fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, on
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -352,7 +352,7 @@ private fun SidebarSearch(query: String, placeholder: String, onQueryChange: (St
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.SidebarSegmentHeight)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .background(browserColors().AddressBarBackground)
             .padding(horizontal = 10.dp),
         decorationBox = { inner ->
@@ -364,6 +364,19 @@ private fun SidebarSearch(query: String, placeholder: String, onQueryChange: (St
                         Text(placeholder, fontSize = 14.sp, color = browserColors().SecondaryText)
                     }
                     inner()
+                }
+                // Quality of life: a clear button appears once there is text, so a search can be
+                // dropped in one tap instead of backspacing.
+                if (query.isNotEmpty()) {
+                    Spacer(Modifier.width(4.dp))
+                    Icon(
+                        Icons.Filled.Close,
+                        contentDescription = "Clear search",
+                        tint = browserColors().SecondaryText,
+                        modifier = Modifier
+                            .size(16.dp)
+                            .clickable { onQueryChange("") },
+                    )
                 }
             }
         }
@@ -386,7 +399,7 @@ private fun SidebarRow(label: String, selected: Boolean, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.SidebarRowHeight)
-            .clip(RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp),
