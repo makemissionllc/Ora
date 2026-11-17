@@ -194,7 +194,7 @@ fun SettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                     Text("Match app theme on websites", fontSize = 15.sp, color = browserColors().AddressBarText)
                                     Text(
                                         "Web pages use this app's light or dark colors",
@@ -236,7 +236,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                 Text("Show tab sidebar", fontSize = 15.sp, color = browserColors().AddressBarText)
                                 Text(
                                     "The tab and bookmark list on the left. The toolbar button also toggles it.",
@@ -413,7 +413,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Column {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                 Text("Ask which engine each search", fontSize = 15.sp, color = browserColors().AddressBarText)
                                 Text(
                                     "When several engines are on, pick one from a sheet each time.",
@@ -455,6 +455,7 @@ fun SettingsScreen(
                             Text("Log and errors", fontSize = 15.sp, color = browserColors().AddressBarText)
                             Text("${logEntries.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
+                        Spacer(Modifier.height(8.dp))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
