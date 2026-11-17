@@ -27,6 +27,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Address bar swipe: swipe sideways on the address bar to move through open tabs, the pages of the current tab, or profiles. Choose the target and the motion in Settings > Address bar swipe. (`01de1e1`)
 - Full-screen video: swipe up or down on the left for brightness and on the right for volume. Turn this off in Settings > Video. (`01de1e1`)
 - Full-screen video: a seek bar along the bottom shows where the video is and lets you drag to another point. (`11f3e74`)
+- Full-screen video: double-tap the left half to go back 10 seconds, or the right half to go forward 10. Repeated taps add up in one "+N s" hint. (`ed85a8a`)
 - On phones, tapping the shrunk address pill brings the full bar back, instead of opening the address for editing. (`01de1e1`)
 
 **Fixed**

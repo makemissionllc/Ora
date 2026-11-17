@@ -37,6 +37,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "Address bar swipe: swipe sideways on the address bar to move through open tabs, the pages of the current tab, or profiles. Choose the target and the motion in Settings > Address bar swipe."),
             ChangeItem(ChangeKind.ADDED, "Full-screen video: swipe up or down on the left for brightness and on the right for volume. Turn this off in Settings > Video."),
             ChangeItem(ChangeKind.ADDED, "Full-screen video: a seek bar along the bottom shows where the video is and lets you drag to another point."),
+            ChangeItem(ChangeKind.ADDED, "Full-screen video: double-tap the left half to go back 10 seconds, or the right half to go forward 10. Repeated taps add up in one \"+N s\" hint."),
             ChangeItem(ChangeKind.ADDED, "On phones, tapping the shrunk address pill brings the full bar back, instead of opening the address for editing."),
             ChangeItem(ChangeKind.FIXED, "Back leaves a full-screen video instead of going back a page. A Settings switch, Back exits full screen (Settings > Video), turns this off."),
             ChangeItem(ChangeKind.FIXED, "Pages no longer flash white while they load in dark modes. The page area takes the browser's own dark background until the page appears."),
