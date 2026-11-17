@@ -47,6 +47,9 @@ Last updated: 2026-11-17, at commit `5ddf098`.
 - Keyboard autocorrect and capitals in the address bar (see Known issues).
 - Find in page, from the Search and selection menus.
 - Profiles that keep tabs and history apart (a decision is needed on storage).
+- Incognito tabs: private tabs that keep no history, cookies or thumbnails once closed.
+- Background tabs: open a link in a tab without switching to it. The page need not load right away; it can wait until the tab is selected.
+- Open in a new tab: opens the link in a new tab and switches to it immediately.
 
 ### Carried over
 

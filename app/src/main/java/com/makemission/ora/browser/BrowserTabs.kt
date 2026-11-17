@@ -53,6 +53,8 @@ class BrowserTab(
     var chromeHidden by mutableStateOf(false)
         private set
     var lastScrollY = 0
+    /** Scroll distance added up since the last change of direction; decides when the chrome folds. */
+    private var foldDistance = 0
 
     /** Text the user has selected on the page, with its on-screen position. Null when nothing is selected. */
     var selection by mutableStateOf<GeckoSession.SelectionActionDelegate.Selection?>(null)
@@ -137,10 +139,16 @@ class BrowserTab(
             override fun onScrollChanged(session: GeckoSession, scrollX: Int, scrollY: Int) {
                 val delta = scrollY - lastScrollY
                 lastScrollY = scrollY
+                // GeckoView reports small steps (1 to 2 px per event), so add them up in one direction
+                // and fold once the total passes the threshold. A change of direction starts over.
+                foldDistance = if (delta == 0 || (foldDistance >= 0) == (delta >= 0)) foldDistance + delta else delta
                 when {
-                    scrollY <= 0 -> chromeHidden = false
-                    delta > SCROLL_FOLD_THRESHOLD_PX -> chromeHidden = true
-                    delta < -SCROLL_FOLD_THRESHOLD_PX -> chromeHidden = false
+                    scrollY <= 0 -> {
+                        chromeHidden = false
+                        foldDistance = 0
+                    }
+                    foldDistance > SCROLL_FOLD_THRESHOLD_PX -> chromeHidden = true
+                    foldDistance < -SCROLL_FOLD_THRESHOLD_PX -> chromeHidden = false
                 }
             }
         }

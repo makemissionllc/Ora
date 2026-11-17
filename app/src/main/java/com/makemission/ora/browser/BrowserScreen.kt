@@ -6,6 +6,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -121,7 +122,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.Bookmark
@@ -361,8 +364,9 @@ private fun BrowserContent(
             }
         } else if (!topLayout) {
             // The bar folds down into its bottom edge while an overlay grows out of the tabs button.
+            // Phone Compact never leaves while a page is open: scrolling only shrinks it, as in iOS Safari.
             AnimatedVisibility(
-                visible = phoneOverlay == PhoneOverlay.NONE && !selected.chromeHidden,
+                visible = phoneOverlay == PhoneOverlay.NONE && (barStyle == BarStyle.COMPACT || !selected.chromeHidden),
                 enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Bottom, animationSpec = OraMotion.enter()),
                 exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Bottom, animationSpec = OraMotion.exit())
             ) {
@@ -384,6 +388,7 @@ private fun BrowserContent(
                     // Phone Compact: a floating row like iOS Safari's compact bar.
                     PhoneCompactBar(
                         tab = selected,
+                        shrunk = selected.chromeHidden,
                         onSubmit = { input -> submitAddress(input) },
                         candidates = addressCandidates,
                         onMore = { showMenu = true },
@@ -1053,12 +1058,20 @@ private fun CompactToolbar(
 @Composable
 private fun PhoneCompactBar(
     tab: BrowserTab,
+    /** True once the page has scrolled down: the round buttons fold away and the pill gets shorter. */
+    shrunk: Boolean,
     onSubmit: (String) -> Unit,
     candidates: List<AddressSuggestion>,
     onMore: () -> Unit,
     onSwipeUp: () -> Unit,
     onSwitchTab: (Int) -> Unit,
 ) {
+    // 0 = full bar, 1 = shrunk. Shrinking uses the exit easing, growing back the enter easing.
+    val shrink by animateFloatAsState(
+        targetValue = if (shrunk) 1f else 0f,
+        animationSpec = if (shrunk) OraMotion.exit<Float>() else OraMotion.enter<Float>(),
+        label = "compactShrink"
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1067,23 +1080,26 @@ private fun PhoneCompactBar(
                 start = BrowserTokens.PhoneCompactPadding,
                 end = BrowserTokens.PhoneCompactPadding,
                 top = BrowserTokens.PhoneCompactPadding,
-                bottom = BrowserTokens.PhoneCompactFloatBottom
+                bottom = lerp(BrowserTokens.PhoneCompactFloatBottom, BrowserTokens.PhoneCompactShrunkBottom, shrink)
             ),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(BrowserTokens.PhoneCompactGap)
+        horizontalArrangement = Arrangement.spacedBy(lerp(BrowserTokens.PhoneCompactGap, 0.dp, shrink))
     ) {
-        FloatingCircleButton(
-            onClick = { tab.stepBack() },
-            enabled = tab.canStepBack,
-            description = "Back",
-            // Quality of life: a long press on Back jumps straight to the start page.
-            onLongClick = {
-                BrowserLog.info("nav", "Long-press Back: opened start page from ${tab.url}")
-                // The start page is native, so set the address directly; GeckoView cannot load ora://.
-                tab.url = BrowserTabs.START_URL
+        // Each round button sits in a box that narrows to nothing, so it folds away instead of vanishing.
+        Box(modifier = Modifier.width(lerp(BrowserTokens.PhoneCompactCircle, 0.dp, shrink)).clipToBounds()) {
+            FloatingCircleButton(
+                onClick = { tab.stepBack() },
+                enabled = tab.canStepBack && shrink < 0.5f,
+                description = "Back",
+                // Quality of life: a long press on Back jumps straight to the start page.
+                onLongClick = {
+                    BrowserLog.info("nav", "Long-press Back: opened start page from ${tab.url}")
+                    // The start page is native, so set the address directly; GeckoView cannot load ora://.
+                    tab.url = BrowserTabs.START_URL
+                }
+            ) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = null)
             }
-        ) {
-            Icon(Icons.Filled.ArrowBack, contentDescription = null)
         }
         AddressBar(
             currentUrl = tab.url,
@@ -1093,12 +1109,15 @@ private fun PhoneCompactBar(
             onReload = { tab.session.reload() }, onHardReload = { hardReload(tab) }, progress = tab.progress,
             onStop = { tab.session.stop() },
             modifier = Modifier.weight(1f),
+            height = lerp(BrowserTokens.AddressBarHeight, BrowserTokens.PhoneCompactShrunkHeight, shrink),
             onSwipeUp = onSwipeUp,
             onSwitchTab = onSwitchTab,
             shape = BrowserTokens.PhoneCompactPill
         )
-        FloatingCircleButton(onClick = onMore, enabled = true, description = "More") {
-            Icon(Icons.Filled.MoreVert, contentDescription = null)
+        Box(modifier = Modifier.width(lerp(BrowserTokens.PhoneCompactCircle, 0.dp, shrink)).clipToBounds()) {
+            FloatingCircleButton(onClick = onMore, enabled = shrink < 0.5f, description = "More") {
+                Icon(Icons.Filled.MoreVert, contentDescription = null)
+            }
         }
     }
 }
@@ -1185,6 +1204,8 @@ private fun AddressBar(
     onHardReload: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier,
+    /** Height of the pill. The phone Compact bar lowers it while the page is scrolled. */
+    height: Dp = BrowserTokens.AddressBarHeight,
     onSwipeUp: () -> Unit = {},
     onSwitchTab: (Int) -> Unit = {},
     shape: androidx.compose.ui.graphics.Shape = BrowserTokens.AddressBarShape,
@@ -1224,7 +1245,7 @@ private fun AddressBar(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .height(BrowserTokens.AddressBarHeight)
+            .height(height)
             .shadow(BrowserTokens.AddressBarElevation, shape),
         shape = shape,
         color = browserColors().AddressBarBackground
