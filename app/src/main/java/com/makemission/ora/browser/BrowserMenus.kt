@@ -86,8 +86,10 @@ fun BrowserMenuSheet(
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
     onFind: () -> Unit,
-    /** Tablet only: the height of the top bar, so the side panel starts below it. */
+    /** Tablet only: the height of the bar across the top (toolbar or floating Compact row), so the side panel starts below it. */
     topInset: Dp = 0.dp,
+    /** Tablet only: each increase slides an open panel closed, so the ⋯ button can toggle it. */
+    closeRequests: Int = 0,
 ) {
     // Each action first closes the menu, then runs. The tablet panel animates out before the action runs.
     val items: @Composable ((() -> Unit) -> Unit) -> Unit = { act ->
@@ -108,7 +110,7 @@ fun BrowserMenuSheet(
         )
     }
     if (isTablet) {
-        BrowserMenuSidePanel(onDismiss = onDismiss, topInset = topInset, content = items)
+        BrowserMenuSidePanel(onDismiss = onDismiss, topInset = topInset, closeRequests = closeRequests, content = items)
     } else {
         ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
             items { action -> onDismiss(); action() }
@@ -215,7 +217,12 @@ private fun BrowserMenuItems(
  * Tapping the scrim or pressing Back slides it out first, then closes it.
  */
 @Composable
-private fun BrowserMenuSidePanel(onDismiss: () -> Unit, topInset: Dp, content: @Composable ((() -> Unit) -> Unit) -> Unit) {
+private fun BrowserMenuSidePanel(
+    onDismiss: () -> Unit,
+    topInset: Dp,
+    closeRequests: Int,
+    content: @Composable ((() -> Unit) -> Unit) -> Unit,
+) {
     val visibleState = remember { MutableTransitionState(false) }
     var dismissing by remember { mutableStateOf(false) }
     // An action chosen from the menu waits until the panel has slid out, then runs.
@@ -233,6 +240,12 @@ private fun BrowserMenuSidePanel(onDismiss: () -> Unit, topInset: Dp, content: @
             dismissing = true
             visibleState.targetState = false
         }
+    }
+    // Quality of life: tapping ⋯ again closes the open panel with the same slide-out as Back and the scrim.
+    // The count at first composition is the baseline, so a panel opened later does not close at once.
+    val baseline = remember { closeRequests }
+    LaunchedEffect(closeRequests) {
+        if (closeRequests != baseline) dismiss()
     }
     val act: (() -> Unit) -> Unit = { action ->
         pendingAction = action

@@ -290,6 +290,10 @@ private fun BrowserContent(
     }
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    /** Tablet: each tap on ⋯ while the panel is open adds one, which slides it closed. */
+    var menuCloseRequests by remember { mutableIntStateOf(0) }
+    /** The tablet ⋯ button opens the menu, or closes it when it is already open. */
+    val toggleMenu: () -> Unit = { if (showMenu) menuCloseRequests++ else showMenu = true }
     LaunchedEffect(showMenu) { if (showMenu) UsageStats.count("menu.open") }
     var showLibrary by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
@@ -508,7 +512,7 @@ private fun BrowserContent(
             top = true,
             onSubmit = { input -> submitAddress(input) },
             candidates = addressCandidates,
-            onMore = { showMenu = true },
+            onMore = toggleMenu,
             onSwipeUp = openTabs,
             onSwitchTab = switchTab,
             onTabs = openTabs,
@@ -544,7 +548,7 @@ private fun BrowserContent(
                         onShare = { shareUrl(context, selected.url) },
                         onNewTab = onNewTab,
                         onDownloads = { showDownloads = true },
-                        onMore = { showMenu = true },
+                        onMore = toggleMenu,
                         onSwipeUp = openTabs,
                         onSwitchTab = switchTab,
                         onTabs = openTabs,
@@ -682,7 +686,9 @@ private fun BrowserContent(
                 if (showMenu) {
                     BrowserMenuSheet(
                         isTablet = isTablet,
-                        topInset = topBarHeight,
+                        // The tablet panel starts below whichever bar is on top: the toolbar (Top) or the floating row (Compact).
+                        topInset = if (tabletCompact) compactRowHeight else topBarHeight,
+                        closeRequests = menuCloseRequests,
                         isBookmarked = selectedBookmarked,
                         onDismiss = { showMenu = false },
                         // The menu closes itself before each action runs, so actions only do their work.
