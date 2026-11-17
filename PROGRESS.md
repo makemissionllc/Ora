@@ -73,6 +73,8 @@ Last updated: 2026-11-17, at commit `c3d1857`.
 
 ## Known issues
 
+- Password autofill: Bitwarden is installed on both devices but reports "Did you add an account?" (no logged-in vault), so no login fill has been offered yet. Sign in to Bitwarden, then retest on a login page.
+- Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
 - Typing "mozilla.org" in the address bar can produce a search instead of a page, if the keyboard inserts spaces or capitals.
 - Tablet: when a page scrolls inside its own element, Ora's bars may not return with a scroll up. Seen on a Fandom wiki page.
 
@@ -105,6 +107,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | Menu actions run after the menu closes (`2d2e8a1`) | "Find in page" from the sheet: the find bar opened after the sheet closed (screenshots) | Settings from the panel opened after the panel slid out (screenshots) |
 | 2026-11-17 | fade text fix (`8c762ca`) | "Fade pages in" text keeps a gap from its switch | Text wraps clear of the switch (screenshot). Tablet not checked | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |
 | 2026-11-17 | Tablet Compact in the top bar layout, sidebar toggle (`762bf4e`) | Bottom Compact bar unchanged (screenshot) | Compact row sits above the page with no dark strip; sidebar toggle shows the sidebar (screenshots). Shrink on scroll and the side panel below the bar not checked |
+| 2026-11-17 | Password autofill with Bitwarden, local login page on localhost (no submit) | Tapping the password field starts an Android autofill session and Bitwarden is bound, but it reports no account; the page then turned fully black (repeated) (screenshots, logcat) | Page visible after the tap; the same Bitwarden "no account" message; no fill offered (screenshot, logcat) |
 | 2026-11-17 | Cookie card; solid status band with page fade (`c3d1857`) | Status band blends into the start page, icons clear (screenshot). Cookies card and Passwords switch shown in Settings > Privacy (screenshot) | Start page captured after the change (screenshot). Settings card not checked |
 | 2026-11-17 | Password autofill switch; phone page below the status bar (`b1fa65a`) | Start page and the Google sign-in page sit below the status bar, with the fade kept (screenshots). Autofill fill not checked on a login page | Start page captured with the Passwords card not seen after the text change; autofill fill not checked |
 | 2026-11-17 | Phone status-bar fade; tablet Compact pill narrower, no band (`6acf4de`) | Status fade: clock and battery readable over the page (screenshot). Bottom Compact bar unchanged | Pill narrower and centred (screenshot). Gap above the page is the window's white background, not yet matched to the page; shrink and side panel not checked |
