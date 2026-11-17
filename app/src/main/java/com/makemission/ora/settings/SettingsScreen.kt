@@ -492,8 +492,6 @@ fun SettingsScreen(
                             }
                         }
                     }
-                    if (shown(SettingsCategory.HOME)) item {
-                        SectionTitle("Home page")
                     if (shown(SettingsCategory.PRIVACY)) item {
                         Column(
                             modifier = Modifier
@@ -539,6 +537,8 @@ fun SettingsScreen(
                             }
                         }
                     }
+                    if (shown(SettingsCategory.HOME)) item {
+                        SectionTitle("Home page")
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
