@@ -12,6 +12,7 @@ import com.makemission.ora.log.UsageStats
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
+import org.mozilla.geckoview.WebRequestError
 import org.mozilla.geckoview.WebResponse
 
 /** One browser tab: a GeckoSession plus the UI state the toolbar and tab grid read from it. */
@@ -148,6 +149,18 @@ class BrowserTab(
 
             override fun onCanGoForward(session: GeckoSession, canGoForward: Boolean) {
                 this@BrowserTab.canGoForward = canGoForward
+            }
+
+            override fun onLoadError(
+                session: GeckoSession,
+                uri: String?,
+                error: WebRequestError
+            ): GeckoResult<String>? {
+                val failed = uri.orEmpty()
+                BrowserLog.error("page", "Could not load $failed: category ${error.category}, code ${error.code}")
+                // Show a plain explanation with a Try again button, in place of GeckoView's blank error page.
+                if (failed.isBlank() || failed.startsWith("data:")) return null
+                return GeckoResult.fromValue(ErrorPage.uriFor(failed, error))
             }
         }
         session.scrollDelegate = object : GeckoSession.ScrollDelegate {
