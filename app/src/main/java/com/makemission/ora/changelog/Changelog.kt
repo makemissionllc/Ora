@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "On tablets, web pages run under the status bar and the floating address row and scroll away beneath them, as on phones. A soft fade replaces the hard edge."),
             ChangeItem(ChangeKind.FIXED, "The ⋯ menu's actions sit in two rows of three, so \"New private tab\" no longer runs into \"Tabs\" and \"Library\" on tablets."),
             ChangeItem(ChangeKind.ADDED, "Saved passwords: Settings > Passwords > Saved passwords lists logins the browser has saved. Search by site or username, show or hide a password, copy it, or delete it after a confirmation. Logins are stored encrypted on the device."),
             ChangeItem(ChangeKind.CHANGED, "Pages that set a theme colour tint the status bar with it. Otherwise the bar takes the colour of the page's top edge."),

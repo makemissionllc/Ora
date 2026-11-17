@@ -48,6 +48,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -536,6 +538,12 @@ private fun BrowserContent(
     Box(modifier = modifier.fillMaxSize()) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        // Phone Bottom and Compact: the page runs up under the status bar, so the content area drops the top inset.
+        contentWindowInsets = if (!topLayout && (!isTablet || tabletCompact)) {
+            WindowInsets.safeDrawing.exclude(WindowInsets.statusBars)
+        } else {
+            WindowInsets.safeDrawing
+        },
         // Tablet Compact floats over the browser grid colour, so no strip shows behind the row or beside the sidebar.
         containerColor = if (tabletCompact) Color.Transparent else MaterialTheme.colorScheme.background,
         topBar = {
@@ -614,6 +622,7 @@ private fun BrowserContent(
                     bookmarks = bookmarkList,
                     blockAds = blockAds,
                     fadePagesIn = fadePagesIn,
+                    autofillPasswords = autofillPasswords,
                     // Phone Compact and Bottom let the page run up under the status bar; push it below, as the fade ends there.
                     belowStatusBar = !isTablet && !topLayout,
                     // Tablet Compact floats over the page; the start page keeps its content clear of the row.
@@ -793,13 +802,13 @@ private fun BrowserContent(
         }
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
         if (tabletCompact) {
-            // The row sits on a band in the page's colour, so the page starts below it without a seam.
-            Box(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth()
-                    .height(compactRowHeight)
-                    .background(barColor)
+            // At the top of a page the row sits on a solid band in the page's colour; once scrolled, the band fades
+            // into the page like the status bar does, so the page scrolls under the row.
+            StatusBarOverlay(
+                color = barColor,
+                scrolled = selected.scrolled,
+                modifier = Modifier.align(Alignment.TopCenter),
+                solidHeight = compactRowHeight,
             )
             Box(
                 modifier = Modifier
@@ -872,6 +881,7 @@ private fun BrowserPage(
     bookmarks: List<Bookmark>,
     blockAds: Boolean,
     fadePagesIn: Boolean,
+    autofillPasswords: Boolean,
     belowStatusBar: Boolean,
     topInset: Dp,
     onSubmit: (String) -> Unit,
@@ -907,8 +917,7 @@ private fun BrowserPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            // Tablet Compact's floating row sits above the page; the page starts below it.
-            .padding(top = topInset)
+            // Web pages run up under the status bar and the floating row; the fade covers them, and they scroll away.
             .pullToReload(
                 canPull = { tab.lastScrollY <= PULL_SCROLL_TOLERANCE_PX && !tab.loading },
                 onDistance = { pull = it },
@@ -920,8 +929,13 @@ private fun BrowserPage(
     ) {
         AndroidView(
             modifier = Modifier.fillMaxSize().graphicsLayer { alpha = pageAlpha },
-            factory = { ctx -> GeckoView(ctx).also { pageView.view = it } },
-            update = { view -> if (view.session != tab.session) view.setSession(tab.session) }
+            // Android autofill: with the setting on, GeckoView reports login fields to the system autofill service,
+            // so the keyboard's Auto-fill chip and password apps such as Bitwarden offer to fill them.
+            factory = { ctx -> GeckoView(ctx).also { pageView.view = it; it.setAutofillEnabled(autofillPasswords) } },
+            update = { view ->
+                if (view.session != tab.session) view.setSession(tab.session)
+                if (view.getAutofillEnabled() != autofillPasswords) view.setAutofillEnabled(autofillPasswords)
+            }
         )
         AnimatedVisibility(
             visible = indicatorVisible,

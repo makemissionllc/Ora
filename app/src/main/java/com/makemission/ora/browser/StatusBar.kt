@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -63,19 +64,22 @@ fun StatusBarOverlay(
     color: Color,
     scrolled: Boolean,
     modifier: Modifier = Modifier,
+    /** Tablet Compact: the solid part covers the floating address row too, not just the status bar. */
+    solidHeight: Dp? = null,
 ) {
     val density = LocalDensity.current
     val statusTop = WindowInsets.statusBars.asPaddingValues(density).calculateTopPadding()
+    val solid = solidHeight ?: statusTop
     val solidAlpha by animateFloatAsState(
         targetValue = if (scrolled) 0f else 1f,
         animationSpec = if (scrolled) OraMotion.exit() else OraMotion.enter(),
         label = "status solid",
     )
-    Box(modifier = modifier.fillMaxWidth().height(BrowserTokens.StatusScrollFade)) {
+    Box(modifier = modifier.fillMaxWidth().height(maxOf(BrowserTokens.StatusScrollFade, solid))) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(statusTop)
+                .height(solid)
                 .graphicsLayer { alpha = solidAlpha }
                 .background(color)
         )

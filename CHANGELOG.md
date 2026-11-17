@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-17
 
 **Fixed**
+- On tablets, web pages run under the status bar and the floating address row and scroll away beneath them, as on phones. A soft fade replaces the hard edge.
 - The ⋯ menu's actions sit in two rows of three, so "New private tab" no longer runs into "Tabs" and "Library" on tablets. (`e88c778`)
 
 **Added**
