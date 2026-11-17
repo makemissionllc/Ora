@@ -56,6 +56,7 @@ Last updated: 2026-11-17, at commit `7d758af`.
 - Incognito tabs: private tabs that keep no history, cookies or thumbnails once closed.
 - Background tabs: open a link in a tab without switching to it. The page need not load right away; it can wait until the tab is selected.
 - Open in a new tab: opens the link in a new tab and switches to it immediately.
+- Built-in ad blocking beyond tracking protection: Privacy already has "Block ads and trackers" (GeckoView strict tracking protection). A fuller blocker would need a filter-list design, a choice of lists, and per-site exceptions before any work.
 
 ### Carried over
 
