@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `1f865d2`.
+Last updated: 2026-11-17, at commit `5ddf098`.
 
 ## Done
 
@@ -15,6 +15,16 @@ Last updated: 2026-11-17, at commit `1f865d2`.
 - Tablet Settings: category rail with one centered column.
 - GeckoView 160, with Kotlin 2.4.21 and compileSdk 37.2.
 - Secure DNS (DNS over HTTPS, with fallback).
+- Selection card for selected page text: Search, Copy, Select all, Share with highlight, and Call, Message or Add to calendar for phone numbers and dates (`5ddf098`).
+- Keeps tabs, the page and the search when the screen rotates (`configChanges` in the manifest, so the activity is not recreated).
+- Clears the link menu when a new page starts.
+
+## Being finished
+
+- Pull to refresh on pages: gesture and indicator are built; the indicator still needs a held-pull check on the device. Debug logging removed.
+- Safari-style pull feedback (indicator follows the finger, springs back, then reloads).
+- Settings page reorganized into sections.
+- Haptic feedback across the app, with a Settings switch to turn it off.
 
 ## In progress
 
@@ -22,6 +32,23 @@ Last updated: 2026-11-17, at commit `1f865d2`.
 - In-app "What's new" page, built from the same entries as CHANGELOG.md.
 
 ## Pending
+
+### Tab management (from the Chrome and Safari comparison)
+
+- Drag one tab onto another to make a group, and drag tabs into or out of groups.
+- Name and colour-code tab groups.
+- Mini tab switcher at the bottom for quick switching within a group.
+- Inactive tabs: move unused tabs to a separate collection after a chosen time.
+- Recent tabs: list tabs open on other devices signed into the same account. Needs a sync design first.
+- Search open tabs, bookmarks and history from one search field.
+
+### Better app usage
+
+- Keyboard autocorrect and capitals in the address bar (see Known issues).
+- Find in page, from the Search and selection menus.
+- Profiles that keep tabs and history apart (a decision is needed on storage).
+
+### Carried over
 
 - Tablet check for the Secure DNS row in Settings > Privacy (see verification log).
 - Reader mode. The approach is undecided. GeckoView `about:reader` has not been tested.
@@ -46,4 +73,6 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `c7b6cb6` | Page fade-in | Loaded page visible | Loaded page visible after relaunch |
 | 2026-11-17 | `403206e` | GeckoView 160 | Start page and mozilla.org loaded | Start page loaded; a search page loaded after a retype |
 | 2026-11-17 | `1f865d2` | Secure DNS row | Network card with the switch on | Not checked: toolbar hidden on a wiki page, Settings unreachable |
+| 2026-11-17 | `5ddf098` | Selection card | Card shown for a selected word; Close cleared the card and handles. Phone number and date actions not checked | Card shown for a selected word; Close cleared the card and handles. Phone number and date actions not checked |
+| 2026-11-17 | rotation fix (uncommitted) | Configuration changes handled in place | Loaded page, search and tab kept after switch to landscape; auto-rotate restored | Not checked |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
