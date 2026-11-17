@@ -12,7 +12,7 @@ Last updated: 2026-11-17, at commit `e3ebbf3`.
 - Search: several engines, choice per search, address suggestions.
 - Privacy: pop-up blocking, ad and tracker blocking (strict tracking protection), clear browsing data.
 - Load feedback: load bar in the address field, failed-load message, page fade-in at 50% load.
-- Tablet Settings: category rail with one centered column, opened as a side panel over the page with tap-outside to close (`e3ebbf3`).
+- Tablet Settings: category rail with one centered column, full screen. Tablet ⋯ menu opens as a side panel from the right, closed by tapping the dimmed page or Back.
 - GeckoView 160, with Kotlin 2.4.21 and compileSdk 37.2.
 - Secure DNS (DNS over HTTPS, with fallback).
 - Selection card for selected page text: Search, Copy, Select all, Share with highlight, and Call, Message or Add to calendar for phone numbers and dates (`5ddf098`).
@@ -96,4 +96,5 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
 | 2026-11-17 | `e3ebbf3` | Tablet Settings as a side panel; tap the dimmed page to close | Settings still full screen (screenshot); the "Fade pages in" description touches its switch (fixed in the next row) |
 | 2026-11-17 | tablet overview full screen; profile chip centring; phone overview backdrop (uncommitted) | Overview shows no page behind its profile row; profile name centred; only the Personal profile exists on this phone (screenshots) | Overview covers the whole window, no toolbar or sidebar; profile names centred in chips (screenshots) |
+| 2026-11-17 | Tablet ⋯ menu as a right side panel; tablet Settings reverted to full screen (uncommitted) | ⋯ menu still a bottom sheet (screenshot) | ⋯ menu slides in from the right; Back closed it (screenshots); Settings opens full screen with its category list (screenshot) |
 | 2026-11-17 | fade text fix (uncommitted) | "Fade pages in" text keeps a gap from its switch | Text wraps clear of the switch (screenshot). Tablet not checked | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |

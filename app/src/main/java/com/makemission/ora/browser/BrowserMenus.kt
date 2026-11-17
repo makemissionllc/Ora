@@ -1,7 +1,21 @@
 package com.makemission.ora.browser
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,9 +45,15 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -41,12 +61,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.OraMotion
 import com.makemission.ora.ui.theme.browserColors
 
-/** Phone "⋯" menu: page actions as a bottom sheet (design: M-Menu). */
+/** "⋯" menu: page actions. Phones show a bottom sheet (design: M-Menu); tablets show a panel from the right. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BrowserMenuSheet(
+    isTablet: Boolean,
     isBookmarked: Boolean,
     onDismiss: () -> Unit,
     onShare: () -> Unit,
@@ -61,7 +83,46 @@ fun BrowserMenuSheet(
     onTabs: () -> Unit,
     onFind: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
+    val items: @Composable () -> Unit = {
+        BrowserMenuItems(
+            isBookmarked = isBookmarked,
+            onShare = onShare,
+            onBookmark = onBookmark,
+            onNewTab = onNewTab,
+            onLibrary = onLibrary,
+            desktopSite = desktopSite,
+            onToggleDesktop = onToggleDesktop,
+            onSettings = onSettings,
+            onExtensions = onExtensions,
+            onDownloads = onDownloads,
+            onTabs = onTabs,
+            onFind = onFind,
+        )
+    }
+    if (isTablet) {
+        BrowserMenuSidePanel(onDismiss = onDismiss, content = items)
+    } else {
+        ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
+            items()
+        }
+    }
+}
+
+@Composable
+private fun BrowserMenuItems(
+    isBookmarked: Boolean,
+    onShare: () -> Unit,
+    onBookmark: () -> Unit,
+    onNewTab: () -> Unit,
+    onLibrary: () -> Unit,
+    desktopSite: Boolean,
+    onToggleDesktop: (Boolean) -> Unit,
+    onSettings: () -> Unit,
+    onExtensions: () -> Unit,
+    onDownloads: () -> Unit,
+    onTabs: () -> Unit,
+    onFind: () -> Unit,
+) {
         Column(modifier = Modifier.padding(bottom = 24.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
@@ -131,6 +192,58 @@ fun BrowserMenuSheet(
             ) {
                 Text("Settings", fontSize = 15.sp, color = browserColors().AddressBarText)
                 Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+            }
+        }
+}
+
+/**
+ * Tablet menu panel: slides in from the right over the page, with a scrim behind it.
+ * Tapping the scrim or pressing Back slides it out first, then closes it.
+ */
+@Composable
+private fun BrowserMenuSidePanel(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    val visibleState = remember { MutableTransitionState(false) }
+    var dismissing by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visibleState.targetState = true }
+    // Once the exit has finished, tell the screen to remove the panel.
+    LaunchedEffect(dismissing, visibleState.isIdle) {
+        if (dismissing && visibleState.isIdle && !visibleState.currentState) onDismiss()
+    }
+    fun dismiss() {
+        if (!dismissing) {
+            dismissing = true
+            visibleState.targetState = false
+        }
+    }
+    BackHandler(enabled = !dismissing) { dismiss() }
+
+    AnimatedVisibility(visibleState = visibleState, enter = fadeIn(OraMotion.enter()), exit = fadeOut(OraMotion.exit())) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(browserColors().Scrim)
+                .clickable { dismiss() }
+        )
+    }
+    AnimatedVisibility(
+        visibleState = visibleState,
+        modifier = Modifier.fillMaxSize(),
+        enter = slideInHorizontally(OraMotion.enter()) { it } + fadeIn(OraMotion.enter()),
+        exit = slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit()),
+    ) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(BrowserTokens.SidePanelWidth)
+                    .shadow(BrowserTokens.FloatingBarElevation, RoundedCornerShape(topStart = BrowserTokens.SidePanelRadius, bottomStart = BrowserTokens.SidePanelRadius))
+                    .clip(RoundedCornerShape(topStart = BrowserTokens.SidePanelRadius, bottomStart = BrowserTokens.SidePanelRadius))
+                    .background(browserColors().AddressBarBackground)
+                    .verticalScroll(rememberScrollState())
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+            ) {
+                content()
             }
         }
     }
