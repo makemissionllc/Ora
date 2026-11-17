@@ -11,5 +11,8 @@ object GeckoEngine {
     private var runtime: GeckoRuntime? = null
 
     fun runtime(context: Context): GeckoRuntime =
-        runtime ?: GeckoRuntime.getDefault(context.applicationContext).also { runtime = it }
+        runtime ?: GeckoRuntime.getDefault(context.applicationContext).also {
+            runtime = it
+            ThemeColor.install(it)
+        }
 }

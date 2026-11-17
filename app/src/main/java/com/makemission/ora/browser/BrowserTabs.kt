@@ -59,6 +59,8 @@ class BrowserTab(
         private set
     /** Colour of the page's top row, sampled while the page sits at its top. Null until a page has been sampled. */
     var topColor by mutableStateOf<androidx.compose.ui.graphics.Color?>(null)
+    /** The page's own <meta name="theme-color">, when it sets one. Preferred over [topColor]. */
+    var themeColor by mutableStateOf<androidx.compose.ui.graphics.Color?>(null)
     /** Scroll distance added up since the last change of direction; decides when the chrome folds. */
     private var foldDistance = 0
 
@@ -180,6 +182,7 @@ class BrowserTab(
                 scrolled = false
                 // The new page's colour is sampled once it stops loading; the old one must not linger.
                 topColor = null
+                themeColor = null
                 // A link menu belongs to the page it was opened on; a new page clears it.
                 pressTarget = null
                 selection = null

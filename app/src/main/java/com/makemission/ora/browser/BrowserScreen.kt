@@ -354,7 +354,17 @@ private fun BrowserContent(
     val stripColor = if (selected.url == BrowserTabs.START_URL) {
         browserColors().GridBackground
     } else {
-        selected.topColor ?: MaterialTheme.colorScheme.background
+        selected.themeColor ?: selected.topColor ?: MaterialTheme.colorScheme.background
+    }
+    // The built-in theme-colour reader reports each page's <meta name="theme-color">; apply it to the tabs showing that URL.
+    LaunchedEffect(tabs) {
+        ThemeColor.updates.collect { update ->
+            tabs.tabs.filter { it.url == update.url }.forEach { tab ->
+                tab.themeColor = update.color
+                val hex = update.color?.toArgb()?.let { "#%06X".format(it and 0xFFFFFF) } ?: "none"
+                BrowserLog.info("page", "Theme colour from ${update.url}: $hex")
+            }
+        }
     }
     val barColor by animateColorAsState(stripColor, OraMotion.enter(), label = "status strip")
     // Dark icons on a light strip, light icons on a dark one. Set on the window so the system bar follows the page.
@@ -777,17 +787,22 @@ private fun BrowserContent(
         }
         // Phone bars float over the page, as iOS does: the page runs under them and nothing is drawn behind.
         if (tabletCompact) {
-            // The page runs up under the status bar: a solid strip in the page's colour at the top, a soft fade once it scrolls.
-            StatusBarOverlay(
-                color = barColor,
-                scrolled = selected.scrolled,
-                modifier = Modifier.align(Alignment.TopCenter),
-            )
-            // Transparent around the pill: the page shows through, so the row seems to float over it.
+            // The row sits on a band in the page's colour, so the page starts below it without a seam.
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .onSizeChanged { compactRowHeight = with(density) { it.height.toDp() } }
+                    .fillMaxWidth()
+                    .height(compactRowHeight)
+                    .background(barColor)
+            )
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .onSizeChanged {
+                        // Keep the largest height: the row shrinks on scroll, and the page must not reflow with it.
+                        val measured = with(density) { it.height.toDp() }
+                        if (measured > compactRowHeight) compactRowHeight = measured
+                    }
             ) { tabletCompactRow() }
         }
         if (!isTablet) {
@@ -880,6 +895,8 @@ private fun BrowserPage(
     Box(
         modifier = Modifier
             .fillMaxSize()
+            // Tablet Compact's floating row sits above the page; the page starts below it.
+            .padding(top = topInset)
             .pullToReload(
                 canPull = { tab.lastScrollY <= PULL_SCROLL_TOLERANCE_PX && !tab.loading },
                 onDistance = { pull = it },

@@ -35,7 +35,7 @@ object OraMotion {
 
     val ENTER_MS: Int
         get() = when (style) {
-            MotionStyle.SMOOTH -> 260
+            MotionStyle.SMOOTH -> 220
             MotionStyle.ELEGANT -> 380
             MotionStyle.FAST -> 160
             MotionStyle.PREMIUM -> 340
@@ -43,7 +43,7 @@ object OraMotion {
 
     val EXIT_MS: Int
         get() = when (style) {
-            MotionStyle.SMOOTH -> 200
+            MotionStyle.SMOOTH -> 160
             MotionStyle.ELEGANT -> 280
             MotionStyle.FAST -> 110
             MotionStyle.PREMIUM -> 220

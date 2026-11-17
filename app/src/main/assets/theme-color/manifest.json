@@ -1,0 +1,12 @@
+{
+  "manifest_version": 2,
+  "name": "Ora theme colour",
+  "version": "1.0",
+  "description": "Reads a page's theme-color so the Ora status bar can match it. Built in; not listed on the Extensions page.",
+  "browser_specific_settings": { "gecko": { "id": "theme-color@ora.makemission" } },
+  "permissions": ["nativeMessaging"],
+  "background": { "scripts": ["background.js"] },
+  "content_scripts": [
+    { "matches": ["http://*/*", "https://*/*"], "js": ["content.js"], "run_at": "document_idle", "all_frames": false }
+  ]
+}

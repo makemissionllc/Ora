@@ -52,7 +52,8 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
     fun refresh() {
         controller.list().accept(
             { list ->
-                val safe = list.orEmpty()
+                // The built-in theme-colour reader is an internal part of the browser, so it is not listed.
+                val safe = list.orEmpty().filter { it.id != com.makemission.ora.browser.ThemeColor.EXTENSION_ID }
                 extensionsById.clear()
                 safe.forEach { extensionsById[it.id] = it }
                 _extensions.value = safe.map { it.toInfo() }
