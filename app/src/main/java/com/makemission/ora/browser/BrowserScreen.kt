@@ -140,6 +140,7 @@ import android.view.View
 import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.bookmarks.BookmarksRepository
+import com.makemission.ora.profiles.Profile
 import com.makemission.ora.profiles.ProfileSwitcher
 import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.extensions.ExtensionsRepository
@@ -762,34 +763,16 @@ private fun BrowserContent(
                             onRemove = { url -> bookmarks.remove(url) },
                             onDone = { showLibrary = false }
                         )
-                        PhoneOverlay.TABS -> Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(browserColors().GridBackground)
-                                .statusBarsPadding()
-                        ) {
-                            ProfileSwitcher(
-                                profiles = profileList,
-                                activeId = profileId,
-                                onSelect = { id -> profiles.select(id) },
-                                onAdd = { name -> profiles.add(name) },
-                                onRemove = { id -> profiles.remove(id) },
-                            )
-                            TabGrid(
-                                tablet = isTablet,
-                                tabs = tabs,
-                                onSelect = { id ->
-                                    tabs.select(id)
-                                    showTabGrid = false
-                                },
-                                onClose = { id -> tabs.close(id) },
-                                onNewTab = {
-                                    onNewTab()
-                                    showTabGrid = false
-                                },
-                                onDone = { showTabGrid = false }
-                            )
-                        }
+                        PhoneOverlay.TABS -> TabOverviewContent(
+                            tablet = isTablet,
+                            profiles = profiles,
+                            profileList = profileList,
+                            profileId = profileId,
+                            tabs = tabs,
+                            onAddTab = onNewTab,
+                            onDone = { showTabGrid = false },
+                            insets = Modifier.statusBarsPadding(),
+                        )
                         PhoneOverlay.EXTENSIONS -> ExtensionsScreen(
                             repository = extensions,
                             onDone = { showExtensions = false }
@@ -834,36 +817,63 @@ private fun BrowserContent(
         enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(initialScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleIn(), transformOrigin = MORPH_ORIGIN),
         exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleOut(), transformOrigin = MORPH_ORIGIN),
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(browserColors().GridBackground)
-                .statusBarsPadding()
-                .navigationBarsPadding()
-        ) {
-            ProfileSwitcher(
-                profiles = profileList,
-                activeId = profileId,
-                onSelect = { id -> profiles.select(id) },
-                onAdd = { name -> profiles.add(name) },
-                onRemove = { id -> profiles.remove(id) },
-            )
-            TabGrid(
-                tablet = true,
-                tabs = tabs,
-                onSelect = { id ->
-                    tabs.select(id)
-                    showTabGrid = false
-                },
-                onClose = { id -> tabs.close(id) },
-                onNewTab = {
-                    onNewTab()
-                    showTabGrid = false
-                },
-                onDone = { showTabGrid = false }
-            )
-        }
+        TabOverviewContent(
+            tablet = true,
+            profiles = profiles,
+            profileList = profileList,
+            profileId = profileId,
+            tabs = tabs,
+            onAddTab = onNewTab,
+            onDone = { showTabGrid = false },
+            insets = Modifier.statusBarsPadding().navigationBarsPadding(),
+        )
     }
+    }
+}
+
+/**
+ * The tab overview, shared by the phone TABS overlay and the tablet overview: profile chips above the tab grid.
+ * Choosing a tab, New tab and Done all close it through [onDone]. [insets] pads the content clear of the system
+ * bars after the background is painted, so those bars keep the grid colour.
+ */
+@Composable
+private fun TabOverviewContent(
+    tablet: Boolean,
+    profiles: ProfilesRepository,
+    profileList: List<Profile>,
+    profileId: String,
+    tabs: BrowserTabs,
+    onAddTab: () -> Unit,
+    onDone: () -> Unit,
+    insets: Modifier,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(browserColors().GridBackground)
+            .then(insets)
+    ) {
+        ProfileSwitcher(
+            profiles = profileList,
+            activeId = profileId,
+            onSelect = { id -> profiles.select(id) },
+            onAdd = { name -> profiles.add(name) },
+            onRemove = { id -> profiles.remove(id) },
+        )
+        TabGrid(
+            tablet = tablet,
+            tabs = tabs,
+            onSelect = { id ->
+                tabs.select(id)
+                onDone()
+            },
+            onClose = { id -> tabs.close(id) },
+            onNewTab = {
+                onAddTab()
+                onDone()
+            },
+            onDone = onDone,
+        )
     }
 }
 
