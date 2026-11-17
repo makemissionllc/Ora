@@ -359,8 +359,6 @@ private fun BrowserContent(
     var topBarHeight by remember { mutableStateOf(0.dp) }
     // Tablet Compact floats over the page, so the sidebar reserves this much room at its top.
     var compactRowHeight by remember { mutableStateOf(0.dp) }
-    // The row's full height, kept at its largest so the page does not resize each time the row shrinks on scroll.
-    var compactRowFullHeight by remember { mutableStateOf(0.dp) }
     /**
      * The colour behind the status bar: the start page's grey on the start page, otherwise the page's own top colour
      * once it has loaded, and the theme background until one is known. It eases between colours with the shared enter motion.
@@ -626,19 +624,9 @@ private fun BrowserContent(
                     // Phone Compact and Bottom let the page run up under the status bar; push it below, as the fade ends there.
                     belowStatusBar = !isTablet && !topLayout,
                     // Tablet Compact floats over the page; the start page keeps its content clear of the row.
-                    topInset = if (tabletCompact) compactRowFullHeight else 0.dp,
+                    topInset = if (tabletCompact) compactRowHeight else 0.dp,
                     onSubmit = { input -> submitAddress(input) }
                 )
-                // The band the row floats over takes the page's top colour, so the gap above the page reads as its header.
-                if (tabletCompact) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.TopCenter)
-                            .fillMaxWidth()
-                            .height(compactRowFullHeight)
-                            .background(barColor)
-                    )
-                }
                 if (showDownloads) {
                     DownloadsSheet(repository = downloads, onDismiss = { showDownloads = false })
                 }
@@ -811,10 +799,7 @@ private fun BrowserContent(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .onSizeChanged {
-                        compactRowHeight = with(density) { it.height.toDp() }
-                        if (compactRowHeight > compactRowFullHeight) compactRowFullHeight = compactRowHeight
-                    }
+                    .onSizeChanged { compactRowHeight = with(density) { it.height.toDp() } }
             ) { tabletCompactRow() }
         }
         // Tablet: a rightward swipe from the left edge of the page opens the sidebar, when the setting is on.
@@ -961,8 +946,7 @@ private fun BrowserPage(
             )
     ) {
         AndroidView(
-            // Tablet Compact: the page starts below the floating row, so the site's own header is not hidden under it.
-            modifier = Modifier.fillMaxSize().padding(top = topInset).graphicsLayer { alpha = pageAlpha },
+            modifier = Modifier.fillMaxSize().graphicsLayer { alpha = pageAlpha },
             factory = { ctx ->
                 GeckoView(ctx).also {
                     // Lets Android's autofill service (Bitwarden, Google and others) see the page's login fields.
