@@ -78,9 +78,11 @@ import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Tab
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.window.PopupProperties
@@ -101,6 +103,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -472,6 +476,36 @@ private fun BrowserContent(
                         )
                     }
                 }
+                // Text selected on the page: a card offers search, copy, share-with-highlight and phone or date actions.
+                val picked = selected.selection
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = BrowserTokens.SelectionMenuBottomInset)
+                ) {
+                    SelectionMenuOverlay(visible = picked != null) {
+                        picked?.text?.let { text ->
+                            SelectionMenu(
+                                text = text,
+                                onSearch = { query ->
+                                    selected.clearSelection()
+                                    submitAddress(query)
+                                },
+                                onCopy = {
+                                    picked.copy()
+                                    BrowserLog.info("select", "Copied selected text")
+                                    Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+                                },
+                                onSelectAll = { picked.selectAll() },
+                                onShare = { selectedText ->
+                                    shareUrl(context, highlightUrl(selected.url, selectedText))
+                                    BrowserLog.info("select", "Shared a link with a highlight")
+                                },
+                                onDismiss = { selected.clearSelection() },
+                            )
+                        }
+                    }
+                }
                 if (showMenu) {
                     BrowserMenuSheet(
                             isBookmarked = bookmarkList.any { it.url == selected.url },
@@ -618,11 +652,59 @@ private fun BrowserPage(
         animationSpec = if (fadePagesIn && tab.pageRevealed) OraMotion.enter<Float>() else OraMotion.exit<Float>(),
         label = "page reveal",
     )
-    AndroidView(
-        modifier = Modifier.fillMaxSize().graphicsLayer { alpha = pageAlpha },
-        factory = { ctx -> GeckoView(ctx).also { pageView.view = it } },
-        update = { view -> if (view.session != tab.session) view.setSession(tab.session) }
-    )
+    // Pull to refresh: pulling down from the top of the page reloads it. A small indicator follows the finger
+    // and stays while the page reloads. The page itself keeps scrolling as before.
+    var pull by remember { mutableStateOf(0.dp) }
+    val indicatorVisible = pull > 0.dp || tab.loading
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .pullToReload(
+                canPull = { tab.lastScrollY <= PULL_SCROLL_TOLERANCE_PX && !tab.loading },
+                onDistance = { pull = it },
+                onRefresh = {
+                    BrowserLog.info("page", "Pull to refresh: ${tab.url}")
+                    tab.session.reload()
+                }
+            )
+    ) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize().graphicsLayer { alpha = pageAlpha },
+            factory = { ctx -> GeckoView(ctx).also { pageView.view = it } },
+            update = { view -> if (view.session != tab.session) view.setSession(tab.session) }
+        )
+        AnimatedVisibility(
+            visible = indicatorVisible,
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
+            enter = fadeIn(OraMotion.enter()) + scaleIn(OraMotion.enter(), initialScale = OraMotion.MORPH_SCALE),
+            exit = fadeOut(OraMotion.exit()) + scaleOut(OraMotion.exit(), targetScale = OraMotion.MORPH_SCALE),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(BrowserTokens.PullRefreshIndicatorSize)
+                    .graphicsLayer { translationY = (pull.coerceAtMost(BrowserTokens.PullRefreshThreshold) / 2).toPx() }
+                    .clip(CircleShape)
+                    .background(browserColors().AddressBarBackground)
+                    .shadow(BrowserTokens.AddressBarElevation, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                if (tab.loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = browserColors().Accent
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        progress = { (pull / BrowserTokens.PullRefreshThreshold).coerceIn(0f, 1f) },
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp,
+                        color = browserColors().Accent
+                    )
+                }
+            }
+        }
+    }
 }
 
 /** Captures the visible page into the tab's thumbnail. Failures keep the previous preview. */
@@ -1082,6 +1164,16 @@ private fun AddressBar(
     // A tap outside the suggestions closes them only. It must not drop focus, or the clear button and typed text reset.
     var suggestionsHidden by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val view = LocalView.current
+    // Quality of life: once a search or address is submitted, the keyboard closes instead of staying up.
+    val finishEditing = {
+        view.hideKeyboard()
+        keyboard?.hide()
+        focusManager.clearFocus()
+        focused = false
+    }
     var anchorWidth by remember { mutableStateOf(0.dp) }
     val density = LocalDensity.current
 
@@ -1163,8 +1255,8 @@ private fun AddressBar(
                 ),
                 keyboardActions = KeyboardActions(
                     onGo = {
+                        finishEditing()
                         onSubmit(fieldValue.text)
-                        focused = false
                     }
                 )
             )
@@ -1257,7 +1349,7 @@ private fun AddressBar(
                     }
                 },
                 onClick = {
-                    focused = false
+                    finishEditing()
                     BrowserLog.info("search", "Suggestion chosen: ${suggestion.target}")
                     onSubmit(suggestion.target)
                 }
@@ -1310,3 +1402,6 @@ private fun shareUrl(context: Context, url: String) {
     }
     context.startActivity(Intent.createChooser(intent, null))
 }
+
+/** GeckoView can report a scroll of a pixel or two at the very top; that still counts as the top for a pull. */
+private const val PULL_SCROLL_TOLERANCE_PX = 4

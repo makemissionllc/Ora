@@ -52,7 +52,18 @@ class BrowserTab(
     /** True while the bars are folded away so the page gets the room. Scrolling down folds them; scrolling up or reaching the top shows them. */
     var chromeHidden by mutableStateOf(false)
         private set
-    private var lastScrollY = 0
+    var lastScrollY = 0
+
+    /** Text the user has selected on the page, with its on-screen position. Null when nothing is selected. */
+    var selection by mutableStateOf<GeckoSession.SelectionActionDelegate.Selection?>(null)
+        private set
+
+    /** Clears the page's selection and its handles; GeckoView then reports the hide, which clears [selection]. */
+    fun clearSelection() {
+        selection?.unselect()
+        selection?.hide()
+        selection = null
+    }
 
     /** True when a page was opened from the native start page and the tab has not returned to it yet. */
     var startPageBehind by mutableStateOf(false)
@@ -133,6 +144,17 @@ class BrowserTab(
                 }
             }
         }
+        // Replaces GeckoView's built-in selection bar: the page's text selection drives Ora's own card instead.
+        session.selectionActionDelegate = object : GeckoSession.SelectionActionDelegate {
+            override fun onShowActionRequest(session: GeckoSession, selection: GeckoSession.SelectionActionDelegate.Selection) {
+                if (selection.text.isNullOrBlank()) return
+                this@BrowserTab.selection = selection
+            }
+
+            override fun onHideAction(session: GeckoSession, hideReason: Int) {
+                this@BrowserTab.selection = null
+            }
+        }
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onPageStart(session: GeckoSession, url: String) {
                 loading = true
@@ -140,6 +162,9 @@ class BrowserTab(
                 pageRevealed = false
                 chromeHidden = false
                 lastScrollY = 0
+                // A link menu belongs to the page it was opened on; a new page clears it.
+                pressTarget = null
+                selection = null
                 BrowserLog.info("page", "Loading $url")
             }
 

@@ -76,6 +76,11 @@ object BrowserTokens {
     val AddressBarHeight = 48.dp
     /** Thickness of the load bar along the bottom of the address field. */
     val LoadBarHeight = 3.dp
+    // Pull to refresh: how far a page must be pulled down at the top to reload, and the indicator size.
+    val PullRefreshThreshold = 96.dp
+    val PullRefreshIndicatorSize = 36.dp
+    /** Space kept above the floating bottom bar, so the selection card sits clear of it. */
+    val SelectionMenuBottomInset = 96.dp
     val AddressBarShape = RoundedCornerShape(14.dp)
     val AddressBarElevation = 4.dp
     val AddressBarInnerPadding = 4.dp
