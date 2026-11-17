@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `02b54e8`.
+Last updated: 2026-11-17, at commit `e3ebbf3`.
 
 ## Done
 
@@ -12,7 +12,7 @@ Last updated: 2026-11-17, at commit `02b54e8`.
 - Search: several engines, choice per search, address suggestions.
 - Privacy: pop-up blocking, ad and tracker blocking (strict tracking protection), clear browsing data.
 - Load feedback: load bar in the address field, failed-load message, page fade-in at 50% load.
-- Tablet Settings: category rail with one centered column.
+- Tablet Settings: category rail with one centered column, opened as a side panel over the page with tap-outside to close (`e3ebbf3`).
 - GeckoView 160, with Kotlin 2.4.21 and compileSdk 37.2.
 - Secure DNS (DNS over HTTPS, with fallback).
 - Selection card for selected page text: Search, Copy, Select all, Share with highlight, and Call, Message or Add to calendar for phone numbers and dates (`5ddf098`).
@@ -94,3 +94,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-17 | `462778d` | Default browser row; incoming http/https links open in a new tab | Not checked: phone not connected over ADB | Row shows "Ora ✓" (already default). VIEW intent for mozilla.org opened it as a new tab (2 of 2 tabs, screenshot). "Set" dialog checked: with Ora removed as default via adb, the row showed "Set"; the dialog listed Ora, Set as default made Ora the default again and the row showed "Ora ✓" (screenshots) |
 | 2026-11-17 | `97e7682` | Menu Library label on one line; profile chips get room | Library label whole in the menu; profile chips fully drawn in the tab overview (screenshots) | Profile chips fully shown in the sidebar (screenshot). Library label in the tablet menu not re-checked |
 | 2026-11-17 | fade row | "Fade pages in" switch | Shown in Appearance | Not checked on the 160 build |
+| 2026-11-17 | `e3ebbf3` | Tablet Settings as a side panel; tap the dimmed page to close | Not checked: phone disconnected from ADB after the build | Settings slides in from the right with the Appearance page; tap on the dimmed page closed it (screenshots) |

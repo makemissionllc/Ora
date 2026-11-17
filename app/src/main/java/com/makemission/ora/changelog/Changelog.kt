@@ -30,6 +30,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "Find in page, from the menu. Type to search the page, then step through the matches."),
             ChangeItem(ChangeKind.CHANGED, "The app icon uses the new charcoal design."),
             ChangeItem(ChangeKind.CHANGED, "On phones, the Compact address bar narrows toward the centre as you scroll, and its address is centred."),
+            ChangeItem(ChangeKind.CHANGED, "On tablets, Settings slides in from the right over the page, not full screen. Tap the dimmed page to close it."),
             ChangeItem(ChangeKind.FIXED, "The Library label in the phone menu stays on one line and is no longer cut off. Profile chips have more room below them."),
             ChangeItem(ChangeKind.FIXED, "Settings text no longer runs into the switches on Appearance, Tabs and Search."),
             ChangeItem(ChangeKind.FIXED, "The address field clears correctly, and search stops asking which engine to use every time."),
