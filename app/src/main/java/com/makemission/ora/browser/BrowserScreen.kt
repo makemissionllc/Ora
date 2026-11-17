@@ -578,21 +578,33 @@ private fun BrowserContent(
                 enter = fadeIn(OraMotion.enter()) + expandHorizontally(expandFrom = Alignment.Start, animationSpec = OraMotion.enter()),
                 exit = fadeOut(OraMotion.exit()) + shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = OraMotion.exit())
             ) {
-                Column(modifier = Modifier.fillMaxHeight()) {
+                // The whole column is sidebar-coloured and fixed to the sidebar width, so no white
+                // window background shows behind the profile chips or beside the list.
+                Column(
+                    modifier = Modifier
+                        .width(BrowserTokens.SidebarWidth)
+                        .fillMaxHeight()
+                        .background(browserColors().SidebarBackground)
+                ) {
                     if (tabletCompact) Spacer(Modifier.height(compactRowHeight))
+                    // Chips scroll sideways when they are wider than the sidebar, so "+ New profile" stays reachable.
                     ProfileSwitcher(
                         profiles = profileList,
                         activeId = profileId,
                         onSelect = { id -> profiles.select(id) },
                         onAdd = { name -> profiles.add(name) },
                         onRemove = { id -> profiles.remove(id) },
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    TabSidebar(
-                        tabs = tabs,
-                        bookmarks = bookmarkList,
-                        onNewTab = onNewTab,
-                        onOpenBookmark = { url -> selected.session.loadUri(url) }
-                    )
+                    // The list takes the height left under the profile chips, so its bottom is not cut off.
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        TabSidebar(
+                            tabs = tabs,
+                            bookmarks = bookmarkList,
+                            onNewTab = onNewTab,
+                            onOpenBookmark = { url -> selected.session.loadUri(url) }
+                        )
+                    }
                 }
             }
             Box(modifier = Modifier.weight(1f).fillMaxSize()) {

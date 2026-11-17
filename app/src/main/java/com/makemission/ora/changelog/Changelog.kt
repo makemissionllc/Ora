@@ -17,6 +17,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "Overlays appear and disappear at once when Android's Remove animations setting is on."),
             ChangeItem(ChangeKind.CHANGED, "Menus, the tab overview and cards fade and grow on one shared timing, with a quicker fade-out."),
             ChangeItem(ChangeKind.ADDED, "Tapping ⋯ again closes the tablet menu, with the same slide-out as Back and a tap on the dimmed page."),
+            ChangeItem(ChangeKind.FIXED, "On tablet, the sidebar no longer shows a white strip behind the profile chips or beside the tab list. The profile chips scroll sideways when they do not fit."),
             ChangeItem(ChangeKind.FIXED, "On tablet, the ⋯ menu's Share, Bookmark and New tab icons show again. The floating Compact bar no longer covers them."),
             ChangeItem(ChangeKind.ADDED, "Auto-fill for text fields: long-press an empty text field and the card offers \"Auto-fill\", which asks your Android password app for suggestions. The card rides above the keyboard."),
             ChangeItem(ChangeKind.FIXED, "Closing the selection card on an empty text field no longer crashes the browser."),
