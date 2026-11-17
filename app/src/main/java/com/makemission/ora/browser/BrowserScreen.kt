@@ -40,6 +40,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -130,6 +131,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.bookmarks.BookmarksRepository
+import com.makemission.ora.profiles.ProfileSwitcher
+import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.extensions.ExtensionsRepository
 import com.makemission.ora.extensions.ExtensionsScreen
 import com.makemission.ora.settings.BarStyle
@@ -181,7 +184,7 @@ private class PageView {
 @Composable
 fun BrowserScreen(
     settings: SettingsRepository,
-    bookmarks: BookmarksRepository,
+    profiles: ProfilesRepository,
     modifier: Modifier = Modifier
 ) {
     val appearance by settings.appearance.collectAsState()
@@ -203,7 +206,7 @@ fun BrowserScreen(
         }
     }
     CompositionLocalProvider(LocalBrowserColors provides palette) {
-        BrowserContent(settings, bookmarks, modifier)
+        BrowserContent(settings, profiles, modifier)
     }
 }
 
@@ -214,25 +217,37 @@ fun BrowserScreen(
 @Composable
 private fun BrowserContent(
     settings: SettingsRepository,
-    bookmarks: BookmarksRepository,
+    profiles: ProfilesRepository,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val bookmarkList by bookmarks.bookmarks.collectAsState()
     val isTablet = LocalConfiguration.current.screenWidthDp >= TABLET_MIN_WIDTH_DP
+    // Each profile has its own tabs and bookmarks. Switching profile swaps both; other profiles' tabs stay open.
+    val profileId by profiles.activeId.collectAsState()
+    val profileList by profiles.profiles.collectAsState()
+    val bookmarks = remember(profileId) { BookmarksRepository(context, profileId) }
+    val bookmarkList by bookmarks.bookmarks.collectAsState()
 
     val blockAds by settings.blockAds.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
-    val tabs = remember {
-        BrowserTabs(
-            context,
-            { settings.blockPopups.value },
-            { response, pageUrl -> downloads.start(response, pageUrl) },
-            desktopByDefault = isTablet
-        )
+    val tabsByProfile = remember { HashMap<String, BrowserTabs>() }
+    val tabs = remember(profileId) {
+        tabsByProfile.getOrPut(profileId) {
+            BrowserTabs(
+                context,
+                { settings.blockPopups.value },
+                { response, pageUrl -> downloads.start(response, pageUrl) },
+                desktopByDefault = isTablet
+            )
+        }
+    }
+    // A removed profile's tabs are closed, so their pages stop running.
+    LaunchedEffect(profileList) {
+        val ids = profileList.map { it.id }.toSet()
+        tabsByProfile.keys.filterNot { it in ids }.forEach { id -> tabsByProfile.remove(id)?.closeAll() }
     }
     // Ad and tracker blocking is a runtime setting: apply it whenever the toggle changes.
     LaunchedEffect(blockAds) {
@@ -463,12 +478,21 @@ private fun BrowserContent(
                 enter = fadeIn(OraMotion.enter()) + expandHorizontally(expandFrom = Alignment.Start, animationSpec = OraMotion.enter()),
                 exit = fadeOut(OraMotion.exit()) + shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = OraMotion.exit())
             ) {
-                TabSidebar(
-                    tabs = tabs,
-                    bookmarks = bookmarkList,
-                    onNewTab = onNewTab,
-                    onOpenBookmark = { url -> selected.session.loadUri(url) }
-                )
+                Column(modifier = Modifier.fillMaxHeight()) {
+                    ProfileSwitcher(
+                        profiles = profileList,
+                        activeId = profileId,
+                        onSelect = { id -> profiles.select(id) },
+                        onAdd = { name -> profiles.add(name) },
+                        onRemove = { id -> profiles.remove(id) },
+                    )
+                    TabSidebar(
+                        tabs = tabs,
+                        bookmarks = bookmarkList,
+                        onNewTab = onNewTab,
+                        onOpenBookmark = { url -> selected.session.loadUri(url) }
+                    )
+                }
             }
             Box(modifier = Modifier.weight(1f).fillMaxSize()) {
                 BrowserPage(
@@ -646,20 +670,29 @@ private fun BrowserContent(
                             onRemove = { url -> bookmarks.remove(url) },
                             onDone = { showLibrary = false }
                         )
-                        PhoneOverlay.TABS -> TabGrid(
-                            tablet = isTablet,
-                            tabs = tabs,
-                            onSelect = { id ->
-                                tabs.select(id)
-                                showTabGrid = false
-                            },
-                            onClose = { id -> tabs.close(id) },
-                            onNewTab = {
-                                onNewTab()
-                                showTabGrid = false
-                            },
-                            onDone = { showTabGrid = false }
-                        )
+                        PhoneOverlay.TABS -> Column(modifier = Modifier.fillMaxSize()) {
+                            ProfileSwitcher(
+                                profiles = profileList,
+                                activeId = profileId,
+                                onSelect = { id -> profiles.select(id) },
+                                onAdd = { name -> profiles.add(name) },
+                                onRemove = { id -> profiles.remove(id) },
+                            )
+                            TabGrid(
+                                tablet = isTablet,
+                                tabs = tabs,
+                                onSelect = { id ->
+                                    tabs.select(id)
+                                    showTabGrid = false
+                                },
+                                onClose = { id -> tabs.close(id) },
+                                onNewTab = {
+                                    onNewTab()
+                                    showTabGrid = false
+                                },
+                                onDone = { showTabGrid = false }
+                            )
+                        }
                         PhoneOverlay.EXTENSIONS -> ExtensionsScreen(
                             repository = extensions,
                             onDone = { showExtensions = false }

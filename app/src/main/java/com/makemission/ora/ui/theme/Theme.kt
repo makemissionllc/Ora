@@ -151,6 +151,11 @@ object BrowserTokens {
     val FloatingBarElevation = 8.dp
     /** Widest the find-in-page bar grows on a tablet. */
     val FindBarMaxWidth = 480.dp
+    // Profile switcher above the tab overview.
+    val ProfileChipHeight = 36.dp
+    val ProfileChipPadding = PaddingValues(horizontal = 14.dp)
+    val ProfileChipSpacing = 8.dp
+    val ProfileSwitcherPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */

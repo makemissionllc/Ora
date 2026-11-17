@@ -10,10 +10,13 @@ import org.json.JSONObject
 data class Bookmark(val url: String, val title: String)
 
 /** Stores bookmarks as a JSON array in private preferences. */
-class BookmarksRepository(context: Context) {
+class BookmarksRepository(context: Context, profileId: String = "default") {
 
     private val prefs = context.applicationContext
         .getSharedPreferences("ora_bookmarks", Context.MODE_PRIVATE)
+
+    /** The default profile keeps the original key, so bookmarks saved before profiles still show. */
+    private val key = if (profileId == "default") "bookmarks" else "bookmarks_$profileId"
 
     private val _bookmarks = MutableStateFlow(load())
     val bookmarks: StateFlow<List<Bookmark>> = _bookmarks.asStateFlow()
@@ -36,20 +39,16 @@ class BookmarksRepository(context: Context) {
     private fun save(list: List<Bookmark>) {
         val array = JSONArray()
         list.forEach { array.put(JSONObject().put("url", it.url).put("title", it.title)) }
-        prefs.edit().putString(KEY, array.toString()).apply()
+        prefs.edit().putString(key, array.toString()).apply()
         _bookmarks.value = list
     }
 
     private fun load(): List<Bookmark> {
-        val raw = prefs.getString(KEY, null) ?: return emptyList()
+        val raw = prefs.getString(key, null) ?: return emptyList()
         val array = JSONArray(raw)
         return List(array.length()) { i ->
             val obj = array.getJSONObject(i)
             Bookmark(obj.getString("url"), obj.getString("title"))
         }
-    }
-
-    private companion object {
-        const val KEY = "bookmarks"
     }
 }

@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.remember
-import com.makemission.ora.bookmarks.BookmarksRepository
+import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.browser.BrowserScreen
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
@@ -22,8 +22,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             OraTheme {
                 val settings = remember { SettingsRepository(applicationContext) }
-                val bookmarks = remember { BookmarksRepository(applicationContext) }
-                BrowserScreen(settings = settings, bookmarks = bookmarks)
+                val profiles = remember { ProfilesRepository(applicationContext) }
+                BrowserScreen(settings = settings, profiles = profiles)
             }
         }
     }
