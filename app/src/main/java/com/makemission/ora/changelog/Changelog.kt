@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Tapping ⋯ again closes the tablet menu, with the same slide-out as Back and a tap on the dimmed page."),
+            ChangeItem(ChangeKind.FIXED, "On tablet, the ⋯ menu's Share, Bookmark and New tab icons show again. The floating Compact bar no longer covers them."),
             ChangeItem(ChangeKind.ADDED, "Auto-fill for text fields: long-press an empty text field and the card offers \"Auto-fill\", which asks your Android password app for suggestions. The card rides above the keyboard."),
             ChangeItem(ChangeKind.FIXED, "Closing the selection card on an empty text field no longer crashes the browser."),
             ChangeItem(ChangeKind.CHANGED, "Password autofill now follows its switch fully: with it on, your Android password app offers suggestions above the keyboard on login pages; with it off, the page is hidden from Android autofill."),

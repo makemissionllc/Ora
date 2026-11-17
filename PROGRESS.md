@@ -2,9 +2,10 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-17, at commit `0b92ba3`.
+Last updated: 2026-11-17, at commit `1deea80`.
 
 ## Done
+- Tablet ⋯ menu: its panel starts below the floating Compact row, so Share, Bookmark and New tab show their icons again. Tapping ⋯ again closes it (`1deea80`). Verified on tablet in landscape; portrait not checked.
 - Status-bar fades merged into one StatusBarFade composable; Extensions search results use the shared motion values (`0b92ba3`). Start page checked on both devices after the change.
 - Private tabs from the ⋯ menu (`8abb39f`): a private-mode session, no thumbnail, not kept for reopen, and a private note on the start page. Verified on phone and tablet (see verification log); tab grid thumbnail check on the phone not done.
 - Motion style setting: Settings > Appearance > Motion with Smooth, Elegant, Fast and Premium (`67c0218`). Verified on phone and tablet; Fast applied on both, Smooth restored.
@@ -79,7 +80,6 @@ Last updated: 2026-11-17, at commit `0b92ba3`.
 ## Known issues
 
 - Saved passwords: tapping into a password (type=password) field on the local login page (http://localhost:8765/login.html, adb reverse) makes GeckoView's surface stop drawing (black screen). It also happens with Password autofill off, and on the build before the Passwords commit (50a4983), so it predates the Passwords change and is not caused by it. Cause not found. Saving and autofilling a login stay unverified until this is fixed. Password autofill was left OFF on the phone by this test; turn it back on in Settings > Passwords.
-- Tablet ⋯ menu: the first row's icons (Share, Bookmark, New tab) are drawn above the panel's top edge and clipped, so only their labels show. Cause not found; a 40 dp top padding moved the labels but not the clipping.
 - Password autofill: Bitwarden is installed on both devices but reports "Did you add an account?" (no logged-in vault), so no login fill has been offered yet. Sign in to Bitwarden, then retest on a login page.
 - Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
 - Typing "mozilla.org" in the address bar can produce a search instead of a page, if the keyboard inserts spaces or capitals.
@@ -91,6 +91,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-17 | `1deea80` | Tablet ⋯ menu below the Compact row; ⋯ again closes it | Not checked: tablet-only pass | Compact top row with the menu open: Share, Bookmark and New tab icons visible (screenshot). ⋯ tapped again: panel slid closed; tapped again: reopened (screenshots). Landscape only; portrait not checked |
 | 2026-11-17 | Android autofill wired to the page view (`setAutofillEnabled`, important for autofill) | Google sign-in: tapping the email field started an Android autofill session with Bitwarden bound, but no suggestion appeared in the keyboard bar (this Bitwarden has no signed-in account). Fill and the Auto-fill selection-menu item not verified | Not checked |
 | 2026-11-17 | Auto-fill debugging with Bitwarden unlocked (logging added to the Auto-fill request) | accounts.google.com and the-internet.herokua... login page: focused field reports domain, username hint and correct bounds; request reaches Bitwarden, which returns no dataset (system says contents can't be auto-filled). Whether Bitwarden has a saved login for these sites is not confirmed | Not checked |
 | 2026-11-17 | `4141fbd` | Auto-fill item on the card for empty text fields; card above keyboard; unselect crash fix | Long-press on the Google email field showed the card (Text field, Auto-fill, Select all). Auto-fill reached Android's service, which answered it can't auto-fill because Bitwarden has no account here. No crash after the fix. Real fill not verified | Not checked: build installed, not exercised |
