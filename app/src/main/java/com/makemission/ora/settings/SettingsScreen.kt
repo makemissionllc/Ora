@@ -102,6 +102,8 @@ fun SettingsScreen(
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val quickResume by settings.quickResume.collectAsState()
+    val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
+    val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val autofillPasswords by settings.autofillPasswords.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
@@ -492,6 +494,51 @@ fun SettingsScreen(
                     }
                     if (shown(SettingsCategory.HOME)) item {
                         SectionTitle("Home page")
+                    if (shown(SettingsCategory.PRIVACY)) item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+                                .background(browserColors().AddressBarBackground)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setGlobalPrivacyControl(!globalPrivacyControl) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Global Privacy Control", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Tells sites not to sell or share your data. Sites that ignore it are not blocked.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = globalPrivacyControl, onCheckedChange = { settings.setGlobalPrivacyControl(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setFingerprintingProtection(!fingerprintingProtection) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Fingerprinting protection", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Hides details sites use to recognise your device. Some pages may look different or work less well.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = fingerprintingProtection, onCheckedChange = { settings.setFingerprintingProtection(it) })
+                            }
+                        }
+                    }
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()

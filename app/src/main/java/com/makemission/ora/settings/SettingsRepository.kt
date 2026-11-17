@@ -164,6 +164,26 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Secure DNS ${if (enabled) "on" else "off"}")
     }
 
+    private val _globalPrivacyControl = MutableStateFlow(prefs.getBoolean(KEY_GLOBAL_PRIVACY_CONTROL, true))
+    /** When on, pages receive the Global Privacy Control signal, asking sites not to sell or share your data. */
+    val globalPrivacyControl: StateFlow<Boolean> = _globalPrivacyControl.asStateFlow()
+
+    fun setGlobalPrivacyControl(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_GLOBAL_PRIVACY_CONTROL, enabled).apply()
+        _globalPrivacyControl.value = enabled
+        BrowserLog.info("settings", "Global Privacy Control ${if (enabled) "on" else "off"}")
+    }
+
+    private val _fingerprintingProtection = MutableStateFlow(prefs.getBoolean(KEY_FINGERPRINTING_PROTECTION, false))
+    /** When on, GeckoView hides details that sites use to recognise your device, such as some hardware and font details. */
+    val fingerprintingProtection: StateFlow<Boolean> = _fingerprintingProtection.asStateFlow()
+
+    fun setFingerprintingProtection(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_FINGERPRINTING_PROTECTION, enabled).apply()
+        _fingerprintingProtection.value = enabled
+        BrowserLog.info("settings", "Fingerprinting protection ${if (enabled) "on" else "off"}")
+    }
+
     private val _edgeSwipeSidebar = MutableStateFlow(prefs.getBoolean(KEY_EDGE_SWIPE_SIDEBAR, true))
     /**
      * Tablet only: a rightward swipe from the left edge of a page opens the sidebar. Off for sites
@@ -312,6 +332,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_MOTION_STYLE = "motion_style"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
+        private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
+        private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
         private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"
         private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_ALL. */

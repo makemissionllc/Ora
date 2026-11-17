@@ -263,6 +263,8 @@ private fun BrowserContent(
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
+    val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
+    val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
     val tabsByProfile = remember { HashMap<String, BrowserTabs>() }
@@ -327,6 +329,13 @@ private fun BrowserContent(
         GeckoEngine.runtime(context).settings.setTrustedRecursiveResolverMode(
             if (secureDns) GeckoRuntimeSettings.TRR_MODE_FIRST else GeckoRuntimeSettings.TRR_MODE_OFF
         )
+    }
+    // Global Privacy Control and fingerprinting protection are runtime settings applied to every session.
+    LaunchedEffect(globalPrivacyControl) {
+        GeckoEngine.runtime(context).settings.setGlobalPrivacyControl(globalPrivacyControl)
+    }
+    LaunchedEffect(fingerprintingProtection) {
+        GeckoEngine.runtime(context).settings.setFingerprintingProtection(fingerprintingProtection)
     }
     // Password autofill is a runtime setting: GeckoView fills login forms from saved logins when it is on.
     val autofillPasswords by settings.autofillPasswords.collectAsState()
