@@ -50,6 +50,8 @@ fun StartPage(
     bookmarks: List<Bookmark>,
     blockAds: Boolean,
     onSubmit: (String) -> Unit,
+    /** Private tabs say so on the start page, so the user knows what is not kept. */
+    isPrivate: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = browserColors()
@@ -66,6 +68,14 @@ fun StartPage(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(28.dp)
         ) {
+            if (isPrivate) {
+                Text(
+                    "Private tab. Ora keeps no history, cookies or thumbnails for it, and it cannot be reopened after it closes.",
+                    color = colors.SecondaryText,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                )
+            }
             // Search field: Enter or the keyboard's Go button submits, the same as the address bar.
             BasicTextField(
                 value = query,

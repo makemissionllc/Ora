@@ -26,8 +26,14 @@ class BrowserTab(
     private val onDownload: (WebResponse, String) -> Unit,
     /** Tablets open tabs with the desktop site, so pages lay out for the larger screen. */
     private val desktopByDefault: Boolean = false,
+    /** A private tab runs in GeckoView private mode: no history, cookies or stored logins are kept for it. */
+    val isPrivate: Boolean = false,
 ) {
-    val session: GeckoSession = GeckoSession()
+    val session: GeckoSession = if (isPrivate) {
+        GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build())
+    } else {
+        GeckoSession()
+    }
     private val appContext: Context = context.applicationContext
 
     var url by mutableStateOf(initialUrl)
@@ -285,11 +291,13 @@ class BrowserTabs(
     val selected: BrowserTab?
         get() = tabs.firstOrNull { it.id == selectedId }
 
-    fun newTab(url: String, select: Boolean = true): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault)
+    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false): BrowserTab {
+        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate)
         tabs.add(tab)
         if (select) select(tab.id)
-        BrowserLog.info("tabs", "Opened tab ${tab.id} (${tabs.size} open)")
+        // Private tabs log no address, so the log does not record what was browsed privately.
+        if (isPrivate) BrowserLog.info("tabs", "Opened private tab ${tab.id} (${tabs.size} open)")
+        else BrowserLog.info("tabs", "Opened tab ${tab.id} (${tabs.size} open)")
         return tab
     }
 
@@ -320,7 +328,8 @@ class BrowserTabs(
         UsageStats.count("tab.close")
         val closing = tabs[index]
         // Start pages have nothing worth bringing back, so they are not offered for undo.
-        recentlyClosed = if (closing.url == START_URL) null else ClosedTab(closing.id, closing.url)
+        // Start pages and private tabs are not offered for undo: a private tab must not come back with its address.
+        recentlyClosed = if (closing.url == START_URL || closing.isPrivate) null else ClosedTab(closing.id, closing.url)
         tabs.removeAt(index).close()
         BrowserLog.info("tabs", "Closed tab $id (${tabs.size} open)")
         if (tabs.isEmpty()) {
