@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -66,8 +67,16 @@ fun TabGrid(
     onDone: () -> Unit,
     tablet: Boolean = false,
 ) {
-    val tabList = tabs.tabs
-    val countText = if (tabList.size == 1) "1 tab" else "${tabList.size} tabs"
+    // Search open tabs by title or address, as the sidebar does; the grid shows only the matches.
+    var query by rememberSaveable { mutableStateOf("") }
+    val needle = query.trim()
+    val allTabs = tabs.tabs
+    val tabList = allTabs.filter { needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true) }
+    val countText = when {
+        needle.isNotEmpty() -> "${tabList.size} of ${allTabs.size} tabs"
+        allTabs.size == 1 -> "1 tab"
+        else -> "${allTabs.size} tabs"
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -87,6 +96,12 @@ fun TabGrid(
                     Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
                 }
             }
+        }
+        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+            SidebarSearch(query = query, placeholder = "Search open tabs", onQueryChange = { query = it })
+        }
+        if (tabList.isEmpty() && needle.isNotEmpty()) {
+            EmptySidebarText("No tabs match \"$needle\"")
         }
         LazyVerticalGrid(
             columns = GridCells.Fixed(if (tablet) 3 else 2),
@@ -134,7 +149,7 @@ fun TabGrid(
                 Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
             }
             Text(
-                text = if (tabList.size == 1) "1 tab" else "${tabList.size} tabs",
+                text = countText,
                 color = browserColors().SecondaryText,
                 fontSize = 14.sp
             )

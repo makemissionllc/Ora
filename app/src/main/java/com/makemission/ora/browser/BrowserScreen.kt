@@ -747,7 +747,7 @@ private fun BrowserContent(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .height(statusTop + BrowserTokens.StatusFadeExtra)
+                    .height(statusTop + BrowserTokens.StatusFadeExtra * 2)
                     .background(Brush.verticalGradient(listOf(browserColors().Scrim, Color.Transparent)))
             )
             // Transparent around the pill: the page shows through, so the row seems to float over it.
