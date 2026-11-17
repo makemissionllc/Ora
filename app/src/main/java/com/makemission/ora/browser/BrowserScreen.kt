@@ -303,6 +303,9 @@ private fun BrowserContent(
 
     val selected = tabs.selected ?: return
     val selectedId = tabs.selectedId
+    // One place for the bookmark state and toggle, shared by the phone and tablet bars and the menu.
+    val selectedBookmarked = bookmarkList.any { it.url == selected.url }
+    val toggleSelectedBookmark = { bookmarks.toggle(selected.url, selected.title) }
 
     // Only the selected tab should be active, so background pages stop rendering.
     LaunchedEffect(selectedId) {
@@ -416,8 +419,8 @@ private fun BrowserContent(
             ) {
                 BottomControlsBar(
                     tab = selected,
-                    isBookmarked = bookmarkList.any { it.url == selected.url },
-                    onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                    isBookmarked = selectedBookmarked,
+                    onBookmark = toggleSelectedBookmark,
                     onShare = { shareUrl(context, selected.url) },
                     onTabs = openTabs,
                     onMenu = { showMenu = true },
@@ -435,10 +438,10 @@ private fun BrowserContent(
                 if (barStyle == BarStyle.BOTTOM) {
                     BrowserToolbar(
                         tab = selected,
-                        isBookmarked = bookmarkList.any { it.url == selected.url },
+                        isBookmarked = selectedBookmarked,
                         onSubmit = { input -> submitAddress(input) },
                         candidates = addressCandidates,
-                        onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                        onBookmark = toggleSelectedBookmark,
                         onShare = { shareUrl(context, selected.url) },
                         onTabs = openTabs,
                         onMenu = { showMenu = true },
@@ -496,13 +499,13 @@ private fun BrowserContent(
                     // Tablet Top: the desktop-style toolbar with sidebar toggle, navigation and tools.
                     TabletToolbar(
                         tab = selected,
-                        isBookmarked = bookmarkList.any { it.url == selected.url },
+                        isBookmarked = selectedBookmarked,
                         showSidebarToggle = isTablet,
                         showSidebar = showSidebar,
                         onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
                         onSubmit = { input -> submitAddress(input) },
                         candidates = addressCandidates,
-                        onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                        onBookmark = toggleSelectedBookmark,
                         onShare = { shareUrl(context, selected.url) },
                         onNewTab = onNewTab,
                         onDownloads = { showDownloads = true },
@@ -639,11 +642,11 @@ private fun BrowserContent(
                     BrowserMenuSheet(
                         isTablet = isTablet,
                         topInset = topBarHeight,
-                        isBookmarked = bookmarkList.any { it.url == selected.url },
+                        isBookmarked = selectedBookmarked,
                         onDismiss = { showMenu = false },
                         // The menu closes itself before each action runs, so actions only do their work.
                         onShare = { shareUrl(context, selected.url) },
-                        onBookmark = { bookmarks.toggle(selected.url, selected.title) },
+                        onBookmark = toggleSelectedBookmark,
                         onNewTab = { onNewTab() },
                         onLibrary = { showLibrary = true },
                         onFind = { showFind = true },

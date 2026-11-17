@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.DisclosureChevron
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -491,7 +492,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Clear browsing data", fontSize = 15.sp, color = browserColors().AddressBarText)
-                            Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+                            DisclosureChevron()
                         }
                     }
                     if (shown(SettingsCategory.DIAGNOSTICS)) item {

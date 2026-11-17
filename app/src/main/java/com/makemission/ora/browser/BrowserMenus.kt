@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.DisclosureChevron
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -151,7 +152,7 @@ private fun BrowserMenuItems(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Find in page", fontSize = 15.sp, color = browserColors().AddressBarText)
-                Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+                DisclosureChevron()
             }
             Row(
                 modifier = Modifier
@@ -173,7 +174,7 @@ private fun BrowserMenuItems(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Downloads", fontSize = 15.sp, color = browserColors().AddressBarText)
-                Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+                DisclosureChevron()
             }
             Row(
                 modifier = Modifier
@@ -184,7 +185,7 @@ private fun BrowserMenuItems(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Extensions", fontSize = 15.sp, color = browserColors().AddressBarText)
-                Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+                DisclosureChevron()
             }
             Row(
                 modifier = Modifier
@@ -195,7 +196,7 @@ private fun BrowserMenuItems(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Settings", fontSize = 15.sp, color = browserColors().AddressBarText)
-                Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+                DisclosureChevron()
             }
         }
 }
