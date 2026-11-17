@@ -4,6 +4,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.animation.core.Animatable
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import android.app.Activity
 import androidx.compose.animation.animateColorAsState
 import androidx.core.view.WindowCompat
@@ -368,7 +369,14 @@ private fun BrowserContent(
     LaunchedEffect(selected.id, selected.loading, selected.scrolled) {
         if (selected.url != BrowserTabs.START_URL && !selected.loading && !selected.scrolled) {
             pageView.view?.capturePixels()?.accept(
-                { bitmap -> if (bitmap != null) selected.topColor = sampleTopRow(bitmap) },
+                { bitmap ->
+                    if (bitmap != null) {
+                        val sampled = sampleTopRow(bitmap)
+                        selected.topColor = sampled
+                        // Feedback for Diagnostics: shows which colour the status bar took from this page.
+                        BrowserLog.info("page", "Status bar colour from ${selected.url}: ${sampled?.toArgb()?.let { "#%06X".format(it and 0xFFFFFF) } ?: "none"}")
+                    }
+                },
                 { }
             )
         }
