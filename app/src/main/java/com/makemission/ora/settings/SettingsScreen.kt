@@ -212,7 +212,7 @@ fun SettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Column(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                     Text("Fade pages in", fontSize = 15.sp, color = browserColors().AddressBarText)
                                     Text(
                                         "A page appears in one smooth fade once it is half loaded, rather than in pieces.",
