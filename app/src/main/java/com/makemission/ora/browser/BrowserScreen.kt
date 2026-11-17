@@ -135,6 +135,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
+import android.view.View
 import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.bookmarks.BookmarksRepository
@@ -596,6 +597,7 @@ private fun BrowserContent(
                     bookmarks = bookmarkList,
                     blockAds = blockAds,
                     fadePagesIn = fadePagesIn,
+                    androidAutofill = autofillPasswords,
                     // Phone Compact and Bottom let the page run up under the status bar; push it below, as the fade ends there.
                     belowStatusBar = !isTablet && !topLayout,
                     // Tablet Compact floats over the page; the start page keeps its content clear of the row.
@@ -849,6 +851,7 @@ private fun BrowserPage(
     bookmarks: List<Bookmark>,
     blockAds: Boolean,
     fadePagesIn: Boolean,
+    androidAutofill: Boolean,
     belowStatusBar: Boolean,
     topInset: Dp,
     onSubmit: (String) -> Unit,
@@ -895,8 +898,20 @@ private fun BrowserPage(
     ) {
         AndroidView(
             modifier = Modifier.fillMaxSize().graphicsLayer { alpha = pageAlpha },
-            factory = { ctx -> GeckoView(ctx).also { pageView.view = it } },
-            update = { view -> if (view.session != tab.session) view.setSession(tab.session) }
+            factory = { ctx ->
+                GeckoView(ctx).also {
+                    // Lets Android's autofill service (Bitwarden, Google and others) see the page's login fields.
+                    it.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_YES
+                    pageView.view = it
+                }
+            },
+            update = { view ->
+                if (view.session != tab.session) view.setSession(tab.session)
+                if (view.autofillEnabled != androidAutofill) {
+                    view.setAutofillEnabled(androidAutofill)
+                    BrowserLog.info("autofill", "Android autofill ${if (androidAutofill) "on" else "off"} for the page view")
+                }
+            }
         )
         AnimatedVisibility(
             visible = indicatorVisible,

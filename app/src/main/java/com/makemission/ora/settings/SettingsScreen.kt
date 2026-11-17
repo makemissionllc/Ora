@@ -370,7 +370,7 @@ fun SettingsScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text("Password autofill", fontSize = 15.sp, color = browserColors().AddressBarText)
                                     Text(
-                                        "Login fields fill from the password app you chose in Android's Autofill settings, such as Bitwarden or Google Password Manager.",
+                                        "Login fields fill from the password app you chose in Android's Autofill settings, such as Bitwarden or Google Password Manager. Its suggestions appear above the keyboard.",
                                         fontSize = 12.sp,
                                         color = browserColors().SecondaryText
                                     )
