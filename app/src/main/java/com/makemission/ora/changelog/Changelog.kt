@@ -37,6 +37,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.FIXED, "On tablet, the profile chips in the sidebar scroll to the edge instead of being cut off partway."),
             ChangeItem(ChangeKind.CHANGED, "On a tablet, switching between Tabs and Bookmarks in the sidebar clears the search, so a filter for tabs never hides bookmarks."),
             ChangeItem(ChangeKind.ADDED, "Tapping ⋯ again closes the tablet menu, with the same slide-out as Back and a tap on the dimmed page."),
+            ChangeItem(ChangeKind.FIXED, "On phone, a site's permission card appears below the status bar, so its title is no longer cut off."),
             ChangeItem(ChangeKind.FIXED, "On tablet, the sidebar no longer shows a white strip behind the profile chips or beside the tab list. The profile chips scroll sideways when they do not fit."),
             ChangeItem(ChangeKind.FIXED, "On tablet, the ⋯ menu's Share, Bookmark and New tab icons show again. The floating Compact bar no longer covers them."),
             ChangeItem(ChangeKind.ADDED, "Auto-fill for text fields: long-press an empty text field and the card offers \"Auto-fill\", which asks your Android password app for suggestions. The card rides above the keyboard."),

@@ -24,6 +24,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - On tablet, Back closes an open sidebar before it goes back through page history. (`fbaf6de`)
 
 **Fixed**
+- On phone, a site's permission card appears below the status bar, so its title is no longer cut off.
 - On tablet, the sidebar no longer shows a white strip behind the profile chips or beside the tab list. The profile chips scroll sideways when they do not fit.
 - On tablet, the ⋯ menu's Share, Bookmark and New tab icons show again. The floating Compact bar no longer covers them. (`1deea80`)
 - Closing the selection card on an empty text field no longer crashes the browser. (`4141fbd`)

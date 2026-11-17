@@ -52,6 +52,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -953,8 +954,14 @@ private fun BrowserContent(
         }
     }
     // A site's permission prompt, under the address bar. The tablet tab overview below covers it.
+    // On the phone bottom-bar layout there is no top bar, so the card starts below the status bar's height.
+    val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     SitePromptOverlay(
-        topOffset = if (tabletCompact) compactRowHeight else topBarHeight,
+        topOffset = when {
+            tabletCompact -> compactRowHeight
+            !isTablet && !topLayout -> statusBarTop
+            else -> topBarHeight
+        },
         modifier = Modifier.align(Alignment.TopCenter),
     )
     // Tablet tab overview covers the whole window, toolbar and sidebar included. It grows out of the tabs button.
