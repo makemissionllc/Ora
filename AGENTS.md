@@ -49,6 +49,11 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 20. **Changelog stays in step with the app.** The in-app "What's new" page (Settings > About) reads the same entries as `CHANGELOG.md`. When an entry is added to `CHANGELOG.md`, add it to the in-app list too, in the same change set. Write entries in plain words for a user, not for a developer.
 21. **Record only what was checked.** Do not write a device as verified in `PROGRESS.md` unless a screenshot or test was seen on that device. If a check was skipped or blocked, say so in the log.
 
+## Status bar rules
+
+22. **The status bar is frozen.** Do not change the status bar, its implementation, or its fade. That covers `StatusBar.kt`, the top-strip tint and theme-colour sampling (`ThemeColor.kt`, `assets/theme-color/`), the status-icon light/dark switching, the 84 dp scroll fade, and the page inset under the bar. Keep all of it exactly as it is in the current code.
+23. **Ask before touching the status bar.** If a task appears to need a status-bar change, stop and check with the user first, every time, even when the change looks small. Do not edit status-bar code without that yes.
+
 ## Attribution
 
 Commits made by an agent end with:
