@@ -155,7 +155,7 @@ object BrowserTokens {
     val ProfileChipHeight = 36.dp
     val ProfileChipPadding = PaddingValues(horizontal = 14.dp)
     val ProfileChipSpacing = 8.dp
-    val ProfileSwitcherPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 4.dp)
+    val ProfileSwitcherPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */

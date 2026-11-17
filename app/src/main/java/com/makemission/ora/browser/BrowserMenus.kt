@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -151,7 +152,15 @@ private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit) {
         ) {
             Icon(icon, contentDescription = label, tint = browserColors().Accent)
         }
-        Text(label, fontSize = 12.sp, color = browserColors().IconColor)
+        // One line only: "Library" was breaking into "Libr / ary" in the five-action row.
+        Text(
+            label,
+            fontSize = 12.sp,
+            color = browserColors().IconColor,
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier.wrapContentWidth(unbounded = true)
+        )
     }
 }
 
