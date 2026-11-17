@@ -1037,6 +1037,32 @@ private fun BrowserContent(
             )
         }
         if (!isTablet) {
+            // Phone Compact: an opaque band the height of the floating row. It hides the page below the row's top
+            // edge in both states, so a folded row clips the page above it as the expanded row does.
+            // Quality of life: while the row is folded, a tap on the band (beside the pill) brings the full bar back.
+            AnimatedVisibility(
+                visible = phoneCompact && !toolbarHidden && bottomBarPx > 0,
+                modifier = Modifier.align(Alignment.BottomCenter),
+                enter = fadeIn(OraMotion.enter()),
+                exit = fadeOut(OraMotion.exit())
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(with(density) { bottomBarPx.toDp() })
+                        .background(browserColors().ToolbarBackground)
+                        .then(
+                            if (selected.chromeHidden) {
+                                Modifier.clickable {
+                                    BrowserLog.info("nav", "Tapped the band under the folded address bar: showed the toolbar")
+                                    selected.showChrome()
+                                }
+                            } else {
+                                Modifier
+                            }
+                        )
+                )
+            }
             // The measured height is kept while a full-screen panel is open, as the tablet's top row is.
             Box(
                 modifier = Modifier
