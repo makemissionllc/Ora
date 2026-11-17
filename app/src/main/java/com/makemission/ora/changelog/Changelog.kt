@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "17 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "The ⋯ menu's actions sit in two rows of three, so \"New private tab\" no longer runs into \"Tabs\" and \"Library\" on tablets."),
             ChangeItem(ChangeKind.ADDED, "New private tab: the ⋯ menu has \"New private tab\". A private tab keeps no history, cookies or thumbnails, and it cannot be reopened after it closes. Its start page says so."),
             ChangeItem(ChangeKind.ADDED, "Motion style: choose Smooth, Elegant, Fast or Premium in Settings > Appearance. It sets how quickly pages, menus and panels move."),
             ChangeItem(ChangeKind.ADDED, "Tab overview: search open tabs by title or address, on phone and tablet. The count shows matches, and a message appears when none match."),
