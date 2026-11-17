@@ -27,9 +27,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Find in page: open it from the menu, type to search the page, and step through matches. (`1ab7996`)
 - On phones, the Compact address pill narrows toward the centre as you scroll, with its URL centred. (`6e0ddeb`)
 - On tablets, Settings slides in from the right over the page, not full screen. Tap the dimmed page to close it. (`e3ebbf3`)
+- On tablets, the tab overview covers the whole window, with no toolbar or sidebar. (uncommitted)
 - Load bar no longer flashes, and phone bars float above the page. (`205a2d6`)
 
 **Fixed**
+- Profile names in the tab overview and sidebar are centred in their chips. (uncommitted)
 - The "Fade pages in" description no longer runs into its switch in Settings > Appearance.
 - The Library label in the phone menu stays on one line and is no longer cut off. Profile chips have more room below them.
 - Settings text no longer runs into the switches on Appearance, Tabs and Search, and the Count feature use row has space above it. (`7d758af`)

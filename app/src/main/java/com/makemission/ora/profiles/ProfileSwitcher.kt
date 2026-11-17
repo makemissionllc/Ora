@@ -3,6 +3,7 @@ package com.makemission.ora.profiles
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.ui.theme.BrowserTokens
@@ -54,32 +56,22 @@ fun ProfileSwitcher(
     ) {
         profiles.forEach { profile ->
             val selected = profile.id == activeId
-            Text(
-                profile.name,
-                fontSize = 14.sp,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (selected) colors.Accent else colors.AddressBarText,
-                modifier = Modifier
-                    .height(BrowserTokens.ProfileChipHeight)
-                    .clip(RoundedCornerShape(50))
-                    .background(if (selected) colors.SidebarSelected else colors.AddressBarBackground)
-                    .combinedClickable(
-                        onClick = { onSelect(profile.id) },
-                        onLongClick = { if (profile.id != ProfilesRepository.DEFAULT_ID) removing = profile }
-                    )
-                    .padding(BrowserTokens.ProfileChipPadding)
+            ProfileChip(
+                label = profile.name,
+                selected = selected,
+                background = if (selected) colors.SidebarSelected else colors.AddressBarBackground,
+                textColor = if (selected) colors.Accent else colors.AddressBarText,
+                onClick = { onSelect(profile.id) },
+                onLongClick = { if (profile.id != ProfilesRepository.DEFAULT_ID) removing = profile },
             )
         }
-        Text(
-            "+ New profile",
-            fontSize = 14.sp,
-            color = colors.SecondaryText,
-            modifier = Modifier
-                .height(BrowserTokens.ProfileChipHeight)
-                .clip(RoundedCornerShape(50))
-                .background(colors.AddressBarBackground)
-                .combinedClickable(onClick = { newName = ""; adding = true })
-                .padding(BrowserTokens.ProfileChipPadding),
+        ProfileChip(
+            label = "+ New profile",
+            selected = false,
+            background = colors.AddressBarBackground,
+            textColor = colors.SecondaryText,
+            onClick = { newName = ""; adding = true },
+            onLongClick = null,
         )
     }
 
@@ -121,6 +113,36 @@ fun ProfileSwitcher(
             dismissButton = {
                 TextButton(onClick = { removing = null }) { Text("Cancel", color = colors.SecondaryText) }
             }
+        )
+    }
+}
+
+/** One pill: the label is centred both ways inside a fixed-height capsule. */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun ProfileChip(
+    label: String,
+    selected: Boolean,
+    background: Color,
+    textColor: Color,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)?,
+) {
+    Box(
+        modifier = Modifier
+            .height(BrowserTokens.ProfileChipHeight)
+            .clip(RoundedCornerShape(50))
+            .background(background)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(BrowserTokens.ProfileChipPadding),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            label,
+            fontSize = 14.sp,
+            maxLines = 1,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = textColor,
         )
     }
 }

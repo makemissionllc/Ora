@@ -31,6 +31,8 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.CHANGED, "The app icon uses the new charcoal design."),
             ChangeItem(ChangeKind.CHANGED, "On phones, the Compact address bar narrows toward the centre as you scroll, and its address is centred."),
             ChangeItem(ChangeKind.CHANGED, "On tablets, Settings slides in from the right over the page, not full screen. Tap the dimmed page to close it."),
+            ChangeItem(ChangeKind.CHANGED, "On tablets, the tab overview covers the whole window, with no toolbar or sidebar."),
+            ChangeItem(ChangeKind.FIXED, "Profile names in the tab overview and sidebar are centred in their chips."),
             ChangeItem(ChangeKind.FIXED, "The \"Fade pages in\" description no longer runs into its switch in Settings > Appearance."),
             ChangeItem(ChangeKind.FIXED, "The Library label in the phone menu stays on one line and is no longer cut off. Profile chips have more room below them."),
             ChangeItem(ChangeKind.FIXED, "Settings text no longer runs into the switches on Appearance, Tabs and Search."),

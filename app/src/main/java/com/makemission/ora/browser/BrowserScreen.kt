@@ -45,6 +45,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.ime
@@ -341,8 +343,9 @@ private fun BrowserContent(
 
     // Full-screen phone overlay currently open (tablets never use one). Tablet Settings is a side panel instead.
     val tabletSettingsOpen = isTablet && showSettings
+    val tabletTabsOpen = isTablet && showTabGrid
     val phoneOverlay = when {
-        showTabGrid -> PhoneOverlay.TABS
+        showTabGrid && !isTablet -> PhoneOverlay.TABS
         showLibrary -> PhoneOverlay.LIBRARY
         showSettings && !isTablet -> PhoneOverlay.SETTINGS
         showExtensions -> PhoneOverlay.EXTENSIONS
@@ -358,13 +361,13 @@ private fun BrowserContent(
     }
 
     // Back closes the open overlay first, then steps back through page history, and only then exits.
-    BackHandler(enabled = phoneOverlay != PhoneOverlay.NONE || tabletSettingsOpen) {
+    BackHandler(enabled = phoneOverlay != PhoneOverlay.NONE || tabletSettingsOpen || tabletTabsOpen) {
         showTabGrid = false
         showLibrary = false
         showSettings = false
         showExtensions = false
     }
-    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && !tabletSettingsOpen && selected.canStepBack) {
+    BackHandler(enabled = phoneOverlay == PhoneOverlay.NONE && !tabletSettingsOpen && !tabletTabsOpen && selected.canStepBack) {
         selected.stepBack()
     }
 
@@ -439,8 +442,9 @@ private fun BrowserContent(
         }
     }
 
+    Box(modifier = modifier.fillMaxSize()) {
     Scaffold(
-        modifier = modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         topBar = {
             // Adaptive shrink: the top bar folds up while the page is scrolled down, and returns on scroll up.
             AnimatedVisibility(
@@ -723,6 +727,44 @@ private fun BrowserContent(
             Box(modifier = Modifier.align(Alignment.BottomCenter)) { bottomBarContent() }
         }
         }
+    }
+    // Tablet tab overview covers the whole window, toolbar and sidebar included. It grows out of the tabs button.
+    AnimatedVisibility(
+        visible = tabletTabsOpen,
+        modifier = Modifier.fillMaxSize(),
+        enter = fadeIn(OraMotion.enter()) + scaleIn(initialScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.enter(), transformOrigin = MORPH_ORIGIN),
+        exit = fadeOut(OraMotion.exit()) + scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.exit(), transformOrigin = MORPH_ORIGIN),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(browserColors().GridBackground)
+                .statusBarsPadding()
+                .navigationBarsPadding()
+        ) {
+            ProfileSwitcher(
+                profiles = profileList,
+                activeId = profileId,
+                onSelect = { id -> profiles.select(id) },
+                onAdd = { name -> profiles.add(name) },
+                onRemove = { id -> profiles.remove(id) },
+            )
+            TabGrid(
+                tablet = true,
+                tabs = tabs,
+                onSelect = { id ->
+                    tabs.select(id)
+                    showTabGrid = false
+                },
+                onClose = { id -> tabs.close(id) },
+                onNewTab = {
+                    onNewTab()
+                    showTabGrid = false
+                },
+                onDone = { showTabGrid = false }
+            )
+        }
+    }
     }
 }
 
