@@ -60,6 +60,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
@@ -348,6 +349,7 @@ private fun BrowserContent(
     val sessionStore = remember { SessionStore(context) }
     val quickResume by settings.quickResume.collectAsState()
     val popupStore = PopupStore.forProfile(context, profileId)
+    val appLinkStore = AppLinkStore.forProfile(context, profileId)
     val tabs = remember(profileId) {
         tabsByProfile.getOrPut(profileId) {
             BrowserTabs(
@@ -365,6 +367,8 @@ private fun BrowserContent(
         }.also {
             // After a window is recreated these tabs still exist; point their callbacks at this window's objects.
             it.popupStore = popupStore
+            it.appLinkStore = appLinkStore
+            it.appLinkMode = { settings.openLinksInApps.value }
             it.rebind(
                 { settings.blockPopups.value },
                 { response, pageUrl -> handleResponse(response, pageUrl) },
@@ -1030,6 +1034,16 @@ private fun BrowserContent(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = if (phoneCompact) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
                 )
+                // A link that an app can open waits here for Stay in Ora, Always or Open. The page keeps loading behind it.
+                AppLinkCardHost(
+                    pending = tabs.pendingAppLink,
+                    onStay = { link -> tabs.answerAppLink(link, open = false) },
+                    onAlways = { link -> tabs.answerAppLink(link, open = true, remember = true) },
+                    onOpen = { link -> tabs.answerAppLink(link, open = true) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+                )
                 // Long press on a link or image opens the quick menu at the press point (both layouts).
                 selected.pressTarget?.let { target ->
                     key(target) {
@@ -1215,6 +1229,7 @@ private fun BrowserContent(
                             onClearData = clearBrowsingData,
                             sitePermissions = sitePermissionsFor(profileId),
                             popups = popupStore,
+                            appLinks = appLinkStore,
                         )
                         PhoneOverlay.LIBRARY -> LibraryScreen(
                             bookmarks = bookmarkList,
@@ -1322,7 +1337,7 @@ private fun BrowserContent(
         onAdd = { allowPrivate -> extensions.answerInstall(true, allowPrivate) },
         modifier = Modifier
             .align(Alignment.BottomCenter)
-            .padding(bottom = if (phoneCompact) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+            .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
     )
     // Tablet tab overview covers the whole window, toolbar and sidebar included. It grows out of the tabs button.
     AnimatedVisibility(
@@ -1629,6 +1644,8 @@ private fun BrowserToolbar(
             AddressBar(
                 currentUrl = tab.url,
                 isPrivate = tab.isPrivate,
+                appChip = tab.appLabel,
+                onAppChip = { tab.onAskApp() },
                 loading = tab.loading,
                 onSubmit = onSubmit,
                 candidates = candidates,
@@ -1826,6 +1843,8 @@ private fun TabletToolbar(
                 AddressBar(
                     currentUrl = tab.url,
                     isPrivate = tab.isPrivate,
+                    appChip = tab.appLabel,
+                    onAppChip = { tab.onAskApp() },
                     loading = tab.loading,
                     onSubmit = onSubmit,
                     candidates = candidates,
@@ -1914,6 +1933,8 @@ private fun CompactToolbar(
             AddressBar(
                 currentUrl = tab.url,
                 isPrivate = tab.isPrivate,
+                appChip = tab.appLabel,
+                onAppChip = { tab.onAskApp() },
                 loading = tab.loading,
                 onSubmit = onSubmit,
                 candidates = candidates,
@@ -2048,6 +2069,8 @@ private fun FloatingCompactRow(
                     } else AddressBar(
                     currentUrl = tab.url,
                     isPrivate = tab.isPrivate,
+                    appChip = tab.appLabel,
+                    onAppChip = { tab.onAskApp() },
                     loading = tab.loading,
                     onSubmit = onSubmit,
                     candidates = candidates,
@@ -2220,6 +2243,9 @@ private fun AddressBar(
     centered: Boolean = false,
     /** Private tabs get a dashed Fog outline and a Private chip. */
     isPrivate: Boolean = false,
+    /** Name of an app that can open this page. Shows an "App" chip in the capsule; null shows none. */
+    appChip: String? = null,
+    onAppChip: () -> Unit = {},
 ) {
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
@@ -2267,6 +2293,7 @@ private fun AddressBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (isPrivate) PrivateChip()
+            if (appChip != null && !focused) AppChip(appChip, onAppChip)
             if (currentUrl.startsWith("https://")) {
                 Spacer(Modifier.width(BrowserTokens.AddressBarTextStart))
                 Icon(
@@ -2529,6 +2556,24 @@ private fun requestAutofill(context: android.content.Context, view: GeckoView?) 
     BrowserLog.info("autofill", "Focused field: domain=${node?.domain} hint=${node?.hint} inputType=${node?.inputType} tag=${node?.tag} attrs=${node?.attributes} rect=$rect id=${data.id}")
     manager.requestAutofill(view, data.id, rect)
     BrowserLog.info("autofill", "Auto-fill requested for the focused field")
+}
+
+/** The "App" chip: this page has an app. One tap asks again whether to open it there. */
+@Composable
+private fun AppChip(label: String, onClick: () -> Unit) {
+    val colors = browserColors()
+    Box(
+        modifier = Modifier
+            .padding(start = 6.dp)
+            .heightIn(min = 32.dp)
+            .clip(CircleShape)
+            .background(colors.GridBackground)
+            .clickable(onClickLabel = "Open in the $label app", onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("App", color = colors.AddressBarText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    }
 }
 
 /** The "Private" chip at the left of a private tab's address capsule. */

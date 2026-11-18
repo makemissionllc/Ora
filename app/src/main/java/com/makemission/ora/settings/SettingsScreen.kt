@@ -95,9 +95,12 @@ fun SettingsScreen(
     onClearData: () -> Unit,
     sitePermissions: SitePermissionStore,
     popups: PopupStore,
+    appLinks: com.makemission.ora.browser.AppLinkStore,
 ) {
     val appearance by settings.appearance.collectAsState()
     val popupSites by popups.allowed.collectAsState()
+    val appLinkSites by appLinks.always.collectAsState()
+    val openLinksMode by settings.openLinksInApps.collectAsState()
     val videoGestures by settings.videoGestures.collectAsState()
     val videoBackExits by settings.videoBackExits.collectAsState()
     val homePage by settings.homePage.collectAsState()
@@ -627,6 +630,60 @@ fun SettingsScreen(
                                 )
                             }
                             MineralSwitch(checked = saveHistory, label = "Switch", onChange = { settings.setSaveHistory(it) })
+                        }
+                    }
+                    if (shown(SettingsCategory.PRIVACY)) item {
+                        SectionTitle("Open links in apps")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                "When a link has an app (YouTube, Maps, a phone number), Ora can open it there. Private tabs always ask.",
+                                fontSize = 14.sp,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                com.makemission.ora.browser.AppLinkMode.values().forEach { mode ->
+                                    com.makemission.ora.browser.SegmentLabel(
+                                        text = mode.label,
+                                        selected = openLinksMode == mode,
+                                        modifier = Modifier.weight(1f),
+                                        pill = true,
+                                    ) { settings.setOpenLinksInApps(mode) }
+                                }
+                            }
+                            Text(
+                                "Sites that open in an app",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp)
+                            )
+                            if (appLinkSites.isEmpty()) {
+                                Text(
+                                    "No sites yet. Choose Always on an app card to add one here.",
+                                    fontSize = 14.sp,
+                                    color = browserColors().SecondaryText,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                                )
+                            }
+                            appLinkSites.sorted().forEach { key ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().height(44.dp).padding(start = 16.dp, end = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(key, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText, modifier = Modifier.weight(1f))
+                                    TextButton(onClick = { appLinks.remove(key) }) { Text("Remove", color = browserColors().SecondaryText) }
+                                }
+                            }
                         }
                     }
                     if (shown(SettingsCategory.PRIVACY)) item {

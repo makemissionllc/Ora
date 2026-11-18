@@ -141,6 +141,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Pop-up blocking ${if (enabled) "on" else "off"}")
     }
 
+    private val _openLinksInApps = MutableStateFlow(com.makemission.ora.browser.AppLinkMode.fromKey(prefs.getString(KEY_OPEN_LINKS_IN_APPS, null)))
+    /** Settings > Open links in apps: Ask (default), Always or Never. Private tabs always ask. */
+    val openLinksInApps: StateFlow<com.makemission.ora.browser.AppLinkMode> = _openLinksInApps.asStateFlow()
+
+    fun setOpenLinksInApps(mode: com.makemission.ora.browser.AppLinkMode) {
+        prefs.edit().putString(KEY_OPEN_LINKS_IN_APPS, mode.key).apply()
+        _openLinksInApps.value = mode
+        BrowserLog.info("settings", "Open links in apps set to ${mode.label}")
+    }
+
     private val _blockAds = MutableStateFlow(prefs.getBoolean(KEY_BLOCK_ADS, true))
     /** When on, ads and trackers are blocked with GeckoView's strict tracking protection. */
     val blockAds: StateFlow<Boolean> = _blockAds.asStateFlow()
@@ -508,6 +518,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_WEBSITE_THEME = "website_theme"
         private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"
         private const val KEY_BLOCK_POPUPS = "block_popups"
+        private const val KEY_OPEN_LINKS_IN_APPS = "open_links_in_apps"
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_VIDEO_GESTURES = "video_gestures"
         private const val KEY_VIDEO_BACK_EXITS = "video_back_exits"

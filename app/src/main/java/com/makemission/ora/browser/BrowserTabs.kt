@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.LogPrivacy
+import org.mozilla.geckoview.AllowOrDeny
 import com.makemission.ora.log.UsageStats
 import com.makemission.ora.permissions.SitePermissionDelegate
 import com.makemission.ora.permissions.SitePermissionStore
@@ -55,6 +57,8 @@ class BrowserTab(
     private val siteAllowedForPopups: (String) -> Boolean = { false },
     /** A pop-up with no tap, when the card must ask. Gets the pop-up's address and the page's domain. */
     private val onPopupAsk: (String, String) -> Unit = { _, _ -> },
+    /** Decides a top-level navigation: whether it opens an app instead of loading here. Allow is the default. */
+    private val onLinkRequest: (BrowserTab, GeckoSession.NavigationDelegate.LoadRequest) -> AllowOrDeny = { _, _ -> AllowOrDeny.ALLOW },
     /** A session already made for a pop-up. GeckoView loads the pop-up into it, so this tab does not load its address itself. */
     adopt: GeckoSession? = null,
 ) {
@@ -67,6 +71,12 @@ class BrowserTab(
     val reader = com.makemission.ora.extensions.ReaderState { url }
 
     var url by mutableStateOf(initialUrl)
+    /** Name of an app that can open this page ("YouTube"), or null. The address capsule shows an "App" chip while it is set. */
+    var appLabel by mutableStateOf<String?>(null)
+    // Set when a load was denied to hand it to an app, so the stop that follows isn't reported as a failure.
+    private var deniedForApp = false
+    /** Set by [BrowserTabs]: the "App" chip calls it to ask again about this page. */
+    var onAskApp: () -> Unit = {}
     private val createdAt = System.currentTimeMillis()
     private var restorePending = restoring && initialUrl != BrowserTabs.START_URL && !deferLoad
     private var restoreStateText: String? = restoreState
@@ -191,6 +201,9 @@ class BrowserTab(
                 url?.let { this@BrowserTab.url = it }
             }
 
+            override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): GeckoResult<AllowOrDeny>? =
+                GeckoResult.fromValue(onLinkRequest(this@BrowserTab, request).also { if (it == AllowOrDeny.DENY) deniedForApp = true })
+
             override fun onNewSession(session: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
                 val siteDomain = popupSiteOf(this@BrowserTab.url)
                 val target = popupSiteOf(uri)
@@ -299,6 +312,7 @@ class BrowserTab(
                 loading = false
                 pageRevealed = true
                 restorePending = false
+                if (deniedForApp) { deniedForApp = false; return }
                 // Progress stays where it is: the bar fades out in place instead of sweeping to full first.
                 if (success) {
                     plog.info("page", "Loaded ${this@BrowserTab.url}")
@@ -503,6 +517,113 @@ class BrowserTabs(
     /** A pop-up with no tap that the card is asking about. Null when no card is showing. */
     var pendingPopup by mutableStateOf<PendingPopup?>(null)
 
+    /** Settings > Open links in apps, read on each link. Replaced when a new window takes over. */
+    var appLinkMode: () -> AppLinkMode = { AppLinkMode.ASK }
+
+    /** The profile's "always open in the app" list. Null while the screen has not attached it. */
+    var appLinkStore: AppLinkStore? = null
+
+    /** A link the card is asking about. Null when no card is showing. */
+    var pendingAppLink by mutableStateOf<PendingAppLink?>(null)
+
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    /**
+     * Called for every top-level navigation. Only a link the user caused, to a different site, can go to an app;
+     * redirects, page scripts and subframes never do. Returns Deny when Ora should not load the address itself.
+     */
+    internal fun appLinkDecision(tab: BrowserTab, request: GeckoSession.NavigationDelegate.LoadRequest): AllowOrDeny {
+        val uri = request.uri
+        val userCaused = request.hasUserGesture || request.isDirectNavigation
+        val private = tab.isPrivate
+        // Private tabs always ask and never remember; they also log nothing about the link.
+        val mode = if (private) AppLinkMode.ASK else appLinkMode()
+        fun log(message: String) { if (!private) BrowserLog.info("applinks", message) }
+
+        if (AppLinks.isWeb(uri)) {
+            if (!userCaused || request.isRedirect) return AllowOrDeny.ALLOW
+            val domain = LogPrivacy.domainOf(uri)
+            if (domain == LogPrivacy.domainOf(tab.url)) return AllowOrDeny.ALLOW
+            val match = AppLinks.findForWeb(context, uri)
+            tab.appLabel = match?.label
+            if (match == null || mode == AppLinkMode.NEVER) return AllowOrDeny.ALLOW
+            val remembered = !private && appLinkStore?.isAlways(domain) == true
+            if (mode == AppLinkMode.ALWAYS || remembered) {
+                if (AppLinks.open(context, match)) {
+                    log("Opened in app (${match.packageName}) for $domain")
+                    tab.appLabel = null
+                    return AllowOrDeny.DENY
+                }
+                log("Stayed in Ora: the app for $domain would not open")
+                return AllowOrDeny.ALLOW
+            }
+            pendingAppLink = PendingAppLink(tab.id, uri, match.label, domain, web = true, fromPrivate = private, fallbackUrl = null)
+            return AllowOrDeny.ALLOW
+        }
+
+        if (!AppLinks.isAppScheme(uri)) return AllowOrDeny.ALLOW
+        val scheme = AppLinks.schemeOf(uri)
+        // A page script cannot start an app: only a tap or a typed address.
+        if (!userCaused) {
+            log("Ignored a $scheme: link a page started on its own")
+            return AllowOrDeny.DENY
+        }
+        val match = AppLinks.findForScheme(context, uri)
+        if (match == null) {
+            log("No app for a $scheme: link")
+            InAppNotices.show("No app on this phone can open that.")
+            return AllowOrDeny.DENY
+        }
+        val key = "$scheme:"
+        val remembered = !private && appLinkStore?.isAlways(key) == true
+        when {
+            mode == AppLinkMode.NEVER -> {
+                log("Stayed in Ora: opening apps is off, for a $scheme: link")
+                match.fallbackUrl?.let { fallback -> mainHandler.post { tab.session.loadUri(fallback) } }
+                    ?: InAppNotices.show("Open links in apps is set to Never in Settings.")
+            }
+            mode == AppLinkMode.ALWAYS || remembered -> openOrFallback(tab, match, key, private)
+            else -> pendingAppLink = PendingAppLink(tab.id, uri, match.label, key, web = false, fromPrivate = private, fallbackUrl = match.fallbackUrl)
+        }
+        return AllowOrDeny.DENY
+    }
+
+    private fun openOrFallback(tab: BrowserTab, match: AppMatch, key: String, private: Boolean) {
+        if (AppLinks.open(context, match)) {
+            if (!private) BrowserLog.info("applinks", "Opened in app (${match.packageName ?: key}) for $key")
+        } else {
+            if (!private) BrowserLog.warn("applinks", "Stayed in Ora: no app opened for $key")
+            match.fallbackUrl?.let { fallback -> mainHandler.post { tab.session.loadUri(fallback) } }
+                ?: InAppNotices.show("No app on this phone can open that.")
+        }
+    }
+
+    /** The user chose on the card. [open] false is Stay in Ora; [remember] saves the site or scheme for next time. */
+    fun answerAppLink(link: PendingAppLink, open: Boolean, remember: Boolean = false) {
+        if (pendingAppLink != link) return
+        pendingAppLink = null
+        val tab = tabs.firstOrNull { it.id == link.tabId }
+        if (!open) {
+            if (!link.fromPrivate) BrowserLog.info("applinks", "Stayed in Ora for ${link.key}")
+            if (!link.web) link.fallbackUrl?.let { fallback -> tab?.session?.loadUri(fallback) }
+            return
+        }
+        if (remember && !link.fromPrivate) appLinkStore?.add(link.key)
+        val match = if (link.web) AppLinks.findForWeb(context, link.url) else AppLinks.findForScheme(context, link.url)
+        if (match == null) {
+            InAppNotices.show("That app isn't available any more.")
+            return
+        }
+        if (tab != null) openOrFallback(tab, match, link.key, link.fromPrivate)
+        else AppLinks.open(context, match)
+    }
+
+    /** The "App" chip: asks again about the page this tab shows. */
+    fun askAboutApp(tab: BrowserTab) {
+        val match = AppLinks.findForWeb(context, tab.url) ?: run { tab.appLabel = null; return }
+        pendingAppLink = PendingAppLink(tab.id, tab.url, match.label, LogPrivacy.domainOf(tab.url), web = true, fromPrivate = tab.isPrivate, fallbackUrl = null)
+    }
+
     fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null, restoring: Boolean = false, deferLoad: Boolean = false, adopt: GeckoSession? = null): BrowserTab {
         // A private tab is never created while the app is locked: it could not be shown, and nothing may load behind the lock.
         if (isPrivate && AppLock.locked) {
@@ -518,8 +639,10 @@ class BrowserTabs(
             desktopByDefault, isPrivate, restoreState, { page, title -> onVisited(page, title) }, sitePermissions, restoring, deferLoad,
             siteAllowedForPopups = { domain -> popupStore?.isAllowed(domain) == true },
             onPopupAsk = { popup, fromSite -> pendingPopup = PendingPopup(popup, fromSite, isPrivate) },
+            onLinkRequest = { t, request -> appLinkDecision(t, request) },
             adopt = adopt,
         )
+        tab.onAskApp = { askAboutApp(tab) }
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.
