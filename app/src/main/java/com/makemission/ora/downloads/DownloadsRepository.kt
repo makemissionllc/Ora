@@ -26,6 +26,7 @@ import android.net.ConnectivityManager
 import android.net.Network
 import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
+import android.content.Intent
 
 /**
  * One download log line, naming the site the file came from and never the file name: a file name can say what
@@ -88,6 +89,8 @@ class DownloadsRepository(
     private val pausing: MutableSet<Long> = ConcurrentHashMap.newKeySet()
     private val lock = Any()
     private var nextId = 1L
+    /** Whether the background service was last asked to run, so it is started and stopped only on change. */
+    @Volatile private var serviceRunning = false
     @Volatile private var lastSave = 0L
 
     private val _items = MutableStateFlow<List<DownloadItem>>(emptyList())
@@ -130,6 +133,10 @@ class DownloadsRepository(
             )
         }
         _items.value = restored
+        // Partial files with no saved row are left from a private download (never saved) or an earlier crash.
+        val keep = saved.map { it.id.toString() }.toSet()
+        dir.listFiles { f -> f.name.endsWith(".part") && f.name.removeSuffix(".part") !in keep }?.forEach { it.delete() }
+        current = this
         if (restored.isNotEmpty()) BrowserLog.info("download", "Restored ${restored.size} unfinished downloads as paused")
     }
 
@@ -140,13 +147,31 @@ class DownloadsRepository(
         val name = fileNameFor(response)
         val total = header(response, "content-length")?.toLongOrNull() ?: -1L
         runCatching { response.body?.close() }
-        val item = DownloadItem(id = nextId++, fileName = name, url = url, mimeType = mime, totalBytes = total)
+        begin(url, name, mime, total, pageUrl, isPrivate)
+    }
+
+    /** Queues a file and starts it. [start] calls this; the tests call it directly, since they have no WebResponse. */
+    internal fun begin(url: String, fileName: String, mime: String?, total: Long, pageUrl: String, isPrivate: Boolean) {
+        val item = DownloadItem(id = nextId++, fileName = fileName, url = url, mimeType = mime, totalBytes = total)
         if (isPrivate) privateIds.add(item.id)
         referrers[item.id] = pageUrl
         update { listOf(item) + it }
         BrowserLog.info("download", downloadLogLine("Started", url, " (${sizeLabel(total)})"))
         _started.tryEmit(item)
         launch(item.id)
+    }
+
+    /** Downloads running right now. The background service stays up while this is above zero. */
+    fun activeCount(): Int = _items.value.count { it.status == DownloadStatus.RUNNING }
+
+    /** Pauses every running download that can resume. Called from the notification's Pause action. */
+    fun pauseAll() {
+        _items.value.filter { it.status == DownloadStatus.RUNNING && it.pausable }.forEach { pause(it.id) }
+    }
+
+    /** Cancels every running download. Called from the notification's Cancel action. */
+    fun cancelAll() {
+        _items.value.filter { it.status == DownloadStatus.RUNNING }.forEach { cancel(it.id) }
     }
 
     /** Pauses a running download. Its saved parts stay on disk, so Resume continues from the same bytes. */
@@ -330,6 +355,8 @@ class DownloadsRepository(
         lastSave = System.currentTimeMillis()
         val saved = _items.value.mapNotNull { item ->
             if (item.status != DownloadStatus.RUNNING && item.status != DownloadStatus.PAUSED && item.status != DownloadStatus.FAILED) return@mapNotNull null
+            // Private downloads never reach the queue file, so they cannot come back after a restart.
+            if (item.id in privateIds) return@mapNotNull null
             // A download that failed before its plan was made is saved with no parts, so it can be retried after a restart.
             val task = tasks[item.id]
             SavedDownload(
@@ -349,6 +376,18 @@ class DownloadsRepository(
 
     private fun update(change: (List<DownloadItem>) -> List<DownloadItem>) = synchronized(lock) {
         _items.value = change(_items.value)
+        syncService()
+    }
+
+    /** Keeps the foreground service running only while a download is active, so Android does not stop it. */
+    private fun syncService() {
+        val running = activeCount() > 0
+        if (running == serviceRunning) return
+        serviceRunning = running
+        val intent = Intent(context, DownloadService::class.java)
+        runCatching {
+            if (running) context.startForegroundService(intent) else context.stopService(intent)
+        }.onFailure { BrowserLog.warn("download", "Could not ${if (running) "start" else "stop"} the background download service: ${it.message}") }
     }
 
     /** The state one download needs to continue: where it comes from, how it was checked, and its parts. */
@@ -367,6 +406,9 @@ class DownloadsRepository(
     companion object {
         const val FILE_CHANGED_NOTICE = "The file changed, so it restarted"
         const val FAILED_TAP_TO_RETRY = "Failed: tap to retry"
+
+        /** The repository the service's notification buttons act on. Set when a repository is created. */
+        @Volatile var current: DownloadsRepository? = null
 
         /** Bytes of a part that are on disk, never more than its size. */
         private fun doneOf(part: Part): Long = doneOf(part.seg)
