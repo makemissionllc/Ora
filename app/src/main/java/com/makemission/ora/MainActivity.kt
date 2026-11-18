@@ -19,14 +19,27 @@ import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.OraTheme
 
 class MainActivity : ComponentActivity() {
+    private companion object {
+        /** Set once per process by the first onCreate. */
+        var processStarted = false
+    }
+
     private val settings by lazy { SettingsRepository(applicationContext) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        BrowserLog.installCrashHandler()
-        BrowserLog.info("app", "Started")
-        UsageStats.init(applicationContext)
-        AppLock.init(settings)
+        // Startup work runs once per process. If Android recreates the activity (a setting changed, memory
+        // pressure) the second onCreate must not install the crash handler again, log "Started" again or
+        // lock the app again; it is logged as a recreation so the cause shows in the log.
+        if (!processStarted) {
+            processStarted = true
+            BrowserLog.installCrashHandler()
+            BrowserLog.info("app", "Started")
+            UsageStats.init(applicationContext)
+            AppLock.init(settings)
+        } else {
+            BrowserLog.info("app", "Window recreated (saved state ${if (savedInstanceState != null) "present" else "absent"}); startup not repeated")
+        }
         handleLink(intent)
         enableEdgeToEdge()
         setContent {
