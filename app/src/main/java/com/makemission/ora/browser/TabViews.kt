@@ -553,7 +553,7 @@ fun TabSidebar(
             pill = true,
             fill = browserColors().GridBackground,
             placeholder = when (panel) {
-                SidebarPanel.TABS -> "Search open tabs"
+                SidebarPanel.TABS -> "Search tabs, bookmarks and history"
                 SidebarPanel.BOOKMARKS -> "Search bookmarks"
                 SidebarPanel.HISTORY -> "Search history"
             },
@@ -608,8 +608,8 @@ fun TabSidebar(
                         )
                     }
                 } else {
-                    if (shownTabs.isEmpty()) {
-                        item { EmptySidebarText("No tabs match \"$needle\"") }
+                    if (shownTabs.isEmpty() && (needle.isEmpty() || (shownBookmarks.isEmpty() && history.none { it.title.contains(needle, true) || it.url.contains(needle, true) }))) {
+                        item { EmptySidebarText("Nothing matches \"$needle\"") }
                     }
                     if (needle.isEmpty()) {
                         // Groups fold with a chevron; tabs outside any group sit under "Not in a group".
@@ -662,6 +662,8 @@ fun TabSidebar(
                             inactiveOpen, { inactiveOpen = !inactiveOpen }, tabs.selectedId, { tabs.select(it) }, { groupState.addTo = it },
                         )
                     }
+                    // One search field: bookmarks and history that match are listed under the tabs.
+                    if (needle.isNotEmpty()) searchMatches(shownBookmarks, history.filter { it.title.contains(needle, true) || it.url.contains(needle, true) }, onOpenBookmark, onOpenHistory)
                 }
             }
         }
@@ -809,4 +811,26 @@ private fun androidx.compose.foundation.lazy.LazyListScope.inactiveSection(
     if (open) items(inactive, key = { it.id }) { tab ->
         SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == selectedId, onClick = { onSelect(tab.id) }, onLongClick = { onLongClick(tab) }, dragTabId = tab.id)
     }
+}
+
+/** Bookmarks and history entries that match the sidebar search, shown under the matching tabs. */
+private fun androidx.compose.foundation.lazy.LazyListScope.searchMatches(
+    bookmarks: List<Bookmark>,
+    history: List<HistoryEntry>,
+    onOpenBookmark: (String) -> Unit,
+    onOpenHistory: (String) -> Unit,
+) {
+    if (bookmarks.isNotEmpty()) {
+        item(key = "found_bookmarks") { FoundLabel("In bookmarks") }
+        items(bookmarks.take(5), key = { "fb_" + it.url }) { b -> SidebarRow(b.title.ifBlank { displayUrl(b.url) }, b.url, false, onClick = { onOpenBookmark(b.url) }) }
+    }
+    if (history.isNotEmpty()) {
+        item(key = "found_history") { FoundLabel("In history") }
+        items(history.take(5), key = { "fh_" + it.url + it.visitedAt }) { h -> SidebarRow(h.title.ifBlank { displayUrl(h.url) }, h.url, false, onClick = { onOpenHistory(h.url) }) }
+    }
+}
+
+@Composable
+private fun FoundLabel(text: String) {
+    Text(text, modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
 }

@@ -5,6 +5,7 @@ The status board for Ora. Update it with every change: move items between sectio
 Last updated: 2026-11-18, at commit `55c62be`.
 
 ## Done
+- One search over tabs, bookmarks and history (tablet sidebar, Tabs list): matches in bookmarks and history are listed under the tabs (up to five each), with "In bookmarks" and "In history" labels. Quality-of-life: the one field replaces choosing the right list first. Not done: the phone overview search still finds tabs only. AGENTS.md now has a section on building new components, pages and features.
 - Drag into groups, phase 6: `TabDrag.kt` (`tabDragSource`: long press then move starts an in-app drag, long press held still keeps Add to group; `tabDropTarget`) on overview tiles and sidebar rows, with drop targets on overview group cards, sidebar group headers and the "Not in a group" label (ungroup). The target lights up while a tab is over it. Moves go through `BrowserTabs.moveToGroup`, which logs and refuses private tabs. Quality-of-life: the hover highlight and the kept long-press sheet. Not done: reordering groups, dragging inside an open group view.
 - Inactive tabs, phase 6: `BrowserTab.lastActive` (set on select, saved with quick resume as "active"), `BrowserTabs.isInactive` (14 days, never the open or a private tab), and a folded "Inactive tabs (N)" row (chevron turn on the shared motion) in the overview grid and the tablet sidebar. Quality-of-life: search still finds inactive tabs. Not done: inactive tabs inside a group (they stay in the group), dragging a tab onto a group, Reader view changes (Reader view already existed).
 - Extensions screens, phase 5: `ExtensionsScreen` now has a search over installed extensions, a switch per row, a Get extensions row (addons.mozilla.org in a new tab) and an `ExtensionDetail` (version, On, Allow in private tabs via `WebExtensionController.setAllowedInPrivateBrowsing`, What it can do from `describeAbilities`, Extension settings from the options page, Ember Remove with confirmation). Tablet: list and detail side by side; phone: detail as its own screen on the overlay fade and scale. Quality-of-life: search over installed extensions and the Get extensions shortcut. Not done: Site access (On all sites / Ask / Only when I tap it), since GeckoView has no simple API for it and I did not add a control that does nothing; the existing store search and install-by-address cards are kept.
@@ -97,12 +98,9 @@ Last updated: 2026-11-18, at commit `55c62be`.
 
 ### Tab management (from the Chrome and Safari comparison)
 
-- Drag one tab onto another to make a group, and drag tabs into or out of groups.
-- Name and colour-code tab groups.
 - Mini tab switcher at the bottom for quick switching within a group.
-- Inactive tabs: move unused tabs to a separate collection after a chosen time.
 - Recent tabs: list tabs open on other devices signed into the same account. Needs a sync design first.
-- Search bookmarks and history from one search field. Open-tab and history search are done (see Done); a single field across bookmarks and history is still open.
+- Search bookmarks and history from one search field. Open-tab and history search are done (see Done); a single field across tabs, bookmarks and history is done on the tablet sidebar; the phone is still open.
 
 ### Better app usage
 
@@ -138,6 +136,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
 | 2026-11-18 | Tab groups (phase 4) | Not checked: the phone was not tried; none of the group screens were seen on it | Tablet (7ba8e294, USB): build installed; sidebar shows the "New tab group" row under the tab list (screenshot). Then someone else started using the tablet (a Google search I had not opened appeared), so I stopped tapping. Not checked: long-press Add to group, New group sheet, folding headers, overview group cards and open group, Close group, quick-resume of groups |
+| 2026-11-18 | Combined search (sidebar) | Not checked: not connected for use | Tablet (7ba8e294): not checked, it was in use by someone else. Build passes only |
 | 2026-11-18 | Drag into groups (phase 6) | Not checked: the phone was showing someone's personal chat, so I did not touch it | Tablet (7ba8e294): build installed earlier; the screen showed the overview of the Anime profile with one tab and no groups, apparently in use by someone else, so I did not create groups or drag. Not checked: pick-up and drop on a card, header and Not in a group, the hover highlight, long press held still |
 | 2026-11-18 | Inactive tabs (phase 6) | Not checked: the phone showed someone's personal chat, so I did not touch it | Tablet (7ba8e294): build installed earlier; someone was using it (scrolling a Google page), so I did not tap. Nothing seen. Not checked: the Inactive tabs row, folding, search, restore after restart (needs a tab older than 14 days) |
 | 2026-11-18 | Extensions screens (phase 5) | Not checked: not connected | Tablet (7ba8e294, USB): build installed and Ora opened, but someone else was using it (a Google search I had not opened), so I did not tap. Not checked: list, search, detail, private switch, Remove, side-by-side layout |

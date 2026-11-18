@@ -63,6 +63,47 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 28. Dashed lines mean private or temporary and are used for nothing else.
 29. Tints change Ora's surfaces only, never web content.
 
+## Building new components, pages and features
+
+Follow this recipe so new work looks and moves like the rest of Ora. The examples name real code to copy from.
+
+### Structure
+- **One file per surface** in the package that owns it (`browser/` for browser UI, `extensions/`, `settings/`, and so on). A surface is a screen, sheet, panel or dialog, for example `GroupSheets.kt` or `PrivateSpacePanel.kt`. Small helpers it alone uses stay `private` in that file; shared pieces (`PillButton`, `SidebarSearch`, `SegmentLabel`) stay in `TabViews.kt` or move to `ui/` only when a second screen needs them.
+- **State lives in a repository or store**, never in a composable. Per-profile data is keyed by profile id in its own preferences file (`ora_tab_groups_<profileId>`, bookmarks and history the same way). A composable holds only view state (`remember`, `rememberSaveable`): which row is open, what was typed.
+- **Preferences** go through `SettingsRepository` with a row on the Settings page (rule 9). Saved data a feature adds (such as a tab's group) is written next to the data it belongs to and read with a default, so old saves still load.
+- **Phone and tablet from one component** where it can be. Take a `tablet: Boolean` and change the layout, not the logic: the tablet shows list and detail side by side (`ExtensionsScreen`), the phone opens the detail as its own screen. If they truly differ, share the state and write two small layouts.
+
+### Look
+- Colours: `browserColors()` only. A new surface reads `LocalBrowserColors`, so it follows Light, Dark, Pure dark, profile tints and the Private space (`privateBrowserColors`) without extra code. A decorative colour with no palette slot is added once to `Mineral` (as the group colours were), never inline. Destructive actions use `Mineral.Ember`.
+- Sizes and radii: `BrowserTokens`. Cards and rows use `CardRadius` or `RadiusSmall`; add a token before adding a literal that appears twice.
+- Text: Instrument Sans through the theme. Titles 22 sp bold, rows 15 sp medium, secondary lines 12 to 14 sp in `SecondaryText`, small section labels 12 to 13 sp semibold in `SecondaryText`.
+- Controls: pills (`PillButton`, `SegmentLabel`) for choices, `Switch` for on/off, a text button in Ember for a destructive action. Primary action is the Chalk (`Accent`) fill; the secondary is a quiet `AddressBarBackground` row. Rows are at least 44 dp tall.
+- Surfaces are flat (rule 27). Use `Modifier.clickable`, and the 94% press scale where a tile has one. No ripple, no shadow, no gradient.
+- Dashed outline (`Modifier.dashedOutline`) only for private or temporary things (rule 28).
+
+### Motion
+- **Pick the right primitive.** A sheet or overlay that grows from a button: `AnimatedVisibility` or `AnimatedContent` with `OraMotion.overlayFadeIn/ScaleIn` and `overlayFadeOut/ScaleOut`, scale `OraMotion.MORPH_SCALE`, origin at the trigger (`TransformOrigin` from the trigger's position). A list that opens a detail on phone: `AnimatedContent` with `fadeIn + scaleIn` `togetherWith` `fadeOut + scaleOut` (`ExtensionsScreen`). A folding section: `AnimatedVisibility(fadeIn(OraMotion.enter()) + expandVertically(OraMotion.enter()))`, and the matching exit with `shrinkVertically`. A chevron or icon that turns: `animateFloatAsState(target, OraMotion.enter())` and `rotate`.
+- **Origin and return.** Whatever opens something is also where it closes to. Dialogs that confirm a destructive action grow out of the button that asked (the Clear history card). A standard `AlertDialog` is fine only when there is no on-screen trigger to morph from, and says so in `PROGRESS.md`.
+- **One easing per direction**, taken from `OraMotion`. Never write `tween(...)` or a new duration in a screen. If a feature needs a new motion, add it to `Motion.kt` with a name, then use it.
+- **Drag and drop** stays inside Ora (`TabDrag.kt`): `tabDragSource` and `tabDropTarget`. A target highlights while something hovers over it. A long press held still keeps its old meaning, so a new gesture never removes an existing route.
+- **Reduce surprises.** Nothing appears or disappears without a transition; a list that changes keeps item keys stable so rows move instead of jumping.
+
+### Behaviour
+- **Every action that cannot be undone asks first** and says what it will do and how many items it touches ("Close group" says how many tabs close). Prefer an undo for small losses (closed tab) and a confirmation for big ones.
+- **Empty states say what to do next**, in one plain sentence ("No bookmarks yet. Use the bookmark button to save a page.").
+- **Search fields filter in place** as you type, are case-insensitive, and match title and address. Say "Nothing matches" when empty.
+- **Private tabs** never reach disk, groups, thumbnails, history or the extension list unless the user allowed it. Check `isPrivate` before storing or showing anything.
+- **Don't add a control that does nothing.** If the platform has no API for a setting, leave it out and record it under *Not done* in `PROGRESS.md`.
+- **Log it** (rules 17 and 18): `BrowserLog.info("tag", ...)` for each state change a user caused, `warn` or `error` with the throwable for failures, in the same change as the feature.
+
+### Done checklist for a new surface
+1. Reads colours and sizes from the theme and tokens; works in Light, Dark, Pure dark and the Private space.
+2. Phone and tablet layouts both exist and were looked at (rule 2); a device not checked is written as *Not checked* (rule 21).
+3. Opens and closes with the shared motion from its trigger; has a stable-key list.
+4. Empty state, confirmation for destructive actions, and the one named quality-of-life feature.
+5. State in a repository, a Settings row if it has a preference, `BrowserLog` calls.
+6. `./gradlew assembleDebug` passes (check the APK time), then CHANGELOG, `Changelog.kt`, PROGRESS and README updated, commit with the hash recorded, pushed.
+
 ## Attribution
 
 Commits made by an agent end with:
