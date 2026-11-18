@@ -47,6 +47,8 @@ data class DownloadItem(
     val status: DownloadStatus = DownloadStatus.RUNNING,
     val contentUri: Uri? = null,
     val error: String? = null,
+    /** A plain note for the row, such as "The file changed, so it restarted". */
+    val notice: String? = null,
     /** False when the server cannot resume a part, so the download can only be cancelled. */
     val pausable: Boolean = true,
     /** When the save began, in epoch milliseconds. Shown as "Started" on the details page. */
@@ -182,7 +184,7 @@ class DownloadsRepository(
         update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.RUNNING, error = null) else it } }
         jobs[id] = scope.launch {
             try {
-                run(id)
+                run(id, restarted = false)
             } catch (e: CancellationException) {
                 if (id in pausing) {
                     pausing.remove(id)
@@ -204,7 +206,7 @@ class DownloadsRepository(
         }
     }
 
-    private suspend fun run(id: Long) {
+    private suspend fun run(id: Long, restarted: Boolean) {
         val item = find(id) ?: return
         val part = partFile(id)
         var task = tasks[id]
@@ -227,7 +229,18 @@ class DownloadsRepository(
         update { list -> list.map { if (it.id == id) it.copy(totalBytes = active.total, status = DownloadStatus.RUNNING, pausable = active.ranged) else it } }
         saveNow()
 
-        engine.download(active.url, active.etag, active.ranged, part, active.parts) { onProgress(id, active) }
+        try {
+            engine.download(active.url, active.etag, active.ranged, part, active.parts) { onProgress(id, active) }
+        } catch (e: FileChangedException) {
+            if (restarted) throw e
+            // The server's file changed, so the saved parts cannot be joined. Start over and say so.
+            BrowserLog.warn("download", downloadLogLine("File changed, restarting", item.url))
+            tasks.remove(id)
+            partFile(id).delete()
+            update { list -> list.map { if (it.id == id) it.copy(notice = FILE_CHANGED_NOTICE, bytes = 0) else it } }
+            saveNow()
+            return run(id, restarted = true)
+        }
 
         publish(id, item, part, active)
     }
@@ -329,6 +342,8 @@ class DownloadsRepository(
     }
 
     companion object {
+        const val FILE_CHANGED_NOTICE = "The file changed, so it restarted"
+
         /** Bytes of a part that are on disk, never more than its size. */
         private fun doneOf(part: Part): Long = doneOf(part.seg)
 
