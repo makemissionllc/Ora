@@ -120,6 +120,7 @@ class DownloadsRepository(
         nextId = (saved.maxOfOrNull { it.id } ?: 0L) + 1
         val restored = saved.map { s ->
             tasks[s.id] = Task(s.url, s.etag, s.ranged, s.totalBytes, s.parts.mapIndexed { i, seg -> Part(i, seg) }.toMutableList())
+            s.referrer?.let { referrers[s.id] = it }
             DownloadItem(
                 id = s.id,
                 fileName = s.fileName,
@@ -369,6 +370,7 @@ class DownloadsRepository(
                 ranged = task?.ranged ?: false,
                 startedAt = item.startedAt,
                 parts = task?.parts?.map { it.seg } ?: emptyList(),
+                referrer = referrers[item.id],
             )
         }
         store.save(saved)

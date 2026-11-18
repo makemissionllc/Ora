@@ -24,6 +24,8 @@ data class SavedDownload(
     val ranged: Boolean,
     val startedAt: Long,
     val parts: List<Segment>,
+    /** The page the file came from, sent as the Referer when the download resumes. */
+    val referrer: String? = null,
 )
 
 /**
@@ -33,6 +35,7 @@ data class SavedDownload(
 class DownloadStore(context: Context, private val legacyFile: File) {
 
     private val dao = Room.databaseBuilder(context, DownloadDatabase::class.java, "ora_downloads.db")
+        .addMigrations(MIGRATION_1_2)
         .build()
         .downloadDao()
     private val writes = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
@@ -52,6 +55,7 @@ class DownloadStore(context: Context, private val legacyFile: File) {
                 ranged = row.ranged,
                 startedAt = row.startedAt,
                 parts = parts[row.id].orEmpty().sortedBy { it.idx }.map { Segment(it.start, it.end, it.done, it.finished) },
+                referrer = row.referrer,
             )
         }
     }
@@ -59,7 +63,7 @@ class DownloadStore(context: Context, private val legacyFile: File) {
     /** Replaces the saved queue. The returned job finishes when the write is on disk. */
     fun save(downloads: List<SavedDownload>): Job {
         val rows = downloads.map { d ->
-            DownloadRow(d.id, d.fileName, d.url, d.mimeType, d.totalBytes, d.etag, d.ranged, d.startedAt)
+            DownloadRow(d.id, d.fileName, d.url, d.mimeType, d.totalBytes, d.etag, d.ranged, d.startedAt, d.referrer)
         }
         val parts = downloads.flatMap { d ->
             d.parts.mapIndexed { i, s -> PartRow(d.id, i, s.start, s.end, s.done, s.finished) }

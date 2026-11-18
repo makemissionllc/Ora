@@ -11,6 +11,8 @@ import androidx.room.PrimaryKey
 import androidx.room.Query
 import androidx.room.RoomDatabase
 import androidx.room.Transaction
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 /** One unfinished download. Only downloads that can still resume are stored. */
 @Entity(tableName = "downloads")
@@ -23,6 +25,8 @@ data class DownloadRow(
     val etag: String?,
     val ranged: Boolean,
     val startedAt: Long,
+    /** The page the file was linked from, sent as the Referer on resume. Null for rows saved before version 2. */
+    val referrer: String? = null,
 )
 
 /** One part of a download: its byte range and how much of it is on disk. [idx] keeps the parts in order. */
@@ -71,7 +75,14 @@ abstract class DownloadDao {
     }
 }
 
-@Database(entities = [DownloadRow::class, PartRow::class], version = 1, exportSchema = false)
+@Database(entities = [DownloadRow::class, PartRow::class], version = 2, exportSchema = false)
 abstract class DownloadDatabase : RoomDatabase() {
     abstract fun downloadDao(): DownloadDao
+}
+
+/** Version 2 adds the Referer column, so a download resumed after a restart still sends the page it came from. */
+internal val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE downloads ADD COLUMN referrer TEXT")
+    }
 }

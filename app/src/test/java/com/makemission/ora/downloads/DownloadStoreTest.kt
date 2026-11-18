@@ -27,6 +27,7 @@ class DownloadStoreTest {
         ranged = true,
         startedAt = 1_700_000_000_000,
         parts = listOf(Segment(0, 2249, done = 100), Segment(2250, 4499, done = 2250, finished = true)),
+        referrer = "https://files.example.com/downloads",
     )
 
     @Test
