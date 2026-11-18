@@ -2059,7 +2059,8 @@ private fun AddressBar(
                 textStyle = TextStyle(
                     color = browserColors().AddressBarText,
                     fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = FontWeight.SemiBold,
+                    fontFamily = com.makemission.ora.ui.theme.InstrumentSansAddress,
                     textAlign = if (centered) TextAlign.Center else TextAlign.Start
                 ),
                 cursorBrush = SolidColor(browserColors().Accent),
