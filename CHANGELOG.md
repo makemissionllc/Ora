@@ -21,6 +21,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card.
 
 **Fixed**
+- When Android rebuilds Ora's window, your open tabs now carry over instead of every tab being opened a second time.  (`bc21b78`)
+- Reopened tabs no longer fail with "Saved history is not valid": tabs saved before their page had loaded were read back as broken history. They now reopen at their address, and a history that cannot be read is dropped instead of being saved again.  (`45fc871`)
+- Private tabs now have their own list and numbering, separate from normal tabs, and the tab counts no longer include them. A private tab cannot be opened while Ora is locked (a notice says to unlock first), and a pop-up from a private tab opens as a private tab.  (`8048a8c`)
+- Ora no longer starts twice when Android rebuilds its window right after launch: startup (crash handler, usage counts, app lock) runs once, and the window now survives font, density, language and similar changes. If a rebuild still happens, the log says so.  (`1a1c84d`)
+- Quick resume no longer saves your tabs while they are still coming back, and an empty list never replaces a good save, so reopened tabs keep their own pages and history. Ora now says "Reopened N tabs" when it restores several.  (`cd65469`)
 - The speckled grain behind tiles and rows (the start page, Lab and Diagnostics) is gone. It was Android's press ripple; the press now only shrinks the tile a little.
 
 **Added**
@@ -33,6 +38,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Gesture log: with "Count feature use" on, each swipe on the address bar, edge swipe for the sidebar and pull to refresh is counted and logged as registered or ignored, with the reason (too short, diagonal, downward, not at the top of the page) and its distance and time, never any page content. A swipe with nowhere to go is logged as a bounce. See Settings > Diagnostics. (`09a342a`)
 
 **Changed**
+- The log now keeps only the domain of a page (for example google.com), never the full address or what you searched for, and says nothing about what you do in private tabs. It is also kept between launches, up to about 5,000 lines, so an export covers days instead of one session, with the date on every line. Clear still empties it.  (`1bbf346`)
+- Tabs reopened at start, or when you switch profile, now load only the tab you were on. The others load the first time you open them, so Ora starts faster and uses less data and memory. The notice says so.  (`ecd913c`)
 - Mineral look: Light, Dark and Pure dark now use the Mineral palette. Dark is Basalt, Slate and Shale with Chalk text; light is Stone, Paper and Ink. The selected state is a Chalk fill with dark text. (`e875a4c`)
 - Ora now uses the Instrument Sans font throughout. (`c8a18fd`)
 - On phones, the ⋯ menu has a new look: tiles for the main actions, plain rows below, and a Desktop site switch. A bookmarked page lights its Bookmark tile. (`c511758`)

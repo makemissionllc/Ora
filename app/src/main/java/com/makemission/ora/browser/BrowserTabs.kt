@@ -2,6 +2,7 @@ package com.makemission.ora.browser
 
 import android.content.Context
 import com.makemission.ora.notice.InAppNotices
+import com.makemission.ora.security.AppLock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -38,18 +39,37 @@ class BrowserTab(
     private val onVisited: (String, String) -> Unit = { _, _ -> },
     /** The profile's saved answers to site permission prompts. Private tabs read and write none of it. */
     private val sitePermissions: SitePermissionStore,
+    /** True for a tab reopened by quick resume. It is not saved again until its page has loaded (or [RESTORE_GRACE_MS] passed). */
+    restoring: Boolean = false,
+    /** A reopened background tab waits: it loads when it is first selected, so start-up loads one page, not nine. */
+    deferLoad: Boolean = false,
 ) {
     val session: GeckoSession = if (isPrivate) {
         GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build())
     } else {
         GeckoSession()
     }
+    /** Page and navigation events go here: a private tab logs nothing, so the log never shows private browsing. */
+    private val plog = TabLog(isPrivate)
     private val appContext: Context = context.applicationContext
 
     /** Reader view for this tab's page: whether it has an article and whether the reader is showing. */
     val reader = com.makemission.ora.extensions.ReaderState { url }
 
     var url by mutableStateOf(initialUrl)
+    private val createdAt = System.currentTimeMillis()
+    private var restorePending = restoring && initialUrl != BrowserTabs.START_URL && !deferLoad
+    private var restoreStateText: String? = restoreState
+    /** False while a reopened tab is waiting for its first selection. Its saved address and history stay as saved. */
+    var loaded = !(deferLoad && initialUrl != BrowserTabs.START_URL)
+        private set
+
+    /**
+     * True while a reopened tab is still coming back, so its address and history are not yet the saved ones.
+     * Saving at this point would write half-restored state over a good save.
+     */
+    val isRestoring: Boolean
+        get() = restorePending && System.currentTimeMillis() - createdAt < RESTORE_GRACE_MS
     /** Latest session state from GeckoView, kept so quick resume can save this tab's history. */
     var sessionState: String? = null
     var title by mutableStateOf("")
@@ -130,7 +150,7 @@ class BrowserTab(
             startPageBehind -> {
                 startPageBehind = false
                 url = BrowserTabs.START_URL
-                BrowserLog.info("nav", "Back to start page on tab $id")
+                plog.info("nav", "Back to start page on tab $id")
             }
         }
     }
@@ -161,9 +181,9 @@ class BrowserTab(
 
             override fun onNewSession(session: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
                 if (popupsBlocked()) {
-                    BrowserLog.info("popup", "Blocked pop-up from ${this@BrowserTab.url}: $uri")
+                    plog.info("popup", "Blocked pop-up from ${this@BrowserTab.url}: $uri")
                 } else {
-                    BrowserLog.info("popup", "Opened pop-up as a tab: $uri")
+                    plog.info("popup", "Opened pop-up as a tab: $uri")
                     onPopupAllowed(uri)
                 }
                 // Returning null keeps the window from opening; the page gets no window back.
@@ -184,7 +204,7 @@ class BrowserTab(
                 error: WebRequestError
             ): GeckoResult<String>? {
                 val failed = uri.orEmpty()
-                BrowserLog.error("page", "Could not load $failed: category ${error.category}, code ${error.code}")
+                plog.error("page", "Could not load $failed: category ${error.category}, code ${error.code}")
                 // Show a plain explanation with a Try again button, in place of GeckoView's blank error page.
                 if (failed.isBlank() || failed.startsWith("data:")) return null
                 return GeckoResult.fromValue(ErrorPage.uriFor(failed, error))
@@ -238,26 +258,27 @@ class BrowserTab(
                 // A link menu belongs to the page it was opened on; a new page clears it.
                 pressTarget = null
                 selection = null
-                BrowserLog.info("page", "Loading $url")
+                plog.info("page", "Loading $url")
             }
 
             override fun onProgressChange(session: GeckoSession, progressPercent: Int) {
                 progress = progressPercent.coerceIn(0, 100)
                 if (!pageRevealed && progress >= REVEAL_PROGRESS_PERCENT) {
                     pageRevealed = true
-                    BrowserLog.info("page", "Showing page at $progress% for ${this@BrowserTab.url}")
+                    plog.info("page", "Showing page at $progress% for ${this@BrowserTab.url}")
                 }
             }
 
             override fun onPageStop(session: GeckoSession, success: Boolean) {
                 loading = false
                 pageRevealed = true
+                restorePending = false
                 // Progress stays where it is: the bar fades out in place instead of sweeping to full first.
                 if (success) {
-                    BrowserLog.info("page", "Loaded ${this@BrowserTab.url}")
+                    plog.info("page", "Loaded ${this@BrowserTab.url}")
                     if (!isPrivate) onVisited(this@BrowserTab.url, this@BrowserTab.title)
                 } else {
-                    BrowserLog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")
+                    plog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")
                     // Quality of life: say so, instead of leaving a half-drawn page with no explanation.
                     InAppNotices.show("Page didn't finish loading. Tap reload to try again.")
                 }
@@ -277,13 +298,13 @@ class BrowserTab(
                 val link = element.linkUri?.takeIf { it.isNotBlank() }
                 val image = element.srcUri?.takeIf { element.type == GeckoSession.ContentDelegate.ContextElement.TYPE_IMAGE && it.isNotBlank() }
                 if (link == null && image == null) return
-                BrowserLog.info("page", "Long press on ${link ?: image}")
+                plog.info("page", "Long press on ${link ?: image}")
                 pressTarget = PressTarget(linkUri = link, imageUri = image, x = screenX, y = screenY)
             }
 
             override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
                 videoFullScreen = fullScreen
-                BrowserLog.info("page", if (fullScreen) "Full screen requested: ${this@BrowserTab.url}" else "Left full screen")
+                plog.info("page", if (fullScreen) "Full screen requested: ${this@BrowserTab.url}" else "Left full screen")
             }
 
             override fun onExternalResponse(session: GeckoSession, response: WebResponse) {
@@ -291,7 +312,7 @@ class BrowserTab(
             }
 
             override fun onCrash(session: GeckoSession) {
-                BrowserLog.error("page", "Renderer crashed for ${this@BrowserTab.url}")
+                plog.error("page", "Renderer crashed for ${this@BrowserTab.url}")
             }
         }
         // Location, camera, microphone and notification requests go to the prompt, or to the saved answer for the site.
@@ -305,25 +326,44 @@ class BrowserTab(
         }
         session.open(GeckoEngine.runtime(context))
         // The start page is drawn natively, so it never goes to GeckoView.
-        if (initialUrl != BrowserTabs.START_URL) {
-            val restored = restoreState != null && restoreHistory(restoreState)
-            if (!restored) session.loadUri(initialUrl)
+        if (loaded && initialUrl != BrowserTabs.START_URL) loadNow()
+        // A waiting tab keeps its saved history text, so saving again before it loads loses nothing.
+        else if (!loaded) sessionState = restoreState
+    }
+
+    private fun loadNow() {
+        val state = restoreStateText
+        val restored = state != null && restoreHistory(state)
+        if (!restored) {
+            // A history that cannot be read must not be saved again, or it would stay broken for good.
+            sessionState = null
+            restoreStateText = null
+            session.loadUri(url)
         }
+    }
+
+    /** Loads a tab that was waiting. Does nothing if it already loaded. */
+    fun ensureLoaded() {
+        if (loaded) return
+        loaded = true
+        restorePending = true
+        plog.info("session", "Loading tab $id on first open")
+        loadNow()
     }
 
     /** Puts a saved history back into the session. Returns false if the saved state cannot be read. */
     private fun restoreHistory(state: String): Boolean = try {
         val parsed = GeckoSession.SessionState.fromString(state)
         if (parsed == null) {
-            BrowserLog.warn("session", "Saved history for $url is not valid. Loading the address instead.")
+            plog.warn("session", "Saved history for $url is not valid. Loading the address instead.")
             false
         } else {
             session.restoreState(parsed)
-            BrowserLog.info("session", "Restored history for $url")
+            plog.info("session", "Restored history for $url")
             true
         }
     } catch (e: Exception) {
-        BrowserLog.error("session", "Could not restore the history for $url. Loading the address instead.", e)
+        plog.error("session", "Could not restore the history for $url. Loading the address instead.", e)
         false
     }
 
@@ -336,6 +376,9 @@ class BrowserTab(
 
 /** Scroll distance in pixels before the bars fold or reappear, so small jitters do not flicker them. */
 private const val SCROLL_FOLD_THRESHOLD_PX = 24
+
+/** How long a reopened tab may take to load before quick resume stops waiting for it and saves anyway. */
+const val RESTORE_GRACE_MS = 20_000L
 
 /** Load progress at which a page is faded in. Earlier than this the page is still mostly blank. */
 const val REVEAL_PROGRESS_PERCENT = 50
@@ -352,19 +395,22 @@ data class PressTarget(val linkUri: String?, val imageUri: String?, val x: Int, 
 /** Owns every open tab and which one is selected. Survives recomposition; created once by the screen. */
 class BrowserTabs(
     private val context: Context,
-    private val popupsBlocked: () -> Boolean,
-    private val onDownload: (WebResponse, String) -> Unit,
+    /** The three callbacks are replaced by [rebind] when a new window takes over these tabs, so none points at a destroyed window. */
+    var popupsBlocked: () -> Boolean,
+    var onDownload: (WebResponse, String) -> Unit,
     private val desktopByDefault: Boolean = false,
     /** Tabs saved by quick resume, reopened in place of a single start page. Null starts fresh. */
     private val restore: SessionStore.Saved? = null,
     /** Receives each page a tab finishes loading, for the profile's history. */
-    private val onVisited: (String, String) -> Unit = { _, _ -> },
+    var onVisited: (String, String) -> Unit = { _, _ -> },
     /** The profile's saved site permission answers, handed to each tab. */
     private val sitePermissions: SitePermissionStore,
     /** Where this profile's tab groups are kept. Null keeps none. */
     private val groupStore: TabGroupStore? = null,
 ) {
     private var nextId = 0L
+    /** Private tabs have their own ids, counting down from -2 (-1 means "none selected"), so they never share the normal numbering. */
+    private var nextPrivateId = -2L
     val tabs = mutableStateListOf<BrowserTab>()
     /** This profile's tab groups, in order. Declared before the first tabs so restored tabs can find theirs. */
     val groups = mutableStateListOf<TabGroup>().also { list -> groupStore?.let { list.addAll(it.load()) } }
@@ -380,12 +426,25 @@ class BrowserTabs(
     var selectedId by mutableLongStateOf(-1L)
         private set
 
+    /** A new window takes over these tabs: its callbacks replace the destroyed window's. */
+    fun rebind(
+        popupsBlocked: () -> Boolean,
+        onDownload: (WebResponse, String) -> Unit,
+        onVisited: (String, String) -> Unit,
+    ) {
+        this.popupsBlocked = popupsBlocked
+        this.onDownload = onDownload
+        this.onVisited = onVisited
+    }
+
     init {
         val saved = restore
         if (saved != null && saved.tabs.isNotEmpty()) {
-            val reopened = saved.tabs.map { saved -> newTab(saved.url, select = false, restoreState = saved.state).also { tab -> tab.groupId = saved.groupId?.takeIf { gid -> groups.any { it.id == gid } }; saved.lastActive?.let { tab.lastActive = it } } }
+            val reopened = saved.tabs.map { saved -> newTab(saved.url, select = false, restoreState = saved.state, restoring = true, deferLoad = true).also { tab -> tab.groupId = saved.groupId?.takeIf { gid -> groups.any { it.id == gid } }; saved.lastActive?.let { tab.lastActive = it } } }
             select(reopened[saved.selected.coerceIn(0, reopened.lastIndex)].id)
             BrowserLog.info("session", "Quick resume reopened ${reopened.size} tabs")
+            // Quality of life: say what came back, so a restored session is never a surprise.
+            if (reopened.size > 1) InAppNotices.show("Reopened ${reopened.size} tabs. Each loads when you open it")
         } else {
             newTab(START_URL)
         }
@@ -394,9 +453,12 @@ class BrowserTabs(
     /**
      * The addresses of the tabs quick resume may keep (private tabs are left out), and the position
      * of the selected tab among them. A private selection falls back to the first tab.
+     * Null while any reopened tab is still loading: saving then would overwrite a good save with half-restored state.
      */
-    fun savableSnapshot(): SessionStore.Saved {
-        val kept = tabs.filterNot { it.isPrivate }
+    fun savableSnapshot(): SessionStore.Saved? {
+        if (tabs.any { it.isRestoring }) return null
+        val kept = tabs.filterNot { it.isPrivate || it.url.isBlank() }
+        if (kept.isEmpty()) return null
         val selectedIndex = kept.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
         return SessionStore.Saved(kept.map { SessionStore.SavedTab(it.url, it.sessionState, it.groupId, if (it.id == selectedId) System.currentTimeMillis() else it.lastActive) }, selectedIndex)
     }
@@ -404,19 +466,26 @@ class BrowserTabs(
     val selected: BrowserTab?
         get() = tabs.firstOrNull { it.id == selectedId }
 
-    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions)
+    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null, restoring: Boolean = false, deferLoad: Boolean = false): BrowserTab {
+        // A private tab is never created while the app is locked: it could not be shown, and nothing may load behind the lock.
+        if (isPrivate && AppLock.locked) {
+            BrowserLog.warn("tabs", "Did not open a private tab: the app is locked")
+            InAppNotices.show("Unlock Ora to open a private tab")
+            return selected ?: tabs.first()
+        }
+        val tab = BrowserTab(if (isPrivate) nextPrivateId-- else nextId++, context, url, { popupsBlocked() }, { popup -> newTab(popup, isPrivate = isPrivate) }, { response, page -> onDownload(response, page) }, desktopByDefault, isPrivate, restoreState, { page, title -> onVisited(page, title) }, sitePermissions, restoring, deferLoad)
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.
-        if (isPrivate) BrowserLog.info("tabs", "Opened private tab ${tab.id} (${tabs.size} open)")
-        else BrowserLog.info("tabs", "Opened tab ${tab.id} (${tabs.size} open)")
+        if (isPrivate) BrowserLog.info("tabs", "Opened private tab ${-tab.id - 1} (${tabs.count { it.isPrivate }} private open)")
+        else BrowserLog.info("tabs", "Opened tab ${tab.id} (${tabs.count { !it.isPrivate }} open)")
         return tab
     }
 
     fun select(id: Long) {
         val tab = tabs.firstOrNull { it.id == id } ?: return
         tab.lastActive = System.currentTimeMillis()
+        tab.ensureLoaded()
         selectedId = id
     }
 
@@ -465,7 +534,8 @@ class BrowserTabs(
             if (closedHistory.size > MAX_CLOSED_HISTORY) closedHistory.removeAt(0)
         }
         tabs.removeAt(index).close()
-        BrowserLog.info("tabs", "Closed tab $id (${tabs.size} open)")
+        if (closing.isPrivate) BrowserLog.info("tabs", "Closed private tab ${-id - 1} (${tabs.count { it.isPrivate }} private open)")
+        else BrowserLog.info("tabs", "Closed tab $id (${tabs.count { !it.isPrivate }} open)")
         if (tabs.isEmpty()) {
             newTab(START_URL)
         } else if (selectedId == id) {
@@ -577,3 +647,19 @@ class BrowserTabs(
 
 /** A tab not opened for this long moves into the collapsed Inactive tabs row (14 days). */
 const val INACTIVE_AFTER_MS = 14L * 24 * 60 * 60 * 1000
+/** [BrowserLog] for one tab. Private tabs are silent except for crashes, which say only that a private tab crashed. */
+private class TabLog(private val silent: Boolean) {
+    fun info(tag: String, message: String) { if (!silent) BrowserLog.info(tag, message) }
+    fun warn(tag: String, message: String, error: Throwable? = null) { if (!silent) BrowserLog.warn(tag, message, error) }
+    fun error(tag: String, message: String, error: Throwable? = null) {
+        if (!silent) BrowserLog.error(tag, message, error) else BrowserLog.error(tag, "A private tab hit an error")
+    }
+}
+
+/**
+ * The open tabs of every profile, kept for the life of the process. A recreated window (Android rebuilds it for some
+ * system changes) picks these up instead of opening every tab a second time.
+ */
+object TabRegistry {
+    val byProfile = HashMap<String, BrowserTabs>()
+}

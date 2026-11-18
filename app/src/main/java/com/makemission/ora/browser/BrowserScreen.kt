@@ -324,13 +324,13 @@ private fun BrowserContent(
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
-    val tabsByProfile = remember { HashMap<String, BrowserTabs>() }
+    val tabsByProfile = TabRegistry.byProfile
     val sessionStore = remember { SessionStore(context) }
     val quickResume by settings.quickResume.collectAsState()
     val tabs = remember(profileId) {
         tabsByProfile.getOrPut(profileId) {
             BrowserTabs(
-                context,
+                context.applicationContext,
                 { settings.blockPopups.value },
                 { response, pageUrl -> downloads.start(response, pageUrl) },
                 desktopByDefault = isTablet,
@@ -341,6 +341,13 @@ private fun BrowserContent(
                 sitePermissions = sitePermissionsFor(profileId),
                 groupStore = TabGroupStore(context, profileId),
             )
+        }.also {
+            // After a window is recreated these tabs still exist; point their callbacks at this window's objects.
+            it.rebind(
+                { settings.blockPopups.value },
+                { response, pageUrl -> downloads.start(response, pageUrl) },
+                { url, title -> if (settings.saveHistory.value) historyFor(profileId).record(url, title) },
+            )
         }
     }
     // Quick resume: when the app leaves the screen, every profile open this session has its tabs saved.
@@ -348,11 +355,17 @@ private fun BrowserContent(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP && settings.quickResume.value) {
+                var savedCount = 0
                 tabsByProfile.forEach { (id, profileTabs) ->
+                    // Null means tabs are still being restored; the earlier save stays as it is.
                     val saved = profileTabs.savableSnapshot()
-                    sessionStore.save(id, saved.tabs, saved.selected)
+                    if (saved == null) {
+                        BrowserLog.info("session", "Skipped saving a profile: its tabs are still being restored")
+                    } else if (sessionStore.save(id, saved.tabs, saved.selected)) {
+                        savedCount++
+                    }
                 }
-                BrowserLog.info("session", "Saved tabs for ${tabsByProfile.size} profile(s)")
+                BrowserLog.info("session", "Saved tabs for $savedCount of ${tabsByProfile.size} profile(s)")
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -653,7 +666,7 @@ private fun BrowserContent(
             default = defaultEngine,
             onChoose = { engine ->
                 pendingSearch = null
-                BrowserLog.info("search", "Searching ${engine.label} for \"$query\"")
+                BrowserLog.info("search", "Searched with ${engine.label}")
                 selected.session.loadUri(engine.urlFor(query))
             },
             onDismiss = { pendingSearch = null }
@@ -1406,6 +1419,8 @@ private fun BrowserPage(
                     alpha = pageAlpha * switchAlpha.value
                     translationY = zoneHeight.toPx() * zoneFraction
                 },
+            // A destroyed window lets go of the session so the next window can take it over.
+            onRelease = { it.releaseSession() },
             factory = { ctx ->
                 GeckoView(ctx).also {
                     // Lets Android's autofill service (Bitwarden, Google and others) see the page's login fields.
