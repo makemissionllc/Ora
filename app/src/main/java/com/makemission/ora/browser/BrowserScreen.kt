@@ -197,6 +197,7 @@ import com.makemission.ora.downloads.DownloadsRepository
 import com.makemission.ora.downloads.DownloadStartedNotice
 import com.makemission.ora.downloads.DownloadsScreen
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.SearchLog
 import com.makemission.ora.log.UsageStats
 import androidx.compose.foundation.isSystemInDarkTheme
 import java.net.URLEncoder
@@ -594,7 +595,7 @@ private fun BrowserContent(
             pendingSearch = input.trim()
         } else if (isSearchInput(input)) {
             val engine = defaultEngine
-            BrowserLog.info("search", "Searching ${engine.label} for \"${input.trim()}\"")
+            SearchLog.record(engine.label, selected.isPrivate)
             selected.session.loadUri(engine.urlFor(input.trim()))
         } else {
             selected.session.loadUri(toLoadableUrl(input, defaultEngine.template))
@@ -672,7 +673,7 @@ private fun BrowserContent(
             default = defaultEngine,
             onChoose = { engine ->
                 pendingSearch = null
-                BrowserLog.info("search", "Searched with ${engine.label}")
+                SearchLog.record(engine.label, selected.isPrivate)
                 selected.session.loadUri(engine.urlFor(query))
             },
             onDismiss = { pendingSearch = null }

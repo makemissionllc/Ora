@@ -25,6 +25,23 @@ class LogPrivacyTest {
     }
 
     @Test
+    fun searchLogNamesTheEngineAndNeverTheText() {
+        val before = BrowserLog.entries.value.size
+        SearchLog.record("Google", privateTab = false)
+        val added = BrowserLog.entries.value.drop(before)
+        assertEquals(listOf("Searched with Google"), added.map { it.message })
+        assertEquals("Searched with DuckDuckGo", SearchLog.line("DuckDuckGo", privateTab = false))
+    }
+
+    @Test
+    fun privateSearchesLeaveNoLogLine() {
+        val before = BrowserLog.entries.value.size
+        SearchLog.record("Google", privateTab = true)
+        assertEquals(before, BrowserLog.entries.value.size)
+        assertEquals(null, SearchLog.line("Google", privateTab = true))
+    }
+
+    @Test
     fun diskLinesRoundTripAcrossDays() {
         val e = LogEntry(1_700_000_000_000L, LogLevel.WARN, "page", "line one\nline\ttwo \\ back")
         assertEquals(e, LogCodec.decode(LogCodec.encode(e)))

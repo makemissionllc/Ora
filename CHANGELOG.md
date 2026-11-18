@@ -30,6 +30,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The Downloads page opens from the toolbar button and shrinks back into it when closed, and it has a Copy link action with a short confirmation on the details page. The tablet layout is not checked on a device yet.  (`e182fda`)
 
 **Fixed**
+- Searches are no longer written to the log with the words you typed. The log now says only which search engine was used, for example "Searched with Google". Searches from a private tab leave no log line at all.  (commit pending)
 - The app icon is no longer cropped on the home screen. The Ora mark now sits in the middle of Android's icon shape on its own charcoal background, and it also works with themed icons.  (`3232d02`)
 - A download that failed before it started is kept in the list after Ora restarts, so Retry is still there.  (`352ab8d`)
 - Tabs that were waiting to load when Ora was closed no longer lose their pages: they could be saved as blank, and open as a blank page.  (`e57a556`)
