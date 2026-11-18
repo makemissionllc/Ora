@@ -35,7 +35,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card.  (`2fdaa3d`)
 
 **Changed**
-- The Open in main browser row is now hidden when no other browser is installed, so it never leads to a dead end.  (`HASH`)
+- The Open in main browser row is now hidden when no other browser is installed, so it never leads to a dead end.  (`c5dacf7`)
 - A page that fails checks the phone's connection first. With no internet, the card says you're offline, whatever the browser reported.  (`a1f02a2`)
 - A pop-up opened by tapping a link now opens as a new tab and switches to it. From a private tab it opens as a private tab.  (`9b91073`)
 - Download entries in the log name the site a file came from and its size, never the file name. A file name can say what you downloaded.  (`fb8d03c`)
