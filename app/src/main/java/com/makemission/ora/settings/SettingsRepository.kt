@@ -239,6 +239,18 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Lab: device font on web pages ${if (enabled) "on" else "off"}")
     }
 
+    private val _textSizePercent = MutableStateFlow(prefs.getInt(KEY_TEXT_SIZE_PERCENT, 100).coerceIn(TEXT_SIZE_MIN, TEXT_SIZE_MAX))
+    /** How large text is on web pages, as a percentage of the page's own size. 100 leaves pages as they are. */
+    val textSizePercent: StateFlow<Int> = _textSizePercent.asStateFlow()
+
+    fun setTextSizePercent(percent: Int) {
+        val value = percent.coerceIn(TEXT_SIZE_MIN, TEXT_SIZE_MAX)
+        prefs.edit().putInt(KEY_TEXT_SIZE_PERCENT, value).apply()
+        _textSizePercent.value = value
+        UsageStats.count("setting.text_size")
+        BrowserLog.info("settings", "Text size on web pages $value%")
+    }
+
     private val _edgeSwipeSidebar = MutableStateFlow(prefs.getBoolean(KEY_EDGE_SWIPE_SIDEBAR, true))
     /**
      * Tablet only: a rightward swipe from the left edge of a page opens the sidebar. Off for sites
@@ -427,6 +439,10 @@ class SettingsRepository(context: Context) {
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
         private const val KEY_DEVICE_FONT_WEB = "device_font_web"
+        private const val KEY_TEXT_SIZE_PERCENT = "text_size_percent"
+        const val TEXT_SIZE_MIN = 50
+        const val TEXT_SIZE_MAX = 200
+        const val TEXT_SIZE_STEP = 10
         private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"
         private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_ALL. */

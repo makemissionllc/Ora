@@ -117,6 +117,7 @@ fun SettingsScreen(
     val quickResume by settings.quickResume.collectAsState()
     val saveHistory by settings.saveHistory.collectAsState()
     val deviceFontWeb by settings.deviceFontWeb.collectAsState()
+    val textSize by settings.textSizePercent.collectAsState()
     val autofillPasswords by settings.autofillPasswords.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val logEntries by BrowserLog.entries.collectAsState()
@@ -315,6 +316,37 @@ fun SettingsScreen(
                                     checked = paletteStyle == PaletteStyle.MATERIAL,
                                     onCheckedChange = { on -> settings.setPaletteStyle(if (on) PaletteStyle.MATERIAL else PaletteStyle.ORIGINAL) },
                                 )
+                            }
+                            Text(
+                                "Text size on web pages",
+                                fontSize = 15.sp,
+                                color = browserColors().AddressBarText,
+                                modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                            )
+                            Text(
+                                "Makes the text on pages larger or smaller. Applies to every page, and reloads are not needed.",
+                                fontSize = 12.sp,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp),
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    TextButton(
+                                        onClick = { settings.setTextSizePercent(textSize - SettingsRepository.TEXT_SIZE_STEP) },
+                                        enabled = textSize > SettingsRepository.TEXT_SIZE_MIN,
+                                    ) { Text("−", fontSize = 20.sp) }
+                                    Text("$textSize%", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    TextButton(
+                                        onClick = { settings.setTextSizePercent(textSize + SettingsRepository.TEXT_SIZE_STEP) },
+                                        enabled = textSize < SettingsRepository.TEXT_SIZE_MAX,
+                                    ) { Text("+", fontSize = 20.sp) }
+                                }
+                                // Quality of life: one tap returns to the page's own size.
+                                TextButton(onClick = { settings.setTextSizePercent(100) }, enabled = textSize != 100) { Text("Reset") }
                             }
                             Text(
                                 "Motion",

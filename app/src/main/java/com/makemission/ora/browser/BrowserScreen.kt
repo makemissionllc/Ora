@@ -384,6 +384,14 @@ private fun BrowserContent(
     LaunchedEffect(deviceFontWeb) {
         GeckoEngine.runtime(context).settings.setWebFontsEnabled(!deviceFontWeb)
     }
+    // Text size on web pages. GeckoView scales page text by this factor once automatic adjustment is off.
+    val textSize by settings.textSizePercent.collectAsState()
+    LaunchedEffect(textSize) {
+        val engine = GeckoEngine.runtime(context).settings
+        engine.setAutomaticFontSizeAdjustment(false)
+        engine.setFontSizeFactor(textSize / 100f)
+        BrowserLog.info("page", "Page text size set to $textSize%")
+    }
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     /** Tablet: each tap on ⋯ while the panel is open adds one, which slides it closed. */
