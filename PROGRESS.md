@@ -5,6 +5,7 @@ The status board for Ora. Update it with every change: move items between sectio
 Last updated: 2026-11-18, at commit `a1f02a2`.
 
 ## Done
+- Close group says how many tabs closed, and Undo brings back all of them (`BrowserTabs.closeGroup`, `UndoCloseOffer`). Built with `./gradlew assembleDebug` (JDK from Android Studio). Not checked on a device: no adb or phone is connected in this session.
 - Main-browser row hidden without another browser (`c5dacf7`): `MainBrowserHandoff.isAvailable` checks for a browser other than Ora before the row shows. Quality-of-life: the row never leads to a "No other browser found" dead end. Phone verified: with Ora the only browser, the menu on an https page no longer shows the row. Not checked: the row with a second browser installed, the tablet.
 - Signing with one personal key (`app/build.gradle.kts`): debug and release sign with the keystore named by `ora.keystore`, `ora.keystore.password`, `ora.key.alias` and `ora.key.password` in `local.properties` (git-ignored) when the file exists, and fall back to the default debug key otherwise. Checked: the fallback builds (`assembleDebug`, no keystore yet: `~/ora-release.jks` and the `ora.*` keys are absent). Not checked: signing with the personal key, installing it, and its SHA-256, which goes here once the keystore exists. Installing a build with a different key over the current one fails, so Ora must be uninstalled first, which clears its data on the phone; not done without your word.
 - Passkeys on branch `passkeys-credman` (experiment, not merged): GeckoView 160 already routes WebAuthn through Android's Credential Manager with the page origin, so no `androidx.credentials` code was needed. Ora only had to declare two normal-level permissions, `CREDENTIAL_MANAGER_SET_ORIGIN` and `CREDENTIAL_MANAGER_QUERY_CANDIDATE_CREDENTIALS`. Phone (Android 17, Bitwarden preferred provider, webauthn.io, throwaway name): Register worked (Bitwarden "Create passkey" sheet, fingerprint) and Authenticate worked ("You're logged in!"). Bitwarden never showed a "trust this app" prompt for Ora. Without the second permission Authenticate crashed Ora with `SecurityException: caller doesn't have the permission to query credential results`. Google Password Manager still rejects Ora's certificate hash until Google approves it. Bitwarden works without a trust prompt; Google Password Manager still needs Google's approval; there is no per-request log because GeckoView gives no hook (accepted). Not done: deleting the test passkey from Bitwarden (owner does this). Not checked: tablet (not connected).
@@ -113,9 +114,10 @@ Last updated: 2026-11-18, at commit `a1f02a2`.
 ## Pending
 
 - Optional: read the page's theme-color for the status-bar tint (see archive/browser-geckoview be8efc6). Needs my yes (rule 22).
+- Release signing: waiting on the keystore (owner task).
 
-### Passkeys: Google approval (owner)
-Until Google lists Ora as a privileged browser, a site's passkey register or sign-in can fail inside Ora (see Done). To ask:
+### Passkeys: Google approval (owner, optional)
+Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google's approval only matters for Google Password Manager: until Google lists Ora as a privileged browser, register or sign-in there can fail inside Ora. To ask:
 1. Package name: `com.makemission.ora`.
 2. Signing certificate SHA-256 of the build you will release: the debug build on the phone showed `AD:90:B7:C4:6D:A3:8E:45:7A:1A:D4:02:7B:21:38:05:BA:09:FF:13:17:34:67:29:39:A3:14:30:A6:59:66:5A`. A release key has a different hash, so ask with that one (`./gradlew signingReport`).
 3. Send both in Google's privileged-app (browser) allowlist request for the FIDO2 / Credential Manager `setOrigin` permission; no form is filled in by Ora and nothing here claims approval.
@@ -179,7 +181,6 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 - Phone: tapping a password field on a local login page turned the whole page black (captures measured fully black), reproduced after a clean relaunch. Not seen on the tablet. Cause not found.
 - Tablet: when a page scrolls inside its own element, Ora's bars may not return with a scroll up. Seen on a Fandom wiki page.
 - Tablet: the Compact floating row overlapping the page's navigation links was not seen on 2026-11-18 (en.wikipedia.org and google.com, page top, sidebar open): the page starts below the row, and tapping Images on google.com opened Google Images. Not checked: scrolled pages and a page with links at the very top edge. Kept open until the original page is found.
-- Tablet sidebar: Close group on a group of 2 tabs shows the snackbar "Tab closed" (singular); it should say how many closed. Small; not fixed.
 - Site permissions: during tests a card was answered with no tap recorded (tablet about 18:21, phone about 18:24, both on the test page). Cause not found. On the phone, an older saved camera choice from test data could explain an automatic Allow. Not reproduced.
 - Phone Compact bar, page clip (`01de1e1`, `2a47c6a`): on google.com the expanded bar shows a cut-off sliver of footer text just below its bottom edge at the page end. With the bar folded on theverge.com, page text and the 'OUR SITES' box show under and below the floating pill while scrolled and at the page end. Not decided whether the folded bar should clip above itself as the expanded bar does.
 
