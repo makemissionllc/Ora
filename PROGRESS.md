@@ -147,6 +147,14 @@ Last updated: 2026-11-18, at commit `3232d02`.
 - Site permissions: during tests a card was answered with no tap recorded (tablet about 18:21, phone about 18:24, both on the test page). Cause not found. On the phone, an older saved camera choice from test data could explain an automatic Allow. Not reproduced.
 - Phone Compact bar, page clip (`01de1e1`, `2a47c6a`): on google.com the expanded bar shows a cut-off sliver of footer text just below its bottom edge at the page end. With the bar folded on theverge.com, page text and the 'OUR SITES' box show under and below the floating pill while scrolled and at the page end. Not decided whether the folded bar should clip above itself as the expanded bar does.
 
+## Custom features
+
+Ideas only, nothing built yet. Full notes are in `Designs/ORA-IDEAS.md`.
+
+**Priority 1** (idea, not built): site tweaks; element zapper; command bar; profile rules.
+
+**Priority 2** and **Priority 3**: not yet supplied. Their lists were in the original prompt and need to be sent again before they can be recorded.
+
 ## Verification log
 
 Each entry lists the change, the devices, and what was checked. Devices: phone (wireless ADB) and tablet (serial `7ba8e294`).
