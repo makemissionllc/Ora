@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Text size on web pages: Settings > Appearance has − and + buttons that make page text smaller or larger, from 50% to 200%. Reset returns to 100% in one tap. It applies at once, with no reload."),
             ChangeItem(ChangeKind.ADDED, "Copy page address: a row in the ⋯ menu copies the current page's address in one tap."),
             ChangeItem(ChangeKind.ADDED, "With \"Count feature use\" on, swipes on the address bar, the edge swipe for the sidebar and pull to refresh are logged as worked or missed, with the reason and its distance and time. No page content is recorded. See Settings > Diagnostics."),
             ChangeItem(ChangeKind.CHANGED, "Switching tabs now fades the page in instead of cutting over. With Remove animations on, it is instant."),
