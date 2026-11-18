@@ -196,3 +196,73 @@ record what was and wasn't checked in PROGRESS.md.
 - Dashed lines mean private/temporary and are used for nothing else.
 - Tints change Ora's surfaces only, never web content.
 ```
+
+---
+
+## 9. Onboarding
+
+Boards: the "Onboarding" page of the canvas.
+
+Flow (phone and tablet share it; tablet uses two columns with a live
+preview on the right):
+
+| Screen | Content | Saves to |
+| --- | --- | --- |
+| Welcome | Ora mark, one-line promise, "Set up Ora", "Use the defaults and start browsing" | — |
+| 1 Look | Phone: bar at the bottom / top, with mini previews. Tablet: floating bar / bar with sidebar, live preview. Theme: Auto, Light, Dark, Pure dark | SettingsRepository |
+| 2 Blocking | Standard / Strict (Strict = fingerprinting protection on). Reject cookie pop-ups, HTTPS-only, App lock (opens PIN setup) | SettingsRepository |
+| 3 Profile | Name (default "Personal"), tint, quick-add chips Work / School / Other | ProfilesRepository |
+| 4 Learning | Three promises, then one switch per learner (site preferences, tab group suggestions, start page). "Turn on learning" / "Not now" | insights settings |
+| Ready | Summary of choices, "Make Ora the default" (system role request), "Start browsing" | — |
+| First-use tips | Shown on the first real page, one at a time: swipe the bar up for tabs; (tablet) swipe from the left edge for the sidebar | a "seen" flag per tip |
+
+Rules:
+- Every screen has Skip (top right) and Back. Skip keeps the defaults.
+- Show onboarding once, on first launch only. Settings > About has
+  "Run setup again".
+- Progress bar with 4 segments for screens 1 to 4 (it's a real sequence).
+- No network calls during onboarding.
+- Log each step as "Onboarding step N shown / skipped / done" (no
+  personal data).
+- Checks: fresh install on phone and tablet; Skip on every screen;
+  Back from every screen; rotate mid-flow; App lock path; default
+  browser request accepted and declined.
+
+## 10. Fixes from the usage logs
+
+From the 2026-11-18 logs (phone and tablet). Boards: "From the logs" row
+on the UI v2 page.
+
+1. **Sidebar closes after you pick a tab** (tablet). Picking a tab, a
+   bookmark or a history entry closes the sidebar. A pin button at the
+   top of the sidebar keeps it open for people who want it docked.
+   Log whether it was opened by the button or the edge swipe
+   ("Tab sidebar shown (button)" / "(swipe)"). If most swipe opens are
+   followed by a close with no action, the swipe is misfiring:
+   require 24 dp of horizontal travel before it opens.
+2. **Search all profiles.** Tab search shows matches in the current
+   profile first, then "In other profiles" (grouped by profile, with
+   its tint dot) and "In history". Tapping one switches profile and
+   opens that tab. Private tabs are never included.
+3. **Easy reload and top.** Tap the status bar strip to scroll to the
+   top. Pull to refresh still works only at the top. Reload stays in
+   the address bar on both devices.
+4. **Reader view in the address bar.** When the page report says
+   "article found", show a Reader button inside the capsule, before
+   reload. Tap opens Reader view. Hide it when there's no article.
+5. **New profiles don't start empty.** A new profile's start page shows
+   "Start this profile with": copy favourites from another profile,
+   suggested sites (a fixed local list, no network), or start empty.
+6. **Load only the visible tab.** On start, on profile switch and on
+   unlock, load only the selected tab. Other tabs load when opened.
+   Keep their title and favicon from the saved state.
+
+Also from the logs (bugs, not design):
+- Phone: quick resume restored 9 tabs all with the same URL and invalid
+  history. Never save tabs before restore has finished, and never
+  overwrite a good save with empty state.
+- Phone: "Started" logged twice 350 ms apart. Startup must run once.
+- Private tabs must not open or load before App lock is unlocked, and
+  use their own numbering.
+- Logs: domain only, never full URLs or search terms, nothing from
+  private tabs. Keep the log across restarts (capped size).
