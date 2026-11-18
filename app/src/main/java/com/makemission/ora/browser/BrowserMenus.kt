@@ -11,6 +11,21 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.outlined.AddToHomeScreen
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.DesktopWindows
+import androidx.compose.material.icons.outlined.Download
+import androidx.compose.material.icons.outlined.Extension
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Tune
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -123,7 +138,12 @@ fun BrowserMenuSheet(
     if (isTablet) {
         BrowserMenuSidePanel(onDismiss = onDismiss, topInset = topInset, closeRequests = closeRequests, content = items)
     } else {
-        ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            containerColor = browserColors().Surface,
+            shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
+            dragHandle = { Box(Modifier.padding(vertical = 10.dp).size(width = 36.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(browserColors().ToolbarBorder.copy(alpha = 0.5f))) },
+        ) {
             items { action -> onDismiss(); action() }
         }
     }
@@ -149,124 +169,94 @@ private fun BrowserMenuItems(
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
 ) {
-        Column(modifier = Modifier.padding(bottom = 24.dp)) {
-            // Two rows of three, each action sharing its row's width, so labels never run into a neighbour
-            // (the six-action row overflowed the 360 dp tablet panel).
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    MenuAction(Icons.Filled.Share, "Share", onShare, Modifier.weight(1f))
-                    MenuAction(
-                        if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
-                        if (isBookmarked) "Bookmarked" else "Bookmark",
-                        onBookmark,
-                        Modifier.weight(1f),
-                    )
-                    MenuAction(Icons.Filled.Add, "New tab", onNewTab, Modifier.weight(1f))
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    MenuAction(Icons.Filled.VisibilityOff, "New private tab", onNewPrivateTab, Modifier.weight(1f))
-                    MenuAction(Icons.Filled.Dashboard, "Tabs", onTabs, Modifier.weight(1f))
-                    MenuAction(Icons.Outlined.Tab, "Library", onLibrary, Modifier.weight(1f))
-                }
+        Column(modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Two rows of three Shale tiles (design: UI v2 phone menu). The bookmarked tile takes the one active state.
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MenuAction(Icons.Filled.Share, "Share", onShare, Modifier.weight(1f))
+                MenuAction(
+                    if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
+                    if (isBookmarked) "Bookmarked" else "Bookmark",
+                    onBookmark,
+                    Modifier.weight(1f),
+                    active = isBookmarked,
+                )
+                MenuAction(Icons.Filled.Add, "New tab", onNewTab, Modifier.weight(1f))
             }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onFind)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Find in page", fontSize = 15.sp, color = browserColors().AddressBarText)
-                DisclosureChevron()
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MenuAction(Icons.Filled.VisibilityOff, "Private tab", onNewPrivateTab, Modifier.weight(1f))
+                MenuAction(Icons.Filled.Dashboard, "Tabs", onTabs, Modifier.weight(1f))
+                MenuAction(Icons.Outlined.Tab, "Library", onLibrary, Modifier.weight(1f))
             }
+            Spacer(Modifier.height(6.dp))
+            MenuRow(Icons.Outlined.Search, "Find in page", onFind, chevron = true)
             // Quality of life: one tap copies the page's address, without opening Share first.
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onCopyAddress)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Copy page address", fontSize = 15.sp, color = browserColors().AddressBarText)
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onAddToHome)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Add to home screen", fontSize = 15.sp, color = browserColors().AddressBarText)
-            }
+            MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
+            MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)
             // Tapping with nothing closed explains itself (the screen shows a snackbar) rather than doing nothing.
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onReopenClosed)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                    Text("Reopen closed tab", fontSize = 15.sp, color = browserColors().AddressBarText)
-                    Text(
-                        text = closedTabTitle?.takeIf { it.isNotBlank() } ?: "Nothing closed yet",
-                        fontSize = 12.sp,
-                        color = browserColors().SecondaryText,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                DisclosureChevron()
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onToggleDesktop(!desktopSite) }
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Desktop site", fontSize = 15.sp, color = browserColors().AddressBarText)
-                Switch(checked = desktopSite, onCheckedChange = onToggleDesktop)
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onDownloads)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Downloads", fontSize = 15.sp, color = browserColors().AddressBarText)
-                DisclosureChevron()
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onExtensions)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Extensions", fontSize = 15.sp, color = browserColors().AddressBarText)
-                DisclosureChevron()
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(onClick = onSettings)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("Settings", fontSize = 15.sp, color = browserColors().AddressBarText)
-                DisclosureChevron()
+            MenuRow(
+                Icons.Outlined.History, "Reopen closed tab", onReopenClosed,
+                subtitle = closedTabTitle?.takeIf { it.isNotBlank() } ?: "Nothing closed yet",
+                chevron = true,
+            )
+            MenuRow(
+                Icons.Outlined.DesktopWindows, "Desktop site", { onToggleDesktop(!desktopSite) },
+                trailing = { MineralSwitch(desktopSite, "Desktop site", onToggleDesktop) },
+            )
+            MenuRow(Icons.Outlined.Download, "Downloads", onDownloads, chevron = true)
+            MenuRow(Icons.Outlined.Extension, "Extensions", onExtensions, chevron = true)
+            MenuRow(Icons.Outlined.Tune, "Settings", onSettings, chevron = true)
+        }
+}
+
+/** One list row in the menu: Fog icon, Chalk title, optional Fog subtitle, then a chevron or a control. */
+@Composable
+private fun MenuRow(
+    icon: ImageVector,
+    title: String,
+    onClick: () -> Unit,
+    subtitle: String? = null,
+    chevron: Boolean = false,
+    trailing: (@Composable () -> Unit)? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(20.dp))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+            if (subtitle != null) {
+                Text(subtitle, fontSize = 13.sp, color = browserColors().SecondaryText, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
         }
+        if (trailing != null) trailing() else if (chevron) {
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(16.dp))
+        }
+    }
+}
+
+/** The Mineral switch: Chalk track with a Basalt knob when on, Shale track with a Fog knob when off. */
+@Composable
+fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) {
+    val colors = browserColors()
+    Box(
+        modifier = Modifier
+            .size(width = 48.dp, height = 28.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (checked) colors.Accent else colors.AddressBarBackground)
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
+            .semantics { contentDescription = label }
+            .padding(4.dp),
+        contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,
+    ) {
+        Box(Modifier.size(20.dp).clip(CircleShape).background(if (checked) colors.GridBackground else colors.SecondaryText))
+    }
 }
 
 /**
@@ -332,7 +322,7 @@ private fun BrowserMenuSidePanel(
                     .width(BrowserTokens.SidePanelWidth)
                     .shadow(BrowserTokens.FloatingBarElevation, RoundedCornerShape(topStart = BrowserTokens.SidePanelRadius, bottomStart = BrowserTokens.SidePanelRadius))
                     .clip(RoundedCornerShape(topStart = BrowserTokens.SidePanelRadius, bottomStart = BrowserTokens.SidePanelRadius))
-                    .background(browserColors().AddressBarBackground)
+                    .background(browserColors().Surface)
                     .verticalScroll(rememberScrollState())
                     .then(if (topInset == 0.dp) Modifier.statusBarsPadding() else Modifier)
                     .navigationBarsPadding()
@@ -344,29 +334,23 @@ private fun BrowserMenuSidePanel(
 }
 
 @Composable
-private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit, modifier: Modifier = Modifier, active: Boolean = false) {
+    val colors = browserColors()
+    // One active state everywhere: a Chalk fill with Basalt text.
+    val fill = if (active) colors.Accent else colors.AddressBarBackground
+    val content = if (active) colors.GridBackground else colors.AddressBarText
     Column(
-        modifier = modifier.clickable(onClick = onClick).padding(8.dp),
+        modifier = modifier
+            .height(76.dp)
+            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+            .background(fill)
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+        verticalArrangement = Arrangement.spacedBy(7.dp, Alignment.CenterVertically),
     ) {
-        Row(
-            modifier = Modifier
-                .size(56.dp)
-                .background(browserColors().AddressBarBackground.copy(alpha = 1f), RoundedCornerShape(BrowserTokens.RadiusMedium)),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Icon(icon, contentDescription = label, tint = browserColors().Accent)
-        }
-        // One line only, kept inside its cell: "Library" was breaking into "Libr / ary" in the five-action row.
-        Text(
-            label,
-            fontSize = 12.sp,
-            color = browserColors().IconColor,
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-        )
+        Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(21.dp))
+        // One line only, kept inside its cell.
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = content, maxLines = 1, textAlign = TextAlign.Center)
     }
 }
 
