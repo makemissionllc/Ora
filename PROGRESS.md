@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-18, at commit `ea7fe8e`.
+Last updated: 2026-11-18, at commit `e182fda`.
 
 ## Done
 - Tablet verification pass of the 2026-11-18 work (see the log row below), with three small fixes found on the way: tabs waiting to load were listed as about:blank (`32b298f`), find in page showed "No matches" and a drifting count (`c59ddf0`), and waiting tabs were saved blank so they opened as an empty page (`e57a556`).
@@ -119,8 +119,8 @@ Last updated: 2026-11-18, at commit `ea7fe8e`.
 ### Downloads (`ORA-DOWNLOADS-SPEC.md`, phase 1 onward)
 - Pause, resume and retry on rows and in the summary ("Pause all"). Needs resumable segments (phase 1), so no button is shown yet.
 - Per-connection split progress (phase 3): the bar is an overall split for now.
-- Tablet two-pane Downloads (list and details with checksum, Open folder, Copy link), per the design's `V5-T-Downloads`. Phone first, as asked.
-- Morph from the menu's Downloads row (rule 10).
+- Tablet two-pane Downloads: built in `e182fda` (list and details, Copy link). Checksum and Open folder are Not done (no API for checksum in the download engine; Open folder has no platform API), so they are left out.
+- Morph from the toolbar button and the ⋯ menu corner is done in `e182fda`; the menu row's origin is the top-right corner, not the row itself (rule 10 partly met).
 
 ### Carried over
 
@@ -151,6 +151,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-18 | Downloads overlay (`e182fda`) | Phone (3C15C5000LM00000): opened from the ⋯ menu's Downloads row; the page grew in and showed the summary card, All/Active/Done/Failed filter and the empty sentence (screenshot). Not checked: the morph frames; the toolbar button origin; rows with real downloads; Cancel, Delete, Copy link and the details page; Light and Pure dark | Not checked: the tablet was not connected (only the phone is attached); the two-pane layout was not seen |
 | 2026-11-18 | Tab groups (phase 4) | Not checked: the phone was not tried; none of the group screens were seen on it | Tablet (7ba8e294, USB): build installed; sidebar shows the "New tab group" row under the tab list (screenshot). Then someone else started using the tablet (a Google search I had not opened appeared), so I stopped tapping. Not checked: long-press Add to group, New group sheet, folding headers, overview group cards and open group, Close group, quick-resume of groups |
 | 2026-11-18 | Combined search (sidebar) | Not checked: not connected for use | Tablet (7ba8e294): not checked, it was in use by someone else. Build passes only |
 | 2026-11-18 | Drag into groups (phase 6) | Not checked: the phone was showing someone's personal chat, so I did not touch it | Tablet (7ba8e294): build installed earlier; the screen showed the overview of the Anime profile with one tab and no groups, apparently in use by someone else, so I did not create groups or drag. Not checked: pick-up and drop on a card, header and Not in a group, the hover highlight, long press held still |
