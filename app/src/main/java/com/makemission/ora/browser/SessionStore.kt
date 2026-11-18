@@ -17,7 +17,7 @@ class SessionStore(context: Context) {
         .getSharedPreferences("ora_session", Context.MODE_PRIVATE)
 
     /** One saved tab: its address, and the GeckoView session state that holds its history (null if none). */
-    data class SavedTab(val url: String, val state: String?, val groupId: String? = null)
+    data class SavedTab(val url: String, val state: String?, val groupId: String? = null, val lastActive: Long? = null)
 
     /** Saved tabs for one profile, and the index of the tab that was selected. */
     data class Saved(val tabs: List<SavedTab>, val selected: Int)
@@ -30,7 +30,7 @@ class SessionStore(context: Context) {
         }
         val array = JSONArray()
         tabs.forEach { tab ->
-            array.put(JSONObject().put("url", tab.url).put("state", tab.state ?: JSONObject.NULL).put("group", tab.groupId ?: JSONObject.NULL))
+            array.put(JSONObject().put("url", tab.url).put("state", tab.state ?: JSONObject.NULL).put("group", tab.groupId ?: JSONObject.NULL).put("active", tab.lastActive ?: JSONObject.NULL))
         }
         val json = JSONObject()
             .put("selected", selected)
@@ -48,7 +48,7 @@ class SessionStore(context: Context) {
                 val array = json.getJSONArray("tabs")
                 val tabs = List(array.length()) {
                     val item = array.getJSONObject(it)
-                    SavedTab(item.getString("url"), item.optString("state", "").ifEmpty { null }, item.optString("group", "").ifEmpty { null })
+                    SavedTab(item.getString("url"), item.optString("state", "").ifEmpty { null }, item.optString("group", "").ifEmpty { null }, item.optLong("active", 0L).takeIf { it > 0 })
                 }
                 Saved(tabs, selected)
             } else {

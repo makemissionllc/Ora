@@ -226,8 +226,11 @@ fun TabGrid(
         val gridTabs = when {
             shownGroup != null -> tabs.tabsIn(shownGroup.id)
             needle.isNotEmpty() -> tabList
-            else -> tabList.filter { t -> t.groupId == null || tabs.groups.none { it.id == t.groupId } }
+            else -> tabList.filter { t -> (t.groupId == null || tabs.groups.none { it.id == t.groupId }) && !tabs.isInactive(t) }
         }
+        // Loose tabs not opened in 14 days wait in a collapsed row; a search still finds them.
+        val inactiveTabs = if (shownGroup == null && needle.isEmpty()) tabList.filter { t -> (t.groupId == null || tabs.groups.none { it.id == t.groupId }) && tabs.isInactive(t) } else emptyList()
+        var inactiveOpen by remember { mutableStateOf(false) }
         if (shownGroup != null && gridTabs.isEmpty()) {
             EmptySidebarText("No tabs in this group. Long-press a tab and choose Add to group.")
         }
@@ -252,6 +255,22 @@ fun TabGrid(
                     onLongClick = { groupState.addTo = tab },
                     groupColor = tabs.groups.firstOrNull { it.id == tab.groupId }?.color?.color,
                 )
+            }
+            if (inactiveTabs.isNotEmpty()) {
+                item(key = "inactive_header", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                    InactiveHeader(inactiveTabs.size, inactiveOpen) { inactiveOpen = !inactiveOpen }
+                }
+                if (inactiveOpen) gridItems(inactiveTabs, key = { it.id }) { tab ->
+                    TabTile(
+                        title = tab.shownTitle(displayUrl(tab.url)),
+                        thumbnail = tab.thumbnail,
+                        selected = false,
+                        onClick = { onSelect(tab.id) },
+                        onClose = { onClose(tab.id) },
+                        onLongClick = { groupState.addTo = tab },
+                        groupColor = null,
+                    )
+                }
             }
         }
         }
@@ -471,6 +490,7 @@ fun TabSidebar(
     val groupState = remember { GroupDialogState() }
     var panel by remember { mutableStateOf(SidebarPanel.TABS) }
     var query by remember { mutableStateOf("") }
+    var inactiveOpen by remember { mutableStateOf(false) }
     val needle = query.trim()
     val shownTabs = tabs.tabs.filter { !it.isPrivate }.filter {
         needle.isEmpty() || it.shownTitle(displayUrl(it.url)).contains(needle, true) || (!(it.isPrivate && AppLock.locked) && it.url.contains(needle, true))
@@ -604,13 +624,17 @@ fun TabSidebar(
                                 }
                             }
                         }
-                        val loose = shownTabs.filter { t -> t.groupId == null || tabs.groups.none { it.id == t.groupId } }
+                        val loose = shownTabs.filter { t -> (t.groupId == null || tabs.groups.none { it.id == t.groupId }) && (!tabs.isInactive(t) || needle.isNotEmpty()) }
                         if (tabs.groups.isNotEmpty()) item(key = "loose") {
                             Text("Not in a group", modifier = Modifier.padding(start = 12.dp, top = 10.dp, bottom = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
                         }
                         items(loose, key = { it.id }) { tab ->
                             SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab })
                         }
+                        inactiveSection(
+                            shownTabs.filter { t -> (t.groupId == null || tabs.groups.none { it.id == t.groupId }) && tabs.isInactive(t) && needle.isEmpty() },
+                            inactiveOpen, { inactiveOpen = !inactiveOpen }, tabs.selectedId, { tabs.select(it) }, { groupState.addTo = it },
+                        )
                         item(key = "new_group") {
                             Row(
                                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(44.dp).clip(RoundedCornerShape(12.dp)).clickable { groupState.newGroup() }.padding(horizontal = 12.dp),
@@ -622,9 +646,13 @@ fun TabSidebar(
                             }
                         }
                     } else {
-                        items(shownTabs, key = { it.id }) { tab ->
+                        items(shownTabs.filter { !tabs.isInactive(it) || needle.isNotEmpty() }, key = { it.id }) { tab ->
                             SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab })
                         }
+                        inactiveSection(
+                            shownTabs.filter { tabs.isInactive(it) && needle.isEmpty() },
+                            inactiveOpen, { inactiveOpen = !inactiveOpen }, tabs.selectedId, { tabs.select(it) }, { groupState.addTo = it },
+                        )
                     }
                 }
             }
@@ -743,5 +771,34 @@ private fun SidebarRow(label: String, url: String, selected: Boolean, onClick: (
         // The open tab also carries a small Chalk dot, so it reads without colour.
         if (selected) Spacer(Modifier.width(8.dp))
         if (selected) Box(Modifier.size(6.dp).clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().Accent))
+    }
+}
+
+/** The collapsed "Inactive tabs (N)" row: tabs not opened in 14 days. Tap to fold them in and out. */
+@Composable
+private fun InactiveHeader(count: Int, open: Boolean, onToggle: () -> Unit) {
+    val turn by androidx.compose.animation.core.animateFloatAsState(if (open) 90f else 0f, OraMotion.enter(), label = "inactive chevron")
+    Row(
+        modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onToggle).padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp).rotate(turn))
+        Spacer(Modifier.width(10.dp))
+        Text("Inactive tabs ($count)", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
+    }
+}
+
+private fun androidx.compose.foundation.lazy.LazyListScope.inactiveSection(
+    inactive: List<BrowserTab>,
+    open: Boolean,
+    onToggle: () -> Unit,
+    selectedId: Long,
+    onSelect: (Long) -> Unit,
+    onLongClick: (BrowserTab) -> Unit,
+) {
+    if (inactive.isEmpty()) return
+    item(key = "inactive_header") { InactiveHeader(inactive.size, open, onToggle) }
+    if (open) items(inactive, key = { it.id }) { tab ->
+        SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == selectedId, onClick = { onSelect(tab.id) }, onLongClick = { onLongClick(tab) })
     }
 }

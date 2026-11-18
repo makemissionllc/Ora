@@ -55,6 +55,8 @@ class BrowserTab(
     var title by mutableStateOf("")
     /** The tab group this tab is in, or null. A tab is in at most one group; private tabs are never grouped. */
     var groupId by mutableStateOf<String?>(null)
+    /** When the tab was last opened (milliseconds). A tab untouched for 14 days counts as inactive. */
+    var lastActive by mutableLongStateOf(System.currentTimeMillis())
     /** Last captured picture of the page, shown as the tab's preview in the tab grid. */
     var thumbnail by mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
     var loading by mutableStateOf(false)
@@ -381,7 +383,7 @@ class BrowserTabs(
     init {
         val saved = restore
         if (saved != null && saved.tabs.isNotEmpty()) {
-            val reopened = saved.tabs.map { saved -> newTab(saved.url, select = false, restoreState = saved.state).also { tab -> tab.groupId = saved.groupId?.takeIf { gid -> groups.any { it.id == gid } } } }
+            val reopened = saved.tabs.map { saved -> newTab(saved.url, select = false, restoreState = saved.state).also { tab -> tab.groupId = saved.groupId?.takeIf { gid -> groups.any { it.id == gid } }; saved.lastActive?.let { tab.lastActive = it } } }
             select(reopened[saved.selected.coerceIn(0, reopened.lastIndex)].id)
             BrowserLog.info("session", "Quick resume reopened ${reopened.size} tabs")
         } else {
@@ -396,7 +398,7 @@ class BrowserTabs(
     fun savableSnapshot(): SessionStore.Saved {
         val kept = tabs.filterNot { it.isPrivate }
         val selectedIndex = kept.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
-        return SessionStore.Saved(kept.map { SessionStore.SavedTab(it.url, it.sessionState, it.groupId) }, selectedIndex)
+        return SessionStore.Saved(kept.map { SessionStore.SavedTab(it.url, it.sessionState, it.groupId, if (it.id == selectedId) System.currentTimeMillis() else it.lastActive) }, selectedIndex)
     }
 
     val selected: BrowserTab?
@@ -413,7 +415,8 @@ class BrowserTabs(
     }
 
     fun select(id: Long) {
-        if (tabs.none { it.id == id }) return
+        val tab = tabs.firstOrNull { it.id == id } ?: return
+        tab.lastActive = System.currentTimeMillis()
         selectedId = id
     }
 
@@ -509,6 +512,10 @@ class BrowserTabs(
         groupStore?.save(groups.toList())
     }
 
+    /** True for a tab not opened in 14 days. The open tab is never inactive. */
+    fun isInactive(tab: BrowserTab): Boolean =
+        !tab.isPrivate && tab.id != selectedId && System.currentTimeMillis() - tab.lastActive > INACTIVE_AFTER_MS
+
     fun tabsIn(groupId: String): List<BrowserTab> = tabs.filter { it.groupId == groupId }
 
     /** Adds an empty group. A blank name becomes "Group N". */
@@ -567,3 +574,6 @@ class BrowserTabs(
         tabs.clear()
     }
 }
+
+/** A tab not opened for this long moves into the collapsed Inactive tabs row (14 days). */
+const val INACTIVE_AFTER_MS = 14L * 24 * 60 * 60 * 1000
