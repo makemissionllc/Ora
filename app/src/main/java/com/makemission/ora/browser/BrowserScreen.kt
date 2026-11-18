@@ -992,6 +992,7 @@ private fun BrowserContent(
                             tabs = tabs,
                             // The page sits lower by the tablet's top zone, so the press point is moved down by the same amount.
                             pageTop = (if (tabletCompact) compactRowHeight else phoneZoneHeight) * zoneFraction,
+                            fromPrivate = selected.isPrivate,
                             onDismiss = { selected.pressTarget = null },
                             onShare = { url -> shareUrl(context, url) }
                         )

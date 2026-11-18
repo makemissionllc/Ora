@@ -43,6 +43,13 @@ import com.makemission.ora.ui.theme.OraMotion
 import com.makemission.ora.ui.theme.browserColors
 
 /**
+ * The log line for opening a link or image from the quick menu, or null when nothing may be logged.
+ * A link opened from a private tab is not logged, so private browsing leaves no trace.
+ */
+internal fun linkOpenLogLine(action: String, url: String, fromPrivate: Boolean): String? =
+    if (fromPrivate) null else "$action: $url"
+
+/**
  * Quick menu opened by a long press on a link or image (phone and tablet).
  * The card grows out of the press point and shrinks back into it on close.
  */
@@ -52,6 +59,8 @@ fun LinkQuickMenu(
     tabs: BrowserTabs,
     /** How far the page sits below the top of its box (tablet Compact's top space). Press points are page coordinates. */
     pageTop: Dp = 0.dp,
+    /** True when the page that was pressed is a private tab: links it opens stay private, and nothing is logged. */
+    fromPrivate: Boolean = false,
     onDismiss: () -> Unit,
     onShare: (String) -> Unit,
 ) {
@@ -106,14 +115,14 @@ fun LinkQuickMenu(
                 target.linkUri?.let { link ->
                     QuickMenuRow("Open in new tab") {
                         close()
-                        BrowserLog.info("page", "Opened link in new tab: $link")
-                        tabs.newTab(link, select = true)
+                        linkOpenLogLine("Opened link in new tab", link, fromPrivate)?.let { BrowserLog.info("page", it) }
+                        tabs.newTab(link, select = true, isPrivate = fromPrivate)
                         InAppNotices.show("Opened in a new tab")
                     }
                     QuickMenuRow("Open in background tab") {
                         close()
-                        BrowserLog.info("page", "Opened link in background tab: $link")
-                        tabs.newTab(link, select = false)
+                        linkOpenLogLine("Opened link in background tab", link, fromPrivate)?.let { BrowserLog.info("page", it) }
+                        tabs.newTab(link, select = false, isPrivate = fromPrivate)
                         InAppNotices.show("Opened in a background tab. Your current page stays put.")
                     }
                     QuickMenuRow("Copy link address") {
@@ -129,8 +138,8 @@ fun LinkQuickMenu(
                     if (target.linkUri != null) HorizontalDivider(color = browserColors().ToolbarBorder)
                     QuickMenuRow("Open image in new tab") {
                         close()
-                        BrowserLog.info("page", "Opened image in new tab: $image")
-                        tabs.newTab(image, select = false)
+                        linkOpenLogLine("Opened image in new tab", image, fromPrivate)?.let { BrowserLog.info("page", it) }
+                        tabs.newTab(image, select = false, isPrivate = fromPrivate)
                         InAppNotices.show("Image opened in a background tab")
                     }
                     QuickMenuRow("Copy image address") {
