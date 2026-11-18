@@ -277,7 +277,7 @@ internal fun ReadyStep(settings: SettingsRepository, profiles: ProfilesRepositor
         onBack, null, "Start browsing", onFinish,
         preview = null,
     ) {
-        SummaryRow("Look", "${bar.label} bar, ${appearance.label} theme", "Settings > Appearance")
+        SummaryRow("Look", (if (tablet) (if (bar == BarStyle.TOP) "Bar with a sidebar" else "Floating bar") else "${bar.label} bar") + ", ${appearance.label} theme", "Settings > Appearance")
         SummaryRow("Blocking", (if (strict) "Strict" else "Standard") + ", HTTPS-only " + (if (httpsOnly) "on" else "off") + ", app lock " + (if (lock != null) "on" else "off"), "Settings > Privacy")
         SummaryRow("Profiles", list.joinToString(", ") { it.name }, "Profiles menu")
         if (!isDefault) {
