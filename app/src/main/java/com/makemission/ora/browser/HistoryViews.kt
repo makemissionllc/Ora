@@ -330,19 +330,19 @@ private fun timeOf(epochMillis: Long): String =
 
 /** A rounded square with the site's first letter, tinted by host, as in the Mineral lists. */
 @Composable
-internal fun SiteChip(title: String, url: String) {
+internal fun SiteChip(title: String, url: String, size: androidx.compose.ui.unit.Dp = 32.dp, radius: androidx.compose.ui.unit.Dp = 9.dp, textSize: androidx.compose.ui.unit.TextUnit = 14.sp) {
     val host = displayUrl(url)
     val tints = com.makemission.ora.ui.theme.Mineral.SiteTints
     Box(
         modifier = Modifier
-            .size(32.dp)
-            .clip(RoundedCornerShape(9.dp))
+            .size(size)
+            .clip(RoundedCornerShape(radius))
             .background(tints[Math.floorMod(host.hashCode(), tints.size)]),
         contentAlignment = Alignment.Center
     ) {
         Text(
             title.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "•",
-            fontSize = 14.sp,
+            fontSize = textSize,
             fontWeight = FontWeight.Bold,
             color = com.makemission.ora.ui.theme.Mineral.Ink
         )

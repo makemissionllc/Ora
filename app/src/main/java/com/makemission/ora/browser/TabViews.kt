@@ -310,19 +310,22 @@ fun TabSidebar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(BrowserTokens.SidebarSegmentHeight)
-                .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
-                .background(browserColors().AddressBarBackground),
+                .height(40.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(browserColors().GridBackground)
+                .padding(3.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Quality of life: switching lists clears the search, so a filter for tabs does not hide bookmarks.
-            SegmentLabel("Tabs", selected = panel == SidebarPanel.TABS, modifier = Modifier.weight(1f)) { panel = SidebarPanel.TABS; query = "" }
-            SegmentLabel("Bookmarks", selected = panel == SidebarPanel.BOOKMARKS, modifier = Modifier.weight(1f)) { panel = SidebarPanel.BOOKMARKS; query = "" }
-            SegmentLabel("History", selected = panel == SidebarPanel.HISTORY, modifier = Modifier.weight(1f)) { panel = SidebarPanel.HISTORY; query = "" }
+            SegmentLabel("Tabs", selected = panel == SidebarPanel.TABS, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.TABS; query = "" }
+            SegmentLabel("Bookmarks", selected = panel == SidebarPanel.BOOKMARKS, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.BOOKMARKS; query = "" }
+            SegmentLabel("History", selected = panel == SidebarPanel.HISTORY, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.HISTORY; query = "" }
         }
         // Filters the list below by title or address.
         SidebarSearch(
             query = query,
+            pill = true,
+            fill = browserColors().GridBackground,
             placeholder = when (panel) {
                 SidebarPanel.TABS -> "Search open tabs"
                 SidebarPanel.BOOKMARKS -> "Search bookmarks"
@@ -373,6 +376,7 @@ fun TabSidebar(
                     items(shownBookmarks, key = { it.url }) { bookmark ->
                         SidebarRow(
                             label = bookmark.title,
+                            url = bookmark.url,
                             selected = false,
                             onClick = { onOpenBookmark(bookmark.url) }
                         )
@@ -384,6 +388,7 @@ fun TabSidebar(
                     items(shownTabs, key = { it.id }) { tab ->
                         SidebarRow(
                             label = tab.title.ifBlank { displayUrl(tab.url) },
+                            url = tab.url,
                             selected = tab.id == tabs.selectedId,
                             onClick = { tabs.select(tab.id) }
                         )
@@ -417,7 +422,7 @@ internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, p
 }
 
 @Composable
-internal fun SidebarSearch(query: String, placeholder: String, pill: Boolean = false, onQueryChange: (String) -> Unit) {
+internal fun SidebarSearch(query: String, placeholder: String, pill: Boolean = false, fill: Color = browserColors().AddressBarBackground, onQueryChange: (String) -> Unit) {
     BasicTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -428,7 +433,7 @@ internal fun SidebarSearch(query: String, placeholder: String, pill: Boolean = f
             .fillMaxWidth()
             .height(if (pill) 44.dp else BrowserTokens.SidebarSegmentHeight)
             .clip(if (pill) androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(BrowserTokens.RadiusSmall))
-            .background(browserColors().AddressBarBackground)
+            .background(fill)
             .padding(horizontal = if (pill) 16.dp else 10.dp),
         decorationBox = { inner ->
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -469,24 +474,30 @@ private fun EmptySidebarText(text: String) {
 }
 
 @Composable
-private fun SidebarRow(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun SidebarRow(label: String, url: String, selected: Boolean, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.SidebarRowHeight)
-            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .clip(RoundedCornerShape(12.dp))
             .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        SiteChip(label, url, size = 22.dp, radius = 6.dp, textSize = 10.sp)
+        Spacer(Modifier.width(12.dp))
         Text(
             text = label,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
             fontSize = 15.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
             color = browserColors().AddressBarText
         )
+        // The open tab also carries a small Chalk dot, so it reads without colour.
+        if (selected) Spacer(Modifier.width(8.dp))
+        if (selected) Box(Modifier.size(6.dp).clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().Accent))
     }
 }

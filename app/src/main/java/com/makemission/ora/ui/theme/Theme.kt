@@ -236,7 +236,7 @@ val LightBrowserColors = BrowserColors(
     GridBackground = Mineral.Stone,
     CloseBadge = Color(0x9C1A1B1E),
     SidebarBackground = Mineral.Paper,
-    SidebarSelected = Color(0x1F1A1B1E),
+    SidebarSelected = Mineral.Stone,
     Surface = Mineral.Paper,
     Scrim = Color(0x33000000),
 )
@@ -254,7 +254,7 @@ val DarkBrowserColors = BrowserColors(
     GridBackground = Mineral.Basalt,
     CloseBadge = Color(0x9CA29D94),
     SidebarBackground = Mineral.Slate,
-    SidebarSelected = Color(0x1FECE6DC),
+    SidebarSelected = Mineral.Shale,
     Surface = Mineral.Slate,
     Scrim = Color(0x8C1A1B1E),
 )
@@ -272,7 +272,7 @@ val PureDarkBrowserColors = BrowserColors(
     GridBackground = Color(0xFF000000),
     CloseBadge = Color(0x9CA29D94),
     SidebarBackground = Color(0xFF000000),
-    SidebarSelected = Color(0x1FECE6DC),
+    SidebarSelected = Color(0xFF1B1C1E),
     Surface = Color(0xFF0E0F10),
     Scrim = Color(0x99000000),
 )

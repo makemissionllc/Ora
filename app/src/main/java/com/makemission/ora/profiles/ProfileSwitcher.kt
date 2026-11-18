@@ -2,6 +2,8 @@ package com.makemission.ora.profiles
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -60,17 +62,18 @@ fun ProfileSwitcher(
             ProfileChip(
                 label = profile.name,
                 selected = selected,
-                background = if (selected) colors.SidebarSelected else colors.AddressBarBackground,
-                textColor = if (selected) colors.Accent else colors.AddressBarText,
+                background = if (selected) colors.Accent else colors.AddressBarBackground,
+                textColor = if (selected) colors.GridBackground else colors.AddressBarText,
                 onClick = { onSelect(profile.id) },
                 onLongClick = { if (profile.id != ProfilesRepository.DEFAULT_ID) removing = profile },
             )
         }
         ProfileChip(
-            label = "+ New profile",
+            label = "+",
             selected = false,
-            background = colors.AddressBarBackground,
+            background = Color.Transparent,
             textColor = colors.SecondaryText,
+            outlined = true,
             onClick = { newName = ""; adding = true },
             onLongClick = null,
         )
@@ -129,12 +132,14 @@ private fun ProfileChip(
     textColor: Color,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)?,
+    outlined: Boolean = false,
 ) {
     Box(
         modifier = Modifier
             .height(BrowserTokens.ProfileChipHeight)
             .clip(RoundedCornerShape(50))
             .background(background)
+            .then(if (outlined) Modifier.border(1.dp, browserColors().SecondaryText.copy(alpha = 0.35f), RoundedCornerShape(50)) else Modifier)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(BrowserTokens.ProfileChipPadding),
         contentAlignment = Alignment.Center,
