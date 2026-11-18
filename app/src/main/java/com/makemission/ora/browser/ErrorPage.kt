@@ -12,7 +12,10 @@ object ErrorPage {
     /** Plain-words title and explanation for a failed load. */
     data class Message(val title: String, val detail: String)
 
-    fun messageFor(error: WebRequestError): Message = when (error.code) {
+    fun messageFor(error: WebRequestError): Message = messageFor(error.code, error.category)
+
+    /** The plain words for a GeckoView load error code and category. Also used by the log, so both read the same. */
+    internal fun messageFor(code: Int, category: Int): Message = when (code) {
         WebRequestError.ERROR_OFFLINE -> Message(
             "You're offline",
             "This device has no connection right now. Check Wi-Fi or mobile data, then try again."
@@ -43,7 +46,15 @@ object ErrorPage {
             "That address doesn't look right",
             "Check the address for typos, then try again."
         )
-        else -> when (error.category) {
+        else -> when (category) {
+            WebRequestError.ERROR_CATEGORY_URI -> Message(
+                "That address doesn't look right",
+                "Check the address for typos, then try again."
+            )
+            WebRequestError.ERROR_CATEGORY_PROXY -> Message(
+                "A proxy stopped the page",
+                "The connection goes through a proxy that refused the request. Check the proxy settings on this device."
+            )
             WebRequestError.ERROR_CATEGORY_NETWORK -> Message(
                 "The page could not be loaded",
                 "There was a problem with the connection. Try again."

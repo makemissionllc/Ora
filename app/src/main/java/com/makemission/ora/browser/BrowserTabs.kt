@@ -206,7 +206,8 @@ class BrowserTab(
                 error: WebRequestError
             ): GeckoResult<String>? {
                 val failed = uri.orEmpty()
-                plog.error("page", "Could not load $failed: category ${error.category}, code ${error.code}")
+                // The plain title the error page shows, so the log and the page say the same thing.
+                plog.error("page", "Could not load $failed: ${ErrorPage.messageFor(error).title}")
                 // Show a plain explanation with a Try again button, in place of GeckoView's blank error page.
                 if (failed.isBlank() || failed.startsWith("data:")) return null
                 return GeckoResult.fromValue(ErrorPage.uriFor(failed, error))
