@@ -17,8 +17,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The speckled grain behind tiles and rows (the start page, Lab and Diagnostics) is gone. It was Android's press ripple; the press now only shrinks the tile a little.
 
 **Added**
-- Private tab lock: with the PIN lock on, Settings > Privacy can lock only private tabs instead of the whole app. A locked private tab shows "Private tabs are locked" and a Go to a regular tab button, so the lock never traps you.
-- Reader view: the ⋯ menu has a Reader view row that shows the article without the clutter and says how long it takes to read. A bar at the bottom changes the text size, Sans or Serif, and the page colour (Stone, Paper or Basalt), and the choices are kept in Settings > Appearance. Back or the close button returns to the page. (`6e24dae`)
 - App lock: Settings > Privacy can ask for a PIN when Ora opens and whenever you come back to it. The PIN is kept only as a salted hash, never as the number itself. After five wrong tries you wait 30 seconds, then longer each time, and the lock screen counts it down. (`dff3c60`)
 - HTTPS-only mode: a Privacy switch that loads pages over a secure connection only. (`dff3c60`)
 - Close all: the tab overview has a Close all button. It asks first, then opens one start page. The last 10 pages can be brought back from Reopen closed tab. (`32294e2`)
@@ -34,9 +32,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The tab overview has the Mineral look on phone and tablet: the open tab has a Chalk ring, each tab shows an initial and a round close button, New tab is Chalk and Close all is red. The search box says how many tabs you have open, such as "Search 9 open tabs". (`470a20c`)
 - The Library has the Mineral look: round Bookmarks and History tabs, a round search box and a coloured letter beside each page. The History list on the tablet sidebar matches. Under your history it now says "Private tabs are never saved." (`37594fb`)
 - The card a site shows when it asks for your camera, microphone, location or notifications has the Mineral look: an icon, a clear question, a red Block, a grey Not now and a light Allow. It now says that Not now asks again next time. (`3040ffc`)
-- The lock screen has the Mineral look: the Ora mark, "Enter your PIN", a row of dots that fill as you type and a round keypad. Hold the delete key to clear the whole PIN at once. It now follows Light, Dark and Pure dark instead of always showing Light. (`d466b61`)
-- The tablet sidebar has the Mineral look: the open profile is a Chalk pill, Tabs, Bookmarks and History sit in a round control, and each row has a coloured letter. The open tab has a soft fill and a small dot. On phones the profile chips in the tab overview match. (`9205d78`)
-- Settings has the Mineral look: cards are rounded Slate, switches have a Chalk track and a dark knob, Done is a Chalk pill, the open category on the tablet is a Chalk pill and Clear browsing data is red. Every switch now gives a short tap of vibration when it flips. (`3ad3c58`)
 - Switching tabs now fades the page in instead of cutting over. With Remove animations on, it is instant. (`638b37c`)
 - With a keyboard attached, Ctrl+Tab moves to the next open tab. (`638b37c`)
 
@@ -71,7 +66,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Address bar swipe: swipe sideways on the address bar to move through open tabs, the pages of the current tab, or profiles. Choose the target and the motion in Settings > Address bar swipe. (`01de1e1`)
 - Full-screen video: swipe up or down on the left for brightness and on the right for volume. Turn this off in Settings > Video. (`01de1e1`)
 - Full-screen video: a seek bar along the bottom shows where the video is and lets you drag to another point. (`11f3e74`)
-- Full-screen video: double-tap the left half to go back 10 seconds, or the right half to go forward 10. Repeated taps add up in one "+N s" hint. (`ed85a8a`)
 - On phones, tapping the shrunk address pill brings the full bar back, instead of opening the address for editing. (`01de1e1`)
 
 **Fixed**
