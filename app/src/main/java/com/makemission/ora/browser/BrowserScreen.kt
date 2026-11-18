@@ -173,6 +173,7 @@ import com.makemission.ora.settings.AddressSwipeTarget
 import com.makemission.ora.settings.BarStyle
 import com.makemission.ora.security.AppLock
 import com.makemission.ora.security.LockScreen
+import com.makemission.ora.security.lockScreenVisible
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.DarkBrowserColors
@@ -1293,11 +1294,12 @@ private fun BrowserContent(
     val lockWholeApp by settings.appLockWholeApp.collectAsState()
     LockScreen(
         settings = settings,
-        visible = AppLock.locked && !lockWholeApp && selected.isPrivate,
+        visible = lockScreenVisible(AppLock.locked, lockWholeApp, selected.isPrivate, AppLock.unlockWanted),
         title = "Private tabs are locked",
         leaveLabel = "Go to a regular tab",
         onLeave = {
             UsageStats.count("security.leave_private")
+            AppLock.dismissUnlockRequest()
             val regular = tabs.tabs.firstOrNull { !it.isPrivate }
             if (regular != null) tabs.select(regular.id) else tabs.newTab(BrowserTabs.START_URL)
         },

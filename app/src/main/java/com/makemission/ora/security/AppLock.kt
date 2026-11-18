@@ -23,6 +23,21 @@ object AppLock {
     var locked by mutableStateOf(false)
         private set
 
+    /** Set when the user asks for a private tab while locked, so the lock screen shows even on a regular tab. */
+    var unlockWanted by mutableStateOf(false)
+        private set
+
+    fun requestUnlock() {
+        if (locked && !unlockWanted) {
+            unlockWanted = true
+            BrowserLog.info("security", "Private tab asked for the PIN")
+        }
+    }
+
+    fun dismissUnlockRequest() {
+        unlockWanted = false
+    }
+
     /** Starts locked when a PIN is set. Call once from onCreate. */
     fun init(settings: SettingsRepository) {
         locked = settings.appLockRecord.value != null
@@ -46,6 +61,7 @@ object AppLock {
         if (ok) {
             settings.setAppLockFailures(0, 0)
             locked = false
+            unlockWanted = false
             UsageStats.count("security.unlock")
             BrowserLog.info("security", "App unlocked")
             return Result.OK
@@ -75,8 +91,16 @@ object AppLock {
     fun turnOff(settings: SettingsRepository) {
         settings.setAppLockRecord(null)
         locked = false
+        unlockWanted = false
     }
 }
+
+/**
+ * Whether the lock screen covers the browser. It shows when the app is locked and either the whole app is
+ * covered, the selected tab is private, or a private tab was asked for (so the user can unlock from a regular tab).
+ */
+internal fun lockScreenVisible(locked: Boolean, wholeApp: Boolean, selectedPrivate: Boolean, unlockWanted: Boolean): Boolean =
+    locked && (wholeApp || selectedPrivate || unlockWanted)
 
 /** What a tab list may show for [this]: a locked private tab is only ever called "Private tab". */
 fun BrowserTab.shownTitle(fallback: String): String =

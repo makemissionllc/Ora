@@ -477,6 +477,7 @@ class BrowserTabs(
         // A private tab is never created while the app is locked: it could not be shown, and nothing may load behind the lock.
         if (isPrivate && AppLock.locked) {
             BrowserLog.warn("tabs", "Did not open a private tab: the app is locked")
+            AppLock.requestUnlock()
             InAppNotices.show("Unlock Ora to open a private tab")
             return selected ?: tabs.first()
         }

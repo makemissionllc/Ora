@@ -30,6 +30,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The Downloads page opens from the toolbar button and shrinks back into it when closed, and it has a Copy link action with a short confirmation on the details page. The tablet layout is not checked on a device yet.  (`e182fda`)
 
 **Fixed**
+- With the PIN lock on, asking for a private tab now shows the lock screen even when you are on a regular tab, so you can unlock from there. Before, the lock could stay on with no way to enter the PIN, and private tabs would not open.  (commit pending)
 - Swiping the address bar moves only between tabs in the current space. From a normal tab it no longer lands on a private tab, and from a private tab it no longer lands on a normal one.  (commit pending)
 - Links and images opened from a private tab (Open in new tab, Open in background tab, Open image in new tab) now open as private tabs instead of normal tabs. Nothing about them is logged.  (commit pending)
 - Searches are no longer written to the log with the words you typed. The log now says only which search engine was used, for example "Searched with Google". Searches from a private tab leave no log line at all.  (commit pending)
