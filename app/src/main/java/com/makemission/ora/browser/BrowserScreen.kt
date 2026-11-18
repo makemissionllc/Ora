@@ -286,7 +286,8 @@ fun BrowserScreen(
         }
     }
     CompositionLocalProvider(LocalBrowserColors provides palette) {
-        BrowserContent(settings, profiles, modifier)
+        // The notice comes first on a first launch; nothing of the browser is composed until it is accepted.
+        com.makemission.ora.onboarding.FirstRunHost(settings) { BrowserContent(settings, profiles, modifier) }
         // Drawn inside the palette so the lock follows Light, Dark and Pure dark like everything else.
         val wholeApp by settings.appLockWholeApp.collectAsState()
         LockScreen(settings, visible = AppLock.locked && wholeApp)

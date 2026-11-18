@@ -141,6 +141,19 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Pop-up blocking ${if (enabled) "on" else "off"}")
     }
 
+    private val _noticeVersion = MutableStateFlow(prefs.getInt(KEY_NOTICE_VERSION, 0))
+    /** The notice version the user accepted, 0 if never. A newer notice version shows it again. */
+    val noticeAcceptedVersion: StateFlow<Int> = _noticeVersion.asStateFlow()
+    /** When the notice was accepted, as yyyy-MM-dd, or empty. */
+    fun noticeAcceptedDate(): String = prefs.getString(KEY_NOTICE_DATE, "") ?: ""
+
+    fun acceptNotice(version: Int) {
+        val date = java.time.LocalDate.now().toString()
+        prefs.edit().putInt(KEY_NOTICE_VERSION, version).putString(KEY_NOTICE_DATE, date).apply()
+        _noticeVersion.value = version
+        BrowserLog.info("notice", "Notice accepted (version $version)")
+    }
+
     private val _openLinksInApps = MutableStateFlow(com.makemission.ora.browser.AppLinkMode.fromKey(prefs.getString(KEY_OPEN_LINKS_IN_APPS, null)))
     /** Settings > Open links in apps: Ask (default), Always or Never. Private tabs always ask. */
     val openLinksInApps: StateFlow<com.makemission.ora.browser.AppLinkMode> = _openLinksInApps.asStateFlow()
@@ -518,6 +531,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_WEBSITE_THEME = "website_theme"
         private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"
         private const val KEY_BLOCK_POPUPS = "block_popups"
+        private const val KEY_NOTICE_VERSION = "notice_version"
+        private const val KEY_NOTICE_DATE = "notice_date"
         private const val KEY_OPEN_LINKS_IN_APPS = "open_links_in_apps"
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_VIDEO_GESTURES = "video_gestures"
