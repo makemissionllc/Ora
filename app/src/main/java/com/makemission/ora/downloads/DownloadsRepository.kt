@@ -66,12 +66,14 @@ class DownloadsRepository(
     private val context: Context,
     /** Read when a download starts or resumes: true lets plain http:// files use the parts engine. */
     private val fastHttp: () -> Boolean = { false },
+    /** Sends the download requests. The app passes the GeckoView-backed transport; tests pass a mock server. */
+    transport: DownloadTransport = HttpUrlTransport(),
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val dir = File(context.filesDir, "downloads").apply { mkdirs() }
-    private val engine = DownloadEngine()
-    private val store = DownloadStore(File(dir, "queue.json"))
+    private val engine = DownloadEngine(transport)
+    private val store = DownloadStore(context, File(dir, "queue.json"))
     private val jobs = ConcurrentHashMap<Long, Job>()
     /** The parts and validator for each unfinished download. Kept on failure so a retry resumes. */
     private val tasks = ConcurrentHashMap<Long, Task>()

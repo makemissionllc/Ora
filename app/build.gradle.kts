@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -77,6 +78,13 @@ dependencies {
     testImplementation(libs.junit)
     // The Android JSON classes are stubs in host tests; this is the real implementation.
     testImplementation("org.json:json:20231013")
+    testImplementation(libs.robolectric)
+    testImplementation("androidx.test:core:1.7.0")
+    testImplementation(libs.mockwebserver)
+    testImplementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

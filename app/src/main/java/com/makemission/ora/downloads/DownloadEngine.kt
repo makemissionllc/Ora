@@ -5,8 +5,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -16,8 +16,6 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
-import java.net.HttpURLConnection
-import java.net.URL
 
 /** A byte range of the file: [start] to [end] inclusive. [end] is -1 when the size is unknown. */
 data class Segment(val start: Long, val end: Long, val done: Long = 0, val finished: Boolean = false) {
@@ -38,8 +36,9 @@ class FileChangedException(message: String) : Exception(message)
  * Fetches a file in parallel parts with HTTP range requests. Each part writes its own slice of a single
  * part file, so the parts can be paused, resumed after an app restart, and retried one by one.
  * Servers without range support are fetched as one stream that restarts on a retry.
+ * Requests go through [transport], so the app and the tests can send them differently.
  */
-class DownloadEngine {
+class DownloadEngine(private val transport: DownloadTransport = HttpUrlTransport()) {
 
     companion object {
         /** Files smaller than this are fetched in one piece. */
@@ -47,27 +46,20 @@ class DownloadEngine {
         const val MAX_PARTS = 4
         const val MAX_ATTEMPTS = 6
         private const val BUFFER = 64 * 1024
-        private const val CONNECT_TIMEOUT_MS = 15_000
-        private const val READ_TIMEOUT_MS = 30_000
     }
 
     /** Asks the server for the size and range support with a one-byte request. Blocking; call on IO. */
     fun probe(url: String): Probe {
-        val conn = open(url)
-        conn.setRequestProperty("Range", "bytes=0-0")
-        try {
-            val code = conn.responseCode
-            val etag = conn.getHeaderField("ETag")
-            return when (code) {
+        transport.get(url, mapOf("Range" to "bytes=0-0")).use { response ->
+            val etag = response.header("ETag")
+            return when (response.code) {
                 206 -> {
-                    val total = conn.getHeaderField("Content-Range")?.substringAfterLast('/')?.toLongOrNull() ?: -1L
+                    val total = response.header("Content-Range")?.substringAfterLast('/')?.toLongOrNull() ?: -1L
                     Probe(total, etag, total > 0)
                 }
-                200 -> Probe(conn.getHeaderField("Content-Length")?.toLongOrNull() ?: -1L, etag, false)
-                else -> throw IOException("The server answered HTTP $code")
+                200 -> Probe(response.header("Content-Length")?.toLongOrNull() ?: -1L, etag, false)
+                else -> throw IOException("The server answered HTTP ${response.code}")
             }
-        } finally {
-            conn.disconnect()
         }
     }
 
@@ -143,39 +135,44 @@ class DownloadEngine {
         onBytes: (Int) -> Unit,
     ) = withContext(Dispatchers.IO) {
         val seg = part.seg
-        val conn = open(url)
-        // Stopping the caller closes the socket so a blocked read ends at once.
+        val wantRange = ranged && seg.end >= 0
+        val headers = mutableMapOf<String, String>()
+        if (wantRange) {
+            headers["Range"] = "bytes=${seg.start + seg.done}-${seg.end}"
+            etag?.let { headers["If-Range"] = it }
+        }
+        var open: RemoteResponse? = null
+        // Stopping the caller closes the response so a blocked read ends at once.
         val watcher = CoroutineScope(currentCoroutineContext()).launch(Dispatchers.IO) {
             try {
                 awaitCancellation()
             } finally {
-                conn.disconnect()
+                open?.close()
             }
         }
         try {
-            val wantRange = ranged && seg.end >= 0
-            if (wantRange) {
-                conn.setRequestProperty("Range", "bytes=${seg.start + seg.done}-${seg.end}")
-                etag?.let { conn.setRequestProperty("If-Range", it) }
-            }
-            val code = conn.responseCode
-            if (wantRange && code == 200) throw FileChangedException("The file changed on the server. Retry to start it again.")
-            if (wantRange && code != 206 && code != 416) throw IOException("The server answered HTTP $code")
-            if (!wantRange && code != 200) throw IOException("The server answered HTTP $code")
-            if (code == 416) throw FileChangedException("The file changed on the server. Retry to start it again.")
+            val response = transport.get(url, headers)
+            open = response
+            response.use { r ->
+                val code = r.code
+                if (wantRange && code == 200) throw FileChangedException("The file changed on the server. Retry to start it again.")
+                if (wantRange && code != 206 && code != 416) throw IOException("The server answered HTTP $code")
+                if (!wantRange && code != 200) throw IOException("The server answered HTTP $code")
+                if (code == 416) throw FileChangedException("The file changed on the server. Retry to start it again.")
 
-            val start = if (wantRange) seg.start + seg.done else 0L
-            RandomAccessFile(file, "rw").use { raf ->
-                raf.seek(start)
-                conn.inputStream.use { input ->
-                    val buffer = ByteArray(BUFFER)
-                    while (true) {
-                        currentCoroutineContext().ensureActive()
-                        val read = input.read(buffer)
-                        if (read < 0) break
-                        raf.write(buffer, 0, read)
-                        part.seg = part.seg.copy(done = part.seg.done + read)
-                        onBytes(part.index)
+                val start = if (wantRange) seg.start + seg.done else 0L
+                RandomAccessFile(file, "rw").use { raf ->
+                    raf.seek(start)
+                    r.body.use { input ->
+                        val buffer = ByteArray(BUFFER)
+                        while (true) {
+                            currentCoroutineContext().ensureActive()
+                            val read = input.read(buffer)
+                            if (read < 0) break
+                            raf.write(buffer, 0, read)
+                            part.seg = part.seg.copy(done = part.seg.done + read)
+                            onBytes(part.index)
+                        }
                     }
                 }
             }
@@ -187,16 +184,7 @@ class DownloadEngine {
             throw e
         } finally {
             watcher.cancel()
-            conn.disconnect()
+            open?.close()
         }
-    }
-
-    private fun open(url: String): HttpURLConnection {
-        val conn = URL(url).openConnection() as HttpURLConnection
-        conn.connectTimeout = CONNECT_TIMEOUT_MS
-        conn.readTimeout = READ_TIMEOUT_MS
-        conn.instanceFollowRedirects = true
-        conn.setRequestProperty("Accept-Encoding", "identity")
-        return conn
     }
 }

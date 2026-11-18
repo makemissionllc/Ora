@@ -1,6 +1,14 @@
 package com.makemission.ora.downloads
 
+import android.content.Context
+import androidx.room.Room
 import com.makemission.ora.log.BrowserLog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -18,50 +26,70 @@ data class SavedDownload(
     val parts: List<Segment>,
 )
 
-/** Reads and writes the queue of unfinished downloads as one small JSON file in app storage. */
-class DownloadStore(private val file: File) {
+/**
+ * Saves the queue of unfinished downloads in a Room database. The first run after an update moves the old
+ * queue.json into the database and deletes the file. Writes run one at a time, in the order they were made.
+ */
+class DownloadStore(context: Context, private val legacyFile: File) {
 
-    fun load(): List<SavedDownload> {
-        if (!file.exists()) return emptyList()
-        return try {
-            val array = JSONArray(file.readText())
-            (0 until array.length()).map { i -> fromJson(array.getJSONObject(i)) }
-        } catch (e: Exception) {
-            BrowserLog.error("download", "Could not read the saved download list: ${e.message}")
-            emptyList()
+    private val dao = Room.databaseBuilder(context, DownloadDatabase::class.java, "ora_downloads.db")
+        .build()
+        .downloadDao()
+    private val writes = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
+
+    /** Reads the saved queue. Called once at start-up, so it blocks briefly. */
+    fun load(): List<SavedDownload> = runBlocking {
+        migrateLegacyFile()
+        val parts = dao.parts().groupBy { it.downloadId }
+        dao.rows().map { row ->
+            SavedDownload(
+                id = row.id,
+                fileName = row.fileName,
+                url = row.url,
+                mimeType = row.mimeType,
+                totalBytes = row.totalBytes,
+                etag = row.etag,
+                ranged = row.ranged,
+                startedAt = row.startedAt,
+                parts = parts[row.id].orEmpty().sortedBy { it.idx }.map { Segment(it.start, it.end, it.done, it.finished) },
+            )
         }
     }
 
-    fun save(downloads: List<SavedDownload>) {
-        val array = JSONArray()
-        downloads.forEach { array.put(toJson(it)) }
-        try {
-            // Write beside the file, then swap, so a crash mid-write keeps the last good list.
-            val temp = File(file.parentFile, file.name + ".tmp")
-            temp.writeText(array.toString())
-            if (!temp.renameTo(file)) {
-                file.writeText(array.toString())
-                temp.delete()
+    /** Replaces the saved queue. The returned job finishes when the write is on disk. */
+    fun save(downloads: List<SavedDownload>): Job {
+        val rows = downloads.map { d ->
+            DownloadRow(d.id, d.fileName, d.url, d.mimeType, d.totalBytes, d.etag, d.ranged, d.startedAt)
+        }
+        val parts = downloads.flatMap { d ->
+            d.parts.mapIndexed { i, s -> PartRow(d.id, i, s.start, s.end, s.done, s.finished) }
+        }
+        return writes.launch {
+            try {
+                dao.replaceAll(rows, parts)
+            } catch (e: Exception) {
+                BrowserLog.error("download", "Could not save the download list", e)
             }
-        } catch (e: Exception) {
-            BrowserLog.error("download", "Could not save the download list: ${e.message}")
         }
     }
 
-    private fun toJson(d: SavedDownload) = JSONObject().apply {
-        put("id", d.id)
-        put("fileName", d.fileName)
-        put("url", d.url)
-        put("mimeType", d.mimeType ?: JSONObject.NULL)
-        put("totalBytes", d.totalBytes)
-        put("etag", d.etag ?: JSONObject.NULL)
-        put("ranged", d.ranged)
-        put("startedAt", d.startedAt)
-        put("parts", JSONArray().apply {
-            d.parts.forEach { p ->
-                put(JSONObject().put("start", p.start).put("end", p.end).put("done", p.done).put("finished", p.finished))
+    private suspend fun migrateLegacyFile() {
+        if (!legacyFile.exists()) return
+        if (dao.rows().isEmpty()) {
+            try {
+                val array = JSONArray(legacyFile.readText())
+                val saved = (0 until array.length()).map { fromJson(array.getJSONObject(it)) }
+                dao.replaceAll(
+                    saved.map { d -> DownloadRow(d.id, d.fileName, d.url, d.mimeType, d.totalBytes, d.etag, d.ranged, d.startedAt) },
+                    saved.flatMap { d -> d.parts.mapIndexed { i, s -> PartRow(d.id, i, s.start, s.end, s.done, s.finished) } },
+                )
+                BrowserLog.info("download", "Moved ${saved.size} saved downloads into the database")
+            } catch (e: Exception) {
+                BrowserLog.error("download", "Could not read the old download list", e)
+                return
             }
-        })
+        }
+        legacyFile.delete()
     }
 
     private fun fromJson(o: JSONObject) = SavedDownload(

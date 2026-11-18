@@ -336,7 +336,7 @@ private fun BrowserContent(
     }
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
-    val downloads = remember { DownloadsRepository(context) { settings.fastHttpDownloads.value } }
+    val downloads = remember { DownloadsRepository(context, fastHttp = { settings.fastHttpDownloads.value }) }
     var showDownloads by remember { mutableStateOf(false) }
     // Where the Downloads page grows from: the toolbar button's centre, or the top-right menu corner.
     var downloadsOrigin by remember { mutableStateOf(TransformOrigin(1f, 0f)) }
