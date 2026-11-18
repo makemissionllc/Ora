@@ -164,10 +164,11 @@ import com.makemission.ora.profiles.ProfileSwitcher
 import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.extensions.ExtensionsRepository
 import com.makemission.ora.extensions.ExtensionsScreen
-import com.makemission.ora.security.LockScreen
 import com.makemission.ora.settings.AddressSwipeEffect
 import com.makemission.ora.settings.AddressSwipeTarget
 import com.makemission.ora.settings.BarStyle
+import com.makemission.ora.security.AppLock
+import com.makemission.ora.security.LockScreen
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.DarkBrowserColors
@@ -260,7 +261,8 @@ fun BrowserScreen(
     CompositionLocalProvider(LocalBrowserColors provides palette) {
         BrowserContent(settings, profiles, modifier)
         // Drawn inside the palette so the lock follows Light, Dark and Pure dark like everything else.
-        LockScreen(settings)
+        val wholeApp by settings.appLockWholeApp.collectAsState()
+        LockScreen(settings, visible = AppLock.locked && wholeApp)
     }
 }
 
@@ -944,8 +946,6 @@ private fun BrowserContent(
                 ) {
                     UndoCloseOffer(visible = closed != null, onUndo = { tabs.reopenLastClosed() })
                 }
-                if (showFind) {
-                    // Keyed on the tab, so switching tabs closes the bar and clears its highlights.
                 // Back closes the reader first, so it never leaves the page behind it.
                 androidx.activity.compose.BackHandler(enabled = selected.reader.open) { selected.reader.close() }
                 key(selected.id) {
@@ -956,6 +956,8 @@ private fun BrowserContent(
                         modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = if (isTablet) 28.dp else BrowserTokens.SelectionMenuBottomInset),
                     )
                 }
+                if (showFind) {
+                    // Keyed on the tab, so switching tabs closes the bar and clears its highlights.
                     key(selected.id) {
                         FindBar(
                             session = selected.session,
@@ -979,8 +981,6 @@ private fun BrowserContent(
                         onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },
                         onFind = { showFind = true },
-                        closedTabTitle = tabs.lastClosedTitle,
-                        onReopenClosed = onReopenClosed,
                         readerOpen = selected.reader.open,
                         readerHint = when {
                             selected.reader.open -> "Showing ${selected.reader.site}"
@@ -1001,6 +1001,8 @@ private fun BrowserContent(
                                 )
                             }
                         },
+                        closedTabTitle = tabs.lastClosedTitle,
+                        onReopenClosed = onReopenClosed,
                         onAddToHome = {
                             val url = selected.url
                             if (url == BrowserTabs.START_URL || url.isBlank() || selected.isPrivate) {
@@ -1177,6 +1179,20 @@ private fun BrowserContent(
             insets = Modifier.statusBarsPadding().navigationBarsPadding(),
         )
     }
+    // With the PIN lock on, a private tab stays behind the lock screen until the PIN is entered.
+    // Leaving it goes to a regular tab, so the lock never traps the user.
+    val lockWholeApp by settings.appLockWholeApp.collectAsState()
+    LockScreen(
+        settings = settings,
+        visible = AppLock.locked && !lockWholeApp && selected.isPrivate,
+        title = "Private tabs are locked",
+        leaveLabel = "Go to a regular tab",
+        onLeave = {
+            UsageStats.count("security.leave_private")
+            val regular = tabs.tabs.firstOrNull { !it.isPrivate }
+            if (regular != null) tabs.select(regular.id) else tabs.newTab(BrowserTabs.START_URL)
+        },
+    )
     }
 }
 

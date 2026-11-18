@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.makemission.ora.browser.BrowserScreen
 import com.makemission.ora.browser.ExternalLinks
@@ -12,6 +14,7 @@ import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
 import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.security.AppLock
+import com.makemission.ora.security.LockScreen
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.OraTheme
 

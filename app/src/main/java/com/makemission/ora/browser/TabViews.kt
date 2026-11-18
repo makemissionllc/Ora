@@ -53,6 +53,8 @@ import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.history.HistoryEntry
 import androidx.compose.material3.AlertDialog
+import com.makemission.ora.security.AppLock
+import com.makemission.ora.security.shownTitle
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.Mineral
 import com.makemission.ora.ui.theme.browserColors
@@ -74,7 +76,7 @@ fun TabGrid(
     var query by rememberSaveable { mutableStateOf("") }
     val needle = query.trim()
     val allTabs = tabs.tabs
-    val tabList = allTabs.filter { needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true) }
+    val tabList = allTabs.filter { needle.isEmpty() || it.shownTitle(displayUrl(it.url)).contains(needle, true) || (!(it.isPrivate && AppLock.locked) && it.url.contains(needle, true)) }
     val countText = when {
         needle.isNotEmpty() -> "${tabList.size} of ${allTabs.size} tabs"
         allTabs.size == 1 -> "1 tab"
@@ -131,7 +133,7 @@ fun TabGrid(
         ) {
             gridItems(tabList, key = { it.id }) { tab ->
                 TabTile(
-                    title = tab.title.ifBlank { displayUrl(tab.url) },
+                    title = tab.shownTitle(displayUrl(tab.url)),
                     thumbnail = tab.thumbnail,
                     selected = tab.id == tabs.selectedId,
                     onClick = { onSelect(tab.id) },
@@ -292,7 +294,7 @@ fun TabSidebar(
     var query by remember { mutableStateOf("") }
     val needle = query.trim()
     val shownTabs = tabs.tabs.filter {
-        needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true)
+        needle.isEmpty() || it.shownTitle(displayUrl(it.url)).contains(needle, true) || (!(it.isPrivate && AppLock.locked) && it.url.contains(needle, true))
     }
     val shownBookmarks = bookmarks.filter {
         needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true)
@@ -387,7 +389,7 @@ fun TabSidebar(
                     }
                     items(shownTabs, key = { it.id }) { tab ->
                         SidebarRow(
-                            label = tab.title.ifBlank { displayUrl(tab.url) },
+                            label = tab.shownTitle(displayUrl(tab.url)),
                             url = tab.url,
                             selected = tab.id == tabs.selectedId,
                             onClick = { tabs.select(tab.id) }

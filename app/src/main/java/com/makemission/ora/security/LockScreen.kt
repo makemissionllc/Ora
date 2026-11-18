@@ -61,9 +61,15 @@ import kotlinx.coroutines.launch
 
 /** Covers the browser while the app lock is engaged. Fades and scales with the shared overlay motion. */
 @Composable
-fun LockScreen(settings: SettingsRepository) {
+fun LockScreen(
+    settings: SettingsRepository,
+    visible: Boolean,
+    title: String = "Ora is locked",
+    leaveLabel: String? = null,
+    onLeave: () -> Unit = {},
+) {
     AnimatedVisibility(
-        visible = AppLock.locked,
+        visible = visible,
         enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), OraMotion.MORPH_SCALE),
         exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), OraMotion.MORPH_SCALE)
     ) {
@@ -110,7 +116,7 @@ fun LockScreen(settings: SettingsRepository) {
             Spacer(Modifier.height(22.dp))
             Text("Enter your PIN", fontSize = 26.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
             Spacer(Modifier.height(10.dp))
-            Text("Ora is locked", fontSize = 15.sp, color = colors.SecondaryText)
+            Text(title, fontSize = 15.sp, color = colors.SecondaryText)
             Spacer(Modifier.height(28.dp))
             PinDots(filled = pin.length)
             Spacer(Modifier.height(14.dp))
@@ -120,6 +126,12 @@ fun LockScreen(settings: SettingsRepository) {
             }
             // Keeps its height so the keypad does not jump when a message appears.
             Text(message ?: " ", fontSize = 13.sp, color = if (message != null) Mineral.Ember else Color.Transparent)
+            if (leaveLabel != null) {
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = onLeave) {
+                    Text(leaveLabel, color = colors.SecondaryText)
+                }
+            }
             Spacer(Modifier.weight(1f))
             val enabled = waitMs <= 0
             Column(

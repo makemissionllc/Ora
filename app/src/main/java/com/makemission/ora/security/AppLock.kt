@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
+import com.makemission.ora.browser.BrowserTab
 import com.makemission.ora.settings.SettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -76,3 +77,7 @@ object AppLock {
         locked = false
     }
 }
+
+/** What a tab list may show for [this]: a locked private tab is only ever called "Private tab". */
+fun BrowserTab.shownTitle(fallback: String): String =
+    if (isPrivate && AppLock.locked) "Private tab" else title.ifBlank { fallback }

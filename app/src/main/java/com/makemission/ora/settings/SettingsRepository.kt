@@ -248,6 +248,17 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "App lock ${if (record != null) "on" else "off"}")
     }
 
+    private val _appLockWholeApp = MutableStateFlow(prefs.getBoolean(KEY_APP_LOCK_WHOLE, false))
+    /** False (the default): the PIN guards private tabs only. True: it covers the whole app. */
+    val appLockWholeApp: StateFlow<Boolean> = _appLockWholeApp.asStateFlow()
+
+    fun setAppLockWholeApp(whole: Boolean) {
+        prefs.edit().putBoolean(KEY_APP_LOCK_WHOLE, whole).apply()
+        _appLockWholeApp.value = whole
+        UsageStats.count("setting.app_lock_scope")
+        BrowserLog.info("settings", "PIN lock covers ${if (whole) "the whole app" else "private tabs only"}")
+    }
+
     fun appLockFailures(): Int = prefs.getInt(KEY_APP_LOCK_FAILS, 0)
     fun appLockLockedUntil(): Long = prefs.getLong(KEY_APP_LOCK_UNTIL, 0L)
     fun setAppLockFailures(count: Int, lockedUntil: Long) {
@@ -486,6 +497,9 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_VIDEO_GESTURES = "video_gestures"
         private const val KEY_VIDEO_BACK_EXITS = "video_back_exits"
+        private const val KEY_READER_SIZE = "reader_size"
+        private const val KEY_READER_SERIF = "reader_serif"
+        private const val KEY_READER_PAGE = "reader_page"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
         private const val KEY_QUICK_RESUME = "quick_resume"
         private const val KEY_SAVE_HISTORY = "save_history"
@@ -497,10 +511,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
-        private const val KEY_READER_SIZE = "reader_size"
-        private const val KEY_READER_SERIF = "reader_serif"
-        private const val KEY_READER_PAGE = "reader_page"
         private const val KEY_APP_LOCK = "app_lock_record"
+        private const val KEY_APP_LOCK_WHOLE = "app_lock_whole"
         private const val KEY_APP_LOCK_FAILS = "app_lock_fails"
         private const val KEY_APP_LOCK_UNTIL = "app_lock_until"
         private const val KEY_HTTPS_ONLY = "https_only"

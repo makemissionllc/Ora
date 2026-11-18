@@ -118,6 +118,7 @@ fun SettingsScreen(
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val httpsOnly by settings.httpsOnly.collectAsState()
     val appLockRecord by settings.appLockRecord.collectAsState()
+    val appLockWholeApp by settings.appLockWholeApp.collectAsState()
     var appLockDialog by remember { mutableStateOf(false) }
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val quickResume by settings.quickResume.collectAsState()
@@ -549,7 +550,6 @@ fun SettingsScreen(
                             }
                         }
                     }
-                    if (shown(SettingsCategory.PRIVACY)) item {
                     if (shown(SettingsCategory.APPEARANCE)) item {
                         SectionTitle("Reader view")
                         val readerSerif by settings.readerSerif.collectAsState()
@@ -601,6 +601,7 @@ fun SettingsScreen(
                             }
                         }
                     }
+                    if (shown(SettingsCategory.PRIVACY)) item {
                         SectionTitle("History")
                         // Saving history: finished pages are listed in the Library (phone) or the sidebar (tablet).
                         Row(
@@ -775,15 +776,33 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                    Text("App lock", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text("PIN lock", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
-                                        if (appLockRecord != null) "On. Ora asks for your PIN when you open it. Tap to turn off."
-                                        else "Ask for a PIN when Ora opens or you come back to it. The PIN is kept only as a salted hash.",
+                                        if (appLockRecord != null) "On. Private tabs ask for your PIN, and ask again each time you come back to Ora. Tap to turn off."
+                                        else "Keep private tabs behind a PIN. The PIN is kept only as a salted hash.",
                                         fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
                                 MineralSwitch(checked = appLockRecord != null, label = "Switch", onChange = { appLockDialog = true })
+                            }
+                            if (appLockRecord != null) Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setAppLockWholeApp(!appLockWholeApp) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Text("Lock the whole app", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Cover regular tabs with the PIN too, not only private ones.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = appLockWholeApp, label = "Switch", onChange = { settings.setAppLockWholeApp(it) })
                             }
                             Row(
                                 modifier = Modifier
