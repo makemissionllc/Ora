@@ -330,7 +330,12 @@ class BrowserTab(
     private fun loadNow() {
         val state = restoreStateText
         val restored = state != null && restoreHistory(state)
-        if (!restored) session.loadUri(url)
+        if (!restored) {
+            // A history that cannot be read must not be saved again, or it would stay broken for good.
+            sessionState = null
+            restoreStateText = null
+            session.loadUri(url)
+        }
     }
 
     /** Loads a tab that was waiting. Does nothing if it already loaded. */

@@ -16,6 +16,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card.
 
 **Fixed**
+- Reopened tabs no longer fail with "Saved history is not valid": tabs saved before their page had loaded were read back as broken history. They now reopen at their address, and a history that cannot be read is dropped instead of being saved again.
 - Private tabs now have their own list and numbering, separate from normal tabs, and the tab counts no longer include them. A private tab cannot be opened while Ora is locked (a notice says to unlock first), and a pop-up from a private tab opens as a private tab.  (`8048a8c`)
 - Ora no longer starts twice when Android rebuilds its window right after launch: startup (crash handler, usage counts, app lock) runs once, and the window now survives font, density, language and similar changes. If a rebuild still happens, the log says so.  (`1a1c84d`)
 - Quick resume no longer saves your tabs while they are still coming back, and an empty list never replaces a good save, so reopened tabs keep their own pages and history. Ora now says "Reopened N tabs" when it restores several.  (`cd65469`)

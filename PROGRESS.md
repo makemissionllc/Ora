@@ -5,6 +5,7 @@ The status board for Ora. Update it with every change: move items between sectio
 Last updated: 2026-11-18, at commit `55c62be`.
 
 ## Done
+- Follow-up to quick resume (found in the exported log): a tab saved with no history was stored as JSON null and read back as the text "null" by Android's optString, so GeckoView rejected it as not valid. Now read with isNull; unreadable history is cleared. Test added. The all-same-URL tabs were not a save bug: the Personal profile restored 3 different URLs correctly. Window destruction is now logged.
 - Log privacy and persistence: `LogPrivacy` cuts every address to its domain before it is shown, copied, saved or sent to logcat; search terms are not logged; private tabs log nothing (`TabLog`); the log is saved to `ora-log.txt` in app storage (1 MB cap, newest 5,000 lines) with full date stamps. `LogPrivacyTest` covers redaction and the disk format.
 - Private tabs: own ids (-2 downward) and counts, logged per kind; newTab refuses a private tab while AppLock.locked; pop-ups from a private tab stay private. Private tabs are never saved, so none exist before unlock.
 - Lazy tab loading: reopened background tabs wait (`deferLoad`) and load on first select; their saved address and history are kept untouched and re-saved as they were.
@@ -224,3 +225,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-18 | Lazy tab loading | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |
 | 2026-11-18 | Private tab separation | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |
 | 2026-11-18 | Log privacy and persistence | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |
+| 2026-11-18 | Quick resume null-state fix | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |

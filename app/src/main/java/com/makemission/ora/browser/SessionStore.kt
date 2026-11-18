@@ -68,7 +68,7 @@ class SessionStore(private val storage: Storage) {
                 val array = json.getJSONArray("tabs")
                 val tabs = List(array.length()) {
                     val item = array.getJSONObject(it)
-                    SavedTab(item.getString("url"), item.optString("state", "").ifEmpty { null })
+                    SavedTab(item.getString("url"), stateOrNull(item))
                 }
                 Saved(tabs, selected)
             } else {
@@ -81,6 +81,13 @@ class SessionStore(private val storage: Storage) {
             null
         }
     }
+
+    /**
+     * The saved history text, or null when there is none. Android's optString turns a stored JSON null into the
+     * text "null", which GeckoView then rejects as "not valid"; so a missing state is checked for explicitly.
+     */
+    private fun stateOrNull(item: JSONObject): String? =
+        if (item.isNull("state")) null else item.getString("state").takeIf { it.isNotEmpty() && it != "null" }
 
     /** Forgets every saved tab, for all profiles. Used when quick resume is turned off. */
     fun clear() {

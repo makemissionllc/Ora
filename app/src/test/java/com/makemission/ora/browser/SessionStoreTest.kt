@@ -46,4 +46,16 @@ class SessionStoreTest {
         assertEquals(5, store.load("a")!!.tabs.size)
         assertEquals(1, store.load("b")!!.tabs.size)
     }
+
+    @Test
+    fun tabsSavedBeforeTheirHistoryWasReadComeBackWithNoHistory() {
+        val store = SessionStore(MapStorage())
+        val early = listOf(SessionStore.SavedTab("https://a.example", null), SessionStore.SavedTab("https://b.example", null))
+        store.save("p", early, 0)
+        assertEquals(early, store.load("p")!!.tabs)
+        // A state written as the text "null" (what the old reader produced) is also read as no history.
+        val raw = MapStorage()
+        raw.put("tabs_p", """{"selected":0,"tabs":[{"url":"https://a.example","state":"null"}]}""")
+        assertEquals(null, SessionStore(raw).load("p")!!.tabs[0].state)
+    }
 }

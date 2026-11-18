@@ -51,6 +51,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onDestroy() {
+        // Says why a window went away, so a double start shows its cause in the log.
+        BrowserLog.info("app", "Window destroyed (finishing=$isFinishing, config change=$isChangingConfigurations)")
+        super.onDestroy()
+    }
+
     // Lock again whenever Ora leaves the screen, so a phone put down mid-browse is not left open.
     override fun onStop() {
         super.onStop()
