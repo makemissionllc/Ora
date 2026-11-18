@@ -51,7 +51,12 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 
 ## Status bar rules
 
-22. **The status bar is frozen.** Do not change the status bar, its implementation, or its fade. That covers `StatusBar.kt`, the top-strip tint and theme-colour sampling (`ThemeColor.kt`, `assets/theme-color/`), the status-icon light/dark switching, the 84 dp scroll fade, and the page inset under the bar. Keep all of it exactly as it is in the current code.
+22. **The status bar is frozen.** Do not change the status bar, its implementation, or its fade. That covers:
+    - `browser/StatusBar.kt`: `StatusBarOverlay` (the solid strip and its scroll fade), `sampleTopRow` (the top-strip tint, read from the page's top pixels) and `isLightStatusStrip` (the icon light/dark decision).
+    - In `browser/BrowserScreen.kt`: the strip colour block (`stripColor`, `barColor`, the `isAppearanceLightStatusBars` effect and the `capturePixels` sampling that sets `selected.topColor`), the two `StatusBarOverlay` calls, and the page inset under the bar (`phoneZoneHeight` and the status-bar insets around the page).
+    - `BrowserTokens.StatusScrollFade` (the 84 dp fade) in `ui/theme/Theme.kt`.
+    - `topColor` on the tab in `browser/BrowserTabs.kt`.
+    There is no `ThemeColor.kt` or `assets/theme-color/` on this line; the page's own `theme-color` is not read. Keep all of it exactly as it is in the current code.
 23. **Ask before touching the status bar.** If a task appears to need a status-bar change, stop and check with the user first, every time, even when the change looks small. Do not edit status-bar code without that yes.
 
 ## Layout rules (protected)

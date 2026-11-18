@@ -112,6 +112,8 @@ Last updated: 2026-11-18, at commit `a1f02a2`.
 
 ## Pending
 
+- Optional: read the page's theme-color for the status-bar tint (see archive/browser-geckoview be8efc6). Needs my yes (rule 22).
+
 ### Passkeys: Google approval (owner)
 Until Google lists Ora as a privileged browser, a site's passkey register or sign-in can fail inside Ora (see Done). To ask:
 1. Package name: `com.makemission.ora`.
