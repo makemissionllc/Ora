@@ -176,6 +176,8 @@ class BrowserTab(
             ) {
                 // GeckoView reports about:blank when it opens; keep the start page address until a real load.
                 if (this@BrowserTab.url == BrowserTabs.START_URL && url == "about:blank") return
+                // A tab still waiting to be loaded keeps its saved address too, or the sidebar lists it as about:blank.
+                if (!loaded && url == "about:blank") return
                 url?.let { this@BrowserTab.url = it }
             }
 
