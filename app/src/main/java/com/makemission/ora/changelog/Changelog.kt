@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "The app icon is no longer cropped on the home screen. The Ora mark now sits in the middle of Android's icon shape on its own charcoal background, and it also works with themed icons.  (`3232d02`)"),
             ChangeItem(ChangeKind.ADDED, "Fast downloads over http: Settings > Privacy > Network has a new switch, off by default. On, plain http:// files download in parts and can be paused and resumed, the same as https files. Off, plain http files download on one connection and cannot be paused. Their data is not encrypted, and the switch says so.  (`352ab8d`)"),
             ChangeItem(ChangeKind.ADDED, "Downloads are split into parts when the site allows it, and a dropped connection is retried. Unfinished downloads come back paused after Ora restarts, so you choose when to continue.  (`352ab8d`)"),
             ChangeItem(ChangeKind.ADDED, "A \"Download started\" note appears at the bottom when a download begins and fades away by itself. Swipe it away if it covers something, or tap it to open Downloads.  (`352ab8d`)"),

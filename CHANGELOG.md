@@ -30,6 +30,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The Downloads page opens from the toolbar button and shrinks back into it when closed, and it has a Copy link action with a short confirmation on the details page. The tablet layout is not checked on a device yet.  (`e182fda`)
 
 **Fixed**
+- The app icon is no longer cropped on the home screen. The Ora mark now sits in the middle of Android's icon shape on its own charcoal background, and it also works with themed icons.  (`3232d02`)
 - A download that failed before it started is kept in the list after Ora restarts, so Retry is still there.  (`352ab8d`)
 - Tabs that were waiting to load when Ora was closed no longer lose their pages: they could be saved as blank, and open as a blank page.  (`e57a556`)
 - Find in page now waits for you to finish typing, so a word that is on the page no longer shows "No matches", and the count starts at 1 instead of moving on with every letter you type.  (`c59ddf0`)
