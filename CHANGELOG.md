@@ -20,6 +20,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The ⋯ menu panel on tablet no longer cuts off its top row: it starts below the top bar, has even space inside, and scrolls if it is taller than the screen.
 - With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card.
 
+**Changed**
+- The Downloads page now matches the design: a summary of what is moving (count, speed and bytes left), an All, Active, Done and Failed filter, Active and Today sections, and rows with a file-type tile and a four-part progress bar. Finished files open on tap and share on a long press, and each filter has its own empty message. Pause, resume and retry are not in yet. Phone only so far.  (`c59ddf0`)
+
 **Fixed**
 - Find in page now waits for you to finish typing, so a word that is on the page no longer shows "No matches", and the count starts at 1 instead of moving on with every letter you type.  (`c59ddf0`)
 - Tabs waiting to load after Ora reopens now show their website name in the tablet sidebar and the tab list, instead of "about:blank".  (`32b298f`)
