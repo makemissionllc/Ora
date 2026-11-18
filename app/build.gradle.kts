@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -21,8 +23,28 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // One personal key for debug and release, so the certificate hash never changes. The keystore and its
+    // passwords live outside the repo: ora.keystore, ora.keystore.password, ora.key.alias, ora.key.password in
+    // local.properties. When they are missing or the file is absent, builds fall back to the default debug key.
+    val localProps = Properties().apply {
+        rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+    }
+    val oraKeystore = localProps.getProperty("ora.keystore")?.let { file(it) }?.takeIf { it.isFile }
+    val oraSigning = if (oraKeystore != null && localProps.getProperty("ora.keystore.password") != null) {
+        signingConfigs.create("ora") {
+            storeFile = oraKeystore
+            storePassword = localProps.getProperty("ora.keystore.password")
+            keyAlias = localProps.getProperty("ora.key.alias", "ora")
+            keyPassword = localProps.getProperty("ora.key.password") ?: localProps.getProperty("ora.keystore.password")
+        }
+    } else null
+
     buildTypes {
+        debug {
+            if (oraSigning != null) signingConfig = oraSigning
+        }
         release {
+            if (oraSigning != null) signingConfig = oraSigning
             optimization {
                 enable = false
             }
