@@ -245,7 +245,8 @@ class BrowserTab(
         }
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onSessionStateChange(session: GeckoSession, state: GeckoSession.SessionState) {
-                sessionState = state.toString()
+                // A tab still waiting to load has an empty session; its saved history must not be replaced by that.
+                if (loaded) sessionState = state.toString()
             }
 
             override fun onPageStart(session: GeckoSession, url: String) {

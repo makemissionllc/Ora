@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Tabs that were waiting to load when Ora was closed no longer lose their pages: they could be saved as blank, and open as a blank page."),
             ChangeItem(ChangeKind.CHANGED, "The Downloads page now matches the design: a summary of what is moving (count, speed and bytes left), an All, Active, Done and Failed filter, Active and Today sections, and rows with a file-type tile and a four-part progress bar. Finished files open on tap and share on a long press, and each filter has its own empty message. Pause, resume and retry are not in yet. Phone only so far."),
             ChangeItem(ChangeKind.FIXED, "Find in page now waits for you to finish typing, so a word that is on the page no longer shows \"No matches\", and the count starts at 1 instead of moving on with every letter you type."),
             ChangeItem(ChangeKind.FIXED, "Tabs waiting to load after Ora reopens now show their website name in the tablet sidebar and the tab list, instead of \"about:blank\"."),
