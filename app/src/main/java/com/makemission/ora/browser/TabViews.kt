@@ -242,7 +242,7 @@ fun TabGrid(
         ) {
             if (shownGroup == null && needle.isEmpty()) {
                 gridItems(tabs.groups.toList(), key = { "g" + it.id }) { group ->
-                    GroupCard(group, tabs.tabsIn(group.id).size, onClick = { openGroupId = group.id })
+                    GroupCard(group, tabs.tabsIn(group.id).size, onClick = { openGroupId = group.id }, onDropTab = { tabs.moveToGroup(it, group.id) })
                 }
             }
             gridItems(gridTabs, key = { it.id }) { tab ->
@@ -254,6 +254,7 @@ fun TabGrid(
                     onClose = { onClose(tab.id) },
                     onLongClick = { groupState.addTo = tab },
                     groupColor = tabs.groups.firstOrNull { it.id == tab.groupId }?.color?.color,
+                    dragTabId = tab.id.takeIf { !tab.isPrivate },
                 )
             }
             if (inactiveTabs.isNotEmpty()) {
@@ -269,6 +270,7 @@ fun TabGrid(
                         onClose = { onClose(tab.id) },
                         onLongClick = { groupState.addTo = tab },
                         groupColor = null,
+                        dragTabId = tab.id,
                     )
                 }
             }
@@ -350,9 +352,12 @@ private fun TabTile(
     onLongClick: (() -> Unit)? = null,
     /** Colour of the tab's group, drawn as a dot before the title. The group's name is in its card. */
     groupColor: Color? = null,
+    /** Set to let the tile be dragged onto a group. Long press without moving still calls [onLongClick]. */
+    dragTabId: Long? = null,
 ) {
     Column(
-        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        modifier = if (dragTabId != null) Modifier.tabDragSource(dragTabId, browserColors().Accent, onLongClick).clickable(onClick = onClick)
+        else Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Surface(
@@ -422,9 +427,10 @@ private fun TabTile(
  * The colour dot sits next to the name; tapping opens the group's tabs.
  */
 @Composable
-private fun GroupCard(group: TabGroup, count: Int, onClick: () -> Unit) {
+private fun GroupCard(group: TabGroup, count: Int, onClick: () -> Unit, onDropTab: (Long) -> Unit) {
     val colors = browserColors()
-    Column(modifier = Modifier.clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    var hovering by remember { mutableStateOf(false) }
+    Column(modifier = Modifier.tabDropTarget({ hovering = it }, onDropTab).then(if (hovering) Modifier.border(BrowserTokens.SelectionWidth, colors.Accent, BrowserTokens.TabTileShape) else Modifier).clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(Modifier.fillMaxWidth().height(BrowserTokens.TabTileHeight)) {
             Surface(Modifier.align(Alignment.BottomCenter).padding(horizontal = 18.dp).fillMaxWidth().height(BrowserTokens.TabTileHeight - 4.dp), shape = BrowserTokens.TabTileShape, color = colors.SidebarSelected.copy(alpha = 0.5f)) {}
             Surface(Modifier.align(Alignment.BottomCenter).padding(horizontal = 9.dp).fillMaxWidth().height(BrowserTokens.TabTileHeight - 10.dp), shape = BrowserTokens.TabTileShape, color = colors.SidebarSelected) {}
@@ -447,9 +453,10 @@ private fun GroupCard(group: TabGroup, count: Int, onClick: () -> Unit) {
 private fun SidebarGroupHeader(group: TabGroup, count: Int, tabs: BrowserTabs, state: GroupDialogState) {
     val colors = browserColors()
     var menu by remember { mutableStateOf(false) }
+    var hovering by remember { mutableStateOf(false) }
     val turn by animateFloatAsState(if (group.collapsed) 0f else 90f, OraMotion.enter(), label = "chevron")
     Row(
-        modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(12.dp)).clickable { tabs.toggleCollapsed(group.id) }.padding(start = 8.dp),
+        modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(12.dp)).background(if (hovering) colors.SidebarSelected else Color.Transparent).tabDropTarget({ hovering = it }) { tabs.moveToGroup(it, group.id) }.clickable { tabs.toggleCollapsed(group.id) }.padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = if (group.collapsed) "Expand ${group.name}" else "Collapse ${group.name}", tint = colors.SecondaryText, modifier = Modifier.size(20.dp).rotate(turn))
@@ -618,7 +625,7 @@ fun TabSidebar(
                                     Column(Modifier.padding(start = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         if (members.isEmpty()) EmptySidebarText("Empty. Long-press a tab to add it.")
                                         members.forEach { tab ->
-                                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab })
+                                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab }, dragTabId = tab.id)
                                         }
                                     }
                                 }
@@ -626,10 +633,11 @@ fun TabSidebar(
                         }
                         val loose = shownTabs.filter { t -> (t.groupId == null || tabs.groups.none { it.id == t.groupId }) && (!tabs.isInactive(t) || needle.isNotEmpty()) }
                         if (tabs.groups.isNotEmpty()) item(key = "loose") {
-                            Text("Not in a group", modifier = Modifier.padding(start = 12.dp, top = 10.dp, bottom = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
+                            var hovering by remember { mutableStateOf(false) }
+                            Text("Not in a group", modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if (hovering) browserColors().SidebarSelected else Color.Transparent).tabDropTarget({ hovering = it }) { tabs.moveToGroup(it, null) }.padding(start = 12.dp, top = 10.dp, bottom = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
                         }
                         items(loose, key = { it.id }) { tab ->
-                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab })
+                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab }, dragTabId = tab.id)
                         }
                         inactiveSection(
                             shownTabs.filter { t -> (t.groupId == null || tabs.groups.none { it.id == t.groupId }) && tabs.isInactive(t) && needle.isEmpty() },
@@ -647,7 +655,7 @@ fun TabSidebar(
                         }
                     } else {
                         items(shownTabs.filter { !tabs.isInactive(it) || needle.isNotEmpty() }, key = { it.id }) { tab ->
-                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab })
+                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab }, dragTabId = tab.id)
                         }
                         inactiveSection(
                             shownTabs.filter { tabs.isInactive(it) && needle.isEmpty() },
@@ -746,14 +754,14 @@ private fun EmptySidebarText(text: String) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun SidebarRow(label: String, url: String, selected: Boolean, onClick: () -> Unit, onLongClick: (() -> Unit)? = null) {
+private fun SidebarRow(label: String, url: String, selected: Boolean, onClick: () -> Unit, onLongClick: (() -> Unit)? = null, dragTabId: Long? = null) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.SidebarRowHeight)
             .clip(RoundedCornerShape(12.dp))
             .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
-            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .then(if (dragTabId != null) Modifier.tabDragSource(dragTabId, browserColors().Accent, onLongClick).clickable(onClick = onClick) else Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick))
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -799,6 +807,6 @@ private fun androidx.compose.foundation.lazy.LazyListScope.inactiveSection(
     if (inactive.isEmpty()) return
     item(key = "inactive_header") { InactiveHeader(inactive.size, open, onToggle) }
     if (open) items(inactive, key = { it.id }) { tab ->
-        SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == selectedId, onClick = { onSelect(tab.id) }, onLongClick = { onLongClick(tab) })
+        SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == selectedId, onClick = { onSelect(tab.id) }, onLongClick = { onLongClick(tab) }, dragTabId = tab.id)
     }
 }
