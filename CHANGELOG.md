@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
+- App lock: Settings > Privacy can ask for a PIN when Ora opens and whenever you come back to it. The PIN is kept only as a salted hash, never as the number itself. After five wrong tries you wait 30 seconds, then longer each time, and the lock screen counts it down. (`dff3c60`)
+- HTTPS-only mode: a Privacy switch that loads pages over a secure connection only. (`dff3c60`)
 - Close all: the tab overview has a Close all button. It asks first, then opens one start page. The last 10 pages can be brought back from Reopen closed tab. (`32294e2`)
 - Add to home screen: a row in the ⋯ menu pins a shortcut to the current page, named after its title. Private tabs and the start page say why they can't be added. (`d25373a`)
 - Text size on web pages: Settings > Appearance has − and + buttons that make page text smaller or larger, from 50% to 200% in steps of 10. A Reset button returns to 100% in one tap. It applies at once, with no reload. (`45c36b6`)
