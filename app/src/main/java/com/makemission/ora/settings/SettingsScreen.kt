@@ -550,6 +550,57 @@ fun SettingsScreen(
                         }
                     }
                     if (shown(SettingsCategory.PRIVACY)) item {
+                    if (shown(SettingsCategory.APPEARANCE)) item {
+                        SectionTitle("Reader view")
+                        val readerSerif by settings.readerSerif.collectAsState()
+                        val readerSize by settings.readerSizeStep.collectAsState()
+                        val readerPage by settings.readerPage.collectAsState()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setReaderSerif(!readerSerif) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Serif text", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text("Articles in Reader view use a book-style face. Off uses the sans face.", fontSize = 14.sp, color = browserColors().SecondaryText)
+                                }
+                                MineralSwitch(checked = readerSerif, label = "Serif text", onChange = { settings.setReaderSerif(it) })
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Text size", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text("Step ${readerSize + 1} of ${com.makemission.ora.extensions.ReaderLook.MAX_SIZE_STEP + 1}", fontSize = 14.sp, color = browserColors().SecondaryText)
+                                }
+                                TextButton(onClick = { settings.setReaderSizeStep(readerSize - 1) }, enabled = readerSize > 0) { Text("Smaller", color = browserColors().Accent) }
+                                TextButton(onClick = { settings.setReaderSizeStep(readerSize + 1) }, enabled = readerSize < com.makemission.ora.extensions.ReaderLook.MAX_SIZE_STEP) { Text("Larger", color = browserColors().Accent) }
+                            }
+                            com.makemission.ora.extensions.ReaderPage.entries.forEach { choice ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { settings.setReaderPage(choice) }
+                                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(selected = readerPage == choice, onClick = { settings.setReaderPage(choice) }, colors = mineralRadio())
+                                    Text("${choice.label} page", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                }
+                            }
+                        }
+                    }
                         SectionTitle("History")
                         // Saving history: finished pages are listed in the Library (phone) or the sidebar (tablet).
                         Row(

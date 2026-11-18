@@ -92,6 +92,9 @@ object BrowserTokens {
     val CardRadius = RadiusMedium
     val SettingsCardRadius = 20.dp
 
+    /** Widest the reader's control bar grows (design: tablet reader view). */
+    val ReaderBarWidth = 560.dp
+
     // Tab grid (phone)
     val GridPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 12.dp)
     val GridSpacing = 16.dp

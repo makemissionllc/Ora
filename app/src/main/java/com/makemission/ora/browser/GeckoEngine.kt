@@ -1,6 +1,7 @@
 package com.makemission.ora.browser
 
 import android.content.Context
+import com.makemission.ora.extensions.ReaderBridge
 import com.makemission.ora.extensions.VideoControlBridge
 import com.makemission.ora.passwords.PasswordStore
 import com.makemission.ora.passwords.PasswordStorageDelegate
@@ -21,5 +22,7 @@ object GeckoEngine {
             it.setAutocompleteStorageDelegate(PasswordStorageDelegate)
             // Bundled helper that lets the full-screen video seek bar read and move the page's video.
             VideoControlBridge.install(it)
+            // Bundled helper that finds a page's article for Reader view.
+            ReaderBridge.install(it)
         }
 }

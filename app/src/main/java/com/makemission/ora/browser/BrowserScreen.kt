@@ -946,6 +946,16 @@ private fun BrowserContent(
                 }
                 if (showFind) {
                     // Keyed on the tab, so switching tabs closes the bar and clears its highlights.
+                // Back closes the reader first, so it never leaves the page behind it.
+                androidx.activity.compose.BackHandler(enabled = selected.reader.open) { selected.reader.close() }
+                key(selected.id) {
+                    ReaderBar(
+                        reader = selected.reader,
+                        settings = settings,
+                        compact = !isTablet,
+                        modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = if (isTablet) 28.dp else BrowserTokens.SelectionMenuBottomInset),
+                    )
+                }
                     key(selected.id) {
                         FindBar(
                             session = selected.session,
@@ -971,6 +981,26 @@ private fun BrowserContent(
                         onFind = { showFind = true },
                         closedTabTitle = tabs.lastClosedTitle,
                         onReopenClosed = onReopenClosed,
+                        readerOpen = selected.reader.open,
+                        readerHint = when {
+                            selected.reader.open -> "Showing ${selected.reader.site}"
+                            selected.reader.readable -> "${selected.reader.minutes} min read, without the clutter"
+                            else -> "No article found on this page"
+                        },
+                        onReader = {
+                            if (selected.reader.open) {
+                                selected.reader.close()
+                            } else if (!selected.reader.readable) {
+                                InAppNotices.show("This page has no article to read")
+                            } else {
+                                UsageStats.count("menu.reader")
+                                selected.reader.show(
+                                    com.makemission.ora.extensions.ReaderLook(
+                                        settings.readerSizeStep.value, settings.readerSerif.value, settings.readerPage.value,
+                                    ),
+                                )
+                            }
+                        },
                         onAddToHome = {
                             val url = selected.url
                             if (url == BrowserTabs.START_URL || url.isBlank() || selected.isPrivate) {

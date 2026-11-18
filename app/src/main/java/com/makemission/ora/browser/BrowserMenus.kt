@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.outlined.AddToHomeScreen
+import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DesktopWindows
@@ -103,6 +104,10 @@ fun BrowserMenuSheet(
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
     onFind: () -> Unit,
+    /** Reader view: [readerOpen] marks it active, [readerHint] says why it can't open when the page has no article. */
+    readerOpen: Boolean,
+    readerHint: String,
+    onReader: () -> Unit,
     onCopyAddress: () -> Unit,
     onAddToHome: () -> Unit,
     /** Title of the tab "Reopen closed tab" would bring back, or null when no tab was closed this run. */
@@ -129,6 +134,9 @@ fun BrowserMenuSheet(
             onDownloads = { act(onDownloads) },
             onTabs = { act(onTabs) },
             onFind = { act(onFind) },
+            readerOpen = readerOpen,
+            readerHint = readerHint,
+            onReader = { act(onReader) },
             onCopyAddress = { act(onCopyAddress) },
             onAddToHome = { act(onAddToHome) },
             closedTabTitle = closedTabTitle,
@@ -164,6 +172,10 @@ private fun BrowserMenuItems(
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
     onFind: () -> Unit,
+    /** Reader view: [readerOpen] marks it active, [readerHint] says why it can't open when the page has no article. */
+    readerOpen: Boolean,
+    readerHint: String,
+    onReader: () -> Unit,
     onCopyAddress: () -> Unit,
     onAddToHome: () -> Unit,
     closedTabTitle: String?,
@@ -189,6 +201,12 @@ private fun BrowserMenuItems(
             }
             Spacer(Modifier.height(6.dp))
             MenuRow(Icons.Outlined.Search, "Find in page", onFind, chevron = true)
+            MenuRow(
+                Icons.Outlined.Article, "Reader view", onReader,
+                subtitle = readerHint,
+                trailing = if (readerOpen) ({ Text("On", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = browserColors().Accent) }) else null,
+                chevron = !readerOpen,
+            )
             // Quality of life: one tap copies the page's address, without opening Share first.
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)

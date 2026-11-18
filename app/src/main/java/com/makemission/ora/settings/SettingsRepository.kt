@@ -161,6 +161,37 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Video brightness and volume swipes ${if (enabled) "on" else "off"}")
     }
 
+    private val _readerSizeStep = MutableStateFlow(prefs.getInt(KEY_READER_SIZE, 1))
+    /** Reader view text size, 0 (smallest) to 4. */
+    val readerSizeStep: StateFlow<Int> = _readerSizeStep.asStateFlow()
+
+    fun setReaderSizeStep(step: Int) {
+        val clamped = step.coerceIn(0, com.makemission.ora.extensions.ReaderLook.MAX_SIZE_STEP)
+        prefs.edit().putInt(KEY_READER_SIZE, clamped).apply()
+        _readerSizeStep.value = clamped
+        BrowserLog.info("settings", "Reader text size set to step $clamped")
+    }
+
+    private val _readerSerif = MutableStateFlow(prefs.getBoolean(KEY_READER_SERIF, true))
+    /** Reader view text face: serif (true) or sans (false). */
+    val readerSerif: StateFlow<Boolean> = _readerSerif.asStateFlow()
+
+    fun setReaderSerif(serif: Boolean) {
+        prefs.edit().putBoolean(KEY_READER_SERIF, serif).apply()
+        _readerSerif.value = serif
+        BrowserLog.info("settings", "Reader text set to ${if (serif) "serif" else "sans"}")
+    }
+
+    private val _readerPage = MutableStateFlow(com.makemission.ora.extensions.ReaderPage.fromKey(prefs.getString(KEY_READER_PAGE, null)))
+    /** Reader view page colour. */
+    val readerPage: StateFlow<com.makemission.ora.extensions.ReaderPage> = _readerPage.asStateFlow()
+
+    fun setReaderPage(page: com.makemission.ora.extensions.ReaderPage) {
+        prefs.edit().putString(KEY_READER_PAGE, page.key).apply()
+        _readerPage.value = page
+        BrowserLog.info("settings", "Reader page colour set to ${page.label}")
+    }
+
     private val _videoBackExits = MutableStateFlow(prefs.getBoolean(KEY_VIDEO_BACK_EXITS, true))
     /** When on, Back leaves a full-screen video instead of going back a page. */
     val videoBackExits: StateFlow<Boolean> = _videoBackExits.asStateFlow()
@@ -466,6 +497,9 @@ class SettingsRepository(context: Context) {
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
+        private const val KEY_READER_SIZE = "reader_size"
+        private const val KEY_READER_SERIF = "reader_serif"
+        private const val KEY_READER_PAGE = "reader_page"
         private const val KEY_APP_LOCK = "app_lock_record"
         private const val KEY_APP_LOCK_FAILS = "app_lock_fails"
         private const val KEY_APP_LOCK_UNTIL = "app_lock_until"

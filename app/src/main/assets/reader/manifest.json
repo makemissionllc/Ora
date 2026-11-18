@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "Reader view",
+  "version": "1.7",
+  "description": "Finds the article on a page and shows it without the clutter.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "reader-view@ora.makemission.com"
+    }
+  },
+  "permissions": [
+    "nativeMessaging",
+    "geckoViewAddons",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

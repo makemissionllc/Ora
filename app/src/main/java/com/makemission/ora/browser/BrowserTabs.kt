@@ -46,6 +46,9 @@ class BrowserTab(
     }
     private val appContext: Context = context.applicationContext
 
+    /** Reader view for this tab's page: whether it has an article and whether the reader is showing. */
+    val reader = com.makemission.ora.extensions.ReaderState { url }
+
     var url by mutableStateOf(initialUrl)
     /** Latest session state from GeckoView, kept so quick resume can save this tab's history. */
     var sessionState: String? = null
