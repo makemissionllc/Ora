@@ -1014,24 +1014,22 @@ private fun BrowserContent(
                 // because the choice was already made.
                 PopupCardHost(
                     pending = tabs.pendingPopup,
+                    more = tabs.morePopups,
                     onOpen = { popup ->
-                        if (tabs.pendingPopup == popup) {
-                            tabs.pendingPopup = null
+                        if (tabs.answerPopup(popup)) {
                             BrowserLog.info("popup", "Pop-up from ${popup.fromSite} opened because the user chose Open")
                             tabs.newTab(popup.url, isPrivate = popup.fromPrivate)
                         }
                     },
                     onAlways = { popup ->
-                        if (tabs.pendingPopup == popup) {
-                            tabs.pendingPopup = null
+                        if (tabs.answerPopup(popup)) {
                             popupStore.allow(popup.fromSite)
                             BrowserLog.info("popup", "Pop-up from ${popup.fromSite} opened because the user chose Always allow")
                             tabs.newTab(popup.url, isPrivate = popup.fromPrivate)
                         }
                     },
                     onBlock = { popup ->
-                        if (tabs.pendingPopup == popup) {
-                            tabs.pendingPopup = null
+                        if (tabs.answerPopup(popup)) {
                             BrowserLog.info("popup", "Blocked a pop-up from ${popup.fromSite} when the user chose Block")
                         }
                     },

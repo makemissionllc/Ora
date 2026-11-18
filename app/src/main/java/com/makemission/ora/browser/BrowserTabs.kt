@@ -466,6 +466,9 @@ class BrowserTabs(
 
         /** How many closed tabs "Reopen closed tab" can bring back. Older ones are dropped. */
         const val MAX_CLOSED_HISTORY = 10
+
+        /** Most pop-ups kept waiting for a choice at once. */
+        const val MAX_POPUP_QUEUE = 20
     }
 
     var selectedId by mutableLongStateOf(-1L)
@@ -515,7 +518,31 @@ class BrowserTabs(
     var popupStore: PopupStore? = null
 
     /** A pop-up with no tap that the card is asking about. Null when no card is showing. */
-    var pendingPopup by mutableStateOf<PendingPopup?>(null)
+    /** Pop-ups the page opened without a tap, oldest first. The card shows the first one and "N more" for the rest. */
+    private val popupQueue = mutableStateListOf<PendingPopup>()
+
+    val pendingPopup: PendingPopup?
+        get() = popupQueue.firstOrNull()
+
+    /** How many more pop-ups wait behind [pendingPopup]. */
+    val morePopups: Int
+        get() = (popupQueue.size - 1).coerceAtLeast(0)
+
+    /** Adds a pop-up to the queue. A burst beyond [MAX_POPUP_QUEUE] is dropped, and the log says so. */
+    fun askPopup(popup: PendingPopup) {
+        if (popupQueue.size >= MAX_POPUP_QUEUE) {
+            BrowserLog.warn("popup", "Pop-up queue full: dropped a pop-up from ${popup.fromSite}")
+            return
+        }
+        popupQueue.add(popup)
+    }
+
+    /** Takes [popup] off the queue once the user has answered it. A stale answer for another pop-up does nothing. */
+    fun answerPopup(popup: PendingPopup): Boolean {
+        if (popupQueue.firstOrNull() != popup) return false
+        popupQueue.removeAt(0)
+        return true
+    }
 
     /** Settings > Open links in apps, read on each link. Replaced when a new window takes over. */
     var appLinkMode: () -> AppLinkMode = { AppLinkMode.ASK }
@@ -638,7 +665,7 @@ class BrowserTabs(
             { response, page -> onDownload(response, page) },
             desktopByDefault, isPrivate, restoreState, { page, title -> onVisited(page, title) }, sitePermissions, restoring, deferLoad,
             siteAllowedForPopups = { domain -> popupStore?.isAllowed(domain) == true },
-            onPopupAsk = { popup, fromSite -> pendingPopup = PendingPopup(popup, fromSite, isPrivate) },
+            onPopupAsk = { popup, fromSite -> askPopup(PendingPopup(popup, fromSite, isPrivate)) },
             onLinkRequest = { t, request -> appLinkDecision(t, request) },
             adopt = adopt,
         )

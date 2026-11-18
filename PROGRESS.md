@@ -5,6 +5,7 @@ The status board for Ora. Update it with every change: move items between sectio
 Last updated: 2026-11-18, at commit `a1f02a2`.
 
 ## Done
+- Pop-up card queue (`BrowserTabs.kt` `popupQueue`, `PopupCard.kt`): pop-ups a page opens without a tap wait in order, up to 20; the card shows "N more pop-ups wait after this one" and each one comes up after the choice. Built with `./gradlew assembleDebug`. Not checked on a device: no adb or phone connected in this session.
 - Messages sit above the phone bottom bar (`BrowserScreen.kt` snackbar host, padded by `bottomBarPx`). Built with `./gradlew assembleDebug`. Not checked on a device: no adb or phone connected in this session.
 - Close group says how many tabs closed, and Undo brings back all of them (`BrowserTabs.closeGroup`, `UndoCloseOffer`). Built with `./gradlew assembleDebug` (JDK from Android Studio). Not checked on a device: no adb or phone is connected in this session.
 - Main-browser row hidden without another browser (`c5dacf7`): `MainBrowserHandoff.isAvailable` checks for a browser other than Ora before the row shows. Quality-of-life: the row never leads to a "No other browser found" dead end. Phone verified: with Ora the only browser, the menu on an https page no longer shows the row. Not checked: the row with a second browser installed, the tablet.
@@ -174,7 +175,7 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 
 ## Known issues
 
-- Pop-up card: it shows one pending pop-up at a time. A page that opens several windows without a tap shows only the newest, and nothing limits how many are asked. With Block pop-up windows off, every pop-up opens as a tab with no limit, as the switch is meant to work.
+- Pop-up card: with Block pop-up windows off, every pop-up opens as a tab with no limit, as the switch is meant to work.
 - Saved passwords: tapping into a password (type=password) field on the local login page (http://localhost:8765/login.html, adb reverse) makes GeckoView's surface stop drawing (black screen). It also happens with Password autofill off, and on the build before the Passwords commit (50a4983), so it predates the Passwords change and is not caused by it. Cause not found. Saving and autofilling a login stay unverified until this is fixed. Password autofill was left OFF on the phone by this test; turn it back on in Settings > Passwords.
 - Password autofill, phone: Bitwarden now has an account but reports "Vault is locked", so a fill needs the vault unlocked first. The request reaches Bitwarden (checked 2026-11-18). Unlock it and retest on a login page with a matching entry. The tablet's Bitwarden state was not checked.
 - Auto-fill follows one page at a time: GeckoView 160 keeps one autofill session for all tabs, so the tab loaded last is the only one that can autofill. Seen on the phone on 2026-11-18: a tap on a field logged "Disregarding old session" until the page was loaded again, which restored it. A full fix needs a newer GeckoView with one autofill session per tab.

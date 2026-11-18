@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
+- Pop-up card: when a page opens several pop-ups without a tap, they are no longer hidden behind the newest one. The card shows how many more wait, and you go through them one at a time.
 - Messages such as "Page didn't finish loading" now sit above the bottom bar on the phone, not under it.
 - Closing a group now says how many tabs closed ("2 tabs closed"), and Undo brings back all of them, not just the last one.
 - Passkeys with Bitwarden: Ora now declares the two Android permissions that let sites' passkey register and sign-in go through your passkey app. Tested with Bitwarden on the phone. Google Password Manager may still refuse until Google approves Ora.  (`0840e06`)

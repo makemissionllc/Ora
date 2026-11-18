@@ -42,6 +42,7 @@ import com.makemission.ora.ui.theme.browserColors
 @Composable
 fun PopupCard(
     pending: PendingPopup,
+    more: Int,
     onOpen: () -> Unit,
     onAlways: () -> Unit,
     onBlock: () -> Unit,
@@ -69,6 +70,15 @@ fun PopupCard(
                 color = colors.SecondaryText,
                 fontSize = 13.sp,
             )
+            // Quality of life: the rest of the queue is counted, and each one comes up after this choice.
+            if (more > 0) {
+                Text(
+                    "$more more ${if (more == 1) "pop-up waits" else "pop-ups wait"} after this one",
+                    color = colors.SecondaryText,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -103,6 +113,7 @@ fun PopupCard(
 @Composable
 fun PopupCardHost(
     pending: PendingPopup?,
+    more: Int,
     onOpen: (PendingPopup) -> Unit,
     onAlways: (PendingPopup) -> Unit,
     onBlock: (PendingPopup) -> Unit,
@@ -121,6 +132,7 @@ fun PopupCardHost(
         shown?.let { popup ->
             PopupCard(
                 pending = popup,
+                more = more,
                 onOpen = { onOpen(popup) },
                 onAlways = { onAlways(popup) },
                 onBlock = { onBlock(popup) },

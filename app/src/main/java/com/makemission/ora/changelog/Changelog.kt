@@ -16,6 +16,7 @@ val Changelog: List<ChangeDay> = listOf(
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "Passkeys with Bitwarden: Ora now declares the two Android permissions that let sites' passkey register and sign-in go through your passkey app. Tested with Bitwarden on the phone. Google Password Manager may still refuse until Google approves Ora.  (`0840e06`)"),
             ChangeItem(ChangeKind.ADDED, "Passkey not working? Open in main browser: on a page that uses https, the ⋯ menu has a row that opens the same page in another browser you choose. Some sites' passkey sign-in does not work in Ora yet, so this gets you in without leaving the page behind. It is hidden on pages that are not https, and says so if no other browser is installed.  (`94fc3b0`)"),
+            ChangeItem(ChangeKind.FIXED, "Pop-up card: when a page opens several pop-ups without a tap, they are no longer hidden behind the newest one. The card shows how many more wait, and you go through them one at a time."),
             ChangeItem(ChangeKind.FIXED, "Messages such as \"Page didn't finish loading\" now sit above the bottom bar on the phone, not under it."),
             ChangeItem(ChangeKind.FIXED, "Closing a group now says how many tabs closed (\"2 tabs closed\"), and Undo brings back all of them, not just the last one."),
             ChangeItem(ChangeKind.CHANGED, "The Open in main browser row is now hidden when no other browser is installed, so it never leads to a dead end.  (`c5dacf7`)"),
