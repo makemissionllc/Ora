@@ -83,6 +83,8 @@ object BrowserTokens {
     val ToolbarRowSpacing = 6.dp
     val HairlineHeight = 1.dp
     val ToolbarButtonSize = 48.dp
+    /** Leading file tile and round row buttons on the Downloads page. */
+    val RowIconSize = 44.dp
     val AddressBarHeight = 48.dp
     /** Thickness of the load bar along the bottom of the address field. */
     val LoadBarHeight = 3.dp

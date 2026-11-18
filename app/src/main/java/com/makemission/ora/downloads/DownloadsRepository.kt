@@ -28,6 +28,8 @@ data class DownloadItem(
     val mimeType: String?,
     val totalBytes: Long,
     val bytes: Long = 0,
+    /** Bytes per second over the last reporting window; 0 when not running or not measured yet. */
+    val speed: Long = 0,
     val status: DownloadStatus = DownloadStatus.RUNNING,
     val contentUri: Uri? = null,
     val error: String? = null,
@@ -93,6 +95,8 @@ class DownloadsRepository(private val context: Context) {
 
         var written = 0L
         var lastReport = 0L
+        var sampleTime = System.nanoTime()
+        var sampleBytes = 0L
         val body = response.body ?: throw IOException("No response body")
         resolver.openOutputStream(uri)?.use { out ->
             body.use { input ->
@@ -103,11 +107,16 @@ class DownloadsRepository(private val context: Context) {
                     if (read < 0) break
                     out.write(buffer, 0, read)
                     written += read
-                    // Throttle UI updates to about one per 256 KB.
+                    // Throttle UI updates to about one per 256 KB, with the speed measured over that window.
                     if (written - lastReport >= 256 * 1024) {
                         lastReport = written
                         val w = written
-                        update { list -> list.map { if (it.id == item.id) it.copy(bytes = w) else it } }
+                        val now = System.nanoTime()
+                        val seconds = (now - sampleTime) / 1_000_000_000.0
+                        val speed = if (seconds > 0) ((w - sampleBytes) / seconds).toLong() else 0L
+                        sampleTime = now
+                        sampleBytes = w
+                        update { list -> list.map { if (it.id == item.id) it.copy(bytes = w, speed = speed) else it } }
                     }
                 }
             }
@@ -117,7 +126,7 @@ class DownloadsRepository(private val context: Context) {
         values.put(MediaStore.Downloads.IS_PENDING, 0)
         resolver.update(uri, values, null, null)
         update { list ->
-            list.map { if (it.id == item.id) it.copy(status = DownloadStatus.DONE, bytes = written, contentUri = uri) else it }
+            list.map { if (it.id == item.id) it.copy(status = DownloadStatus.DONE, bytes = written, speed = 0, contentUri = uri) else it }
         }
         BrowserLog.info("download", "Saved ${item.fileName} (${sizeLabel(written)}) to Downloads/Ora")
     }
@@ -175,7 +184,8 @@ class DownloadsRepository(private val context: Context) {
             bytes < 0 -> "unknown size"
             bytes < 1024 -> "$bytes B"
             bytes < 1024 * 1024 -> "${bytes / 1024} KB"
-            else -> String.format("%.1f MB", bytes / 1024.0 / 1024.0)
+            bytes < 1024L * 1024 * 1024 -> String.format("%.1f MB", bytes / 1024.0 / 1024.0)
+            else -> String.format("%.1f GB", bytes / 1024.0 / 1024.0 / 1024.0)
         }
 
         private fun header(response: WebResponse, name: String): String? =

@@ -70,9 +70,11 @@ fun FindBar(session: GeckoSession, onClose: () -> Unit, modifier: Modifier = Mod
         } else {
             GeckoSession.FINDER_FIND_FORWARD
         }
+        val asked = query
         runCatching {
             session.finder.find(query, flags).accept { result ->
-                if (result != null) {
+                // An answer for text the user has since changed must not overwrite the newer count.
+                if (result != null && asked == query) {
                     current = result.current
                     total = result.total
                 }
@@ -81,7 +83,17 @@ fun FindBar(session: GeckoSession, onClose: () -> Unit, modifier: Modifier = Mod
     }
 
     // Searching as the user types, from the top of the page.
-    LaunchedEffect(query) { find(backwards = false) }
+    // Clearing first restarts the search at the top, so typing more letters shows "1 of N", not a count that
+    // moved on one match per letter typed.
+    // It waits a moment for the next letter: a search started for every letter in quick succession can end
+    // on "No matches" for a word that is on the page.
+    LaunchedEffect(query) {
+        if (query.isNotBlank()) {
+            kotlinx.coroutines.delay(250)
+            session.finder.clear()
+        }
+        find(backwards = false)
+    }
     DisposableEffect(Unit) {
         BrowserLog.info("find", "Find in page opened")
         UsageStats.count("find.open")

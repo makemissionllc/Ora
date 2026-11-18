@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Find in page now waits for you to finish typing, so a word that is on the page no longer shows \"No matches\", and the count starts at 1 instead of moving on with every letter you type."),
             ChangeItem(ChangeKind.FIXED, "Tabs waiting to load after Ora reopens now show their website name in the tablet sidebar and the tab list, instead of \"about:blank\"."),
             ChangeItem(ChangeKind.ADDED, "Search tabs, bookmarks and history in one field: on tablet, the sidebar's Tabs search now also lists matching bookmarks and history entries under your tabs, so you can find a page without choosing the right list first."),
             ChangeItem(ChangeKind.ADDED, "Drag a tab into a group: touch and hold a tab, then move your finger to pick it up, and drop it on a group card in the overview or on a group's header in the tablet sidebar. The group lights up as you hover over it. In the sidebar, drop a tab on \"Not in a group\" to take it out of its group. Holding a tab still without moving still opens Add to group, as before."),
