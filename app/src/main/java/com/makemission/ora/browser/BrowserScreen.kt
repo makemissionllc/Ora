@@ -106,7 +106,10 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
@@ -191,7 +194,7 @@ import com.makemission.ora.settings.SettingsScreen
 import com.makemission.ora.settings.SearchEngine
 import com.makemission.ora.settings.isSearchInput
 import com.makemission.ora.downloads.DownloadsRepository
-import com.makemission.ora.downloads.DownloadsSheet
+import com.makemission.ora.downloads.DownloadsScreen
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -324,6 +327,8 @@ private fun BrowserContent(
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
+    // Where the Downloads page grows from: the toolbar button's centre, or the top-right menu corner.
+    var downloadsOrigin by remember { mutableStateOf(TransformOrigin(1f, 0f)) }
     val tabsByProfile = TabRegistry.byProfile
     val sessionStore = remember { SessionStore(context) }
     val quickResume by settings.quickResume.collectAsState()
@@ -802,7 +807,7 @@ private fun BrowserContent(
                         onBookmark = toggleSelectedBookmark,
                         onShare = { shareUrl(context, selected.url) },
                         onNewTab = onNewTab,
-                        onDownloads = { showDownloads = true },
+                        onDownloads = { origin -> downloadsOrigin = origin; showDownloads = true },
                         onMore = toggleMenu,
                         onSwipeUp = openTabs,
                         onSwitchTab = switchTab,
@@ -960,7 +965,12 @@ private fun BrowserContent(
                     VideoSeekBar(modifier = Modifier.align(Alignment.BottomCenter))
                 }
                 if (showDownloads) {
-                    DownloadsSheet(repository = downloads, onDismiss = { showDownloads = false })
+                    DownloadsScreen(
+                        repository = downloads,
+                        tablet = isTablet,
+                        origin = downloadsOrigin,
+                        onDismiss = { showDownloads = false },
+                    )
                 }
                 // Long press on a link or image opens the quick menu at the press point (both layouts).
                 selected.pressTarget?.let { target ->
@@ -1106,7 +1116,7 @@ private fun BrowserContent(
                         onToggleDesktop = { enabled -> selected.applyDesktopSite(enabled) },
                         onSettings = { showSettings = true },
                         onExtensions = { showExtensions = true },
-                        onDownloads = { showDownloads = true },
+                        onDownloads = { downloadsOrigin = TransformOrigin(1f, 0f); showDownloads = true },
                         onTabs = { openTabs() }
                     )
                 }
@@ -1702,7 +1712,7 @@ private fun TabletToolbar(
     onBookmark: () -> Unit,
     onShare: () -> Unit,
     onNewTab: () -> Unit,
-    onDownloads: () -> Unit,
+    onDownloads: (TransformOrigin) -> Unit,
     onMore: () -> Unit,
     onSwipeUp: () -> Unit,
     onSwitchTab: (Int) -> Unit,
@@ -1750,8 +1760,25 @@ private fun TabletToolbar(
             ToolbarButton(onClick = onShare, enabled = tab.url.isNotBlank(), description = "Share") {
                 Icon(Icons.Filled.Share, contentDescription = null)
             }
-            ToolbarButton(onClick = onDownloads, enabled = true, description = "Downloads") {
-                Icon(Icons.Filled.Download, contentDescription = null)
+            // The button's centre, as a fraction of the window, is where the Downloads page grows from.
+            var downloadsAnchor by remember { mutableStateOf<Rect?>(null) }
+            val windowSize = LocalWindowInfo.current.containerSize
+            Box(modifier = Modifier.onGloballyPositioned { downloadsAnchor = it.boundsInWindow() }) {
+                ToolbarButton(
+                    onClick = {
+                        val anchor = downloadsAnchor
+                        val origin = if (anchor != null && windowSize.width > 0 && windowSize.height > 0) {
+                            TransformOrigin(anchor.center.x / windowSize.width, anchor.center.y / windowSize.height)
+                        } else {
+                            TransformOrigin(1f, 0f)
+                        }
+                        onDownloads(origin)
+                    },
+                    enabled = true,
+                    description = "Downloads",
+                ) {
+                    Icon(Icons.Filled.Download, contentDescription = null)
+                }
             }
             ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = "Bookmark") {
                 Icon(

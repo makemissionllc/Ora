@@ -33,6 +33,8 @@ data class DownloadItem(
     val status: DownloadStatus = DownloadStatus.RUNNING,
     val contentUri: Uri? = null,
     val error: String? = null,
+    /** When the save began, in epoch milliseconds. Shown as "Started" on the details page. */
+    val startedAt: Long = System.currentTimeMillis(),
 ) {
     /** 0..1 while running, -1 when the total size is unknown. */
     val progress: Float get() = if (totalBytes > 0) (bytes.toFloat() / totalBytes).coerceIn(0f, 1f) else -1f
