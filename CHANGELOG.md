@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
+- Add to home screen: a row in the ⋯ menu pins a shortcut to the current page, named after its title. Private tabs and the start page say why they can't be added. (`d25373a`)
 - Text size on web pages: Settings > Appearance has − and + buttons that make page text smaller or larger, from 50% to 200% in steps of 10. A Reset button returns to 100% in one tap. It applies at once, with no reload. (`45c36b6`)
 - Copy page address: a row in the ⋯ menu copies the current page's address in one tap. On the start page it says there is nothing to copy. (`09a342a`)
 - Gesture log: with "Count feature use" on, each swipe on the address bar, edge swipe for the sidebar and pull to refresh is counted and logged as registered or ignored, with the reason (too short, diagonal, downward, not at the top of the page) and its distance and time, never any page content. A swipe with nowhere to go is logged as a bounce. See Settings > Diagnostics. (`09a342a`)
