@@ -13,8 +13,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Mic
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Videocam
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.makemission.ora.ui.theme.Mineral
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -62,17 +76,26 @@ fun SitePromptOverlay(topOffset: Dp, modifier: Modifier = Modifier) {
     }
 }
 
+private fun SitePermission.icon(): ImageVector = when (this) {
+    SitePermission.LOCATION -> Icons.Outlined.LocationOn
+    SitePermission.CAMERA -> Icons.Outlined.Videocam
+    SitePermission.MICROPHONE -> Icons.Outlined.Mic
+    SitePermission.NOTIFICATIONS -> Icons.Outlined.Notifications
+}
+
 @Composable
 private fun SitePromptCard(prompt: SitePrompt) {
     val wants = prompt.permissions.joinToString(" and ") { it.label }
+    val colors = browserColors()
+    val shape = RoundedCornerShape(BrowserTokens.RadiusLarge)
     Column(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 12.dp)
             .widthIn(max = 420.dp)
             .fillMaxWidth()
-            .shadow(BrowserTokens.AddressBarElevation, RoundedCornerShape(BrowserTokens.RadiusMedium))
-            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-            .background(browserColors().Surface)
+            .shadow(BrowserTokens.AddressBarElevation, shape)
+            .clip(shape)
+            .background(colors.Surface)
             // Touches on the card belong to the card. The page under it is a native view, and without this it still gets them.
             // Buttons inside the card handle their own clicks first, because this runs after them.
             .pointerInput(Unit) {
@@ -82,40 +105,60 @@ private fun SitePromptCard(prompt: SitePrompt) {
                     }
                 }
             }
-            .padding(16.dp),
+            .padding(18.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text(
-            "${prompt.host} asks for $wants",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = browserColors().AddressBarText,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            if (prompt.privateTab) {
-                "Private tab: your choice is not remembered."
-            } else {
-                "Allow and Block are remembered for this site. Change them in Settings > Privacy."
-            },
-            fontSize = 13.sp,
-            color = browserColors().SecondaryText,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = { SitePrompts.answerCurrent(SitePromptChoice.BLOCK) }) {
-                Text("Block", color = browserColors().SecondaryText)
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.Top) {
+            Box(
+                modifier = Modifier.size(44.dp).clip(CircleShape).background(colors.AddressBarBackground),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(prompt.permissions.first().icon(), contentDescription = null, tint = colors.AddressBarText, modifier = Modifier.size(22.dp))
             }
-            TextButton(onClick = { SitePrompts.answerCurrent(SitePromptChoice.NOT_NOW) }) {
-                Text("Not now", color = browserColors().SecondaryText)
-            }
-            TextButton(onClick = { SitePrompts.answerCurrent(SitePromptChoice.ALLOW) }) {
-                Text("Allow", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    "Let ${prompt.host} use $wants?",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = 22.sp,
+                    color = colors.AddressBarText,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                // Quality of life: say what "Not now" does, so nobody fears it saved a Block.
+                Text(
+                    if (prompt.privateTab) {
+                        "Private tab: your choice is not remembered."
+                    } else {
+                        "Allow and Block are remembered for this site. Not now asks again next time."
+                    },
+                    fontSize = 14.sp,
+                    lineHeight = 20.sp,
+                    color = colors.SecondaryText,
+                )
             }
         }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            PromptButton("Block", Mineral.Ember, Color.Transparent) { SitePrompts.answerCurrent(SitePromptChoice.BLOCK) }
+            Spacer(Modifier.weight(1f))
+            PromptButton("Not now", colors.AddressBarText, colors.AddressBarBackground) { SitePrompts.answerCurrent(SitePromptChoice.NOT_NOW) }
+            PromptButton("Allow", colors.GridBackground, colors.Accent) { SitePrompts.answerCurrent(SitePromptChoice.ALLOW) }
+        }
+    }
+}
+
+/** A 48 dp pill button: Block is bare Ember, Not now is Shale, Allow is the one Chalk action. */
+@Composable
+private fun PromptButton(text: String, content: Color, fill: Color, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .height(48.dp)
+            .clip(CircleShape)
+            .background(fill)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 20.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, color = content, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
     }
 }
