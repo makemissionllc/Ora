@@ -275,7 +275,7 @@ class DownloadsRepository(
         task.lastBytes = bytes
         task.lastTime = now
         update { list -> list.map { if (it.id == id) it.copy(bytes = bytes, speed = speed) else it } }
-        if (now - lastSave > 3000) saveNow()
+        if (now - lastSave > 2000) saveNow()
     }
 
     private fun fail(id: Long, message: String) {
