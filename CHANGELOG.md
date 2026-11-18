@@ -25,6 +25,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The Library has the Mineral look: round Bookmarks and History tabs, a round search box and a coloured letter beside each page. The History list on the tablet sidebar matches. Under your history it now says "Private tabs are never saved." (`37594fb`)
 - The card a site shows when it asks for your camera, microphone, location or notifications has the Mineral look: an icon, a clear question, a red Block, a grey Not now and a light Allow. It now says that Not now asks again next time. (`3040ffc`)
 - The lock screen has the Mineral look: the Ora mark, "Enter your PIN", a row of dots that fill as you type and a round keypad. Hold the delete key to clear the whole PIN at once. It now follows Light, Dark and Pure dark instead of always showing Light. (`d466b61`)
+- The tablet sidebar has the Mineral look: the open profile is a Chalk pill, Tabs, Bookmarks and History sit in a round control, and each row has a coloured letter. The open tab has a soft fill and a small dot. On phones the profile chips in the tab overview match. (`9205d78`)
 - Switching tabs now fades the page in instead of cutting over. With Remove animations on, it is instant. (`638b37c`)
 - With a keyboard attached, Ctrl+Tab moves to the next open tab. (`638b37c`)
 
