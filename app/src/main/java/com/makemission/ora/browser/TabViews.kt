@@ -6,6 +6,23 @@ import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.draw.rotate
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import com.makemission.ora.ui.theme.OraMotion
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -83,6 +100,10 @@ fun TabGrid(
     val needle = query.trim()
     // Normal and private tabs live in separate spaces (UI v2). The segmented control switches between them.
     var inPrivate by rememberSaveable { mutableStateOf(tabs.selected?.isPrivate == true) }
+    val groupState = remember { GroupDialogState() }
+    // The group whose tabs fill the overview, opened from its stacked card. Null shows groups and loose tabs.
+    var openGroupId by rememberSaveable { mutableStateOf<String?>(null) }
+    val openGroup = tabs.groups.firstOrNull { it.id == openGroupId }
     val allTabs = tabs.tabs.filter { !it.isPrivate }
     val privateCount = tabs.tabs.count { it.isPrivate }
     val tabList = allTabs.filter { needle.isEmpty() || it.shownTitle(displayUrl(it.url)).contains(needle, true) || (!(it.isPrivate && AppLock.locked) && it.url.contains(needle, true)) }
@@ -111,6 +132,7 @@ fun TabGrid(
     androidx.compose.runtime.CompositionLocalProvider(
         com.makemission.ora.ui.theme.LocalBrowserColors provides if (inPrivate) com.makemission.ora.ui.theme.privateBrowserColors(browserColors()) else browserColors()
     ) {
+    GroupDialogs(tabs, groupState, onGroupClosed = { openGroupId = null })
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -154,11 +176,60 @@ fun TabGrid(
                 modifier = Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 8.dp),
             )
         } else {
-        Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            SidebarSearch(query = query, placeholder = "Search ${allTabs.size} open tabs", onQueryChange = { query = it })
+        // A group opens in place of the overview and shrinks back into its card: shared overlay fade and scale.
+        AnimatedContent(
+            targetState = openGroup?.id,
+            modifier = Modifier.weight(1f),
+            transitionSpec = {
+                (fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE))
+                    .togetherWith(fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE))
+            },
+            label = "group",
+        ) { shownGroupId ->
+        val shownGroup = tabs.groups.firstOrNull { it.id == shownGroupId }
+        Column(Modifier.fillMaxSize()) {
+        if (shownGroup != null) {
+            var menu by remember { mutableStateOf(false) }
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                IconButton(onClick = { openGroupId = null }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to all tabs", tint = browserColors().AddressBarText)
+                }
+                Box(Modifier.size(12.dp).clip(androidx.compose.foundation.shape.CircleShape).background(shownGroup.color.color))
+                Spacer(Modifier.width(8.dp))
+                Text(shownGroup.name, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = browserColors().AddressBarText)
+                Box {
+                    IconButton(onClick = { menu = true }) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = "Group options", tint = browserColors().AddressBarText)
+                    }
+                    GroupMenu(menu, { menu = false }, shownGroup, tabs, groupState, onUngrouped = { openGroupId = null })
+                }
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
+                SidebarSearch(query = query, placeholder = "Search ${allTabs.size} open tabs", onQueryChange = { query = it })
+            }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.End) {
+                TextButton(onClick = { groupState.newGroup() }) {
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("New group", color = browserColors().SecondaryText, fontSize = 14.sp)
+                }
+            }
+            if (tabList.isEmpty() && needle.isNotEmpty()) {
+                EmptySidebarText("No tabs match \"$needle\"")
+            }
         }
-        if (tabList.isEmpty() && needle.isNotEmpty()) {
-            EmptySidebarText("No tabs match \"$needle\"")
+        // Inside a group: its tabs. With a search: every match, flat. Otherwise: group cards, then loose tabs.
+        val gridTabs = when {
+            shownGroup != null -> tabs.tabsIn(shownGroup.id)
+            needle.isNotEmpty() -> tabList
+            else -> tabList.filter { t -> t.groupId == null || tabs.groups.none { it.id == t.groupId } }
+        }
+        if (shownGroup != null && gridTabs.isEmpty()) {
+            EmptySidebarText("No tabs in this group. Long-press a tab and choose Add to group.")
         }
         LazyVerticalGrid(
             columns = GridCells.Fixed(if (tablet) 3 else 2),
@@ -166,15 +237,24 @@ fun TabGrid(
             verticalArrangement = Arrangement.spacedBy(BrowserTokens.GridSpacing),
             horizontalArrangement = Arrangement.spacedBy(BrowserTokens.GridSpacing)
         ) {
-            gridItems(tabList, key = { it.id }) { tab ->
+            if (shownGroup == null && needle.isEmpty()) {
+                gridItems(tabs.groups.toList(), key = { "g" + it.id }) { group ->
+                    GroupCard(group, tabs.tabsIn(group.id).size, onClick = { openGroupId = group.id })
+                }
+            }
+            gridItems(gridTabs, key = { it.id }) { tab ->
                 TabTile(
                     title = tab.shownTitle(displayUrl(tab.url)),
                     thumbnail = tab.thumbnail,
                     selected = tab.id == tabs.selectedId,
                     onClick = { onSelect(tab.id) },
-                    onClose = { onClose(tab.id) }
+                    onClose = { onClose(tab.id) },
+                    onLongClick = { groupState.addTo = tab },
+                    groupColor = tabs.groups.firstOrNull { it.id == tab.groupId }?.color?.color,
                 )
             }
+        }
+        }
         }
         }
         if (tablet) {
@@ -239,6 +319,7 @@ private fun PillButton(text: String, onClick: () -> Unit, primary: Boolean = fal
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun TabTile(
     title: String,
@@ -246,9 +327,13 @@ private fun TabTile(
     selected: Boolean,
     onClick: () -> Unit,
     onClose: () -> Unit,
+    /** Long press: opens "Add to group". */
+    onLongClick: (() -> Unit)? = null,
+    /** Colour of the tab's group, drawn as a dot before the title. The group's name is in its card. */
+    groupColor: Color? = null,
 ) {
     Column(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Surface(
@@ -299,6 +384,7 @@ private fun TabTile(
             ) {
                 Text(title.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "•", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
             }
+            if (groupColor != null) Box(Modifier.size(8.dp).clip(androidx.compose.foundation.shape.CircleShape).background(groupColor))
             Text(
                 text = title,
                 maxLines = 1,
@@ -308,6 +394,56 @@ private fun TabTile(
                 fontWeight = FontWeight.Medium,
                 color = browserColors().AddressBarText
             )
+        }
+    }
+}
+
+/**
+ * A tab group in the overview: a card with two layers peeking out behind it, so it reads as a stack.
+ * The colour dot sits next to the name; tapping opens the group's tabs.
+ */
+@Composable
+private fun GroupCard(group: TabGroup, count: Int, onClick: () -> Unit) {
+    val colors = browserColors()
+    Column(modifier = Modifier.clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.fillMaxWidth().height(BrowserTokens.TabTileHeight)) {
+            Surface(Modifier.align(Alignment.BottomCenter).padding(horizontal = 18.dp).fillMaxWidth().height(BrowserTokens.TabTileHeight - 4.dp), shape = BrowserTokens.TabTileShape, color = colors.SidebarSelected.copy(alpha = 0.5f)) {}
+            Surface(Modifier.align(Alignment.BottomCenter).padding(horizontal = 9.dp).fillMaxWidth().height(BrowserTokens.TabTileHeight - 10.dp), shape = BrowserTokens.TabTileShape, color = colors.SidebarSelected) {}
+            Surface(Modifier.align(Alignment.TopCenter).fillMaxWidth().height(BrowserTokens.TabTileHeight - 18.dp), shape = BrowserTokens.TabTileShape, color = colors.AddressBarBackground) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Box(Modifier.size(12.dp).clip(androidx.compose.foundation.shape.CircleShape).background(group.color.color))
+                        Text(group.name, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
+                    }
+                    Text(if (count == 1) "1 tab" else "$count tabs", fontSize = 13.sp, color = colors.SecondaryText)
+                }
+            }
+        }
+        Text("Group", fontSize = 12.sp, color = colors.SecondaryText, modifier = Modifier.padding(start = 2.dp))
+    }
+}
+
+/** A group's header in the tablet sidebar: chevron, colour dot, name, count and a ⋯ menu. Tapping folds the group. */
+@Composable
+private fun SidebarGroupHeader(group: TabGroup, count: Int, tabs: BrowserTabs, state: GroupDialogState) {
+    val colors = browserColors()
+    var menu by remember { mutableStateOf(false) }
+    val turn by animateFloatAsState(if (group.collapsed) 0f else 90f, OraMotion.enter(), label = "chevron")
+    Row(
+        modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(12.dp)).clickable { tabs.toggleCollapsed(group.id) }.padding(start = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = if (group.collapsed) "Expand ${group.name}" else "Collapse ${group.name}", tint = colors.SecondaryText, modifier = Modifier.size(20.dp).rotate(turn))
+        Spacer(Modifier.width(6.dp))
+        Box(Modifier.size(10.dp).clip(androidx.compose.foundation.shape.CircleShape).background(group.color.color))
+        Spacer(Modifier.width(8.dp))
+        Text(group.name, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
+        Text("$count", fontSize = 13.sp, color = colors.SecondaryText)
+        Box {
+            IconButton(onClick = { menu = true }, modifier = Modifier.size(40.dp)) {
+                Icon(Icons.Filled.MoreVert, contentDescription = "Group options", tint = colors.SecondaryText, modifier = Modifier.size(18.dp))
+            }
+            GroupMenu(menu, { menu = false }, group, tabs, state)
         }
     }
 }
@@ -332,6 +468,7 @@ fun TabSidebar(
 ) {
     // The private space opens inside the sidebar from the pinned bottom row, in the Obsidian colours.
     var inPrivate by remember { mutableStateOf(tabs.selected?.isPrivate == true) }
+    val groupState = remember { GroupDialogState() }
     var panel by remember { mutableStateOf(SidebarPanel.TABS) }
     var query by remember { mutableStateOf("") }
     val needle = query.trim()
@@ -346,6 +483,7 @@ fun TabSidebar(
         com.makemission.ora.ui.theme.LocalBrowserColors provides if (inPrivate) com.makemission.ora.ui.theme.privateBrowserColors(browserColors()) else browserColors()
     ) {
     val privateCount = tabs.tabs.count { it.isPrivate }
+    GroupDialogs(tabs, groupState)
     Column(
         modifier = Modifier
             .width(BrowserTokens.SidebarWidth)
@@ -446,13 +584,47 @@ fun TabSidebar(
                     if (shownTabs.isEmpty()) {
                         item { EmptySidebarText("No tabs match \"$needle\"") }
                     }
-                    items(shownTabs, key = { it.id }) { tab ->
-                        SidebarRow(
-                            label = tab.shownTitle(displayUrl(tab.url)),
-                            url = tab.url,
-                            selected = tab.id == tabs.selectedId,
-                            onClick = { tabs.select(tab.id) }
-                        )
+                    if (needle.isEmpty()) {
+                        // Groups fold with a chevron; tabs outside any group sit under "Not in a group".
+                        tabs.groups.toList().forEach { group ->
+                            val members = shownTabs.filter { it.groupId == group.id }
+                            item(key = "gh_" + group.id) { SidebarGroupHeader(group, members.size, tabs, groupState) }
+                            item(key = "gb_" + group.id) {
+                                AnimatedVisibility(
+                                    visible = !group.collapsed,
+                                    enter = fadeIn(OraMotion.enter()) + expandVertically(OraMotion.enter()),
+                                    exit = fadeOut(OraMotion.exit()) + shrinkVertically(OraMotion.exit()),
+                                ) {
+                                    Column(Modifier.padding(start = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        if (members.isEmpty()) EmptySidebarText("Empty. Long-press a tab to add it.")
+                                        members.forEach { tab ->
+                                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab })
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        val loose = shownTabs.filter { t -> t.groupId == null || tabs.groups.none { it.id == t.groupId } }
+                        if (tabs.groups.isNotEmpty()) item(key = "loose") {
+                            Text("Not in a group", modifier = Modifier.padding(start = 12.dp, top = 10.dp, bottom = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
+                        }
+                        items(loose, key = { it.id }) { tab ->
+                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab })
+                        }
+                        item(key = "new_group") {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(44.dp).clip(RoundedCornerShape(12.dp)).clickable { groupState.newGroup() }.padding(horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(Icons.Filled.Add, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
+                                Spacer(Modifier.width(12.dp))
+                                Text("New tab group", fontSize = 15.sp, color = browserColors().SecondaryText)
+                            }
+                        }
+                    } else {
+                        items(shownTabs, key = { it.id }) { tab ->
+                            SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab })
+                        }
                     }
                 }
             }
@@ -544,15 +716,16 @@ private fun EmptySidebarText(text: String) {
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun SidebarRow(label: String, url: String, selected: Boolean, onClick: () -> Unit) {
+private fun SidebarRow(label: String, url: String, selected: Boolean, onClick: () -> Unit, onLongClick: (() -> Unit)? = null) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.SidebarRowHeight)
             .clip(RoundedCornerShape(12.dp))
             .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
-            .clickable(onClick = onClick)
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

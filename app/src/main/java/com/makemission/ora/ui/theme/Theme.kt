@@ -233,6 +233,10 @@ object Mineral {
     val Lichen = Color(0xFFA9C08C)
     /** Destructive actions: Block, Close all, Clear. Meaning only, never decoration. */
     val Ember = Color(0xFFE58A6B)
+    /** Tab group colours beyond Lichen, Ember and Fog. A group is always named next to its colour. */
+    val Ochre = Color(0xFFD8B46A)
+    val Tide = Color(0xFF7E9BB8)
+    val Plum = Color(0xFFA88BB8)
     /** Soft tints behind a site's initial in lists. Decoration chosen per host, always with Basalt text. */
     val SiteTints = listOf(Color(0xFFCBD8C6), Color(0xFFCDD6E2), Color(0xFFD9D2E2), Color(0xFFE6D5C0), Color(0xFFDCDCD6))
     val Stone = Color(0xFFE9E8E4)

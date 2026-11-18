@@ -53,6 +53,8 @@ class BrowserTab(
     /** Latest session state from GeckoView, kept so quick resume can save this tab's history. */
     var sessionState: String? = null
     var title by mutableStateOf("")
+    /** The tab group this tab is in, or null. A tab is in at most one group; private tabs are never grouped. */
+    var groupId by mutableStateOf<String?>(null)
     /** Last captured picture of the page, shown as the tab's preview in the tab grid. */
     var thumbnail by mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
     var loading by mutableStateOf(false)
@@ -357,9 +359,13 @@ class BrowserTabs(
     private val onVisited: (String, String) -> Unit = { _, _ -> },
     /** The profile's saved site permission answers, handed to each tab. */
     private val sitePermissions: SitePermissionStore,
+    /** Where this profile's tab groups are kept. Null keeps none. */
+    private val groupStore: TabGroupStore? = null,
 ) {
     private var nextId = 0L
     val tabs = mutableStateListOf<BrowserTab>()
+    /** This profile's tab groups, in order. Declared before the first tabs so restored tabs can find theirs. */
+    val groups = mutableStateListOf<TabGroup>().also { list -> groupStore?.let { list.addAll(it.load()) } }
 
     companion object {
         /** Address of the native start page. New tabs open here. */
@@ -375,7 +381,7 @@ class BrowserTabs(
     init {
         val saved = restore
         if (saved != null && saved.tabs.isNotEmpty()) {
-            val reopened = saved.tabs.map { newTab(it.url, select = false, restoreState = it.state) }
+            val reopened = saved.tabs.map { saved -> newTab(saved.url, select = false, restoreState = saved.state).also { tab -> tab.groupId = saved.groupId?.takeIf { gid -> groups.any { it.id == gid } } } }
             select(reopened[saved.selected.coerceIn(0, reopened.lastIndex)].id)
             BrowserLog.info("session", "Quick resume reopened ${reopened.size} tabs")
         } else {
@@ -390,7 +396,7 @@ class BrowserTabs(
     fun savableSnapshot(): SessionStore.Saved {
         val kept = tabs.filterNot { it.isPrivate }
         val selectedIndex = kept.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
-        return SessionStore.Saved(kept.map { SessionStore.SavedTab(it.url, it.sessionState) }, selectedIndex)
+        return SessionStore.Saved(kept.map { SessionStore.SavedTab(it.url, it.sessionState, it.groupId) }, selectedIndex)
     }
 
     val selected: BrowserTab?
@@ -494,6 +500,66 @@ class BrowserTabs(
         BrowserLog.info("tabs", "Closed ${doomed.size} private tabs")
         if (tabs.isEmpty()) newTab(START_URL)
         else if (tabs.none { it.id == selectedId }) select(tabs.last().id)
+    }
+
+    // ---- Tab groups ----
+
+    private fun persistGroups() {
+        groups.forEachIndexed { i, g -> if (g.order != i) groups[i] = g.copy(order = i) }
+        groupStore?.save(groups.toList())
+    }
+
+    fun tabsIn(groupId: String): List<BrowserTab> = tabs.filter { it.groupId == groupId }
+
+    /** Adds an empty group. A blank name becomes "Group N". */
+    fun addGroup(name: String, color: GroupColor): TabGroup {
+        val clean = name.trim().ifEmpty { "Group ${groups.size + 1}" }
+        val group = TabGroup("g" + System.currentTimeMillis(), clean, color, collapsed = false, order = groups.size)
+        groups.add(group)
+        persistGroups()
+        UsageStats.count("group.new")
+        BrowserLog.info("groups", "Added group $clean (${color.label})")
+        return group
+    }
+
+    fun updateGroup(id: String, name: String, color: GroupColor) {
+        val i = groups.indexOfFirst { it.id == id }
+        if (i < 0) return
+        groups[i] = groups[i].copy(name = name.trim().ifEmpty { groups[i].name }, color = color)
+        persistGroups()
+        BrowserLog.info("groups", "Edited group ${groups[i].name} (${color.label})")
+    }
+
+    fun toggleCollapsed(id: String) {
+        val i = groups.indexOfFirst { it.id == id }
+        if (i < 0) return
+        groups[i] = groups[i].copy(collapsed = !groups[i].collapsed)
+        persistGroups()
+    }
+
+    /** Puts a tab in a group, or takes it out with a null id. Private tabs cannot be grouped. */
+    fun moveToGroup(tabId: Long, groupId: String?) {
+        val tab = tabs.firstOrNull { it.id == tabId } ?: return
+        if (tab.isPrivate || (groupId != null && groups.none { it.id == groupId })) return
+        tab.groupId = groupId
+        BrowserLog.info("groups", if (groupId == null) "Took tab $tabId out of its group" else "Added tab $tabId to a group")
+    }
+
+    /** Deletes the group and keeps its tabs, now not in a group. */
+    fun ungroup(id: String) {
+        tabsIn(id).forEach { it.groupId = null }
+        groups.removeAll { it.id == id }
+        persistGroups()
+        BrowserLog.info("groups", "Ungrouped a group")
+    }
+
+    /** Deletes the group and closes its tabs. */
+    fun closeGroup(id: String) {
+        val doomed = tabsIn(id).map { it.id }
+        doomed.forEach { close(it) }
+        groups.removeAll { it.id == id }
+        persistGroups()
+        BrowserLog.info("groups", "Closed a group and its ${doomed.size} tabs")
     }
 
     fun closeAll() {

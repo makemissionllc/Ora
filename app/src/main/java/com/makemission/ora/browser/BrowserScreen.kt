@@ -339,6 +339,7 @@ private fun BrowserContent(
                 // Finished pages are listed in this profile's history, when saving is on.
                 onVisited = { url, title -> if (settings.saveHistory.value) historyFor(profileId).record(url, title) },
                 sitePermissions = sitePermissionsFor(profileId),
+                groupStore = TabGroupStore(context, profileId),
             )
         }
     }
