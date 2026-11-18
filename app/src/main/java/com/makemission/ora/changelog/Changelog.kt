@@ -14,6 +14,10 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Pop-up card: when a page opens a new window on its own, without a tap, Ora asks first. The card names the site, with Open (opens it this time), Always allow (opens it and lets that site open pop-ups from now on) and Block (stops it). Private tabs have no Always allow."),
+            ChangeItem(ChangeKind.ADDED, "Pop-up sites: Settings > Privacy > Pop-ups and ads lists the sites you chose Always allow for, with Remove to stop allowing one. Block pop-up windows in the same section turns the check off, and then pop-ups open as tabs without asking."),
+            ChangeItem(ChangeKind.CHANGED, "A pop-up opened by tapping a link now opens as a new tab and switches to it. From a private tab it opens as a private tab."),
+            ChangeItem(ChangeKind.FIXED, "A pop-up that a page opens without a tap is no longer dropped silently. Ora now sees it and asks first, so the card can show."),
             ChangeItem(ChangeKind.CHANGED, "Download entries in the log name the site a file came from and its size, never the file name. A file name can say what you downloaded.  (`fb8d03c`)"),
             ChangeItem(ChangeKind.FIXED, "The log no longer fills with a line each time you scroll a page that was not at its top. Reader's \"Page report\" is written only when a page's answer changes, not every time it loads.  (`7d8fdd3`)"),
             ChangeItem(ChangeKind.FIXED, "A page that fails to load is logged with the same plain words the error page uses (for example \"The address could not be found\") instead of a category and code number. Pages that fail because of a proxy or a bad address now get their own words too.  (`1f2fb61`)"),

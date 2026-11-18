@@ -38,6 +38,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.foundation.shape.CircleShape
 import com.makemission.ora.browser.MineralSwitch
+import com.makemission.ora.browser.PopupStore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -93,8 +94,10 @@ fun SettingsScreen(
     onDone: () -> Unit,
     onClearData: () -> Unit,
     sitePermissions: SitePermissionStore,
+    popups: PopupStore,
 ) {
     val appearance by settings.appearance.collectAsState()
+    val popupSites by popups.allowed.collectAsState()
     val videoGestures by settings.videoGestures.collectAsState()
     val videoBackExits by settings.videoBackExits.collectAsState()
     val homePage by settings.homePage.collectAsState()
@@ -645,12 +648,47 @@ fun SettingsScreen(
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text("Block pop-up windows", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
-                                        "Stops sites opening windows on their own. When off, pop-ups open as a new tab.",
+                                        "Stops sites opening windows on their own. You're asked first, unless the site is listed below. When off, pop-ups open as a new tab.",
                                         fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
                                 MineralSwitch(checked = blockPopups, label = "Switch", onChange = { settings.setBlockPopups(it) })
+                            }
+                            Text(
+                                "Pop-up sites",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp)
+                            )
+                            if (popupSites.isEmpty()) {
+                                Text(
+                                    "No sites yet. Choose Always allow on a pop-up card to add one here.",
+                                    fontSize = 14.sp,
+                                    color = browserColors().SecondaryText,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                                )
+                            }
+                            popupSites.sorted().forEach { domain ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp)
+                                        .padding(start = 16.dp, end = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        domain,
+                                        fontSize = 15.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = browserColors().AddressBarText,
+                                        modifier = Modifier.weight(1f)
+                                    )
+                                    TextButton(onClick = { popups.remove(domain) }) {
+                                        Text("Remove", color = browserColors().SecondaryText)
+                                    }
+                                }
                             }
                             Row(
                                 modifier = Modifier

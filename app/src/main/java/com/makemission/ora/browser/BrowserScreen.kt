@@ -160,6 +160,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
+import android.view.MotionEvent
 import android.view.View
 import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.Bookmark
@@ -337,6 +338,7 @@ private fun BrowserContent(
     val tabsByProfile = TabRegistry.byProfile
     val sessionStore = remember { SessionStore(context) }
     val quickResume by settings.quickResume.collectAsState()
+    val popupStore = PopupStore.forProfile(context, profileId)
     val tabs = remember(profileId) {
         tabsByProfile.getOrPut(profileId) {
             BrowserTabs(
@@ -353,6 +355,7 @@ private fun BrowserContent(
             )
         }.also {
             // After a window is recreated these tabs still exist; point their callbacks at this window's objects.
+            it.popupStore = popupStore
             it.rebind(
                 { settings.blockPopups.value },
                 { response, pageUrl -> downloads.start(response, pageUrl) },
@@ -988,6 +991,36 @@ private fun BrowserContent(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = if (phoneCompact) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
                 )
+                // A pop-up the page opened without a tap waits here until the user picks Open, Always allow or Block.
+                // The card eases in and out from the bottom edge (see PopupCardHost). A tap while it leaves does nothing,
+                // because the choice was already made.
+                PopupCardHost(
+                    pending = tabs.pendingPopup,
+                    onOpen = { popup ->
+                        if (tabs.pendingPopup == popup) {
+                            tabs.pendingPopup = null
+                            BrowserLog.info("popup", "Pop-up from ${popup.fromSite} opened because the user chose Open")
+                            tabs.newTab(popup.url, isPrivate = popup.fromPrivate)
+                        }
+                    },
+                    onAlways = { popup ->
+                        if (tabs.pendingPopup == popup) {
+                            tabs.pendingPopup = null
+                            popupStore.allow(popup.fromSite)
+                            BrowserLog.info("popup", "Pop-up from ${popup.fromSite} opened because the user chose Always allow")
+                            tabs.newTab(popup.url, isPrivate = popup.fromPrivate)
+                        }
+                    },
+                    onBlock = { popup ->
+                        if (tabs.pendingPopup == popup) {
+                            tabs.pendingPopup = null
+                            BrowserLog.info("popup", "Blocked a pop-up from ${popup.fromSite} when the user chose Block")
+                        }
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = if (phoneCompact) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+                )
                 // Long press on a link or image opens the quick menu at the press point (both layouts).
                 selected.pressTarget?.let { target ->
                     key(target) {
@@ -1172,6 +1205,7 @@ private fun BrowserContent(
                             onDone = { showSettings = false },
                             onClearData = clearBrowsingData,
                             sitePermissions = sitePermissionsFor(profileId),
+                            popups = popupStore,
                         )
                         PhoneOverlay.LIBRARY -> LibraryScreen(
                             bookmarks = bookmarkList,
@@ -1456,6 +1490,11 @@ private fun BrowserPage(
                 GeckoView(ctx).also {
                     // Lets Android's autofill service (Bitwarden, Google and others) see the page's login fields.
                     it.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_YES
+                    // A finger that lifts on the page counts as a tap, so a pop-up it causes opens as a tab.
+                    it.setOnTouchListener { _, event ->
+                        if (event.actionMasked == MotionEvent.ACTION_UP) PopupTaps.recordTap()
+                        false
+                    }
                     pageView.view = it
                     pageView.appliedClip = 0
                 }

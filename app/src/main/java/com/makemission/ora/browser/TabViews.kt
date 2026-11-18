@@ -322,7 +322,7 @@ fun TabGrid(
 
 /** Pill button from the Mineral design: Chalk fill with dark text when primary, Shale fill with Chalk text otherwise. */
 @Composable
-private fun PillButton(text: String, onClick: () -> Unit, primary: Boolean = false, icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
+internal fun PillButton(text: String, onClick: () -> Unit, primary: Boolean = false, icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
     val fill = if (primary) browserColors().Accent else browserColors().AddressBarBackground
     val content = if (primary) browserColors().GridBackground else browserColors().AddressBarText
     Row(

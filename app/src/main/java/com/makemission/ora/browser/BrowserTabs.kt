@@ -19,6 +19,13 @@ import org.mozilla.geckoview.GeckoSessionSettings
 import org.mozilla.geckoview.WebRequestError
 import org.mozilla.geckoview.WebResponse
 
+/** A pop-up waiting for the card's answer: its address, the page it came from, and whether that page is private. */
+data class PendingPopup(val url: String, val fromSite: String, val fromPrivate: Boolean)
+
+/** A GeckoView session for a tab: private mode for a private tab, normal otherwise. */
+internal fun newSession(isPrivate: Boolean): GeckoSession =
+    if (isPrivate) GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build()) else GeckoSession()
+
 /** One browser tab: a GeckoSession plus the UI state the toolbar and tab grid read from it. */
 class BrowserTab(
     val id: Long,
@@ -26,7 +33,8 @@ class BrowserTab(
     initialUrl: String,
     /** Read on each pop-up request: true blocks it, false opens it as a new tab. */
     private val popupsBlocked: () -> Boolean,
-    private val onPopupAllowed: (String) -> Unit,
+    /** A pop-up to open as a tab. The session is the one GeckoView will load the pop-up's page into. */
+    private val onPopupAllowed: (String, GeckoSession) -> Unit,
     /** A page handed over a file to save (a download link or a script-started download). */
     private val onDownload: (WebResponse, String) -> Unit,
     /** Tablets open tabs with the desktop site, so pages lay out for the larger screen. */
@@ -43,12 +51,14 @@ class BrowserTab(
     restoring: Boolean = false,
     /** A reopened background tab waits: it loads when it is first selected, so start-up loads one page, not nine. */
     deferLoad: Boolean = false,
+    /** Whether a site may open pop-ups without asking: the domain is checked against the profile's allow list. */
+    private val siteAllowedForPopups: (String) -> Boolean = { false },
+    /** A pop-up with no tap, when the card must ask. Gets the pop-up's address and the page's domain. */
+    private val onPopupAsk: (String, String) -> Unit = { _, _ -> },
+    /** A session already made for a pop-up. GeckoView loads the pop-up into it, so this tab does not load its address itself. */
+    adopt: GeckoSession? = null,
 ) {
-    val session: GeckoSession = if (isPrivate) {
-        GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build())
-    } else {
-        GeckoSession()
-    }
+    val session: GeckoSession = adopt ?: newSession(isPrivate)
     /** Page and navigation events go here: a private tab logs nothing, so the log never shows private browsing. */
     private val plog = TabLog(isPrivate)
     private val appContext: Context = context.applicationContext
@@ -182,14 +192,21 @@ class BrowserTab(
             }
 
             override fun onNewSession(session: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
-                if (popupsBlocked()) {
-                    plog.info("popup", "Blocked pop-up from ${this@BrowserTab.url}: $uri")
-                } else {
-                    plog.info("popup", "Opened pop-up as a tab: $uri")
-                    onPopupAllowed(uri)
+                val siteDomain = popupSiteOf(this@BrowserTab.url)
+                val target = popupSiteOf(uri)
+                val fromTap = PopupTaps.tappedRecently()
+                if (popupDecision(fromTap, siteAllowedForPopups(siteDomain), popupsBlocked()) == PopupDecision.ASK) {
+                    // Nothing is dropped silently: the card asks, and until it is answered no window opens.
+                    plog.info("popup", "Pop-up asked from $siteDomain with no tap: $target")
+                    onPopupAsk(uri, siteDomain)
+                    return null
                 }
-                // Returning null keeps the window from opening; the page gets no window back.
-                return null
+                // A tap's pop-up, or one the site may open, becomes a tab. The fresh session goes to GeckoView unopened,
+                // so a form POST or a download the page starts there reaches the new tab, not a plain GET of its address.
+                plog.info("popup", if (fromTap) "Pop-up opened from a tap: $target" else "Pop-up opened for an allowed site: $target")
+                val opened = newSession(isPrivate)
+                onPopupAllowed(uri, opened)
+                return GeckoResult.fromValue(opened)
             }
 
             override fun onCanGoBack(session: GeckoSession, canGoBack: Boolean) {
@@ -328,9 +345,10 @@ class BrowserTab(
         } else {
             GeckoSessionSettings.USER_AGENT_MODE_MOBILE
         }
-        session.open(GeckoEngine.runtime(context))
+        // A pop-up session is opened by GeckoView itself, and its page is loaded by GeckoView, not here.
+        if (adopt == null) session.open(GeckoEngine.runtime(context))
         // The start page is drawn natively, so it never goes to GeckoView.
-        if (loaded && initialUrl != BrowserTabs.START_URL) loadNow()
+        if (loaded && initialUrl != BrowserTabs.START_URL && adopt == null) loadNow()
         // A waiting tab keeps its saved history text, so saving again before it loads loses nothing.
         else if (!loaded) sessionState = restoreState
     }
@@ -474,7 +492,13 @@ class BrowserTabs(
     val selected: BrowserTab?
         get() = tabs.firstOrNull { it.id == selectedId }
 
-    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null, restoring: Boolean = false, deferLoad: Boolean = false): BrowserTab {
+    /** The profile's allow list for pop-ups. Null while the screen has not attached it, so nothing is allowed then. */
+    var popupStore: PopupStore? = null
+
+    /** A pop-up with no tap that the card is asking about. Null when no card is showing. */
+    var pendingPopup by mutableStateOf<PendingPopup?>(null)
+
+    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null, restoring: Boolean = false, deferLoad: Boolean = false, adopt: GeckoSession? = null): BrowserTab {
         // A private tab is never created while the app is locked: it could not be shown, and nothing may load behind the lock.
         if (isPrivate && AppLock.locked) {
             BrowserLog.warn("tabs", "Did not open a private tab: the app is locked")
@@ -482,7 +506,15 @@ class BrowserTabs(
             InAppNotices.show("Unlock Ora to open a private tab")
             return selected ?: tabs.first()
         }
-        val tab = BrowserTab(if (isPrivate) nextPrivateId-- else nextId++, context, url, { popupsBlocked() }, { popup -> newTab(popup, isPrivate = isPrivate) }, { response, page -> onDownload(response, page) }, desktopByDefault, isPrivate, restoreState, { page, title -> onVisited(page, title) }, sitePermissions, restoring, deferLoad)
+        val tab = BrowserTab(
+            if (isPrivate) nextPrivateId-- else nextId++, context, url, { popupsBlocked() },
+            { popup, opened -> newTab(popup, isPrivate = isPrivate, adopt = opened) },
+            { response, page -> onDownload(response, page) },
+            desktopByDefault, isPrivate, restoreState, { page, title -> onVisited(page, title) }, sitePermissions, restoring, deferLoad,
+            siteAllowedForPopups = { domain -> popupStore?.isAllowed(domain) == true },
+            onPopupAsk = { popup, fromSite -> pendingPopup = PendingPopup(popup, fromSite, isPrivate) },
+            adopt = adopt,
+        )
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.

@@ -9,6 +9,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
+- Pop-up card: when a page opens a new window on its own, without a tap, Ora asks first. The card names the site, with Open (opens it this time), Always allow (opens it and lets that site open pop-ups from now on) and Block (stops it). Private tabs have no Always allow.
+- Pop-up sites: Settings > Privacy > Pop-ups and ads lists the sites you chose Always allow for, with Remove to stop allowing one. Block pop-up windows in the same section turns the check off, and then pop-ups open as tabs without asking.
 - Fast downloads over http: Settings > Privacy > Network has a new switch, off by default. On, plain http:// files download in parts and can be paused and resumed, the same as https files. Off, plain http files download on one connection and cannot be paused. Their data is not encrypted, and the switch says so.  (`352ab8d`)
 - Downloads are split into parts when the site allows it, and a dropped connection is retried. Unfinished downloads come back paused after Ora restarts, so you choose when to continue.  (`352ab8d`)
 - A "Download started" note appears at the bottom when a download begins and fades away by itself. Swipe it away if it covers something, or tap it to open Downloads.  (`352ab8d`)
@@ -25,12 +27,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card.  (`2fdaa3d`)
 
 **Changed**
+- A pop-up opened by tapping a link now opens as a new tab and switches to it. From a private tab it opens as a private tab.
 - Download entries in the log name the site a file came from and its size, never the file name. A file name can say what you downloaded.  (`fb8d03c`)
 - On phone, the Downloads page opens as a sheet from the bottom that you can drag up to full screen. Pause is shown only on downloads that can pause.  (`352ab8d`)
 - The Downloads page now matches the design: a summary of what is moving (count, speed and bytes left), an All, Active, Done and Failed filter, Active and Today sections, and rows with a file-type tile and a four-part progress bar. Finished files open on tap and share on a long press, and each filter has its own empty message. Pause, resume and retry are not in yet. Phone only so far.  (`c59ddf0`)
 - The Downloads page opens from the toolbar button and shrinks back into it when closed, and it has a Copy link action with a short confirmation on the details page. The tablet layout is not checked on a device yet.  (`e182fda`)
 
 **Fixed**
+- A pop-up that a page opens without a tap is no longer dropped silently. Ora now sees it and asks first, so the card can show.
 - The log no longer fills with a line each time you scroll a page that was not at its top. Reader's "Page report" is written only when a page's answer changes, not every time it loads.  (`7d8fdd3`)
 - A page that fails to load is logged with the same plain words the error page uses (for example "The address could not be found") instead of a category and code number. Pages that fail because of a proxy or a bad address now get their own words too.  (`1f2fb61`)
 - Installing an extension: tapping Add again while it is installing does nothing, the button says "Adding…", and the extension is installed once. A failed install now says why in plain words, not a blank message.  (`729e558`)
