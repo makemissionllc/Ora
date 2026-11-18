@@ -15,7 +15,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - A dropped connection is retried after 2, 5, 15 and 30 seconds, then every minute, up to ten times. When the network is gone, it waits and resumes when it comes back. (`665274c`)
 
 **Changed**
-- On Android 14 and later, downloads keep running in the background as a system-managed download job, with the same Pause all and Cancel notification buttons.  (`(this commit)`)
+- On Android 14 and later, downloads keep running in the background as a system-managed download job, with the same Pause all and Cancel notification buttons.  (`5bc0a47`)
 - A download paused or failed before an app restart keeps the page it came from, so resuming still sends the right Referer.  (`69ea180`)
 - Downloads use the same sign-in and cookies as the tab that started them. Private-tab downloads share nothing with normal tabs and are not saved to the list after a restart. (`94ff36b`, `0c93cda`)
 
