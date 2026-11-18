@@ -9,7 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
-- Failed pages now show a card that says what went wrong, in one plain title and one sentence, instead of a blank page. There are cards for offline, an address that can't be found, a site that isn't answering or refused the connection, a blocked port, a certificate problem and a few others. Try again reloads the address, and Go back returns to the page before it, greyed out when there is no earlier page. Details for support is folded under the card, with a Copy details button for a bug report.
+- Failed pages now show a card that says what went wrong, in one plain title and one sentence, instead of a blank page. There are cards for offline, an address that can't be found, a site that isn't answering or refused the connection, a blocked port, a certificate problem and a few others. Try again reloads the address, and Go back returns to the page before it, greyed out when there is no earlier page. Details for support is folded under the card, with a Copy details button for a bug report.  (`a1f02a2`)
 - Pop-up card: when a page opens a new window on its own, without a tap, Ora asks first. The card names the site, with Open (opens it this time), Always allow (opens it and lets that site open pop-ups from now on) and Block (stops it). Private tabs have no Always allow.  (`9b91073`)
 - Pop-up sites: Settings > Privacy > Pop-ups and ads lists the sites you chose Always allow for, with Remove to stop allowing one. Block pop-up windows in the same section turns the check off, and then pop-ups open as tabs without asking.  (`9b91073`)
 - Fast downloads over http: Settings > Privacy > Network has a new switch, off by default. On, plain http:// files download in parts and can be paused and resumed, the same as https files. Off, plain http files download on one connection and cannot be paused. Their data is not encrypted, and the switch says so.  (`352ab8d`)
@@ -28,7 +28,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card.  (`2fdaa3d`)
 
 **Changed**
-- A page that fails checks the phone's connection first. With no internet, the card says you're offline, whatever the browser reported.
+- A page that fails checks the phone's connection first. With no internet, the card says you're offline, whatever the browser reported.  (`a1f02a2`)
 - A pop-up opened by tapping a link now opens as a new tab and switches to it. From a private tab it opens as a private tab.  (`9b91073`)
 - Download entries in the log name the site a file came from and its size, never the file name. A file name can say what you downloaded.  (`fb8d03c`)
 - On phone, the Downloads page opens as a sheet from the bottom that you can drag up to full screen. Pause is shown only on downloads that can pause.  (`352ab8d`)
