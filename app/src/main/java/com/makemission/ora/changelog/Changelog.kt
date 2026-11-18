@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.CHANGED, "On tablet, the sidebar now grows out of the sidebar button and shrinks back into it when it closes."),
+            ChangeItem(ChangeKind.CHANGED, "On a tablet with a keyboard, Escape closes the sidebar."),
             ChangeItem(ChangeKind.FIXED, "Auto-fill on a login page now reaches your password app. It no longer stops with \"Contents can't be auto-filled\"."),
             ChangeItem(ChangeKind.CHANGED, "When Auto-fill cannot help, the message says why: turn on a password app in your phone's settings, or tap a login field first, then reload the page if it still fails."),
         ),

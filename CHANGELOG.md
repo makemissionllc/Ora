@@ -8,6 +8,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-18
 
+**Changed**
+- On tablet, the sidebar now grows out of the sidebar button and shrinks back into it when it closes. (`HASH`)
+- On a tablet with a keyboard, Escape closes the sidebar. (`HASH`)
+
 **Fixed**
 - Auto-fill on a login page now reaches your password app. It no longer stops with "Contents can't be auto-filled". (`55c62be`)
 

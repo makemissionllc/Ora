@@ -81,6 +81,11 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
@@ -755,13 +760,25 @@ private fun BrowserContent(
         },
         bottomBar = { if (isTablet) bottomBarContent() }
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+        // Quality of life: Escape on a hardware keyboard closes the sidebar.
+        Box(modifier = Modifier.fillMaxSize().onPreviewKeyEvent { e ->
+            if (isTablet && showSidebar && e.key == Key.Escape && e.type == KeyEventType.KeyUp) {
+                BrowserLog.info("ui", "Sidebar closed with Escape")
+                settings.setTabletSidebar(false)
+                true
+            } else false
+        }) {
         Row(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
             // The sidebar slides in and out from its left edge, using the shared overlay motion.
             AnimatedVisibility(
                 visible = isTablet && showSidebar,
-                enter = fadeIn(OraMotion.enter()) + expandHorizontally(expandFrom = Alignment.Start, animationSpec = OraMotion.enter()),
-                exit = fadeOut(OraMotion.exit()) + shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = OraMotion.exit())
+                // It also scales from the hamburger (top left) and shrinks back into it.
+                enter = fadeIn(OraMotion.overlayFadeIn()) +
+                    scaleIn(OraMotion.overlayScaleIn(), OraMotion.MORPH_SCALE, TransformOrigin(0f, 0f)) +
+                    expandHorizontally(expandFrom = Alignment.Start, animationSpec = OraMotion.enter()),
+                exit = fadeOut(OraMotion.overlayFadeOut()) +
+                    scaleOut(OraMotion.overlayScaleOut(), OraMotion.MORPH_SCALE, TransformOrigin(0f, 0f)) +
+                    shrinkHorizontally(shrinkTowards = Alignment.Start, animationSpec = OraMotion.exit())
             ) {
                 // The whole column is sidebar-coloured and fixed to the sidebar width, so no white
                 // window background shows behind the profile chips or beside the list.
