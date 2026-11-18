@@ -61,7 +61,13 @@ class ReaderState(private val urlOf: () -> String) {
 }
 
 /** Installs the reader extension and keeps what each page reported. */
+/** Whether a page report differs from the last one logged for its tab. Only changes are written to the log. */
+internal fun readerReportChanged(previous: Boolean?, readable: Boolean): Boolean = previous != readable
+
 object ReaderBridge {
+    /** The last "article found / no article" value logged per tab, so a repeat report is not logged again. */
+    private val lastLoggedReport = mutableMapOf<Int, Boolean>()
+
     private const val EXTENSION_ID = "reader-view@ora.makemission.com"
     private const val RESOURCE_PATH = "resource://android/assets/reader/"
     private const val NATIVE_APP = "ora"
@@ -124,7 +130,10 @@ object ReaderBridge {
                             // A new document in this tab: the reader is gone and the page has been judged again.
                             val readable = json.optBoolean("readable")
                             update(Page(tab, url, readable, json.optString("site"), json.optInt("minutes"), json.optBoolean("open"), System.nanoTime()))
-                            BrowserLog.info("reader", "Page report: ${if (readable) "article found" else "no article"}")
+                            if (readerReportChanged(lastLoggedReport[tab], readable)) {
+                                lastLoggedReport[tab] = readable
+                                BrowserLog.info("reader", "Page report: ${if (readable) "article found" else "no article"}")
+                            }
                         }
                         "opened" -> {
                             val before = pages[tab] ?: return

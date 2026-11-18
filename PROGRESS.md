@@ -153,6 +153,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-18 | Log noise: pull "not at top" counted, not logged; Reader page report logged on change (Fix 8, commit pending) | Not checked: the phone was not connected | Host tests pass (`ReaderReportTest`, 3 of 3). Tablet: not checked yet |
 | 2026-11-18 | Load errors in plain words, in the page and the log (Fix 7, commit pending) | Not checked: the phone was not connected | Host tests pass (`ErrorWordsTest`, 2 of 2): code 37 maps to "The address could not be found", and the URI and proxy categories have their own words. Tablet: not checked yet; no failing page was loaded on the device |
 | 2026-11-18 | Extension install: repeat taps ignored, "Adding…" shown, readable failure text (Fix 6, commit pending) | Not checked: the phone was not connected | Host tests pass (`ReadableFailureTest`, 2 of 2). The in-flight guard runs on GeckoView, so it is not in host tests. Tablet: not checked yet |
 | 2026-11-18 | Pull to refresh: threshold 96 dp to 82 dp, haptic tick at the threshold (Fix 5, commit pending) | Not checked: the phone was not connected | Host tests pass (`PullThresholdTest`). Tablet: not checked yet; the gesture needs a page at the top with a normal tab selected, and the tablet was on the lock screen after the Fix 4 check |

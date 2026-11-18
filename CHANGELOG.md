@@ -30,6 +30,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The Downloads page opens from the toolbar button and shrinks back into it when closed, and it has a Copy link action with a short confirmation on the details page. The tablet layout is not checked on a device yet.  (`e182fda`)
 
 **Fixed**
+- The log no longer fills with a line each time you scroll a page that was not at its top. Reader's "Page report" is written only when a page's answer changes, not every time it loads.  (commit pending)
 - A page that fails to load is logged with the same plain words the error page uses (for example "The address could not be found") instead of a category and code number. Pages that fail because of a proxy or a bad address now get their own words too.  (commit pending)
 - Installing an extension: tapping Add again while it is installing does nothing, the button says "Adding…", and the extension is installed once. A failed install now says why in plain words, not a blank message.  (commit pending)
 - Pull to refresh reloads a page after a shorter pull, about 15% less than before, and a short haptic tick marks the moment the pull is far enough to reload.  (commit pending)

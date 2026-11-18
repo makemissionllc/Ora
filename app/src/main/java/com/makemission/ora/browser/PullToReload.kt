@@ -42,7 +42,8 @@ fun Modifier.pullToReload(
                     UsageStats.gesture("pull_to_refresh", "ignored", "released_early", "pull=${distance.toInt()} need=${threshold.toInt()}")
                 } else if (!pulling && downward > threshold) {
                     // A downward drag that began below the top of the page is a scroll, not a refresh.
-                    UsageStats.gesture("pull_to_refresh", "ignored", "not_at_top", "dy=${downward.toInt()}")
+                    // Counted only: a scroll that starts below the top is normal, so it is not written to the log.
+                    UsageStats.count("pull_to_refresh.not_at_top")
                 }
                 onDistance(Dp.Hairline)
                 break
