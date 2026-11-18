@@ -202,6 +202,7 @@ import com.makemission.ora.settings.SettingsScreen
 import com.makemission.ora.settings.SearchEngine
 import com.makemission.ora.settings.isSearchInput
 import com.makemission.ora.downloads.DownloadsRepository
+import com.makemission.ora.downloads.GeckoTransport
 import com.makemission.ora.downloads.DownloadStartedNotice
 import com.makemission.ora.downloads.DownloadsScreen
 import com.makemission.ora.log.BrowserLog
@@ -336,15 +337,19 @@ private fun BrowserContent(
     }
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
-    val downloads = remember { DownloadsRepository(context, fastHttp = { settings.fastHttpDownloads.value }) }
+    val downloads = remember { DownloadsRepository(
+            context,
+            fastHttp = { settings.fastHttpDownloads.value },
+            transportFor = { priv, referrer -> GeckoTransport(GeckoEngine.runtime(context), priv, referrer) },
+        ) }
     var showDownloads by remember { mutableStateOf(false) }
     // Where the Downloads page grows from: the toolbar button's centre, or the top-right menu corner.
     var downloadsOrigin by remember { mutableStateOf(TransformOrigin(1f, 0f)) }
     val extensions = remember { ExtensionsRepository(GeckoEngine.runtime(context)) }
     // An extension file is installed, not downloaded: "Add to Firefox" on addons.mozilla.org lands here.
-    val handleResponse: (WebResponse, String) -> Unit = { response, pageUrl ->
+    val handleResponse: (WebResponse, String, Boolean) -> Unit = { response, pageUrl, isPrivate ->
         if (isExtensionDownload(response.uri, response.headers)) extensions.installFromPage(response.uri, pageUrl)
-        else downloads.start(response, pageUrl)
+        else downloads.start(response, pageUrl, isPrivate)
     }
     val tabsByProfile = TabRegistry.byProfile
     val sessionStore = remember { SessionStore(context) }
@@ -356,7 +361,7 @@ private fun BrowserContent(
             BrowserTabs(
                 context.applicationContext,
                 { settings.blockPopups.value },
-                { response, pageUrl -> handleResponse(response, pageUrl) },
+                { response, pageUrl, isPrivate -> handleResponse(response, pageUrl, isPrivate) },
                 desktopByDefault = isTablet,
                 // Quick resume: a profile's tabs reopen from the last time they were saved, when the setting is on.
                 restore = if (settings.quickResume.value) sessionStore.load(profileId) else null,
@@ -372,7 +377,7 @@ private fun BrowserContent(
             it.appLinkMode = { settings.openLinksInApps.value }
             it.rebind(
                 { settings.blockPopups.value },
-                { response, pageUrl -> handleResponse(response, pageUrl) },
+                { response, pageUrl, isPrivate -> handleResponse(response, pageUrl, isPrivate) },
                 { url, title -> if (settings.saveHistory.value) historyFor(profileId).record(url, title) },
             )
         }

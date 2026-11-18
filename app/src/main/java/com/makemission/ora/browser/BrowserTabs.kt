@@ -38,7 +38,7 @@ class BrowserTab(
     /** A pop-up to open as a tab. The session is the one GeckoView will load the pop-up's page into. */
     private val onPopupAllowed: (String, GeckoSession) -> Unit,
     /** A page handed over a file to save (a download link or a script-started download). */
-    private val onDownload: (WebResponse, String) -> Unit,
+    private val onDownload: (WebResponse, String, Boolean) -> Unit,
     /** Tablets open tabs with the desktop site, so pages lay out for the larger screen. */
     private val desktopByDefault: Boolean = false,
     /** A private tab runs in GeckoView private mode: no history, cookies or stored logins are kept for it. */
@@ -348,7 +348,7 @@ class BrowserTab(
             }
 
             override fun onExternalResponse(session: GeckoSession, response: WebResponse) {
-                onDownload(response, this@BrowserTab.url)
+                onDownload(response, this@BrowserTab.url, this@BrowserTab.isPrivate)
             }
 
             override fun onCrash(session: GeckoSession) {
@@ -442,7 +442,7 @@ class BrowserTabs(
     private val context: Context,
     /** The three callbacks are replaced by [rebind] when a new window takes over these tabs, so none points at a destroyed window. */
     var popupsBlocked: () -> Boolean,
-    var onDownload: (WebResponse, String) -> Unit,
+    var onDownload: (WebResponse, String, Boolean) -> Unit,
     private val desktopByDefault: Boolean = false,
     /** Tabs saved by quick resume, reopened in place of a single start page. Null starts fresh. */
     private val restore: SessionStore.Saved? = null,
@@ -477,7 +477,7 @@ class BrowserTabs(
     /** A new window takes over these tabs: its callbacks replace the destroyed window's. */
     fun rebind(
         popupsBlocked: () -> Boolean,
-        onDownload: (WebResponse, String) -> Unit,
+        onDownload: (WebResponse, String, Boolean) -> Unit,
         onVisited: (String, String) -> Unit,
     ) {
         this.popupsBlocked = popupsBlocked
@@ -662,7 +662,7 @@ class BrowserTabs(
         val tab = BrowserTab(
             if (isPrivate) nextPrivateId-- else nextId++, context, url, { popupsBlocked() },
             { popup, opened -> newTab(popup, isPrivate = isPrivate, adopt = opened) },
-            { response, page -> onDownload(response, page) },
+            { response, page, priv -> onDownload(response, page, priv) },
             desktopByDefault, isPrivate, restoreState, { page, title -> onVisited(page, title) }, sitePermissions, restoring, deferLoad,
             siteAllowedForPopups = { domain -> popupStore?.isAllowed(domain) == true },
             onPopupAsk = { popup, fromSite -> askPopup(PendingPopup(popup, fromSite, isPrivate)) },

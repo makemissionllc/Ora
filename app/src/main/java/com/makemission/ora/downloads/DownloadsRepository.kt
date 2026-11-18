@@ -70,13 +70,16 @@ class DownloadsRepository(
     private val context: Context,
     /** Read when a download starts or resumes: true lets plain http:// files use the parts engine. */
     private val fastHttp: () -> Boolean = { false },
-    /** Sends the download requests. The app passes the GeckoView-backed transport; tests pass a mock server. */
-    transport: DownloadTransport = HttpUrlTransport(),
+    /** Makes the transport for one download. The app uses GeckoWebExecutor; tests use the default plain connection. */
+    private val transportFor: (isPrivate: Boolean, referrer: String?) -> DownloadTransport = { _, _ -> HttpUrlTransport() },
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val dir = File(context.filesDir, "downloads").apply { mkdirs() }
-    private val engine = DownloadEngine(transport)
+    /** Downloads started in a private tab. They are never written to Room. */
+    private val privateIds: MutableSet<Long> = ConcurrentHashMap.newKeySet()
+    /** The page each download started from, sent as the Referer. Kept for this run only. */
+    private val referrers = ConcurrentHashMap<Long, String>()
     private val store = DownloadStore(context, File(dir, "queue.json"))
     private val jobs = ConcurrentHashMap<Long, Job>()
     /** The parts and validator for each unfinished download. Kept on failure so a retry resumes. */
@@ -131,13 +134,15 @@ class DownloadsRepository(
     }
 
     /** Starts saving a response that the page handed over as a file. The page's own stream is not used. */
-    fun start(response: WebResponse, pageUrl: String) {
+    fun start(response: WebResponse, pageUrl: String, isPrivate: Boolean = false) {
         val url = response.uri
         val mime = header(response, "content-type")?.substringBefore(';')?.trim()
         val name = fileNameFor(response)
         val total = header(response, "content-length")?.toLongOrNull() ?: -1L
         runCatching { response.body?.close() }
         val item = DownloadItem(id = nextId++, fileName = name, url = url, mimeType = mime, totalBytes = total)
+        if (isPrivate) privateIds.add(item.id)
+        referrers[item.id] = pageUrl
         update { listOf(item) + it }
         BrowserLog.info("download", downloadLogLine("Started", url, " (${sizeLabel(total)})"))
         _started.tryEmit(item)
@@ -225,6 +230,7 @@ class DownloadsRepository(
 
     private suspend fun run(id: Long, restarted: Boolean) {
         val item = find(id) ?: return
+        val engine = DownloadEngine(transportFor(id in privateIds, referrers[id]))
         val part = partFile(id)
         var task = tasks[id]
         // Plain http without the setting: one connection, no probe, no range requests.

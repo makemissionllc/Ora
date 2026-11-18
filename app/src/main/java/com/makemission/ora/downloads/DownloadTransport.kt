@@ -1,8 +1,12 @@
 package com.makemission.ora.downloads
 
+import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import org.mozilla.geckoview.GeckoRuntime
+import org.mozilla.geckoview.GeckoWebExecutor
+import org.mozilla.geckoview.WebRequest
 
 /** One HTTP response as the engine uses it. [close] ends the body at once, even while a read is blocked. */
 class RemoteResponse(
@@ -39,5 +43,36 @@ class HttpUrlTransport : DownloadTransport {
             .mapKeys { it.key }
         val body = runCatching { conn.inputStream }.getOrElse { conn.errorStream ?: InputStream.nullInputStream() }
         return RemoteResponse(code, map, body) { conn.disconnect() }
+    }
+}
+
+/**
+ * Sends the requests through GeckoWebExecutor, so cookies, logins, proxy and HTTPS settings match the tab that
+ * started the download. Private downloads use FETCH_FLAGS_PRIVATE, so they share no cookies with normal tabs.
+ */
+class GeckoTransport(
+    private val runtime: GeckoRuntime,
+    private val isPrivate: Boolean,
+    private val referrer: String?,
+) : DownloadTransport {
+
+    private val executor by lazy { GeckoWebExecutor(runtime) }
+
+    override fun get(url: String, headers: Map<String, String>): RemoteResponse {
+        val builder = WebRequest.Builder(url).cacheMode(WebRequest.CACHE_MODE_NO_STORE)
+        headers.forEach { (name, value) -> builder.header(name, value) }
+        referrer?.let { builder.referrer(it) }
+        val flags = if (isPrivate) GeckoWebExecutor.FETCH_FLAGS_PRIVATE else GeckoWebExecutor.FETCH_FLAGS_NONE
+        val response = try {
+            executor.fetch(builder.build(), flags).poll(FETCH_TIMEOUT_MS)
+        } catch (e: Exception) {
+            throw IOException(e.message ?: "The request failed", e)
+        } ?: throw IOException("The request returned no response")
+        val body = response.body ?: InputStream.nullInputStream()
+        return RemoteResponse(response.statusCode, response.headers, body) { runCatching { body.close() } }
+    }
+
+    private companion object {
+        const val FETCH_TIMEOUT_MS = 60_000L
     }
 }
