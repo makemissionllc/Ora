@@ -730,7 +730,7 @@ fun SettingsScreen(
                                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
                                     Text("HTTPS-only mode", fontSize = 15.sp, color = browserColors().AddressBarText)
                                     Text(
-                                        "Loads pages over a secure connection only. A site with no secure version shows a warning first, so it never loads unencrypted by surprise.",
+                                        "Loads pages over a secure connection only. Sites that offer one are upgraded to it. A site with no secure version won't load.",
                                         fontSize = 12.sp,
                                         color = browserColors().SecondaryText
                                     )

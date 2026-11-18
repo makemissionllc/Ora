@@ -224,7 +224,7 @@ class SettingsRepository(context: Context) {
     }
 
     private val _httpsOnly = MutableStateFlow(prefs.getBoolean(KEY_HTTPS_ONLY, false))
-    /** When on, pages load over HTTPS only. A site that has no HTTPS version shows a warning instead of loading unencrypted. */
+    /** When on, pages load over HTTPS only. A site that has no HTTPS version does not load. */
     val httpsOnly: StateFlow<Boolean> = _httpsOnly.asStateFlow()
 
     fun setHttpsOnly(enabled: Boolean) {
