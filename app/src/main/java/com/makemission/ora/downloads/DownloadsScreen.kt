@@ -879,7 +879,7 @@ private fun openFile(context: Context, item: DownloadItem) {
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     runCatching { context.startActivity(Intent.createChooser(intent, "Open with")) }
-        .onFailure { BrowserLog.error("download", "No app can open ${item.fileName}") }
+        .onFailure { BrowserLog.error("download", downloadLogLine("No app can open", item.url)) }
 }
 
 /** Shares a finished file through the system share sheet. */
@@ -897,6 +897,6 @@ private fun shareFile(context: Context, item: DownloadItem) {
 private fun copyLink(context: Context, item: DownloadItem) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     clipboard.setPrimaryClip(ClipData.newPlainText("Download link", item.url))
-    BrowserLog.info("download", "Copied the link for ${item.fileName}")
+    BrowserLog.info("download", downloadLogLine("Copied the link for", item.url))
     Toast.makeText(context, "Link copied", Toast.LENGTH_SHORT).show()
 }

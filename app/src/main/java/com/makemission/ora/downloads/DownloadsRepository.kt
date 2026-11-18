@@ -6,6 +6,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.LogPrivacy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +24,13 @@ import java.io.File
 import java.io.IOException
 import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
+
+/**
+ * One download log line, naming the site the file came from and never the file name: a file name can say what
+ * was downloaded. [suffix] carries the size or the reason, with its own leading space or colon.
+ */
+internal fun downloadLogLine(event: String, url: String?, suffix: String = ""): String =
+    "$event a download from ${LogPrivacy.domainOf(url.orEmpty())}$suffix"
 
 enum class DownloadStatus { RUNNING, PAUSED, DONE, FAILED, CANCELLED }
 
@@ -112,7 +120,7 @@ class DownloadsRepository(
         runCatching { response.body?.close() }
         val item = DownloadItem(id = nextId++, fileName = name, url = url, mimeType = mime, totalBytes = total)
         update { listOf(item) + it }
-        BrowserLog.info("download", "Started $name from $url (${sizeLabel(total)})")
+        BrowserLog.info("download", downloadLogLine("Started", url, " (${sizeLabel(total)})"))
         _started.tryEmit(item)
         launch(item.id)
     }
@@ -129,7 +137,7 @@ class DownloadsRepository(
     fun resume(id: Long) {
         val item = find(id) ?: return
         if (item.status != DownloadStatus.PAUSED && item.status != DownloadStatus.FAILED) return
-        BrowserLog.info("download", "Resumed ${item.fileName}")
+        BrowserLog.info("download", downloadLogLine("Resumed", item.url))
         launch(id)
     }
 
@@ -142,7 +150,7 @@ class DownloadsRepository(
         tasks.remove(id)
         update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.CANCELLED, speed = 0) else it } }
         saveNow()
-        BrowserLog.warn("download", "Cancelled ${item.fileName}")
+        BrowserLog.warn("download", downloadLogLine("Cancelled", item.url))
     }
 
     /** Deletes the saved file and removes the row. An unfinished download is cancelled first. */
@@ -154,7 +162,7 @@ class DownloadsRepository(
         tasks.remove(id)
         update { list -> list.filterNot { it.id == id } }
         saveNow()
-        BrowserLog.info("download", "Deleted ${item.fileName}")
+        BrowserLog.info("download", downloadLogLine("Deleted", item.url))
     }
 
     /** Removes finished, failed and cancelled rows. Files stay on disk. */
@@ -178,7 +186,7 @@ class DownloadsRepository(
                     pausing.remove(id)
                     update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.PAUSED, speed = 0) else it } }
                     saveNow()
-                    BrowserLog.info("download", "Paused ${find(id)?.fileName ?: "download $id"}")
+                    BrowserLog.info("download", downloadLogLine("Paused", find(id)?.url))
                 }
                 throw e
             } catch (e: FileChangedException) {
@@ -211,7 +219,7 @@ class DownloadsRepository(
             RandomAccessFile(part, "rw").use { raf -> if (total > 0) raf.setLength(total) }
             task.parts += engine.plan(total, task.ranged).mapIndexed { i, s -> Part(i, s) }
             tasks[id] = task
-            BrowserLog.info("download", "Plan ${item.fileName}: ${task.parts.size} part(s), ${if (task.ranged) "range requests" else "one stream, cannot pause"}")
+            BrowserLog.info("download", downloadLogLine("Planned", item.url, ": ${task.parts.size} part(s), ${if (task.ranged) "range requests" else "one stream, cannot pause"}"))
         }
         val active = task
         update { list -> list.map { if (it.id == id) it.copy(totalBytes = active.total, status = DownloadStatus.RUNNING, pausable = active.ranged) else it } }
@@ -250,8 +258,8 @@ class DownloadsRepository(
             list.map { if (it.id == id) it.copy(status = DownloadStatus.DONE, bytes = size, speed = 0, contentUri = uri) else it }
         }
         saveNow()
-        BrowserLog.info("download", "Saved ${item.fileName} (${sizeLabel(size)}) to Downloads/Ora")
-        if (task.parts.size > 1) BrowserLog.info("download", "Finished ${item.fileName} in ${task.parts.size} parts")
+        BrowserLog.info("download", downloadLogLine("Saved", item.url, " (${sizeLabel(size)}) to Downloads/Ora"))
+        if (task.parts.size > 1) BrowserLog.info("download", downloadLogLine("Finished", item.url, " in ${task.parts.size} parts"))
     }
 
     /** Called by the parts as bytes arrive. Throttled, so the list redraws about four times a second. */
@@ -269,10 +277,10 @@ class DownloadsRepository(
     }
 
     private fun fail(id: Long, message: String) {
-        val name = find(id)?.fileName ?: return
+        val url = find(id)?.url ?: return
         update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.FAILED, error = message, speed = 0) else it } }
         saveNow()
-        BrowserLog.error("download", "Failed $name: $message")
+        BrowserLog.error("download", downloadLogLine("Failed", url, ": $message"))
     }
 
     private fun partFile(id: Long) = File(dir, "$id.part")

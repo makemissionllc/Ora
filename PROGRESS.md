@@ -153,6 +153,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-18 | Download log lines name the site and size, not the file name (Fix 9, commit pending) | Not checked: the phone was not connected | Host tests pass (`DownloadLogTest`, 3 of 3); assembleDebug passes. Tablet: not checked yet |
 | 2026-11-18 | Log noise: pull "not at top" counted, not logged; Reader page report logged on change (Fix 8, commit pending) | Not checked: the phone was not connected | Host tests pass (`ReaderReportTest`, 3 of 3). Tablet: not checked yet |
 | 2026-11-18 | Load errors in plain words, in the page and the log (Fix 7, commit pending) | Not checked: the phone was not connected | Host tests pass (`ErrorWordsTest`, 2 of 2): code 37 maps to "The address could not be found", and the URI and proxy categories have their own words. Tablet: not checked yet; no failing page was loaded on the device |
 | 2026-11-18 | Extension install: repeat taps ignored, "Adding…" shown, readable failure text (Fix 6, commit pending) | Not checked: the phone was not connected | Host tests pass (`ReadableFailureTest`, 2 of 2). The in-flight guard runs on GeckoView, so it is not in host tests. Tablet: not checked yet |

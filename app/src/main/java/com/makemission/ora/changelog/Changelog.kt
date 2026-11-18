@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.CHANGED, "Download entries in the log name the site a file came from and its size, never the file name. A file name can say what you downloaded.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "The log no longer fills with a line each time you scroll a page that was not at its top. Reader's \"Page report\" is written only when a page's answer changes, not every time it loads.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "A page that fails to load is logged with the same plain words the error page uses (for example \"The address could not be found\") instead of a category and code number. Pages that fail because of a proxy or a bad address now get their own words too.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "Installing an extension: tapping Add again while it is installing does nothing, the button says \"Adding…\", and the extension is installed once. A failed install now says why in plain words, not a blank message.  (commit pending)"),
