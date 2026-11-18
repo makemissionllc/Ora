@@ -31,6 +31,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Gesture log: with "Count feature use" on, each swipe on the address bar, edge swipe for the sidebar and pull to refresh is counted and logged as registered or ignored, with the reason (too short, diagonal, downward, not at the top of the page) and its distance and time, never any page content. A swipe with nowhere to go is logged as a bounce. See Settings > Diagnostics. (`09a342a`)
 
 **Changed**
+- The log now keeps only the domain of a page (for example google.com), never the full address or what you searched for, and says nothing about what you do in private tabs. It is also kept between launches, up to about 5,000 lines, so an export covers days instead of one session, with the date on every line. Clear still empties it.
 - Tabs reopened at start, or when you switch profile, now load only the tab you were on. The others load the first time you open them, so Ora starts faster and uses less data and memory. The notice says so.
 - Mineral look: Light, Dark and Pure dark now use the Mineral palette. Dark is Basalt, Slate and Shale with Chalk text; light is Stone, Paper and Ink. The selected state is a Chalk fill with dark text. (`e875a4c`)
 - Ora now uses the Instrument Sans font throughout. (`c8a18fd`)

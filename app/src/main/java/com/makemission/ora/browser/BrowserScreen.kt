@@ -658,7 +658,7 @@ private fun BrowserContent(
             default = defaultEngine,
             onChoose = { engine ->
                 pendingSearch = null
-                BrowserLog.info("search", "Searching ${engine.label} for \"$query\"")
+                BrowserLog.info("search", "Searched with ${engine.label}")
                 selected.session.loadUri(engine.urlFor(query))
             },
             onDismiss = { pendingSearch = null }

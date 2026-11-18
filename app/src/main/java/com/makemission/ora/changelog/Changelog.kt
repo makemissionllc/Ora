@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.CHANGED, "The log now keeps only the domain of a page (for example google.com), never the full address or what you searched for, and says nothing about what you do in private tabs. It is also kept between launches, up to about 5,000 lines, so an export covers days instead of one session, with the date on every line. Clear still empties it."),
             ChangeItem(ChangeKind.FIXED, "Private tabs now have their own list and numbering, separate from normal tabs, and the tab counts no longer include them. A private tab cannot be opened while Ora is locked (a notice says to unlock first), and a pop-up from a private tab opens as a private tab."),
             ChangeItem(ChangeKind.CHANGED, "Tabs reopened at start, or when you switch profile, now load only the tab you were on. The others load the first time you open them, so Ora starts faster and uses less data and memory. The notice says so."),
             ChangeItem(ChangeKind.FIXED, "Ora no longer starts twice when Android rebuilds its window right after launch: startup (crash handler, usage counts, app lock) runs once, and the window now survives font, density, language and similar changes. If a rebuild still happens, the log says so."),

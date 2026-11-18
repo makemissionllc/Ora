@@ -49,6 +49,8 @@ class BrowserTab(
     } else {
         GeckoSession()
     }
+    /** Page and navigation events go here: a private tab logs nothing, so the log never shows private browsing. */
+    private val plog = TabLog(isPrivate)
     private val appContext: Context = context.applicationContext
 
     /** Reader view for this tab's page: whether it has an article and whether the reader is showing. */
@@ -144,7 +146,7 @@ class BrowserTab(
             startPageBehind -> {
                 startPageBehind = false
                 url = BrowserTabs.START_URL
-                BrowserLog.info("nav", "Back to start page on tab $id")
+                plog.info("nav", "Back to start page on tab $id")
             }
         }
     }
@@ -175,9 +177,9 @@ class BrowserTab(
 
             override fun onNewSession(session: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
                 if (popupsBlocked()) {
-                    BrowserLog.info("popup", "Blocked pop-up from ${this@BrowserTab.url}: $uri")
+                    plog.info("popup", "Blocked pop-up from ${this@BrowserTab.url}: $uri")
                 } else {
-                    BrowserLog.info("popup", "Opened pop-up as a tab: $uri")
+                    plog.info("popup", "Opened pop-up as a tab: $uri")
                     onPopupAllowed(uri)
                 }
                 // Returning null keeps the window from opening; the page gets no window back.
@@ -198,7 +200,7 @@ class BrowserTab(
                 error: WebRequestError
             ): GeckoResult<String>? {
                 val failed = uri.orEmpty()
-                BrowserLog.error("page", "Could not load $failed: category ${error.category}, code ${error.code}")
+                plog.error("page", "Could not load $failed: category ${error.category}, code ${error.code}")
                 // Show a plain explanation with a Try again button, in place of GeckoView's blank error page.
                 if (failed.isBlank() || failed.startsWith("data:")) return null
                 return GeckoResult.fromValue(ErrorPage.uriFor(failed, error))
@@ -252,14 +254,14 @@ class BrowserTab(
                 // A link menu belongs to the page it was opened on; a new page clears it.
                 pressTarget = null
                 selection = null
-                BrowserLog.info("page", "Loading $url")
+                plog.info("page", "Loading $url")
             }
 
             override fun onProgressChange(session: GeckoSession, progressPercent: Int) {
                 progress = progressPercent.coerceIn(0, 100)
                 if (!pageRevealed && progress >= REVEAL_PROGRESS_PERCENT) {
                     pageRevealed = true
-                    BrowserLog.info("page", "Showing page at $progress% for ${this@BrowserTab.url}")
+                    plog.info("page", "Showing page at $progress% for ${this@BrowserTab.url}")
                 }
             }
 
@@ -269,10 +271,10 @@ class BrowserTab(
                 restorePending = false
                 // Progress stays where it is: the bar fades out in place instead of sweeping to full first.
                 if (success) {
-                    BrowserLog.info("page", "Loaded ${this@BrowserTab.url}")
+                    plog.info("page", "Loaded ${this@BrowserTab.url}")
                     if (!isPrivate) onVisited(this@BrowserTab.url, this@BrowserTab.title)
                 } else {
-                    BrowserLog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")
+                    plog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")
                     // Quality of life: say so, instead of leaving a half-drawn page with no explanation.
                     InAppNotices.show("Page didn't finish loading. Tap reload to try again.")
                 }
@@ -292,13 +294,13 @@ class BrowserTab(
                 val link = element.linkUri?.takeIf { it.isNotBlank() }
                 val image = element.srcUri?.takeIf { element.type == GeckoSession.ContentDelegate.ContextElement.TYPE_IMAGE && it.isNotBlank() }
                 if (link == null && image == null) return
-                BrowserLog.info("page", "Long press on ${link ?: image}")
+                plog.info("page", "Long press on ${link ?: image}")
                 pressTarget = PressTarget(linkUri = link, imageUri = image, x = screenX, y = screenY)
             }
 
             override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
                 videoFullScreen = fullScreen
-                BrowserLog.info("page", if (fullScreen) "Full screen requested: ${this@BrowserTab.url}" else "Left full screen")
+                plog.info("page", if (fullScreen) "Full screen requested: ${this@BrowserTab.url}" else "Left full screen")
             }
 
             override fun onExternalResponse(session: GeckoSession, response: WebResponse) {
@@ -306,7 +308,7 @@ class BrowserTab(
             }
 
             override fun onCrash(session: GeckoSession) {
-                BrowserLog.error("page", "Renderer crashed for ${this@BrowserTab.url}")
+                plog.error("page", "Renderer crashed for ${this@BrowserTab.url}")
             }
         }
         // Location, camera, microphone and notification requests go to the prompt, or to the saved answer for the site.
@@ -336,7 +338,7 @@ class BrowserTab(
         if (loaded) return
         loaded = true
         restorePending = true
-        BrowserLog.info("session", "Loading tab $id on first open")
+        plog.info("session", "Loading tab $id on first open")
         loadNow()
     }
 
@@ -344,15 +346,15 @@ class BrowserTab(
     private fun restoreHistory(state: String): Boolean = try {
         val parsed = GeckoSession.SessionState.fromString(state)
         if (parsed == null) {
-            BrowserLog.warn("session", "Saved history for $url is not valid. Loading the address instead.")
+            plog.warn("session", "Saved history for $url is not valid. Loading the address instead.")
             false
         } else {
             session.restoreState(parsed)
-            BrowserLog.info("session", "Restored history for $url")
+            plog.info("session", "Restored history for $url")
             true
         }
     } catch (e: Exception) {
-        BrowserLog.error("session", "Could not restore the history for $url. Loading the address instead.", e)
+        plog.error("session", "Could not restore the history for $url. Loading the address instead.", e)
         false
     }
 
@@ -550,5 +552,14 @@ class BrowserTabs(
     fun closeAll() {
         tabs.forEach { it.close() }
         tabs.clear()
+    }
+}
+
+/** [BrowserLog] for one tab. Private tabs are silent except for crashes, which say only that a private tab crashed. */
+private class TabLog(private val silent: Boolean) {
+    fun info(tag: String, message: String) { if (!silent) BrowserLog.info(tag, message) }
+    fun warn(tag: String, message: String, error: Throwable? = null) { if (!silent) BrowserLog.warn(tag, message, error) }
+    fun error(tag: String, message: String, error: Throwable? = null) {
+        if (!silent) BrowserLog.error(tag, message, error) else BrowserLog.error(tag, "A private tab hit an error")
     }
 }

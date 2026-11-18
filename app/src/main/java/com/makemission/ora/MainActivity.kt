@@ -33,6 +33,7 @@ class MainActivity : ComponentActivity() {
         // lock the app again; it is logged as a recreation so the cause shows in the log.
         if (!processStarted) {
             processStarted = true
+            BrowserLog.init(applicationContext)
             BrowserLog.installCrashHandler()
             BrowserLog.info("app", "Started")
             UsageStats.init(applicationContext)
