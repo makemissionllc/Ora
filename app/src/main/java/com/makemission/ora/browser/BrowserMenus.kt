@@ -88,6 +88,7 @@ fun BrowserMenuSheet(
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
     onFind: () -> Unit,
+    onCopyAddress: () -> Unit,
     /** Title of the tab "Reopen closed tab" would bring back, or null when no tab was closed this run. */
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
@@ -112,6 +113,7 @@ fun BrowserMenuSheet(
             onDownloads = { act(onDownloads) },
             onTabs = { act(onTabs) },
             onFind = { act(onFind) },
+            onCopyAddress = { act(onCopyAddress) },
             closedTabTitle = closedTabTitle,
             onReopenClosed = { act(onReopenClosed) },
         )
@@ -140,6 +142,7 @@ private fun BrowserMenuItems(
     onDownloads: () -> Unit,
     onTabs: () -> Unit,
     onFind: () -> Unit,
+    onCopyAddress: () -> Unit,
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
 ) {
@@ -173,6 +176,17 @@ private fun BrowserMenuItems(
             ) {
                 Text("Find in page", fontSize = 15.sp, color = browserColors().AddressBarText)
                 DisclosureChevron()
+            }
+            // Quality of life: one tap copies the page's address, without opening Share first.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onCopyAddress)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Copy page address", fontSize = 15.sp, color = browserColors().AddressBarText)
             }
             // Tapping with nothing closed explains itself (the screen shows a snackbar) rather than doing nothing.
             Row(

@@ -452,6 +452,7 @@ private fun BrowserContent(
                     val canSwitch = list.size > 1
                     val index = list.indexOfFirst { it.id == selectedId }
                     val next = if (canSwitch) list[Math.floorMod(index + delta, list.size)] else null
+                    UsageStats.gesture("address_swipe.tabs", if (canSwitch) "moved" else "bounced", if (canSwitch) null else "only_one_tab")
                     swipeMotion.play(delta, swipeEffect, canSwitch) {
                         next?.let {
                             tabs.select(it.id)
@@ -461,6 +462,7 @@ private fun BrowserContent(
                 }
                 AddressSwipeTarget.PAGES -> {
                     val canSwitch = if (delta > 0) selected.canGoForward else selected.canStepBack
+                    UsageStats.gesture("address_swipe.pages", if (canSwitch) "moved" else "bounced", if (canSwitch) null else if (delta > 0) "no_forward_page" else "no_back_page")
                     swipeMotion.play(delta, swipeEffect, canSwitch) {
                         if (delta > 0) selected.session.goForward() else selected.stepBack()
                         BrowserLog.info("tabs", "Swiped to the ${if (delta > 0) "next" else "previous"} page in tab ${selected.id}")
@@ -469,6 +471,7 @@ private fun BrowserContent(
                 AddressSwipeTarget.PROFILES -> {
                     val list = profileList
                     val canSwitch = list.size > 1
+                    UsageStats.gesture("address_swipe.profiles", if (canSwitch) "moved" else "bounced", if (canSwitch) null else "only_one_profile")
                     val index = list.indexOfFirst { it.id == profiles.activeId.value }
                     val next = if (canSwitch) list[Math.floorMod(index + delta, list.size)] else null
                     swipeMotion.play(delta, swipeEffect, canSwitch) {
@@ -951,6 +954,18 @@ private fun BrowserContent(
                         onFind = { showFind = true },
                         closedTabTitle = tabs.lastClosedTitle,
                         onReopenClosed = onReopenClosed,
+                        onCopyAddress = {
+                            val url = selected.url
+                            if (url == BrowserTabs.START_URL || url.isBlank()) {
+                                InAppNotices.show("Nothing to copy on the start page")
+                            } else {
+                                val clipboard = context.getSystemService(android.content.ClipboardManager::class.java)
+                                clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Page address", url))
+                                UsageStats.count("menu.copy_address")
+                                BrowserLog.info("page", "Page address copied from the menu")
+                                InAppNotices.show("Page address copied")
+                            }
+                        },
                         desktopSite = selected.desktopSite,
                         onToggleDesktop = { enabled -> selected.applyDesktopSite(enabled) },
                         onSettings = { showSettings = true },
@@ -1847,14 +1862,32 @@ private fun Modifier.addressSwipes(onSwipeUp: () -> Unit, onSwitchTab: (Int) -> 
                 if (!change.pressed) released = true
             }
             val threshold = 96f
+            val durationMs = change0Time(down.uptimeMillis)
+            val detail = "dx=${dx.toInt()} dy=${dy.toInt()} ms=$durationMs"
             if (abs(dy) > abs(dx) && dy < -threshold) {
                 BrowserLog.info("tabs", "Swipe up on address bar: all tabs")
+                UsageStats.gesture("address_swipe", "registered", "up", detail)
                 onSwipeUp()
             } else if (abs(dx) > abs(dy) && abs(dx) > threshold) {
+                UsageStats.gesture("address_swipe", "registered", if (dx < 0) "left" else "right", detail)
                 onSwitchTab(if (dx < 0) 1 else -1)
+            } else if (abs(dx) > GESTURE_TAP_SLOP_PX || abs(dy) > GESTURE_TAP_SLOP_PX) {
+                // The finger moved too far to be a tap, but not into a recognised swipe. Say why, to tune the thresholds.
+                val reason = when {
+                    abs(dx) > abs(dy) -> "too_short"
+                    dy > 0 -> "downward"
+                    abs(dy) > threshold * 0.5f && abs(dx) > threshold * 0.5f -> "diagonal"
+                    else -> "too_short"
+                }
+                UsageStats.gesture("address_swipe", "ignored", reason, detail)
             }
         }
     }
+
+/** Movement under this many px counts as a tap, not a swipe attempt, and is not logged as a gesture. */
+private const val GESTURE_TAP_SLOP_PX = 24f
+
+private fun change0Time(startMs: Long): Long = android.os.SystemClock.uptimeMillis() - startMs
 
 /** Reloads the page ignoring cached copies. Logged so reloads show on the Diagnostics page. */
 private fun hardReload(tab: BrowserTab) {

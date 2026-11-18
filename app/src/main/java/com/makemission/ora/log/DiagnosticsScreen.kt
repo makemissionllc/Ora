@@ -108,7 +108,7 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
                     .background(browserColors().AddressBarBackground)
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
-                usage.take(8).forEach { item ->
+                usage.take(14).forEach { item ->
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(item.action, fontSize = 13.sp, fontFamily = FontFamily.Monospace, color = browserColors().AddressBarText)
                         Text("${item.count} · ${timeFormat.format(Date(item.lastUsed))}", fontSize = 12.sp, color = browserColors().SecondaryText)

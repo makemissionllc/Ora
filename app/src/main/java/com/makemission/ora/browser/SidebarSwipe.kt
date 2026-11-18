@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalDensity
+import com.makemission.ora.log.UsageStats
 import com.makemission.ora.ui.theme.BrowserTokens
 import kotlin.math.abs
 
@@ -47,8 +48,18 @@ fun SidebarEdgeSwipe(onOpen: () -> Unit, modifier: Modifier = Modifier) {
                         // Only a mostly sideways drive to the right counts; a scroll or a tap does not.
                         if (across > distancePx && abs(across) > abs(along) * 1.5f) {
                             opened = true
+                            UsageStats.gesture("edge_swipe_sidebar", "registered", null, "dx=${across.toInt()} dy=${along.toInt()}")
                             currentOnOpen()
                         }
+                    }
+                    // Released without opening: say why, when the finger moved enough to have meant it.
+                    if (!opened && (abs(across) > 24f || abs(along) > 24f)) {
+                        val reason = when {
+                            across < 0 -> "leftward"
+                            abs(along) * 1.5f >= abs(across) -> "too_vertical"
+                            else -> "too_short"
+                        }
+                        UsageStats.gesture("edge_swipe_sidebar", "ignored", reason, "dx=${across.toInt()} dy=${along.toInt()} need=${distancePx.toInt()}")
                     }
                 }
             }

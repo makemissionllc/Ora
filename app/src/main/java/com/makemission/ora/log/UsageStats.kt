@@ -61,6 +61,22 @@ object UsageStats {
         }
     }
 
+    /**
+     * Records one gesture attempt: what it was, whether it registered, and why not when it did not.
+     * [name] and [outcome] are fixed names from the code (for example "address_swipe.tabs" and "registered").
+     * [details] holds only distances in px and times in ms, never page content. Adds a count, and a
+     * "gesture" line in the log, so the Diagnostics page shows which gestures work and which are missed.
+     * Does nothing while feature-use counting is off.
+     */
+    fun gesture(name: String, outcome: String, reason: String? = null, details: String = "") {
+        if (!enabled) return
+        count("gesture.$name.$outcome" + (reason?.let { ".$it" } ?: ""))
+        BrowserLog.info(
+            "gesture",
+            "$name $outcome" + (reason?.let { " ($it)" } ?: "") + (if (details.isNotEmpty()) " $details" else "")
+        )
+    }
+
     /** Removes every count. Asked for first on the Diagnostics page. */
     fun clear() {
         val store = prefs ?: return

@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Copy page address: a row in the ⋯ menu copies the current page's address in one tap."),
+            ChangeItem(ChangeKind.ADDED, "With \"Count feature use\" on, swipes on the address bar, the edge swipe for the sidebar and pull to refresh are logged as worked or missed, with the reason and its distance and time. No page content is recorded. See Settings > Diagnostics."),
             ChangeItem(ChangeKind.CHANGED, "Switching tabs now fades the page in instead of cutting over. With Remove animations on, it is instant."),
             ChangeItem(ChangeKind.CHANGED, "With a keyboard attached, Ctrl+Tab moves to the next open tab."),
             ChangeItem(ChangeKind.CHANGED, "On tablet, the sidebar now grows out of the sidebar button and shrinks back into it when it closes."),

@@ -7,6 +7,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.unit.Dp
+import com.makemission.ora.log.UsageStats
 import com.makemission.ora.ui.theme.BrowserTokens
 
 /**
@@ -26,17 +27,28 @@ fun Modifier.pullToReload(
         // Only a gesture that starts at the top of the page can become a pull.
         val pulling = canPull()
         var distance = 0f
+        var downward = 0f
         while (true) {
             val event = awaitPointerEvent(PointerEventPass.Initial)
             val change = event.changes.firstOrNull { it.id == down.id } ?: break
             if (!change.pressed) {
-                if (pulling && distance >= threshold) onRefresh()
+                if (pulling && distance >= threshold) {
+                    UsageStats.gesture("pull_to_refresh", "registered", null, "pull=${distance.toInt()}")
+                    onRefresh()
+                } else if (pulling && distance > 24f) {
+                    UsageStats.gesture("pull_to_refresh", "ignored", "released_early", "pull=${distance.toInt()} need=${threshold.toInt()}")
+                } else if (!pulling && downward > threshold) {
+                    // A downward drag that began below the top of the page is a scroll, not a refresh.
+                    UsageStats.gesture("pull_to_refresh", "ignored", "not_at_top", "dy=${downward.toInt()}")
+                }
                 onDistance(Dp.Hairline)
                 break
             }
             if (pulling) {
                 distance = (distance + change.positionChange().y).coerceAtLeast(0f)
                 onDistance(distance.toDp())
+            } else {
+                downward += change.positionChange().y
             }
         }
     }
