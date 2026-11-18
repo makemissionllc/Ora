@@ -181,6 +181,11 @@ import com.makemission.ora.ui.theme.PaletteStyle
 import com.makemission.ora.ui.theme.materialBrowserColors
 import com.makemission.ora.ui.theme.oraColorScheme
 import com.makemission.ora.ui.theme.PureDarkBrowserColors
+import com.makemission.ora.ui.theme.Mineral
+import com.makemission.ora.ui.theme.PrivateSpace
+import com.makemission.ora.ui.theme.dashedOutline
+import com.makemission.ora.ui.theme.privateBrowserColors
+import androidx.compose.runtime.SideEffect
 import com.makemission.ora.settings.AppearanceMode
 import com.makemission.ora.settings.SettingsScreen
 import com.makemission.ora.settings.SearchEngine
@@ -250,10 +255,12 @@ fun BrowserScreen(
     val activeProfileId by profiles.activeId.collectAsState()
     val activeTint = profileList.firstOrNull { it.id == activeProfileId }?.tint ?: ProfileTint.BASALT
     val tinted = browserColors(original, activeTint)
+    // The private space overrides the tint with Obsidian while a private tab is selected.
+    val spaced = if (PrivateSpace.active) privateBrowserColors(tinted) else tinted
     val palette = if (paletteStyle == PaletteStyle.MATERIAL) {
-        materialBrowserColors(materialScheme, tinted)
+        materialBrowserColors(materialScheme, spaced)
     } else {
-        tinted
+        spaced
     }
     // Web pages follow the app's light or dark palette (or the system setting when the toggle is off).
     val websiteTheme by settings.websiteTheme.collectAsState()
@@ -430,7 +437,9 @@ private fun BrowserContent(
     var pendingSearch by remember { mutableStateOf<String?>(null) }
     val pageView = remember { PageView() }
 
+    val appLockSet = settings.appLockRecord.collectAsState().value != null
     val selected = tabs.selected ?: return
+    SideEffect { PrivateSpace.active = selected.isPrivate }
     val selectedId = tabs.selectedId
     // One place for the bookmark state and toggle, shared by the phone and tablet bars and the menu.
     val selectedBookmarked = bookmarkList.any { it.url == selected.url }
@@ -888,6 +897,8 @@ private fun BrowserContent(
                             onOpenHistory = { url -> selected.session.loadUri(url) },
                             onRemoveHistory = { url -> history.remove(url) },
                             onClearHistory = { history.clear() },
+                            onNewPrivateTab = onNewPrivateTab,
+                            onLockPrivate = if (appLockSet) ({ AppLock.lockIfEnabled(settings) }) else null,
                         )
                     }
                 }
@@ -1141,6 +1152,8 @@ private fun BrowserContent(
                             profileId = profileId,
                             tabs = tabs,
                             onAddTab = onNewTab,
+                            onAddPrivateTab = onNewPrivateTab,
+                            onLockPrivate = if (appLockSet) ({ AppLock.lockIfEnabled(settings) }) else null,
                             onDone = { showTabGrid = false },
                             insets = Modifier.statusBarsPadding(),
                         )
@@ -1229,6 +1242,8 @@ private fun BrowserContent(
             profileId = profileId,
             tabs = tabs,
             onAddTab = onNewTab,
+                            onAddPrivateTab = onNewPrivateTab,
+                            onLockPrivate = if (appLockSet) ({ AppLock.lockIfEnabled(settings) }) else null,
             onDone = { showTabGrid = false },
             insets = Modifier.statusBarsPadding().navigationBarsPadding(),
         )
@@ -1263,6 +1278,8 @@ private fun TabOverviewContent(
     profileId: String,
     tabs: BrowserTabs,
     onAddTab: () -> Unit,
+    onAddPrivateTab: () -> Unit,
+    onLockPrivate: (() -> Unit)?,
     onDone: () -> Unit,
     insets: Modifier,
 ) {
@@ -1292,6 +1309,8 @@ private fun TabOverviewContent(
                 onAddTab()
                 onDone()
             },
+            onNewPrivateTab = onAddPrivateTab,
+            onLockPrivate = onLockPrivate,
             onDone = onDone,
         )
     }
@@ -1502,6 +1521,7 @@ private fun BrowserToolbar(
             // Like iOS Safari's bottom bar: the full-width address bar sits above the controls.
             AddressBar(
                 currentUrl = tab.url,
+                isPrivate = tab.isPrivate,
                 loading = tab.loading,
                 onSubmit = onSubmit,
                 candidates = candidates,
@@ -1698,6 +1718,7 @@ private fun TabletToolbar(
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 AddressBar(
                     currentUrl = tab.url,
+                    isPrivate = tab.isPrivate,
                     loading = tab.loading,
                     onSubmit = onSubmit,
                     candidates = candidates,
@@ -1768,6 +1789,7 @@ private fun CompactToolbar(
         ) {
             AddressBar(
                 currentUrl = tab.url,
+                isPrivate = tab.isPrivate,
                 loading = tab.loading,
                 onSubmit = onSubmit,
                 candidates = candidates,
@@ -1899,6 +1921,7 @@ private fun FloatingCompactRow(
                         Surface(shape = BrowserTokens.PhoneCompactPill, color = browserColors().AddressBarBackground, modifier = Modifier.fillMaxWidth()) { findBar() }
                     } else AddressBar(
                     currentUrl = tab.url,
+                    isPrivate = tab.isPrivate,
                     loading = tab.loading,
                     onSubmit = onSubmit,
                     candidates = candidates,
@@ -2057,6 +2080,8 @@ private fun AddressBar(
     shape: androidx.compose.ui.graphics.Shape = BrowserTokens.AddressBarShape,
     /** Centres the URL in the pill (phone Compact bar). */
     centered: Boolean = false,
+    /** Private tabs get a dashed Fog outline and a Private chip. */
+    isPrivate: Boolean = false,
 ) {
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
@@ -2094,7 +2119,8 @@ private fun AddressBar(
         modifier = Modifier
             .fillMaxWidth()
             .height(height)
-            .shadow(BrowserTokens.AddressBarElevation, shape),
+            .shadow(BrowserTokens.AddressBarElevation, shape)
+            .then(if (isPrivate) Modifier.dashedOutline(shape, Mineral.Fog) else Modifier),
         shape = shape,
         color = browserColors().AddressBarBackground
     ) {
@@ -2102,6 +2128,7 @@ private fun AddressBar(
             modifier = Modifier.fillMaxSize().padding(horizontal = BrowserTokens.AddressBarInnerPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (isPrivate) PrivateChip()
             if (currentUrl.startsWith("https://")) {
                 Spacer(Modifier.width(BrowserTokens.AddressBarTextStart))
                 Icon(
@@ -2364,4 +2391,20 @@ private fun requestAutofill(context: android.content.Context, view: GeckoView?) 
     BrowserLog.info("autofill", "Focused field: domain=${node?.domain} hint=${node?.hint} inputType=${node?.inputType} tag=${node?.tag} attrs=${node?.attributes} rect=$rect id=${data.id}")
     manager.requestAutofill(view, data.id, rect)
     BrowserLog.info("autofill", "Auto-fill requested for the focused field")
+}
+
+/** The "Private" chip at the left of a private tab's address capsule. */
+@Composable
+private fun PrivateChip() {
+    val colors = browserColors()
+    Box(
+        modifier = Modifier
+            .padding(start = 6.dp)
+            .clip(CircleShape)
+            .background(colors.GridBackground)
+            .padding(horizontal = 10.dp, vertical = 5.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("Private", color = Mineral.Fog, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+    }
 }

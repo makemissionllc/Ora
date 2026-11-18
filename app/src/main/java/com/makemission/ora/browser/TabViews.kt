@@ -28,6 +28,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Surface
@@ -71,11 +73,18 @@ fun TabGrid(
     onNewTab: () -> Unit,
     onDone: () -> Unit,
     tablet: Boolean = false,
+    /** Opens a private tab. The overview's private space uses it for its New tab button. */
+    onNewPrivateTab: () -> Unit = onNewTab,
+    /** Locks the private tabs with the app PIN; null when no PIN is set. */
+    onLockPrivate: (() -> Unit)? = null,
 ) {
     // Search open tabs by title or address, as the sidebar does; the grid shows only the matches.
     var query by rememberSaveable { mutableStateOf("") }
     val needle = query.trim()
-    val allTabs = tabs.tabs
+    // Normal and private tabs live in separate spaces (UI v2). The segmented control switches between them.
+    var inPrivate by rememberSaveable { mutableStateOf(tabs.selected?.isPrivate == true) }
+    val allTabs = tabs.tabs.filter { !it.isPrivate }
+    val privateCount = tabs.tabs.count { it.isPrivate }
     val tabList = allTabs.filter { needle.isEmpty() || it.shownTitle(displayUrl(it.url)).contains(needle, true) || (!(it.isPrivate && AppLock.locked) && it.url.contains(needle, true)) }
     val countText = when {
         needle.isNotEmpty() -> "${tabList.size} of ${allTabs.size} tabs"
@@ -99,6 +108,9 @@ fun TabGrid(
             dismissButton = { TextButton(onClick = { confirmCloseAll = false }) { Text("Cancel") } },
         )
     }
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.makemission.ora.ui.theme.LocalBrowserColors provides if (inPrivate) com.makemission.ora.ui.theme.privateBrowserColors(browserColors()) else browserColors()
+    ) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -112,13 +124,36 @@ fun TabGrid(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(onClick = { confirmCloseAll = true }, enabled = allTabs.size > 1) {
-                    Text("Close all", color = Mineral.Ember, fontWeight = FontWeight.SemiBold)
+                TextButton(onClick = { if (inPrivate) { tabs.closePrivate(); onDone() } else confirmCloseAll = true }, enabled = if (inPrivate) privateCount > 0 else allTabs.size > 1) {
+                    Text(if (inPrivate) "Close private" else "Close all", color = Mineral.Ember, fontWeight = FontWeight.SemiBold)
                 }
-                Text(text = countText, color = browserColors().AddressBarText, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                Text(text = if (inPrivate) "$privateCount private" else countText, color = browserColors().AddressBarText, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                 PillButton("Done", onClick = onDone)
             }
         }
+        // Segmented control: normal tabs | private tabs (UI v2, phone overview).
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 4.dp)
+                .fillMaxWidth()
+                .height(44.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(browserColors().Surface)
+                .padding(3.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SegmentLabel(if (allTabs.size == 1) "1 tab" else "${allTabs.size} tabs", selected = !inPrivate, modifier = Modifier.weight(1f), pill = true) { inPrivate = false }
+            SegmentLabel("$privateCount private", selected = inPrivate, modifier = Modifier.weight(1f), pill = true) { inPrivate = true }
+        }
+        if (inPrivate) {
+            PrivateSpacePanel(
+                tabs = tabs,
+                onSelect = { id -> onSelect(id) },
+                onNewPrivateTab = { onNewPrivateTab(); onDone() },
+                onLock = onLockPrivate,
+                modifier = Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 8.dp),
+            )
+        } else {
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             SidebarSearch(query = query, placeholder = "Search ${allTabs.size} open tabs", onQueryChange = { query = it })
         }
@@ -141,6 +176,7 @@ fun TabGrid(
                 )
             }
         }
+        }
         if (tablet) {
             Row(
                 modifier = Modifier
@@ -148,7 +184,7 @@ fun TabGrid(
                     .padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                PillButton("New tab", onClick = onNewTab, primary = true, icon = Icons.Filled.Add)
+                PillButton(if (inPrivate) "New private tab" else "New tab", onClick = { if (inPrivate) { onNewPrivateTab(); onDone() } else onNewTab() }, primary = true, icon = Icons.Filled.Add)
             }
             return@Column
         }
@@ -161,8 +197,9 @@ fun TabGrid(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            TextButton(onClick = { confirmCloseAll = true }, enabled = allTabs.size > 1, modifier = Modifier.height(48.dp)) {
-                Text("Close all", color = if (allTabs.size > 1) Mineral.Ember else browserColors().DisabledIcon, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            val closeEnabled = if (inPrivate) privateCount > 0 else allTabs.size > 1
+            TextButton(onClick = { if (inPrivate) { tabs.closePrivate(); onDone() } else confirmCloseAll = true }, enabled = closeEnabled, modifier = Modifier.height(48.dp)) {
+                Text(if (inPrivate) "Close private" else "Close all", color = if (closeEnabled) Mineral.Ember else browserColors().DisabledIcon, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             }
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 Box(
@@ -170,7 +207,7 @@ fun TabGrid(
                         .size(width = 64.dp, height = 52.dp)
                         .clip(RoundedCornerShape(26.dp))
                         .background(browserColors().Accent)
-                        .clickable(onClick = onNewTab),
+                        .clickable { if (inPrivate) { onNewPrivateTab(); onDone() } else onNewTab() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().GridBackground, modifier = Modifier.size(24.dp))
@@ -178,6 +215,7 @@ fun TabGrid(
             }
             PillButton("Done", onClick = onDone)
         }
+    }
     }
 }
 
@@ -289,17 +327,25 @@ fun TabSidebar(
     onOpenHistory: (String) -> Unit,
     onRemoveHistory: (String) -> Unit,
     onClearHistory: () -> Unit,
+    onNewPrivateTab: () -> Unit = onNewTab,
+    onLockPrivate: (() -> Unit)? = null,
 ) {
+    // The private space opens inside the sidebar from the pinned bottom row, in the Obsidian colours.
+    var inPrivate by remember { mutableStateOf(tabs.selected?.isPrivate == true) }
     var panel by remember { mutableStateOf(SidebarPanel.TABS) }
     var query by remember { mutableStateOf("") }
     val needle = query.trim()
-    val shownTabs = tabs.tabs.filter {
+    val shownTabs = tabs.tabs.filter { !it.isPrivate }.filter {
         needle.isEmpty() || it.shownTitle(displayUrl(it.url)).contains(needle, true) || (!(it.isPrivate && AppLock.locked) && it.url.contains(needle, true))
     }
     val shownBookmarks = bookmarks.filter {
         needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true)
     }
 
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.makemission.ora.ui.theme.LocalBrowserColors provides if (inPrivate) com.makemission.ora.ui.theme.privateBrowserColors(browserColors()) else browserColors()
+    ) {
+    val privateCount = tabs.tabs.count { it.isPrivate }
     Column(
         modifier = Modifier
             .width(BrowserTokens.SidebarWidth)
@@ -308,6 +354,19 @@ fun TabSidebar(
             .padding(BrowserTokens.SidebarPadding),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        if (inPrivate) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().height(40.dp).clip(androidx.compose.foundation.shape.CircleShape).clickable { inPrivate = false }.padding(horizontal = 8.dp)) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Back to tabs", color = browserColors().SecondaryText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            }
+            PrivateSpacePanel(tabs = tabs, onSelect = { tabs.select(it) }, onNewPrivateTab = onNewPrivateTab, onLock = onLockPrivate, modifier = Modifier.weight(1f))
+            if (privateCount > 0) Box(
+                modifier = Modifier.fillMaxWidth().height(44.dp).clip(androidx.compose.foundation.shape.CircleShape).clickable { tabs.closePrivate(); inPrivate = false },
+                contentAlignment = Alignment.Center,
+            ) { Text("Close private", color = Mineral.Ember, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
+            return@Column
+        }
         // Tabs, Bookmarks and History switch, like the segmented control in the design (D-Sidebar).
         Row(
             modifier = Modifier
@@ -398,6 +457,16 @@ fun TabSidebar(
                 }
             }
         }
+        // Pinned at the bottom: opens the private space.
+        Row(
+            modifier = Modifier.fillMaxWidth().height(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().GridBackground).clickable { inPrivate = true }.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Filled.VisibilityOff, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(10.dp))
+            Text("Private tabs ($privateCount)", color = browserColors().AddressBarText, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        }
+    }
     }
 }
 

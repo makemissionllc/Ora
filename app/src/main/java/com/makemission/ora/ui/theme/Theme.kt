@@ -15,6 +15,9 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.layout.PaddingValues
@@ -363,4 +366,25 @@ val LocalBrowserColors = staticCompositionLocalOf { LightBrowserColors }
 /** The active browser palette. Read it inside composables: `browserColors().Accent`. */
 @Composable
 @ReadOnlyComposable
-fun browserColors(): BrowserColors = LocalBrowserColors.current
+fun browserColors(): BrowserColors = LocalBrowserColors.current/** Obsidian: the private space's colours (UI v2). Dark only; Light and Pure dark keep their own palettes. */
+fun privateBrowserColors(base: BrowserColors): BrowserColors {
+    if (base != DarkBrowserColors && !isTintedDark(base)) return base
+    val obsidian = Color(0xFF111214)
+    val raised = Color(0xFF1B1C20)
+    return base.copy(
+        GridBackground = obsidian,
+        ToolbarBackground = raised,
+        SidebarBackground = raised,
+        Surface = raised,
+        AddressBarBackground = raised,
+        SidebarSelected = Color(0xFF25272C),
+    )
+}
+
+private fun isTintedDark(base: BrowserColors): Boolean = ProfileTint.values().any { it != ProfileTint.BASALT && base.GridBackground == it.base }
+
+/** True while the selected tab is private. The palette reads it, so the whole browser takes the Obsidian colours. */
+object PrivateSpace {
+    var active by mutableStateOf(false)
+}
+

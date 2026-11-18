@@ -484,6 +484,18 @@ class BrowserTabs(
         newTab(START_URL)
     }
 
+    /** Closes every private tab. A normal tab is selected afterwards, and a start page is opened if none is left. */
+    fun closePrivate() {
+        val doomed = tabs.filter { it.isPrivate }
+        if (doomed.isEmpty()) return
+        UsageStats.count("tab.close_private")
+        doomed.forEach { it.close() }
+        tabs.removeAll(doomed)
+        BrowserLog.info("tabs", "Closed ${doomed.size} private tabs")
+        if (tabs.isEmpty()) newTab(START_URL)
+        else if (tabs.none { it.id == selectedId }) select(tabs.last().id)
+    }
+
     fun closeAll() {
         tabs.forEach { it.close() }
         tabs.clear()
