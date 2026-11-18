@@ -101,8 +101,11 @@ class DownloadEngineTest {
             override fun dispatch(request: RecordedRequest): MockResponse {
                 val m = request.getHeader("Range")?.let { Regex("bytes=(\\d+)-(\\d*)").find(it) }
                 if (m == null) return MockResponse().setResponseCode(200).setBody(okio.Buffer().write(small))
-                return MockResponse().setResponseCode(206).setHeader("Content-Range", "bytes 0-0/${small.size}")
-                    .setBody(okio.Buffer().write(small.copyOfRange(0, 1)))
+                val start = m.groupValues[1].toInt()
+                val end = m.groupValues[2].toIntOrNull() ?: (small.size - 1)
+                return MockResponse().setResponseCode(206)
+                    .setHeader("Content-Range", "bytes $start-$end/${small.size}")
+                    .setBody(okio.Buffer().write(small.copyOfRange(start, end + 1)))
             }
         }
         val url = server.url("/small.bin").toString()

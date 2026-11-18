@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import org.mozilla.geckoview.WebResponse
 import java.io.File
 import java.io.IOException
+import android.net.ConnectivityManager
+import android.net.Network
 import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
 
@@ -93,7 +95,20 @@ class DownloadsRepository(
     /** Fires once for each download that begins, so the start notice can show its name. */
     val started: SharedFlow<DownloadItem> = _started.asSharedFlow()
 
+    /** Downloads that failed on a network error. They resume when a network comes back. */
+    private val waitingForNetwork: MutableSet<Long> = ConcurrentHashMap.newKeySet()
+
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) {
+            val ids = waitingForNetwork.toList()
+            if (ids.isEmpty()) return
+            BrowserLog.info("download", "Network is back, resuming ${ids.size} download(s)")
+            ids.forEach { waitingForNetwork.remove(it); resume(it) }
+        }
+    }
+
     init {
+        runCatching { context.getSystemService(ConnectivityManager::class.java)?.registerDefaultNetworkCallback(networkCallback) }
         // Downloads left unfinished by an earlier run come back paused, so the user decides when to continue.
         val saved = store.load()
         nextId = (saved.maxOfOrNull { it.id } ?: 0L) + 1
@@ -134,6 +149,7 @@ class DownloadsRepository(
         val job = jobs[id]?.takeIf { it.isActive } ?: return
         if (find(id)?.pausable != true) return
         pausing.add(id)
+        waitingForNetwork.remove(id)
         job.cancel()
     }
 
@@ -199,6 +215,7 @@ class DownloadsRepository(
                 partFile(id).delete()
                 fail(id, e.message ?: "The file changed on the server")
             } catch (e: Exception) {
+                if (e is IOException) waitingForNetwork.add(id)
                 fail(id, e.message ?: e.javaClass.simpleName)
             } finally {
                 jobs.remove(id)
@@ -293,7 +310,7 @@ class DownloadsRepository(
 
     private fun fail(id: Long, message: String) {
         val url = find(id)?.url ?: return
-        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.FAILED, error = message, speed = 0) else it } }
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.FAILED, error = FAILED_TAP_TO_RETRY, speed = 0) else it } }
         saveNow()
         BrowserLog.error("download", downloadLogLine("Failed", url, ": $message"))
     }
@@ -343,6 +360,7 @@ class DownloadsRepository(
 
     companion object {
         const val FILE_CHANGED_NOTICE = "The file changed, so it restarted"
+        const val FAILED_TAP_TO_RETRY = "Failed: tap to retry"
 
         /** Bytes of a part that are on disk, never more than its size. */
         private fun doneOf(part: Part): Long = doneOf(part.seg)

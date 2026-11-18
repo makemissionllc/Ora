@@ -38,13 +38,27 @@ class FileChangedException(message: String) : Exception(message)
  * Servers without range support are fetched as one stream that restarts on a retry.
  * Requests go through [transport], so the app and the tests can send them differently.
  */
-class DownloadEngine(private val transport: DownloadTransport = HttpUrlTransport()) {
+/** The wait before retry [retry] (1 is the first): 2 s, 5 s, 15 s, 30 s, then 60 s. */
+internal fun retryDelayMillis(retry: Int): Long = when (retry) {
+    1 -> 2_000L
+    2 -> 5_000L
+    3 -> 15_000L
+    4 -> 30_000L
+    else -> 60_000L
+}
+
+class DownloadEngine(
+    private val transport: DownloadTransport = HttpUrlTransport(),
+    /** Wait before retry number n (1 is the first). Tests pass a short one. */
+    private val retryDelayMs: (Int) -> Long = ::retryDelayMillis,
+) {
 
     companion object {
         /** Files smaller than this are fetched in one piece. */
         const val SPLIT_THRESHOLD = 4L * 1024 * 1024
         const val MAX_PARTS = 4
-        const val MAX_ATTEMPTS = 6
+        /** Retries after the first failure: 2 s, 5 s, 15 s, 30 s, then every 60 s, ten in all. */
+        const val MAX_RETRIES = 10
         private const val BUFFER = 64 * 1024
     }
 
@@ -117,11 +131,11 @@ class DownloadEngine(private val transport: DownloadTransport = HttpUrlTransport
             } catch (e: IOException) {
                 currentCoroutineContext().ensureActive()
                 attempt++
-                if (attempt >= MAX_ATTEMPTS) throw e
-                BrowserLog.warn("download", "Part ${part.index + 1} stopped (${e.message ?: "network error"}), retry $attempt of ${MAX_ATTEMPTS - 1}")
+                if (attempt > MAX_RETRIES) throw e
+                BrowserLog.warn("download", "Part ${part.index + 1} stopped (${e.message ?: "network error"}), retry $attempt of $MAX_RETRIES")
                 // A stream without ranges has no offset to resume from, so it starts over.
                 if (!ranged || part.seg.end < 0) part.seg = part.seg.copy(done = 0)
-                delay(minOf(30_000L, 1_000L shl minOf(attempt, 5)))
+                delay(retryDelayMs(attempt))
             }
         }
     }
@@ -176,10 +190,14 @@ class DownloadEngine(private val transport: DownloadTransport = HttpUrlTransport
                     }
                 }
             }
-            // Unknown-size streams end at EOF; ranged parts are complete once every byte arrived.
+            // Unknown-size streams end at EOF. Otherwise the part is complete only when every byte arrived; the
+            // byte count decides, before the finished flag is set (the flag alone would hide a short read).
+            if (!wantRange && seg.end < 0) {
+                part.seg = part.seg.copy(finished = true)
+                return@withContext
+            }
+            if (part.seg.start + part.seg.done <= part.seg.end) throw IOException("The connection closed early")
             part.seg = part.seg.copy(finished = true)
-            if (!wantRange && seg.end < 0) return@withContext
-            if (!part.seg.complete) throw IOException("The connection closed early")
         } catch (e: CancellationException) {
             throw e
         } finally {
