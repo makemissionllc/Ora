@@ -19,6 +19,8 @@
     <!-- Downloads keep running in the background as a data-sync foreground service. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- Android 14 and later: downloads run as a user-initiated data-transfer job (see DownloadJobService). -->
+    <uses-permission android:name="android.permission.RUN_USER_INITIATED_JOBS" />
     <!-- Optional, so devices without a camera or microphone can still install Ora. -->
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
@@ -72,6 +74,13 @@
             android:name=".downloads.DownloadService"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+        <receiver
+            android:name=".downloads.DownloadActionReceiver"
+            android:exported="false" />
+        <service
+            android:name=".downloads.DownloadJobService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 
 </manifest>

@@ -18,6 +18,8 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "Paused downloads come back after a restart, and a download can be resumed from where it stopped.  (`b5403e8`, `d4bd14c`)"),
             ChangeItem(ChangeKind.ADDED, "A download whose file changed on the server starts again, and the row says so.  (`0a8d9c5`)"),
             ChangeItem(ChangeKind.ADDED, "A dropped connection is retried after 2, 5, 15 and 30 seconds, then every minute, up to ten times. When the network is gone, it waits and resumes when it comes back.  (`665274c`)"),
+            ChangeItem(ChangeKind.CHANGED, "On Android 14 and later, downloads keep running in the background as a system-managed download job, with the same Pause all and Cancel notification buttons.  (`(this commit)`)"),
+            ChangeItem(ChangeKind.CHANGED, "A download paused or failed before an app restart keeps the page it came from, so resuming still sends the right Referer.  (`69ea180`)"),
             ChangeItem(ChangeKind.CHANGED, "Downloads use the same sign-in and cookies as the tab that started them. Private-tab downloads share nothing with normal tabs and are not saved to the list after a restart.  (`94ff36b`, `0c93cda`)"),
         ),
     ),

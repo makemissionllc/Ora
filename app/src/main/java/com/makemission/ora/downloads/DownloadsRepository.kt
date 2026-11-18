@@ -26,7 +26,12 @@ import android.net.ConnectivityManager
 import android.net.Network
 import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
+import android.app.job.JobInfo
+import android.app.job.JobScheduler
+import android.content.ComponentName
 import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 
 /**
  * One download log line, naming the site the file came from and never the file name: a file name can say what
@@ -381,15 +386,40 @@ class DownloadsRepository(
         syncService()
     }
 
-    /** Keeps the foreground service running only while a download is active, so Android does not stop it. */
+    /**
+     * Keeps downloads alive in the background while one is active: a user-initiated job on Android 14 and later,
+     * a data-sync foreground service before that. Started and stopped only when the state changes.
+     */
     private fun syncService() {
         val running = activeCount() > 0
         if (running == serviceRunning) return
         serviceRunning = running
-        val intent = Intent(context, DownloadService::class.java)
         runCatching {
-            if (running) context.startForegroundService(intent) else context.stopService(intent)
-        }.onFailure { BrowserLog.warn("download", "Could not ${if (running) "start" else "stop"} the background download service: ${it.message}") }
+            if (Build.VERSION.SDK_INT >= 34) syncJob(running) else syncForegroundService(running)
+        }.onFailure { BrowserLog.warn("download", "Could not ${if (running) "start" else "stop"} background downloads: ${it.message}") }
+    }
+
+    @RequiresApi(34)
+    private fun syncJob(running: Boolean) {
+        val scheduler = context.getSystemService(JobScheduler::class.java) ?: return
+        if (!running) {
+            scheduler.cancel(DownloadJobService.JOB_ID)
+            return
+        }
+        val job = JobInfo.Builder(DownloadJobService.JOB_ID, ComponentName(context, DownloadJobService::class.java))
+            .setUserInitiated(true)
+            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+            .setEstimatedNetworkBytes(JobInfo.NETWORK_BYTES_UNKNOWN.toLong(), JobInfo.NETWORK_BYTES_UNKNOWN.toLong())
+            .build()
+        val result = scheduler.schedule(job)
+        if (result != JobScheduler.RESULT_SUCCESS) {
+            BrowserLog.warn("download", "The system did not start the background download job (result $result); downloads run only while Ora is open")
+        }
+    }
+
+    private fun syncForegroundService(running: Boolean) {
+        val intent = Intent(context, DownloadService::class.java)
+        if (running) context.startForegroundService(intent) else context.stopService(intent)
     }
 
     /** The state one download needs to continue: where it comes from, how it was checked, and its parts. */
