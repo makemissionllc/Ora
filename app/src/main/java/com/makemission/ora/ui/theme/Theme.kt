@@ -204,58 +204,75 @@ data class BrowserColors(
     val Scrim: Color,
 )
 
-/** Light palette from the "Android Browser Mockups" design. */
+/** Mineral swatches from the UI v2 design. Read them through [browserColors], not directly, except for meaning colours. */
+object Mineral {
+    val Basalt = Color(0xFF1A1B1E)
+    val Slate = Color(0xFF232528)
+    val Shale = Color(0xFF2D3034)
+    val Seam = Color(0xFF383B40)
+    val Chalk = Color(0xFFECE6DC)
+    val Fog = Color(0xFFA29D94)
+    /** Protection working: trackers blocked, secure connection. Meaning only, never decoration. */
+    val Lichen = Color(0xFFA9C08C)
+    /** Destructive actions: Block, Close all, Clear. Meaning only, never decoration. */
+    val Ember = Color(0xFFE58A6B)
+    val Stone = Color(0xFFE9E8E4)
+    val Paper = Color(0xFFF6F5F2)
+    val Ink = Color(0xFF1A1B1E)
+}
+
+/** Light Mineral: Stone page, Paper bars, Ink text. The selected state is an Ink fill with Paper text. */
 val LightBrowserColors = BrowserColors(
-    Accent = Color(0xFF3B6DF0),
-    ToolbarBackground = Color(0xFFF4F5F7),
-    ToolbarBorder = Color(0x14000000),
-    AddressBarBackground = Color(0xFFE6E8ED),
-    AddressBarText = Color(0xFF23262F),
-    SecondaryText = Color(0xFF6B7080),
-    IconColor = Color(0xFF4A4F5C),
-    DisabledIcon = Color(0xFFB4B4BA),
-    GridBackground = Color(0xFFE9E9EE),
-    CloseBadge = Color(0x9C3C3C43),
-    SidebarBackground = Color(0xFFF2F2F6),
-    SidebarSelected = Color(0x1F0B6BDE),
-    Surface = Color(0xFFFFFFFF),
+    Accent = Mineral.Ink,
+    ToolbarBackground = Mineral.Paper,
+    ToolbarBorder = Color(0x1A1A1B1E),
+    AddressBarBackground = Mineral.Stone,
+    AddressBarText = Mineral.Ink,
+    SecondaryText = Color(0xFF6C6962),
+    IconColor = Mineral.Ink,
+    DisabledIcon = Color(0xFFB4B2AB),
+    GridBackground = Mineral.Stone,
+    CloseBadge = Color(0x9C1A1B1E),
+    SidebarBackground = Mineral.Paper,
+    SidebarSelected = Color(0x1F1A1B1E),
+    Surface = Mineral.Paper,
     Scrim = Color(0x33000000),
 )
 
-/** Dark palette from the "Dark" browser mockups. */
+/** Dark Mineral (default): Basalt page, Slate bars, Shale tiles, Chalk text. The selected state is a Chalk fill with Basalt text. */
 val DarkBrowserColors = BrowserColors(
-    Accent = Color(0xFF6C93FF),
-    ToolbarBackground = Color(0xFF141518),
-    ToolbarBorder = Color(0x14FFFFFF),
-    AddressBarBackground = Color(0xFF2E3138),
-    AddressBarText = Color(0xFFECEDF0),
-    SecondaryText = Color(0xFF9097A6),
-    IconColor = Color(0xFFB4B8C4),
-    DisabledIcon = Color(0xFF5A5E6A),
-    GridBackground = Color(0xFF141518),
-    CloseBadge = Color(0x9C8E8E93),
-    SidebarBackground = Color(0xFF1A1B1F),
-    SidebarSelected = Color(0x1F6C93FF),
-    Surface = Color(0xFF23252B),
-    Scrim = Color(0x66000000),
+    Accent = Mineral.Chalk,
+    ToolbarBackground = Mineral.Slate,
+    ToolbarBorder = Color(0x14ECE6DC),
+    AddressBarBackground = Mineral.Shale,
+    AddressBarText = Mineral.Chalk,
+    SecondaryText = Mineral.Fog,
+    IconColor = Mineral.Chalk,
+    DisabledIcon = Color(0x66A29D94),
+    GridBackground = Mineral.Basalt,
+    CloseBadge = Color(0x9CA29D94),
+    SidebarBackground = Mineral.Slate,
+    SidebarSelected = Color(0x1FECE6DC),
+    Surface = Mineral.Slate,
+    Scrim = Color(0x8C1A1B1E),
 )
 
-/** Pure (OLED) black variant: same layout as dark, with true black chrome and surfaces. */
+/** Pure (OLED) black variant: same layout as dark, with true black chrome and surfaces, and the same Mineral text. */
 val PureDarkBrowserColors = BrowserColors(
-    Accent = Color(0xFF6C93FF),
+    Accent = Mineral.Chalk,
     ToolbarBackground = Color(0xFF000000),
-    ToolbarBorder = Color(0x14FFFFFF),
-    AddressBarBackground = Color(0xFF1C1C1E),
-    AddressBarText = Color(0xFFF2F2F7),
-    SecondaryText = Color(0xFF8E8E93),
-    IconColor = Color(0xFFC7C7CC),
-    DisabledIcon = Color(0xFF48484A),
+    ToolbarBorder = Color(0x14ECE6DC),
+    AddressBarBackground = Color(0xFF1B1C1E),
+    AddressBarText = Mineral.Chalk,
+    SecondaryText = Mineral.Fog,
+    IconColor = Mineral.Chalk,
+    DisabledIcon = Color(0x66A29D94),
     GridBackground = Color(0xFF000000),
-    CloseBadge = Color(0x9C8E8E93),
+    CloseBadge = Color(0x9CA29D94),
     SidebarBackground = Color(0xFF000000),
-    SidebarSelected = Color(0x1F6C93FF),
-    Surface = Color(0xFF121212),
-    Scrim = Color(0x80000000),
+    SidebarSelected = Color(0x1FECE6DC),
+    Surface = Color(0xFF0E0F10),
+    Scrim = Color(0x99000000),
 )
 
 /** The Material colour scheme for one mode: wallpaper-based on Android 12+, otherwise the fixed Ora scheme. */
