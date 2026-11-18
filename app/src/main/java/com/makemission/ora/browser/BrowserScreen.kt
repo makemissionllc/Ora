@@ -962,6 +962,14 @@ private fun BrowserContent(
                         onFind = { showFind = true },
                         closedTabTitle = tabs.lastClosedTitle,
                         onReopenClosed = onReopenClosed,
+                        onAddToHome = {
+                            val url = selected.url
+                            if (url == BrowserTabs.START_URL || url.isBlank() || selected.isPrivate) {
+                                InAppNotices.show(if (selected.isPrivate) "Private tabs can't be added to the home screen" else "Open a page first")
+                            } else {
+                                HomeShortcut.add(context, url, selected.title)
+                            }
+                        },
                         onCopyAddress = {
                             val url = selected.url
                             if (url == BrowserTabs.START_URL || url.isBlank()) {

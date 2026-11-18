@@ -89,6 +89,7 @@ fun BrowserMenuSheet(
     onTabs: () -> Unit,
     onFind: () -> Unit,
     onCopyAddress: () -> Unit,
+    onAddToHome: () -> Unit,
     /** Title of the tab "Reopen closed tab" would bring back, or null when no tab was closed this run. */
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
@@ -114,6 +115,7 @@ fun BrowserMenuSheet(
             onTabs = { act(onTabs) },
             onFind = { act(onFind) },
             onCopyAddress = { act(onCopyAddress) },
+            onAddToHome = { act(onAddToHome) },
             closedTabTitle = closedTabTitle,
             onReopenClosed = { act(onReopenClosed) },
         )
@@ -143,6 +145,7 @@ private fun BrowserMenuItems(
     onTabs: () -> Unit,
     onFind: () -> Unit,
     onCopyAddress: () -> Unit,
+    onAddToHome: () -> Unit,
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
 ) {
@@ -187,6 +190,16 @@ private fun BrowserMenuItems(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text("Copy page address", fontSize = 15.sp, color = browserColors().AddressBarText)
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onAddToHome)
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Add to home screen", fontSize = 15.sp, color = browserColors().AddressBarText)
             }
             // Tapping with nothing closed explains itself (the screen shows a snackbar) rather than doing nothing.
             Row(
