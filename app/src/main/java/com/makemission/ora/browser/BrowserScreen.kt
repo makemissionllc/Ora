@@ -1120,7 +1120,7 @@ private fun BrowserContent(
                         .align(Alignment.BottomCenter)
                         .padding(bottom = BrowserTokens.SelectionMenuBottomInset)
                 ) {
-                    UndoCloseOffer(visible = closed != null, onUndo = { tabs.reopenLastClosed() })
+                    UndoCloseOffer(visible = closed != null, count = tabs.recentlyClosedCount, onUndo = { tabs.undoRecentClose() })
                 }
                 // Back closes the reader first, so it never leaves the page behind it.
                 androidx.activity.compose.BackHandler(enabled = selected.reader.open) { selected.reader.close() }
@@ -2525,7 +2525,7 @@ private const val PULL_SCROLL_TOLERANCE_PX = 4
 
 /** "Tab closed · Undo" card shown after a tab is closed. Grows in and shrinks back, like the other overlays. */
 @Composable
-private fun UndoCloseOffer(visible: Boolean, onUndo: () -> Unit) {
+private fun UndoCloseOffer(visible: Boolean, count: Int, onUndo: () -> Unit) {
     AnimatedVisibility(
         visible = visible,
         enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE),
@@ -2538,7 +2538,7 @@ private fun UndoCloseOffer(visible: Boolean, onUndo: () -> Unit) {
                 .padding(start = 16.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Tab closed", color = browserColors().AddressBarText, fontSize = 15.sp)
+            Text(if (count == 1) "Tab closed" else "$count tabs closed", color = browserColors().AddressBarText, fontSize = 15.sp)
             TextButton(onClick = {
                 BrowserLog.info("tabs", "Undo close from the tab grid")
                 onUndo()

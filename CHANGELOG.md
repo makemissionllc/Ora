@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
+- Closing a group now says how many tabs closed ("2 tabs closed"), and Undo brings back all of them, not just the last one.
 - Passkeys with Bitwarden: Ora now declares the two Android permissions that let sites' passkey register and sign-in go through your passkey app. Tested with Bitwarden on the phone. Google Password Manager may still refuse until Google approves Ora.  (`0840e06`)
 - Passkey not working? Open in main browser: on a page that uses https, the ⋯ menu has a row that opens the same page in another browser you choose. Some sites' passkey sign-in does not work in Ora yet, so this gets you in without leaving the page behind. It is hidden on pages that are not https, and says so if no other browser is installed.  (`94fc3b0`)
 - Setup on a new install: after the notice, Ora welcomes you and asks three quick things, how it should look (bar position and theme), what it should block (Standard or Strict fingerprinting protection, HTTPS-only, App lock with a PIN) and your first profile (name, colour, and quick Work, School or Other profiles). Every step has Back and Skip, every choice saves straight away, and closing Ora part-way resumes where you were. The last screen lists what you chose and where to change each one in Settings. "Use the defaults and start browsing" skips it all. Settings > About > Run setup again shows the steps with your current choices. After setup, short tips explain swiping the bar up for tabs (and, on tablet, swiping right for the sidebar), each shown once with Got it.  (`49e2ad4`)
@@ -45,6 +46,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - The Downloads page opens from the toolbar button and shrinks back into it when closed, and it has a Copy link action with a short confirmation on the details page. The tablet layout is not checked on a device yet.  (`e182fda`)
 
 **Fixed**
+- Closing a group now says how many tabs closed ("2 tabs closed"), and Undo brings back all of them, not just the last one.
 - A pop-up that a page opens without a tap is no longer dropped silently. Ora now sees it and asks first, so the card can show.  (`9b91073`)
 - The log no longer fills with a line each time you scroll a page that was not at its top. Reader's "Page report" is written only when a page's answer changes, not every time it loads.  (`7d8fdd3`)
 - A page that fails to load is logged with the same plain words the error page uses (for example "The address could not be found") instead of a category and code number. Pages that fail because of a proxy or a bad address now get their own words too.  (`1f2fb61`)

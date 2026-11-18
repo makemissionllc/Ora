@@ -662,6 +662,10 @@ class BrowserTabs(
     var recentlyClosed by mutableStateOf<ClosedTab?>(null)
         private set
 
+    /** How many tabs the offer in [recentlyClosed] brings back: 1 for a single close, more for a group. */
+    var recentlyClosedCount by mutableStateOf(1)
+        private set
+
     /** Closed tabs, most recent last, for "Reopen closed tab". Kept for this run only, not written to disk. */
     private val closedHistory = mutableStateListOf<ClosedTab>()
 
@@ -681,6 +685,12 @@ class BrowserTabs(
         return true
     }
 
+    /** Brings back every tab the undo offer covers, then clears the offer. */
+    fun undoRecentClose() {
+        repeat(recentlyClosedCount) { reopenLastClosed() }
+        recentlyClosed = null
+    }
+
     fun dismissUndo() {
         recentlyClosed = null
     }
@@ -698,6 +708,7 @@ class BrowserTabs(
             ClosedTab(closing.id, closing.url, closing.title, closing.sessionState)
         }
         recentlyClosed = closed
+        recentlyClosedCount = 1
         if (closed != null) {
             closedHistory.add(closed)
             if (closedHistory.size > MAX_CLOSED_HISTORY) closedHistory.removeAt(0)
@@ -802,7 +813,12 @@ class BrowserTabs(
     /** Deletes the group and closes its tabs. */
     fun closeGroup(id: String) {
         val doomed = tabsIn(id).map { it.id }
+        val keptBefore = closedHistory.size
         doomed.forEach { close(it) }
+        // One offer for the whole group: "N tabs closed", and Undo brings back the ones that were kept.
+        val kept = closedHistory.size - keptBefore
+        recentlyClosed = if (kept > 0) closedHistory.last() else null
+        recentlyClosedCount = maxOf(kept, 1)
         groups.removeAll { it.id == id }
         persistGroups()
         BrowserLog.info("groups", "Closed a group and its ${doomed.size} tabs")
