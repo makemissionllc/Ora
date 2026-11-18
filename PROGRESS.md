@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-18, at commit `3232d02`.
+Last updated: 2026-11-18, at commit `4d2ce37`.
 
 ## Done
 - Adaptive launcher icon (`3281194`, `3232d02`): the background is a full-bleed charcoal layer, the foreground is the Ora ring and dot at 48 dp centred on the 108 dp canvas, and a monochrome layer carries the same mark. The XML is in `mipmap-anydpi-v26`, and the legacy WebP launcher icons were removed (minSdk 33). The phone (CPH2745) shows the new mark in its app drawer, and the tablet (`7ba8e294`) shows it on the home screen. Not checked: the phone's home screen, the tablet app drawer, Android's themed icons (the device setting was not changed), the tablet app drawer, and the "Ora · App icon" board on the canvas.
@@ -135,6 +135,18 @@ Last updated: 2026-11-18, at commit `3232d02`.
 - Network: GeckoView 160 has no public DNS prefetch or preconnect control. Those options are internal and would need a decision before any work.
 - Typing in the tablet address bar with the on-screen keyboard can insert spaces and capitals, so the address becomes a search. Not reproduced on 2026-11-17 (landscape, Gboard): "mozilla.org" typed letter by letter, with no inserted spaces or capitals, loaded mozilla.org on Go. An earlier search came from a keyboard that had dropped mid-typing. It recurred on 2026-11-17 on the tablet: "http://nosuchsite.invalid" was typed with a space after the dot, so the address field shows "nosuchsite. invalid". Open again.
 
+### Custom features
+
+Ideas only, nothing built yet. The full list, with the rules, each idea's API check and its size, is in [Designs/ORA-IDEAS.md](Designs/ORA-IDEAS.md).
+
+Priority 1 (do first):
+- Site tweaks: per-site switches to hide elements, force dark, change font and widen text.
+- Element zapper: long-press an element, "Hide on this site".
+- Command bar: ">" in the address bar runs actions.
+- Profile rules: "Always open this site in profile X".
+
+Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to build yet; the order is for the user to set.
+
 ## Known issues
 
 - Saved passwords: tapping into a password (type=password) field on the local login page (http://localhost:8765/login.html, adb reverse) makes GeckoView's surface stop drawing (black screen). It also happens with Password autofill off, and on the build before the Passwords commit (50a4983), so it predates the Passwords change and is not caused by it. Cause not found. Saving and autofilling a login stay unverified until this is fixed. Password autofill was left OFF on the phone by this test; turn it back on in Settings > Passwords.
@@ -146,14 +158,6 @@ Last updated: 2026-11-18, at commit `3232d02`.
 - Tablet sidebar: Close group on a group of 2 tabs shows the snackbar "Tab closed" (singular); it should say how many closed. Small; not fixed.
 - Site permissions: during tests a card was answered with no tap recorded (tablet about 18:21, phone about 18:24, both on the test page). Cause not found. On the phone, an older saved camera choice from test data could explain an automatic Allow. Not reproduced.
 - Phone Compact bar, page clip (`01de1e1`, `2a47c6a`): on google.com the expanded bar shows a cut-off sliver of footer text just below its bottom edge at the page end. With the bar folded on theverge.com, page text and the 'OUR SITES' box show under and below the floating pill while scrolled and at the page end. Not decided whether the folded bar should clip above itself as the expanded bar does.
-
-## Custom features
-
-Ideas only, nothing built yet. Full notes are in `Designs/ORA-IDEAS.md`.
-
-**Priority 1** (idea, not built): site tweaks; element zapper; command bar; profile rules.
-
-**Priority 2** and **Priority 3**: not yet supplied. Their lists were in the original prompt and need to be sent again before they can be recorded.
 
 ## Verification log
 
