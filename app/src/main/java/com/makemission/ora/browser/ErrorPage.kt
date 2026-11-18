@@ -1,101 +1,276 @@
 package com.makemission.ora.browser
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.Uri
+import com.makemission.ora.log.BrowserLog
 import org.mozilla.geckoview.WebRequestError
 
 /**
- * A friendly page shown in place of a failed load. It is built as a data: URI, so it needs no
- * network and no app colours (it is web content, so it follows the system light or dark setting).
+ * The page shown in place of a failed load: one card per cause, with an icon, a plain title, one reason
+ * sentence, its buttons, and a folded "Details for support" block. It is built as a data: URI, so it needs no
+ * network. Its colours are the Mineral values written into its CSS, because it is web content built outside
+ * Compose. It follows the system light or dark setting.
  */
 object ErrorPage {
 
-    /** Plain-words title and explanation for a failed load. */
-    data class Message(val title: String, val detail: String)
+    /** The icon on the card. Each cause has its own. */
+    enum class Icon { OFFLINE, NOT_FOUND, TIMEOUT, SECURITY, GENERIC }
+
+    /** A card button. TRY_AGAIN loads the failed address again; GO_BACK returns to the page before it. */
+    enum class Action { TRY_AGAIN, GO_BACK }
+
+    /**
+     * One card for one cause. [title] and [detail] are plain words. [support] is the short cause shown after
+     * "Details for support:", and [category] names the GeckoView category in the support block.
+     * [secondary] is null when the card has one button.
+     */
+    data class Message(
+        val icon: Icon,
+        val title: String,
+        val detail: String,
+        val support: String,
+        val category: String,
+        val primary: Action,
+        val secondary: Action?,
+    )
 
     fun messageFor(error: WebRequestError): Message = messageFor(error.code, error.category)
 
-    /** The plain words for a GeckoView load error code and category. Also used by the log, so both read the same. */
-    internal fun messageFor(code: Int, category: Int): Message = when (code) {
-        WebRequestError.ERROR_OFFLINE -> Message(
-            "You're offline",
-            "This device has no connection right now. Check Wi-Fi or mobile data, then try again."
-        )
-        WebRequestError.ERROR_NET_TIMEOUT -> Message(
-            "The site took too long to answer",
-            "The server did not respond in time. It may be busy, or your connection may be slow."
-        )
-        WebRequestError.ERROR_UNKNOWN_HOST -> Message(
-            "The address could not be found",
-            "Check the spelling of the address. If it is right, the site may be down or the name may have expired."
-        )
-        WebRequestError.ERROR_CONNECTION_REFUSED -> Message(
-            "The site refused the connection",
-            "The server is not accepting visitors right now. Try again in a little while."
-        )
-        WebRequestError.ERROR_SECURITY_BAD_CERT,
-        WebRequestError.ERROR_SECURITY_SSL,
-        WebRequestError.ERROR_BAD_HSTS_CERT -> Message(
-            "This connection is not private",
-            "The site's security certificate could not be verified, so Ora stopped the page. Only continue if you trust the site."
-        )
-        WebRequestError.ERROR_REDIRECT_LOOP -> Message(
-            "The page keeps redirecting",
-            "The site sent you around in a loop and never settled on a page."
-        )
-        WebRequestError.ERROR_MALFORMED_URI -> Message(
-            "That address doesn't look right",
-            "Check the address for typos, then try again."
-        )
-        else -> when (category) {
-            WebRequestError.ERROR_CATEGORY_URI -> Message(
-                "That address doesn't look right",
-                "Check the address for typos, then try again."
+    /**
+     * The card for a GeckoView load error. [online] is the connectivity check: with no network the card says so,
+     * whatever GeckoView reported. [host] is the domain only, and goes into titles and the support block.
+     * The log uses the same words, so the log and the page agree.
+     */
+    internal fun messageFor(code: Int, category: Int, host: String? = null, online: Boolean = true): Message {
+        val name = categoryName(category)
+        val site = host?.takeIf { it.isNotBlank() }
+        if (!online) return offline(name)
+        return when (code) {
+            WebRequestError.ERROR_OFFLINE -> offline(name)
+            WebRequestError.ERROR_NET_TIMEOUT -> Message(
+                Icon.TIMEOUT,
+                if (site != null) "$site isn't responding" else "The site isn't responding",
+                "Your connection works, but the site took too long to answer. It may be busy or down for a while.",
+                "connection timed out", name, Action.TRY_AGAIN, Action.GO_BACK
             )
-            WebRequestError.ERROR_CATEGORY_PROXY -> Message(
-                "A proxy stopped the page",
-                "The connection goes through a proxy that refused the request. Check the proxy settings on this device."
+            WebRequestError.ERROR_UNKNOWN_HOST -> Message(
+                Icon.NOT_FOUND,
+                if (site != null) "Can't find $site" else "The address could not be found",
+                "Check the spelling. If it's right, the site may be down or its name may have expired.",
+                "name not resolved", name, Action.TRY_AGAIN, Action.GO_BACK
             )
-            WebRequestError.ERROR_CATEGORY_NETWORK -> Message(
-                "The page could not be loaded",
-                "There was a problem with the connection. Try again."
+            WebRequestError.ERROR_CONNECTION_REFUSED -> Message(
+                Icon.GENERIC,
+                "The site refused the connection",
+                "The server is not accepting visitors right now. Try again in a little while.",
+                "connection refused", name, Action.TRY_AGAIN, Action.GO_BACK
             )
-            WebRequestError.ERROR_CATEGORY_SECURITY -> Message(
-                "This connection is not private",
-                "The site's security could not be verified, so Ora stopped the page."
+            WebRequestError.ERROR_SECURITY_BAD_CERT,
+            WebRequestError.ERROR_SECURITY_SSL,
+            WebRequestError.ERROR_BAD_HSTS_CERT -> insecure(name, "certificate")
+            WebRequestError.ERROR_REDIRECT_LOOP -> Message(
+                Icon.GENERIC,
+                "The page keeps redirecting",
+                "The site sent you around in a loop and never settled on a page.",
+                "redirect loop", name, Action.TRY_AGAIN, Action.GO_BACK
             )
-            else -> Message(
-                "The page could not be loaded",
-                "Something stopped this page from opening. Try again, or check the address."
+            WebRequestError.ERROR_PORT_BLOCKED -> Message(
+                Icon.GENERIC,
+                "This address uses a blocked port",
+                "Browsers keep this port closed for safety, so Ora didn't open it. Check the address, then try again.",
+                "port blocked", name, Action.TRY_AGAIN, Action.GO_BACK
             )
+            WebRequestError.ERROR_MALFORMED_URI -> badAddress(name)
+            else -> when (category) {
+                WebRequestError.ERROR_CATEGORY_URI -> badAddress(name)
+                WebRequestError.ERROR_CATEGORY_PROXY -> Message(
+                    Icon.GENERIC,
+                    "A proxy stopped the page",
+                    "The connection goes through a proxy that refused the request. Check the proxy settings on this device.",
+                    "proxy refused", name, Action.TRY_AGAIN, Action.GO_BACK
+                )
+                WebRequestError.ERROR_CATEGORY_NETWORK -> Message(
+                    Icon.GENERIC,
+                    "The page could not be loaded",
+                    "There was a problem with the connection. Try again.",
+                    "network error", name, Action.TRY_AGAIN, Action.GO_BACK
+                )
+                WebRequestError.ERROR_CATEGORY_SECURITY -> insecure(name, "error")
+                else -> Message(
+                    Icon.GENERIC,
+                    "The page could not be loaded",
+                    "Something stopped this page from opening. Try again, or check the address.",
+                    "unknown error", name, Action.TRY_AGAIN, Action.GO_BACK
+                )
+            }
         }
     }
 
-    /** Builds the data: URI that GeckoView shows instead of the failed page. */
-    fun uriFor(failedUrl: String, error: WebRequestError): String {
-        val message = messageFor(error)
+    private fun offline(category: String) = Message(
+        Icon.OFFLINE,
+        "You're offline",
+        "Your phone isn't connected to the internet, so Ora can't open pages right now.",
+        "no network", category, Action.TRY_AGAIN, Action.GO_BACK
+    )
+
+    private fun insecure(category: String, support: String) = Message(
+        Icon.SECURITY,
+        "This connection is not private",
+        "Ora stopped the page because the site's security could not be verified, so what you send to it could be seen or changed.",
+        "security $support", category, Action.GO_BACK, null
+    )
+
+    private fun badAddress(category: String) = Message(
+        Icon.GENERIC,
+        "That address doesn't look right",
+        "Check the address for typos, then try again.",
+        "address not valid", category, Action.TRY_AGAIN, Action.GO_BACK
+    )
+
+    private fun categoryName(category: Int): String = when (category) {
+        WebRequestError.ERROR_CATEGORY_NETWORK -> "network"
+        WebRequestError.ERROR_CATEGORY_SECURITY -> "security"
+        WebRequestError.ERROR_CATEGORY_URI -> "address"
+        WebRequestError.ERROR_CATEGORY_PROXY -> "proxy"
+        else -> "other"
+    }
+
+    /**
+     * True when the device has an internet connection, from ConnectivityManager. If the check cannot run,
+     * the device counts as online, so a failed check never hides the real error.
+     */
+    fun isOnline(context: Context): Boolean {
+        return try {
+            val manager = context.getSystemService(ConnectivityManager::class.java) ?: return true
+            val capabilities = manager.getNetworkCapabilities(manager.activeNetwork)
+            capabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        } catch (e: SecurityException) {
+            BrowserLog.warn("page", "Connection check could not run, so the error is shown as GeckoView gave it", e)
+            true
+        }
+    }
+
+    /** Builds the data: URI that GeckoView shows instead of the failed page. [host] is the domain only. */
+    fun uriFor(failedUrl: String, error: WebRequestError, host: String, online: Boolean): String {
+        val message = messageFor(error.code, error.category, host, online)
+        val retry = failedUrl.startsWith("http://") || failedUrl.startsWith("https://")
+        val domain = host.ifBlank { "unknown" }
+        val connection = if (online) "connected" else "offline"
+        val copyText = listOf(
+            "Ora: ${message.title}",
+            "Category: ${message.category}",
+            "Code: ${error.code}",
+            "Domain: $domain",
+            "Connection: $connection"
+        ).joinToString("\n")
+        val iconClass = if (message.icon == Icon.SECURITY) "icon alert" else "icon"
         val html = buildString {
-            append("<!DOCTYPE html><html><head><meta charset=\"utf-8\">")
+            append("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"utf-8\">")
             append("<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">")
             append("<title>").append(escape(message.title)).append("</title>")
-            append("<style>")
-            append(":root{color-scheme:light dark;--fg:#1c1c1e;--muted:#6b6b72;--card:#f2f2f6;--btn:#3b6df0;--btnfg:#fff}")
-            append("@media (prefers-color-scheme:dark){:root{--fg:#ecedf0;--muted:#9097a6;--card:#1f2026;--btn:#6c93ff;--btnfg:#0b0c10}}")
-            append("body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;color:var(--fg);background:transparent;padding:24px;box-sizing:border-box}")
-            append(".card{max-width:440px;width:100%;background:var(--card);border-radius:16px;padding:28px 24px;text-align:center}")
-            append("h1{font-size:22px;margin:0 0 10px;font-weight:600}")
-            append("p{font-size:15px;line-height:1.45;color:var(--muted);margin:0 0 18px}")
-            append(".addr{font-size:13px;color:var(--muted);word-break:break-all;margin:0 0 20px}")
-            append("a.btn{display:inline-block;background:var(--btn);color:var(--btnfg);text-decoration:none;font-weight:600;padding:12px 22px;border-radius:999px}")
-            append("</style></head><body><div class=\"card\">")
+            append("<style>").append(STYLE).append("</style></head><body><main class=\"page\">")
+            append("<span class=\"").append(iconClass).append("\">").append(svg(iconPaths(message.icon), 30)).append("</span>")
             append("<h1>").append(escape(message.title)).append("</h1>")
-            append("<p>").append(escape(message.detail)).append("</p>")
-            append("<p class=\"addr\">").append(escape(failedUrl)).append("</p>")
-            // The button reloads the same address through the normal load path.
-            append("<a class=\"btn\" href=\"").append(escape(failedUrl)).append("\">Try again</a>")
-            append("</div></body></html>")
+            append("<p class=\"reason\">").append(escape(message.detail)).append("</p>")
+            append("<div class=\"actions\">")
+            append(actionHtml(message.primary, failedUrl, retry, "primary"))
+            message.secondary?.let { append(actionHtml(it, failedUrl, retry, "secondary")) }
+            append("</div>")
+            append("<details class=\"support\"><summary>").append(svg(CHEVRON, 16))
+            append("<span>Details for support: ").append(escape(message.support)).append("</span></summary>")
+            append("<dl><dt>Category</dt><dd>").append(escape(message.category)).append("</dd>")
+            append("<dt>Code</dt><dd>").append(error.code).append("</dd>")
+            append("<dt>Domain</dt><dd>").append(escape(domain)).append("</dd>")
+            append("<dt>Connection</dt><dd>").append(connection).append("</dd></dl>")
+            append("<button class=\"btn copy\" type=\"button\" id=\"copy\">Copy details</button>")
+            append("</details>")
+            append("<textarea id=\"details\" readonly tabindex=\"-1\" aria-hidden=\"true\">")
+                .append(escape(copyText)).append("</textarea>")
+            append("</main><script>").append(SCRIPT).append("</script></body></html>")
         }
         return "data:text/html;charset=utf-8," + Uri.encode(html)
     }
+
+    private fun actionHtml(action: Action, failedUrl: String, retry: Boolean, style: String): String = when (action) {
+        Action.TRY_AGAIN ->
+            if (retry) "<a class=\"btn $style\" href=\"${escape(failedUrl)}\">Try again</a>" else ""
+        Action.GO_BACK ->
+            "<button class=\"btn $style\" type=\"button\" data-back>Go back</button>"
+    }
+
+    private fun iconPaths(icon: Icon): String = when (icon) {
+        Icon.OFFLINE -> "<path d=\"M2 9a15 15 0 0 1 6-3.6\"/><path d=\"M22 9a15 15 0 0 0-9.5-4\"/>" +
+            "<path d=\"M5.5 12.5a10 10 0 0 1 4-2.3\"/><path d=\"M18.5 12.5a10 10 0 0 0-2.2-1.6\"/>" +
+            "<path d=\"M9 16a4 4 0 0 1 6 0\"/><path d=\"M12 19.5h.01\"/><path d=\"M3 3l18 18\"/>"
+        Icon.NOT_FOUND -> "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18\"/>" +
+            "<path d=\"M12 3c3 3 3 15 0 18\"/><path d=\"M12 3c-3 3-3 15 0 18\"/>"
+        Icon.TIMEOUT -> "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>"
+        Icon.SECURITY -> "<rect x=\"5\" y=\"11\" width=\"14\" height=\"10\" rx=\"2\"/><path d=\"M8 11V7a4 4 0 0 1 7.5-2\"/>"
+        Icon.GENERIC -> "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 8v5\"/><path d=\"M12 16h.01\"/>"
+    }
+
+    private fun svg(paths: String, size: Int): String =
+        "<svg aria-hidden=\"true\" width=\"$size\" height=\"$size\" viewBox=\"0 0 24 24\" fill=\"none\" " +
+            "stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\">$paths</svg>"
+
+    private const val CHEVRON = "<path d=\"M5 9l7 7 7-7\"/>"
+
+    /** Mineral values: Basalt, Slate, Shale, Chalk and Fog in dark; Paper, Stone and Ink in light. Ember marks the security card. */
+    private const val STYLE = """
+:root{--bg:#1A1B1E;--card:#232528;--quiet:#2D3034;--fg:#ECE6DC;--fg2:#A29D94;--action:#ECE6DC;--action-fg:#1A1B1E;--alert:#E58A6B}
+@media (prefers-color-scheme: light){:root{--bg:#F6F5F2;--card:#E9E8E4;--quiet:#DDDBD5;--fg:#1A1B1E;--fg2:#6C6962;--action:#1A1B1E;--action-fg:#F6F5F2;--alert:#1A1B1E}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,sans-serif}
+.page{min-height:100vh;max-width:420px;margin:0 auto;padding:96px 20px 40px;display:flex;flex-direction:column;gap:16px}
+.icon{width:64px;height:64px;border-radius:32px;background:var(--card);color:var(--fg);display:flex;align-items:center;justify-content:center;margin-bottom:6px}
+.icon.alert{color:var(--alert)}
+h1{margin:0;font-size:28px;line-height:1.15;font-weight:600;letter-spacing:-.5px}
+.reason{margin:0;font-size:16px;line-height:1.5;color:var(--fg2)}
+.actions{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.btn{display:flex;align-items:center;justify-content:center;border:0;border-radius:26px;font:inherit;font-weight:600;text-decoration:none;cursor:pointer;transition:transform 160ms ease;padding:0 20px}
+.btn:active{transform:scale(.94)}
+.btn:disabled{opacity:.45;cursor:default;transform:none}
+.primary{height:54px;border-radius:27px;background:var(--action);color:var(--action-fg);font-size:16px}
+.secondary{height:52px;background:var(--quiet);color:var(--fg);font-size:15px}
+.support{margin-top:8px}
+.support summary{list-style:none;min-height:44px;display:flex;align-items:center;gap:6px;color:var(--fg2);font-size:14px;cursor:pointer}
+.support summary::-webkit-details-marker{display:none}
+.support summary svg{flex-shrink:0;transition:transform 160ms ease}
+.support[open] summary svg{transform:rotate(180deg)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:8px 0 14px;font-size:14px;color:var(--fg2)}
+dd{margin:0;color:var(--fg);word-break:break-all}
+.copy{height:44px;padding:0 18px;background:var(--quiet);color:var(--fg);font-size:14px}
+#details{position:absolute;left:-9999px;top:0;width:1px;height:1px}
+"""
+
+    /** Enables Go back only when there is a page to return to, and copies the details (the clipboard API, or a selection as a fallback). */
+    private const val SCRIPT = """
+(function () {
+  var copy = document.getElementById('copy');
+  var text = document.getElementById('details');
+  document.querySelectorAll('[data-back]').forEach(function (button) {
+    if (history.length < 2) button.disabled = true;
+    button.addEventListener('click', function () { history.back(); });
+  });
+  if (!copy || !text) return;
+  function done(ok) {
+    copy.textContent = ok ? 'Copied' : 'Could not copy';
+    setTimeout(function () { copy.textContent = 'Copy details'; }, 1500);
+  }
+  copy.addEventListener('click', function () {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text.value).then(function () { done(true); }, function () { done(false); });
+      return;
+    }
+    text.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    done(ok);
+  });
+})();
+"""
 
     private fun escape(text: String): String = text
         .replace("&", "&amp;")

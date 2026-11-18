@@ -45,6 +45,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `history/`: `HistoryRepository`, the browsing history store. Each profile has its own list, and a page is recorded when it finishes loading (never in a private tab). `browser/HistoryViews.kt` draws the list in the tablet sidebar and the phone Library.
 - `permissions/`: site permission prompts. `SitePermissionDelegate` answers GeckoView's permission requests (location, camera, microphone, notifications) from saved choices, or asks. `SitePrompts` queues the questions and `SitePromptCard.kt` draws the Allow / Not now / Block card. `SitePermissionStore` keeps the choices per profile in `ora_site_permissions` (private tabs save nothing). `AndroidManifest.xml` declares the matching Android permissions.
 - `browser/PopupCard.kt` draws the card that asks before a page opens a window without a tap. `browser/PopupStore.kt` keeps each profile's "Always allow" sites in `ora_popups_<profileId>`, and `popupDecision` in the same file decides open or ask. `GeckoEngine.kt` starts GeckoView with Gecko's own pop-up blocker off, through a config file it writes to app storage, so those pop-ups reach Ora.
+- `browser/ErrorPage.kt` builds the card for a failed load: one card per cause, after a connection check (ConnectivityManager). It is a data: URI page, so it needs no network, and its colours are CSS copies of the Mineral values.
 
 ## Design sources
 

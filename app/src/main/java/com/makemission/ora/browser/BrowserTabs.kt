@@ -223,11 +223,16 @@ class BrowserTab(
                 error: WebRequestError
             ): GeckoResult<String>? {
                 val failed = uri.orEmpty()
-                // The plain title the error page shows, so the log and the page say the same thing.
-                plog.error("page", "Could not load $failed: ${ErrorPage.messageFor(error).title}")
-                // Show a plain explanation with a Try again button, in place of GeckoView's blank error page.
+                val host = popupSiteOf(failed)
+                // The connectivity check comes first: with no network the card says so, whatever GeckoView reported.
+                val online = ErrorPage.isOnline(appContext)
+                val message = ErrorPage.messageFor(error.code, error.category, host, online)
+                // The plain title and cause the error page shows, so the log and the page say the same thing.
+                val connection = if (online) "online" else "offline"
+                plog.error("page", "Could not load $failed: ${message.title} (${message.support}, code ${error.code}, $connection)")
+                // One card per cause, in place of GeckoView's blank error page.
                 if (failed.isBlank() || failed.startsWith("data:")) return null
-                return GeckoResult.fromValue(ErrorPage.uriFor(failed, error))
+                return GeckoResult.fromValue(ErrorPage.uriFor(failed, error, host, online))
             }
         }
         session.scrollDelegate = object : GeckoSession.ScrollDelegate {
