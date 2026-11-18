@@ -14,7 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
-            ChangeItem(ChangeKind.FIXED, "When Android rebuilds Ora's window, your open tabs now carry over instead of every tab being opened a second time."),
+            ChangeItem(ChangeKind.FIXED, "When Android rebuilds Ora's window, your open tabs now carry over instead of every tab being opened a second time.  (`bc21b78`)"),
             ChangeItem(ChangeKind.FIXED, "Reopened tabs no longer fail with \"Saved history is not valid\": tabs saved before their page had loaded were read back as broken history. They now reopen at their address, and a history that cannot be read is dropped instead of being saved again.  (`45fc871`)"),
             ChangeItem(ChangeKind.CHANGED, "The log now keeps only the domain of a page (for example google.com), never the full address or what you searched for, and says nothing about what you do in private tabs. It is also kept between launches, up to about 5,000 lines, so an export covers days instead of one session, with the date on every line. Clear still empties it."),
             ChangeItem(ChangeKind.FIXED, "Private tabs now have their own list and numbering, separate from normal tabs, and the tab counts no longer include them. A private tab cannot be opened while Ora is locked (a notice says to unlock first), and a pop-up from a private tab opens as a private tab."),
