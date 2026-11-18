@@ -245,12 +245,17 @@ private fun MenuRow(
 @Composable
 fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) {
     val colors = browserColors()
+    // Quality of life: every flip gives a short haptic tick, so a switch feels like it moved.
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     Box(
         modifier = Modifier
             .size(width = 48.dp, height = 28.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(if (checked) colors.Accent else colors.AddressBarBackground)
-            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
+            .toggleable(value = checked, role = Role.Switch, onValueChange = {
+                haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                onChange(it)
+            })
             .semantics { contentDescription = label }
             .padding(4.dp),
         contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,

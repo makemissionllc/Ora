@@ -35,7 +35,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.foundation.shape.CircleShape
+import com.makemission.ora.browser.MineralSwitch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -64,6 +66,7 @@ import com.makemission.ora.passwords.PasswordsScreen
 import com.makemission.ora.notice.InAppNotices
 import com.makemission.ora.permissions.SitePermissionStore
 import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.Mineral
 import com.makemission.ora.ui.theme.MotionStyle
 import com.makemission.ora.ui.theme.PaletteStyle
 import com.makemission.ora.ui.theme.browserColors
@@ -169,19 +172,30 @@ fun SettingsScreen(
                 .height(BrowserTokens.PanelHeaderHeight),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onDone) {
+            IconButton(
+                onClick = onDone,
+                modifier = Modifier.clip(CircleShape).background(browserColors().Surface),
+            ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = browserColors().IconColor)
             }
             Text(
                 "Settings",
                 modifier = Modifier.weight(1f).padding(start = 4.dp),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.SemiBold,
                 color = browserColors().AddressBarText,
                 maxLines = 1,
             )
-            TextButton(onClick = onDone) {
-                Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+            Box(
+                modifier = Modifier
+                    .height(40.dp)
+                    .clip(CircleShape)
+                    .background(browserColors().Accent)
+                    .clickable(onClick = onDone)
+                    .padding(horizontal = 22.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("Done", color = browserColors().GridBackground, fontWeight = FontWeight.SemiBold)
             }
         }
         Spacer(Modifier.height(12.dp))
@@ -207,8 +221,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             if (isTablet) {
                                 // Tablet: one row with a segmented control, as in the Settings mockup.
@@ -220,7 +234,7 @@ fun SettingsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text("Theme", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Theme", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     AppearanceSegments(selected = appearance, onSelect = { settings.setAppearance(it) })
                                 }
                             } else {
@@ -233,7 +247,7 @@ fun SettingsScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text(mode.label, fontSize = 15.sp, color = browserColors().AddressBarText)
+                                        Text(mode.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                         if (mode == appearance) {
                                             Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
                                         }
@@ -249,14 +263,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                    Text("Match app theme on websites", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Match app theme on websites", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Web pages use this app's light or dark colors",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = websiteTheme, onCheckedChange = { settings.setWebsiteTheme(it) })
+                                MineralSwitch(checked = websiteTheme, label = "Switch", onChange = { settings.setWebsiteTheme(it) })
                             }
                             Row(
                                 modifier = Modifier
@@ -267,14 +281,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                    Text("Fade pages in", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Fade pages in", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "A page appears in one smooth fade once it is half loaded, rather than in pieces.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = fadePagesIn, onCheckedChange = { settings.setFadePagesIn(it) })
+                                MineralSwitch(checked = fadePagesIn, label = "Switch", onChange = { settings.setFadePagesIn(it) })
                             }
                             Row(
                                 modifier = Modifier
@@ -285,14 +299,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                    Text("Swipe right to open the sidebar", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Swipe right to open the sidebar", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Tablet only. Swipe right from the left edge of a page. Turn this off if a site's own swipes get in the way.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = edgeSwipeSidebar, onCheckedChange = { settings.setEdgeSwipeSidebar(it) })
+                                MineralSwitch(checked = edgeSwipeSidebar, label = "Switch", onChange = { settings.setEdgeSwipeSidebar(it) })
                             }
                             // Quality of life: the whole row is tappable, and the description says what stays the same.
                             Row(
@@ -308,16 +322,17 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                    Text("Material colours", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Material colours", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Buttons, the accent and icons take Material colours from your theme. Off keeps the original blue design. Backgrounds stay the same.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText,
                                     )
                                 }
-                                Switch(
+                                MineralSwitch(
                                     checked = paletteStyle == PaletteStyle.MATERIAL,
-                                    onCheckedChange = { on -> settings.setPaletteStyle(if (on) PaletteStyle.MATERIAL else PaletteStyle.ORIGINAL) },
+                                    label = "Material colours",
+                                    onChange = { on -> settings.setPaletteStyle(if (on) PaletteStyle.MATERIAL else PaletteStyle.ORIGINAL) },
                                 )
                             }
                             Text(
@@ -328,7 +343,7 @@ fun SettingsScreen(
                             )
                             Text(
                                 "Makes the text on pages larger or smaller. Applies to every page, and reloads are not needed.",
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 color = browserColors().SecondaryText,
                                 modifier = Modifier.padding(start = 16.dp, end = 16.dp),
                             )
@@ -342,7 +357,7 @@ fun SettingsScreen(
                                         onClick = { settings.setTextSizePercent(textSize - SettingsRepository.TEXT_SIZE_STEP) },
                                         enabled = textSize > SettingsRepository.TEXT_SIZE_MIN,
                                     ) { Text("−", fontSize = 20.sp) }
-                                    Text("$textSize%", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("$textSize%", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     TextButton(
                                         onClick = { settings.setTextSizePercent(textSize + SettingsRepository.TEXT_SIZE_STEP) },
                                         enabled = textSize < SettingsRepository.TEXT_SIZE_MAX,
@@ -359,7 +374,7 @@ fun SettingsScreen(
                             )
                             Text(
                                 motionStyle.description,
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 color = browserColors().SecondaryText,
                                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
                             )
@@ -372,7 +387,7 @@ fun SettingsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(style.label, fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(style.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     if (style == motionStyle) {
                                         Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
                                     }
@@ -385,8 +400,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .padding(bottom = 4.dp)
                         ) {
                             Text(
@@ -397,7 +412,7 @@ fun SettingsScreen(
                             )
                             Text(
                                 swipeTarget.detail,
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 color = browserColors().SecondaryText,
                                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
                             )
@@ -410,7 +425,7 @@ fun SettingsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(target.label, fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(target.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     if (target == swipeTarget) {
                                         Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
                                     }
@@ -424,7 +439,7 @@ fun SettingsScreen(
                             )
                             Text(
                                 swipeEffect.detail,
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 color = browserColors().SecondaryText,
                                 modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
                             )
@@ -437,7 +452,7 @@ fun SettingsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(effect.label, fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(effect.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     if (effect == swipeEffect) {
                                         Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
                                     }
@@ -450,22 +465,22 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable { settings.setTabletSidebar(!tabletSidebar) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                Text("Show tab sidebar", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("Show tab sidebar", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 Text(
                                     "The tab and bookmark list on the left. The toolbar button also toggles it.",
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     color = browserColors().SecondaryText
                                 )
                             }
-                            Switch(checked = tabletSidebar, onCheckedChange = { settings.setTabletSidebar(it) })
+                            MineralSwitch(checked = tabletSidebar, label = "Switch", onChange = { settings.setTabletSidebar(it) })
                         }
                     }
                     if (!isTablet) item {
@@ -474,7 +489,7 @@ fun SettingsScreen(
                         Text(
                             "Scroll down to fold the bars away; scroll up to bring them back.",
                             modifier = Modifier.padding(start = 4.dp, top = 6.dp),
-                            fontSize = 12.sp,
+                            fontSize = 14.sp,
                             color = browserColors().SecondaryText
                         )
                     }
@@ -484,7 +499,7 @@ fun SettingsScreen(
                         Text(
                             "Swipe the address bar up to open all tabs, or sideways to switch between open tabs.",
                             modifier = Modifier.padding(start = 4.dp, top = 6.dp),
-                            fontSize = 12.sp,
+                            fontSize = 14.sp,
                             color = browserColors().SecondaryText
                         )
                     }
@@ -493,8 +508,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -505,14 +520,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Brightness and volume swipes", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Brightness and volume swipes", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "In full-screen video, swipe up or down on the left for brightness and on the right for volume.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = videoGestures, onCheckedChange = { settings.setVideoGestures(it) })
+                                MineralSwitch(checked = videoGestures, label = "Switch", onChange = { settings.setVideoGestures(it) })
                             }
                             Row(
                                 modifier = Modifier
@@ -523,14 +538,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Back exits full screen", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Back exits full screen", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "When a video is full screen, Back returns to the normal page instead of going back a page.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = videoBackExits, onCheckedChange = { settings.setVideoBackExits(it) })
+                                MineralSwitch(checked = videoBackExits, label = "Switch", onChange = { settings.setVideoBackExits(it) })
                             }
                         }
                     }
@@ -540,22 +555,22 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable { settings.setSaveHistory(!saveHistory) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                Text("Save browsing history", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("Save browsing history", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 Text(
                                     "Pages you open are listed newest first, in the Library on phone or the sidebar on tablet. Private tabs are never saved.",
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     color = browserColors().SecondaryText
                                 )
                             }
-                            Switch(checked = saveHistory, onCheckedChange = { settings.setSaveHistory(it) })
+                            MineralSwitch(checked = saveHistory, label = "Switch", onChange = { settings.setSaveHistory(it) })
                         }
                     }
                     if (shown(SettingsCategory.PRIVACY)) item {
@@ -563,8 +578,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -575,14 +590,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Block pop-up windows", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Block pop-up windows", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Stops sites opening windows on their own. When off, pop-ups open as a new tab.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = blockPopups, onCheckedChange = { settings.setBlockPopups(it) })
+                                MineralSwitch(checked = blockPopups, label = "Switch", onChange = { settings.setBlockPopups(it) })
                             }
                             Row(
                                 modifier = Modifier
@@ -593,22 +608,22 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Block ads and trackers", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Block ads and trackers", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Strict tracking protection. Some pages may load more slowly or look different.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = blockAds, onCheckedChange = { settings.setBlockAds(it) })
+                                MineralSwitch(checked = blockAds, label = "Switch", onChange = { settings.setBlockAds(it) })
                             }
                         }
                         SectionTitle("Passwords")
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -619,14 +634,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Password autofill", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Password autofill", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Login fields fill from the password app you chose in Android's Autofill settings, such as Bitwarden or Google Password Manager. Its suggestions appear above the keyboard.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = autofillPasswords, onCheckedChange = { settings.setAutofillPasswords(it) })
+                                MineralSwitch(checked = autofillPasswords, label = "Switch", onChange = { settings.setAutofillPasswords(it) })
                             }
                             Row(
                                 modifier = Modifier
@@ -636,7 +651,7 @@ fun SettingsScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text("Saved passwords", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("Saved passwords", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 Text("${savedLogins.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                             }
                         }
@@ -644,8 +659,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             CookieChoice(
                                 title = "Allow all cookies",
@@ -670,8 +685,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -682,14 +697,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Secure DNS", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Secure DNS", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Looks up site addresses over encrypted DNS. If that fails, the network's own DNS is used.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = secureDns, onCheckedChange = { settings.setSecureDns(it) })
+                                MineralSwitch(checked = secureDns, label = "Switch", onChange = { settings.setSecureDns(it) })
                             }
                         }
                     }
@@ -697,8 +712,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -709,15 +724,15 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                    Text("App lock", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("App lock", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         if (appLockRecord != null) "On. Ora asks for your PIN when you open it. Tap to turn off."
                                         else "Ask for a PIN when Ora opens or you come back to it. The PIN is kept only as a salted hash.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = appLockRecord != null, onCheckedChange = { appLockDialog = true })
+                                MineralSwitch(checked = appLockRecord != null, label = "Switch", onChange = { appLockDialog = true })
                             }
                             Row(
                                 modifier = Modifier
@@ -728,14 +743,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                    Text("HTTPS-only mode", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("HTTPS-only mode", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Loads pages over a secure connection only. Sites that offer one are upgraded to it. A site with no secure version won't load.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = httpsOnly, onCheckedChange = { settings.setHttpsOnly(it) })
+                                MineralSwitch(checked = httpsOnly, label = "Switch", onChange = { settings.setHttpsOnly(it) })
                             }
                             Row(
                                 modifier = Modifier
@@ -746,14 +761,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Global Privacy Control", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Global Privacy Control", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Tells sites not to sell or share your data. Sites that ignore it are not blocked.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = globalPrivacyControl, onCheckedChange = { settings.setGlobalPrivacyControl(it) })
+                                MineralSwitch(checked = globalPrivacyControl, label = "Switch", onChange = { settings.setGlobalPrivacyControl(it) })
                             }
                             Row(
                                 modifier = Modifier
@@ -764,14 +779,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Fingerprinting protection", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Fingerprinting protection", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Hides details sites use to recognise your device. Some pages may look different or work less well.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = fingerprintingProtection, onCheckedChange = { settings.setFingerprintingProtection(it) })
+                                MineralSwitch(checked = fingerprintingProtection, label = "Switch", onChange = { settings.setFingerprintingProtection(it) })
                             }
                         }
                     }
@@ -780,8 +795,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .padding(12.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -805,22 +820,22 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable { settings.setQuickResume(!quickResume) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                Text("Quick resume", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("Quick resume", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 Text(
                                     "When you leave Ora, your open tabs are kept and reopen the next time you start it. Private tabs are never kept.",
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     color = browserColors().SecondaryText
                                 )
                             }
-                            Switch(checked = quickResume, onCheckedChange = { settings.setQuickResume(it) })
+                            MineralSwitch(checked = quickResume, label = "Switch", onChange = { settings.setQuickResume(it) })
                         }
                     }
                     if (shown(SettingsCategory.SEARCH)) item {
@@ -828,8 +843,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             SearchEngine.entries.forEach { engine ->
                                 val on = engine in searchEngines
@@ -858,7 +873,7 @@ fun SettingsScreen(
                             Text(
                                 "The selected dot is the default. Searches use it unless the switch below is on.",
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                fontSize = 12.sp,
+                                fontSize = 14.sp,
                                 color = browserColors().SecondaryText
                             )
                         }
@@ -866,22 +881,22 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable { settings.setAskEachSearch(!askEachSearch) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                Text("Ask which engine each search", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("Ask which engine each search", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 Text(
                                     "When several engines are on, pick one from a sheet each time.",
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     color = browserColors().SecondaryText
                                 )
                             }
-                            Switch(checked = askEachSearch, onCheckedChange = { settings.setAskEachSearch(it) })
+                            MineralSwitch(checked = askEachSearch, label = "Switch", onChange = { settings.setAskEachSearch(it) })
                         }
                     }
                     if (shown(SettingsCategory.PRIVACY)) item {
@@ -889,8 +904,8 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable {
                                     // Quality of life: with nothing saved, say so instead of opening an empty confirmation.
                                     if (siteCount > 0) {
@@ -904,7 +919,7 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column {
-                                Text("Site permissions", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("Site permissions", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 Text(
                                     if (siteCount == 0) "No saved choices yet" else "Saved for $siteLabel. Tap to clear.",
                                     fontSize = 13.sp,
@@ -916,14 +931,14 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable { confirmClear = true }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Clear browsing data", fontSize = 15.sp, color = browserColors().AddressBarText)
+                            Text("Clear browsing data", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = Mineral.Ember)
                             DisclosureChevron()
                         }
                     }
@@ -932,8 +947,8 @@ fun SettingsScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                         ) {
                             Row(
                                 modifier = Modifier
@@ -944,14 +959,14 @@ fun SettingsScreen(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text("Device font on web pages", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text("Device font on web pages", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     Text(
                                         "Web pages use the device's font instead of the fonts each site asks for. Some icons may show as boxes. Applies to pages loaded after you change it.",
-                                        fontSize = 12.sp,
+                                        fontSize = 14.sp,
                                         color = browserColors().SecondaryText
                                     )
                                 }
-                                Switch(checked = deviceFontWeb, onCheckedChange = { settings.setDeviceFontWeb(it) })
+                                MineralSwitch(checked = deviceFontWeb, label = "Switch", onChange = { settings.setDeviceFontWeb(it) })
                             }
                         }
                     }
@@ -960,36 +975,36 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable { showDiagnostics = true }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Log and errors", fontSize = 15.sp, color = browserColors().AddressBarText)
+                            Text("Log and errors", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                             Text("${logEntries.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
                         Spacer(Modifier.height(8.dp))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable { settings.setUsageStats(!usageStats) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Count feature use", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("Count feature use", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 Text(
                                     "Counts how often you use each setting and control, on this device only. No pages or searches are recorded.",
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     color = browserColors().SecondaryText
                                 )
                             }
-                            Switch(checked = usageStats, onCheckedChange = { settings.setUsageStats(it) })
+                            MineralSwitch(checked = usageStats, label = "Switch", onChange = { settings.setUsageStats(it) })
                         }
                     }
                     if (shown(SettingsCategory.ABOUT)) item {
@@ -1012,8 +1027,8 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable(enabled = !isDefaultBrowser) {
                                     val intent = DefaultBrowser.requestIntent(context)
                                     if (intent == null) {
@@ -1032,10 +1047,10 @@ fun SettingsScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text("Default browser", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                Text("Default browser", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 Text(
                                     "Open web links from other apps in Ora.",
-                                    fontSize = 12.sp,
+                                    fontSize = 14.sp,
                                     color = browserColors().SecondaryText
                                 )
                             }
@@ -1048,8 +1063,8 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
                                 .clickable {
                                     BrowserLog.info("settings", "Opened What's new")
                                     showChangelog = true
@@ -1058,7 +1073,7 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("What's new", fontSize = 15.sp, color = browserColors().AddressBarText)
+                            Text("What's new", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                             Text("${Changelog.first().date} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
                     }
@@ -1133,8 +1148,8 @@ private fun SettingsRail(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(BrowserTokens.SettingsRailRowHeight)
-                    .clip(RoundedCornerShape(BrowserTokens.CardRadius))
-                    .background(if (on) browserColors().AddressBarBackground else Color.Transparent)
+                    .clip(CircleShape)
+                    .background(if (on) browserColors().Accent else Color.Transparent)
                     .clickable { onSelect(section) }
                     .padding(horizontal = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -1143,7 +1158,7 @@ private fun SettingsRail(
                     section.label,
                     fontSize = 15.sp,
                     fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (on) browserColors().Accent else browserColors().AddressBarText,
+                    color = if (on) browserColors().GridBackground else browserColors().AddressBarText,
                 )
             }
         }
@@ -1188,8 +1203,8 @@ private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit, table
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-            .background(browserColors().AddressBarBackground)
+            .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+            .background(browserColors().Surface)
     ) {
         BarStyle.entries.forEach { style ->
             Row(
@@ -1201,10 +1216,10 @@ private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit, table
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(style.label, fontSize = 15.sp, color = browserColors().AddressBarText)
-                    Text(if (tablet) style.tabletDetail else style.detail, fontSize = 12.sp, color = browserColors().SecondaryText)
+                    Text(style.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                    Text(if (tablet) style.tabletDetail else style.detail, fontSize = 14.sp, color = browserColors().SecondaryText)
                 }
-                RadioButton(selected = style == selected, onClick = { onSelect(style) })
+                RadioButton(selected = style == selected, onClick = { onSelect(style) }, colors = mineralRadio())
             }
         }
     }
@@ -1215,7 +1230,7 @@ private fun SectionTitle(text: String) {
     Text(
         text,
         modifier = Modifier.padding(start = 4.dp, bottom = 6.dp),
-        fontSize = 13.sp,
+        fontSize = 15.sp,
         fontWeight = FontWeight.SemiBold,
         color = browserColors().SecondaryText
     )
@@ -1231,10 +1246,16 @@ private fun CookieChoice(title: String, description: String, selected: Boolean, 
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RadioButton(selected = selected, onClick = onSelect)
+        RadioButton(selected = selected, onClick = onSelect, colors = mineralRadio())
         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
-            Text(title, fontSize = 15.sp, color = browserColors().AddressBarText)
-            Text(description, fontSize = 12.sp, color = browserColors().SecondaryText)
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+            Text(description, fontSize = 14.sp, color = browserColors().SecondaryText)
         }
     }
 }
+
+@Composable
+private fun mineralRadio() = RadioButtonDefaults.colors(
+    selectedColor = browserColors().Accent,
+    unselectedColor = browserColors().SecondaryText,
+)

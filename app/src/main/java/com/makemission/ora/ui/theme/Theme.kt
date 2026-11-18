@@ -90,6 +90,7 @@ object BrowserTokens {
     val LockIconSize = 13.dp
     /** Corner radius for cards on Settings, Extensions and the library. */
     val CardRadius = RadiusMedium
+    val SettingsCardRadius = 20.dp
 
     // Tab grid (phone)
     val GridPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 12.dp)
