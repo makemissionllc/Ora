@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -121,6 +122,8 @@ fun DownloadsScreen(
     tablet: Boolean,
     origin: TransformOrigin,
     onDismiss: () -> Unit,
+    /** Installs a downloaded .xpi as an extension. */
+    onInstall: (DownloadItem) -> Unit = {},
 ) {
     val all by repository.items.collectAsState()
     val context = LocalContext.current
@@ -148,7 +151,7 @@ fun DownloadsScreen(
         onCancel = { repository.cancel(it.id) },
         onPause = { repository.pause(it.id) },
         onResume = { repository.resume(it.id) },
-        onOpen = { openFile(context, it) },
+        onOpen = { if (it.isExtensionFile) onInstall(it) else openFile(context, it) },
         onShare = { shareFile(context, it) },
         onDelete = { confirmDelete = it },
     )
@@ -272,6 +275,10 @@ fun DownloadsScreen(
         )
     }
 }
+
+/** A finished .xpi file: its action is Install, not Open. */
+private val DownloadItem.isExtensionFile: Boolean
+    get() = fileName.endsWith(".xpi", ignoreCase = true)
 
 /** The four row actions, bundled so both layouts share them. */
 private class RowActions(
@@ -660,8 +667,16 @@ private fun DownloadRow(
                     IconTile(Icons.Outlined.PlayArrow, "Resume download") { actions.onResume(item) }
                     IconTile(Icons.Outlined.Close, "Cancel download") { actions.onCancel(item) }
                 }
-                DownloadStatus.DONE -> if (onTap == null) IconTile(Icons.Outlined.Delete, "Delete file") { actions.onDelete(item) }
-                    else Icon(Icons.Outlined.Check, contentDescription = "Done", tint = Mineral.Lichen, modifier = Modifier.size(18.dp))
+                DownloadStatus.DONE -> if (onTap == null) {
+                    if (item.isExtensionFile) Text(
+                        "Install",
+                        color = colors.Accent,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.height(44.dp).clickable { actions.onOpen(item) }.padding(horizontal = 10.dp).wrapContentHeight(Alignment.CenterVertically),
+                    )
+                    IconTile(Icons.Outlined.Delete, "Delete file") { actions.onDelete(item) }
+                } else Icon(Icons.Outlined.Check, contentDescription = "Done", tint = Mineral.Lichen, modifier = Modifier.size(18.dp))
                 DownloadStatus.FAILED -> {
                     IconTile(Icons.Outlined.Refresh, "Retry download") { actions.onResume(item) }
                     IconTile(Icons.Outlined.Delete, "Remove from list") { actions.onDelete(item) }
@@ -726,7 +741,7 @@ private fun DownloadDetail(item: DownloadItem, actions: RowActions, onCopyLink: 
                     DetailPill("Cancel download", Mineral.Ember) { actions.onCancel(item) }
                 }
                 DownloadStatus.DONE -> {
-                    DetailPill("Open", colors.Accent, filled = true) { actions.onOpen(item) }
+                    DetailPill(if (item.isExtensionFile) "Install" else "Open", colors.Accent, filled = true) { actions.onOpen(item) }
                     DetailPill("Share", colors.AddressBarText) { actions.onShare(item) }
                     DetailPill("Delete file", Mineral.Ember) { actions.onDelete(item) }
                 }

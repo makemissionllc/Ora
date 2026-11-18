@@ -1,6 +1,11 @@
 package com.makemission.ora.extensions
 
+import android.content.Context
+import android.net.Uri
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.log.LogPrivacy
+import com.makemission.ora.notice.InAppNotices
+import java.io.File
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +43,50 @@ internal fun readableFailure(message: String?, fallback: String): String {
     return if (trimmed.isEmpty()) "$fallback Check the address and your connection, then try again." else trimmed
 }
 
+/** An extension that downloaded and verified, waiting for the user to choose Add extension or Cancel on the install sheet. */
+data class PendingInstall(
+    val name: String,
+    val version: String,
+    val abilities: List<String>,
+    /** Where it came from, as a site name: "addons.mozilla.org", another site, or "a file on this device". */
+    val source: String,
+    val fromAmo: Boolean,
+    val fromFile: Boolean,
+    /** True when GeckoView reports a Mozilla signature. Release GeckoView refuses unsigned ones before this point. */
+    val signed: Boolean,
+)
+
+/** What a failed install means, in plain words. Unknown failures fall back to GeckoView's own text. */
+internal fun plainInstallError(error: Throwable?, fallback: String): String {
+    val code = (error as? WebExtension.InstallException)?.code
+    return when (code) {
+        WebExtension.InstallException.ErrorCodes.ERROR_SIGNEDSTATE_REQUIRED ->
+            "This extension isn't signed by Mozilla, so Ora can't install it."
+        WebExtension.InstallException.ErrorCodes.ERROR_INCOMPATIBLE,
+        WebExtension.InstallException.ErrorCodes.ERROR_UNEXPECTED_ADDON_VERSION ->
+            "This extension doesn't work with this version of Ora."
+        WebExtension.InstallException.ErrorCodes.ERROR_CORRUPT_FILE,
+        WebExtension.InstallException.ErrorCodes.ERROR_INCORRECT_HASH ->
+            "The file is damaged, so it can't be installed. Download it again."
+        WebExtension.InstallException.ErrorCodes.ERROR_NETWORK_FAILURE ->
+            "The download failed. Check your connection and try again."
+        WebExtension.InstallException.ErrorCodes.ERROR_FILE_ACCESS ->
+            "Ora couldn't read the file."
+        WebExtension.InstallException.ErrorCodes.ERROR_BLOCKLISTED,
+        WebExtension.InstallException.ErrorCodes.ERROR_SOFT_BLOCKED ->
+            "Mozilla has blocked this extension."
+        WebExtension.InstallException.ErrorCodes.ERROR_USER_CANCELED -> null
+        else -> readableFailure(error?.message, fallback)
+    } ?: ""
+}
+
+/** True when a download response is an extension to install: the xpinstall type, or an address ending in .xpi. */
+fun isExtensionDownload(uri: String, headers: Map<String, String>): Boolean {
+    val type = headers.entries.firstOrNull { it.key.equals("content-type", ignoreCase = true) }?.value.orEmpty()
+    if (type.substringBefore(';').trim().equals("application/x-xpinstall", ignoreCase = true)) return true
+    return uri.substringBefore('#').substringBefore('?').endsWith(".xpi", ignoreCase = true)
+}
+
 class ExtensionsRepository(runtime: GeckoRuntime) {
 
     private val controller: WebExtensionController = runtime.webExtensionController
@@ -53,18 +102,91 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
     private val _installing = MutableStateFlow<Set<String>>(emptySet())
     val installing: StateFlow<Set<String>> = _installing.asStateFlow()
 
+    private val _pending = MutableStateFlow<PendingInstall?>(null)
+    /** The install sheet shows this. Null when nothing waits. */
+    val pending: StateFlow<PendingInstall?> = _pending.asStateFlow()
+
+    private var answer: GeckoResult<WebExtension.PermissionPromptResponse>? = null
+    /** Where the install now running came from; read when GeckoView asks for the permission prompt. */
+    private var currentSource: String = "addons.mozilla.org"
+    private var currentFromFile = false
+
     init {
-        // The user typed the address and chose Install, so accept the requested permissions.
+        // GeckoView holds the install until this answers, so the sheet is the one confirmation.
         controller.setPromptDelegate(object : WebExtensionController.PromptDelegate {
             override fun onInstallPromptRequest(
                 extension: WebExtension,
                 permissions: Array<out String>,
                 origins: Array<out String>,
                 dataCollection: Array<out String>,
-            ): GeckoResult<WebExtension.PermissionPromptResponse> =
-                GeckoResult.fromValue(WebExtension.PermissionPromptResponse(true, true, true))
+            ): GeckoResult<WebExtension.PermissionPromptResponse> {
+                val result = GeckoResult<WebExtension.PermissionPromptResponse>()
+                // A second prompt while one waits is declined, so no answer is left hanging.
+                answer?.complete(WebExtension.PermissionPromptResponse(false, false, false))
+                answer = result
+                val meta = extension.metaData
+                val amo = currentSource in AMO_HOSTS
+                _pending.value = PendingInstall(
+                    name = meta?.name?.takeIf { it.isNotBlank() } ?: extension.id,
+                    version = meta?.version.orEmpty(),
+                    abilities = describeAbilities(permissions.toList(), origins.toList()),
+                    source = currentSource,
+                    fromAmo = amo,
+                    fromFile = currentFromFile,
+                    signed = (meta?.signedState ?: 0) >= WebExtension.SignedStateFlags.SIGNED,
+                )
+                BrowserLog.info("extensions", "Asking to add ${extension.id} from $currentSource")
+                return result
+            }
         })
         refresh()
+    }
+
+    /** Called by the install sheet. [allowPrivate] is the "Allow in private tabs" switch, off unless the user turned it on. */
+    fun answerInstall(add: Boolean, allowPrivate: Boolean) {
+        val result = answer ?: return
+        answer = null
+        _pending.value = null
+        BrowserLog.info("extensions", if (add) "Add extension chosen (private tabs ${if (allowPrivate) "allowed" else "not allowed"})" else "Install cancelled")
+        result.complete(WebExtension.PermissionPromptResponse(add, add && allowPrivate, add))
+    }
+
+    /** A page handed over an extension file. It is installed, not downloaded. Logs the site only. */
+    fun installFromPage(url: String, pageUrl: String) {
+        val host = LogPrivacy.domainOf(url).ifBlank { LogPrivacy.domainOf(pageUrl) }
+        BrowserLog.info("extensions", "Extension file offered by $host, installing instead of downloading")
+        install(url, source = host.ifBlank { "this site" })
+    }
+
+    /** Copies a picked or downloaded .xpi to the app cache, installs from the copy, then deletes it. */
+    fun installFromFile(context: Context, uri: Uri) {
+        val copy = File(context.cacheDir, "install-${System.nanoTime()}.xpi")
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input -> copy.outputStream().use { input.copyTo(it) } }
+                ?: throw java.io.IOException("Could not open the file")
+        } catch (e: Exception) {
+            copy.delete()
+            reportError("Reading the extension file", e, "Ora couldn't read that file")
+            return
+        }
+        install("file://${copy.absolutePath}", source = "a file on this device", fromFile = true, cleanup = copy)
+    }
+
+    /** The .xpi files Ora saved in Downloads/Ora, newest first, for the "Found in Downloads" card. */
+    fun xpiInDownloads(context: Context): List<Pair<String, Uri>> = try {
+        val base = android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI
+        context.contentResolver.query(
+            base,
+            arrayOf(android.provider.MediaStore.Downloads._ID, android.provider.MediaStore.Downloads.DISPLAY_NAME),
+            "${android.provider.MediaStore.Downloads.RELATIVE_PATH} LIKE ? AND ${android.provider.MediaStore.Downloads.DISPLAY_NAME} LIKE ?",
+            arrayOf("Download/Ora/%", "%.xpi"),
+            "${android.provider.MediaStore.Downloads.DATE_ADDED} DESC",
+        )?.use { c ->
+            buildList { while (c.moveToNext()) add(c.getString(1) to android.content.ContentUris.withAppendedId(base, c.getLong(0))) }
+        }.orEmpty()
+    } catch (e: Exception) {
+        BrowserLog.warn("extensions", "Could not look for .xpi files in Downloads", e)
+        emptyList()
     }
 
     /** Reloads the installed list from GeckoView. */
@@ -81,7 +203,12 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
     }
 
     /** Installs from an https URL or a resource address. A tap while the same address is already installing is ignored. */
-    fun install(url: String) {
+    fun install(
+        url: String,
+        source: String = AMO_HOST,
+        fromFile: Boolean = false,
+        cleanup: File? = null,
+    ) {
         val trimmed = url.trim()
         if (trimmed.isEmpty()) return
         if (trimmed in _installing.value) {
@@ -90,16 +217,32 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
         }
         _lastError.value = null
         _installing.value = _installing.value + trimmed
-        BrowserLog.info("extensions", "Installing from $trimmed")
-        controller.install(trimmed).accept(
+        // Only the site is logged, never the whole address.
+        val where = if (fromFile) "a file" else LogPrivacy.domainOf(trimmed)
+        currentSource = if (fromFile) source else LogPrivacy.domainOf(trimmed).ifBlank { source }
+        currentFromFile = fromFile
+        BrowserLog.info("extensions", "Installing from $where")
+        val method = if (fromFile) WebExtensionController.INSTALLATION_METHOD_FROM_FILE else WebExtensionController.INSTALLATION_METHOD_MANAGER
+        controller.install(trimmed, method).accept(
             {
                 _installing.value = _installing.value - trimmed
-                BrowserLog.info("extensions", "Installed from $trimmed")
+                cleanup?.delete()
+                BrowserLog.info("extensions", "Installed from $where")
+                InAppNotices.show("Extension added")
                 refresh()
             },
             { error ->
                 _installing.value = _installing.value - trimmed
-                reportError("Installing $trimmed", error, "Could not install this extension")
+                cleanup?.delete()
+                val declined = (error as? WebExtension.InstallException)?.code == WebExtension.InstallException.ErrorCodes.ERROR_USER_CANCELED
+                if (declined) {
+                    BrowserLog.info("extensions", "Install from $where cancelled")
+                } else {
+                    val plain = plainInstallError(error, "Could not install this extension")
+                    BrowserLog.error("extensions", "Installing from $where failed: $plain", error)
+                    _lastError.value = plain
+                    InAppNotices.show(plain)
+                }
             }
         )
     }
@@ -136,6 +279,11 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
         _lastError.value = null
     }
 
+    companion object {
+        const val AMO_HOST = "addons.mozilla.org"
+        private val AMO_HOSTS = setOf(AMO_HOST, "addons.cdn.mozilla.net")
+    }
+
     private fun reportError(action: String, error: Throwable?, fallback: String) {
         BrowserLog.error("extensions", "$action failed", error)
         _lastError.value = readableFailure(error?.message, fallback)
@@ -154,7 +302,7 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
     )
 
     /** Turns permission names into short plain sentences. Unknown ones are shown as named. */
-    private fun describeAbilities(permissions: List<String>, origins: List<String>): List<String> = buildList {
+    internal fun describeAbilities(permissions: List<String>, origins: List<String>): List<String> = buildList {
         if (origins.any { it == "<all_urls>" || it.startsWith("*://*/") || it == "*://*/*" }) add("Read and change data on all sites")
         else if (origins.isNotEmpty()) add("Read and change data on ${origins.size} ${if (origins.size == 1) "site" else "sites"}")
         permissions.forEach { permission ->

@@ -34,7 +34,7 @@ adb shell monkey -p com.makemission.ora -c android.intent.category.LAUNCHER 1
 
 All paths are under `app/src/main/java/com/makemission/ora/`.
 
-- `browser/`: the browser screen, tabs (`BrowserTabs.kt`), the GeckoView engine (`GeckoEngine.kt`), the tab grid and sidebar, the start page, menus, downloads and extensions.
+- `browser/`: the browser screen, tabs (`BrowserTabs.kt`), the GeckoView engine (`GeckoEngine.kt`), the tab grid and sidebar, the start page, menus, downloads and extensions. Extension installs (from addons.mozilla.org, an address or a file) go through `extensions/ExtensionsRepository.kt` and the sheet in `extensions/ExtensionInstallSheet.kt`.
 - `settings/`: `SettingsRepository.kt` holds every persisted setting. `SettingsScreen.kt` is the Settings page, with a category rail on tablet. `DefaultBrowser.kt` checks and requests the system browser role.
 - `browser/ExternalLinks.kt` holds a web link sent to Ora by another app, until the browser opens it in a new tab. `MainActivity` fills it.
 - `browser/AutofillBridge.kt`: a hidden 1 px view beside Compose that passes the page's login fields to Android's autofill framework. The framework walk stops at Compose's root view, so the GeckoView inside it is otherwise never seen.

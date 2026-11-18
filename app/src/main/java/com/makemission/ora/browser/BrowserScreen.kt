@@ -169,7 +169,10 @@ import com.makemission.ora.history.HistoryRepository
 import com.makemission.ora.profiles.Profile
 import com.makemission.ora.profiles.ProfileSwitcher
 import com.makemission.ora.profiles.ProfilesRepository
+import com.makemission.ora.extensions.ExtensionInstallHost
+import org.mozilla.geckoview.WebResponse
 import com.makemission.ora.extensions.ExtensionsRepository
+import com.makemission.ora.extensions.isExtensionDownload
 import com.makemission.ora.extensions.ExtensionsScreen
 import com.makemission.ora.settings.AddressSwipeEffect
 import com.makemission.ora.settings.AddressSwipeTarget
@@ -335,6 +338,12 @@ private fun BrowserContent(
     var showDownloads by remember { mutableStateOf(false) }
     // Where the Downloads page grows from: the toolbar button's centre, or the top-right menu corner.
     var downloadsOrigin by remember { mutableStateOf(TransformOrigin(1f, 0f)) }
+    val extensions = remember { ExtensionsRepository(GeckoEngine.runtime(context)) }
+    // An extension file is installed, not downloaded: "Add to Firefox" on addons.mozilla.org lands here.
+    val handleResponse: (WebResponse, String) -> Unit = { response, pageUrl ->
+        if (isExtensionDownload(response.uri, response.headers)) extensions.installFromPage(response.uri, pageUrl)
+        else downloads.start(response, pageUrl)
+    }
     val tabsByProfile = TabRegistry.byProfile
     val sessionStore = remember { SessionStore(context) }
     val quickResume by settings.quickResume.collectAsState()
@@ -344,7 +353,7 @@ private fun BrowserContent(
             BrowserTabs(
                 context.applicationContext,
                 { settings.blockPopups.value },
-                { response, pageUrl -> downloads.start(response, pageUrl) },
+                { response, pageUrl -> handleResponse(response, pageUrl) },
                 desktopByDefault = isTablet,
                 // Quick resume: a profile's tabs reopen from the last time they were saved, when the setting is on.
                 restore = if (settings.quickResume.value) sessionStore.load(profileId) else null,
@@ -358,7 +367,7 @@ private fun BrowserContent(
             it.popupStore = popupStore
             it.rebind(
                 { settings.blockPopups.value },
-                { response, pageUrl -> downloads.start(response, pageUrl) },
+                { response, pageUrl -> handleResponse(response, pageUrl) },
                 { url, title -> if (settings.saveHistory.value) historyFor(profileId).record(url, title) },
             )
         }
@@ -456,7 +465,6 @@ private fun BrowserContent(
     var showExtensions by remember { mutableStateOf(false) }
     /** Find-in-page bar is open over the page. */
     var showFind by remember { mutableStateOf(false) }
-    val extensions = remember { ExtensionsRepository(GeckoEngine.runtime(context)) }
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
     val askEachSearch by settings.askEachSearch.collectAsState()
@@ -980,6 +988,7 @@ private fun BrowserContent(
                         tablet = isTablet,
                         origin = downloadsOrigin,
                         onDismiss = { showDownloads = false },
+                        onInstall = { item -> item.contentUri?.let { extensions.installFromFile(context, it) } },
                     )
                 }
                 // Chrome-style start notice: a small pill near the bottom edge that fades out, or swipes away.
@@ -1304,6 +1313,16 @@ private fun BrowserContent(
             else -> topBarHeight
         },
         modifier = Modifier.align(Alignment.TopCenter),
+    )
+    // The one confirmation before an extension is added. It grows from the bottom edge, above the floating row.
+    val pendingInstall by extensions.pending.collectAsState()
+    ExtensionInstallHost(
+        pending = pendingInstall,
+        onCancel = { extensions.answerInstall(false, false) },
+        onAdd = { allowPrivate -> extensions.answerInstall(true, allowPrivate) },
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = if (phoneCompact) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
     )
     // Tablet tab overview covers the whole window, toolbar and sidebar included. It grows out of the tabs button.
     AnimatedVisibility(

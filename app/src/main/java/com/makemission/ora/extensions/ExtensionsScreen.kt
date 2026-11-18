@@ -54,8 +54,10 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.OraMotion
+import com.makemission.ora.ui.theme.dashedOutline
 import com.makemission.ora.ui.theme.browserColors
 import kotlinx.coroutines.launch
 
@@ -77,6 +79,25 @@ fun ExtensionsScreen(
     val error by repository.lastError.collectAsState()
     val installingNow by repository.installing.collectAsState()
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    // The system file picker, limited to what Android lets a browser filter by: any file, then the .xpi check below.
+    val picker = androidx.activity.compose.rememberLauncherForActivityResult(
+        androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            val name = runCatching {
+                context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                    ?.use { c -> if (c.moveToFirst()) c.getString(0) else null }
+            }.getOrNull() ?: uri.lastPathSegment.orEmpty()
+            if (name.endsWith(".xpi", ignoreCase = true)) repository.installFromFile(context, uri)
+            else {
+                BrowserLog.warn("extensions", "A file that isn't an .xpi was picked")
+                com.makemission.ora.notice.InAppNotices.show("That isn't an extension file. Pick a file that ends in .xpi.")
+            }
+        } else BrowserLog.info("extensions", "File picker closed without a choice")
+    }
+    // An .xpi already saved in Downloads/Ora is offered without a trip through the picker.
+    val foundXpi = remember(extensions) { repository.xpiInDownloads(context) }
 
     var query by remember { mutableStateOf("") }
     var results by remember { mutableStateOf<List<StoreAddon>>(emptyList()) }
@@ -148,6 +169,42 @@ fun ExtensionsScreen(
                 ) {
                     Text("Get extensions", modifier = Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                     Text("addons.mozilla.org", fontSize = 12.sp, color = browserColors().SecondaryText)
+                }
+            }
+            // An .xpi already in Downloads/Ora. Dashed, because it is a temporary file waiting to be used.
+            foundXpi.firstOrNull()?.let { (fileName, uri) ->
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .dashedOutline(RoundedCornerShape(BrowserTokens.CardRadius), browserColors().SecondaryText)
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text("Found in Downloads", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
+                            Text(fileName, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                        }
+                        TextButton(onClick = { repository.installFromFile(context, uri) }) {
+                            Text("Install", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+                        }
+                    }
+                }
+            }
+            // Pick an .xpi with the system file picker.
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+                        .background(browserColors().AddressBarBackground)
+                        .clickable { picker.launch(arrayOf("*/*")) }
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Install from a file", modifier = Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                    Text(".xpi", fontSize = 12.sp, color = browserColors().SecondaryText)
                 }
             }
             // Store search card (design: the Firefox Add-ons store).
@@ -263,6 +320,14 @@ fun ExtensionsScreen(
             // Installed extensions.
             item {
                 Text(
+                    "Only extensions signed by Mozilla can be installed.",
+                    modifier = Modifier.padding(start = 4.dp),
+                    fontSize = 12.sp,
+                    color = browserColors().SecondaryText
+                )
+            }
+            item {
+                Text(
                     "Installed",
                     modifier = Modifier.padding(start = 4.dp),
                     fontSize = 13.sp,
@@ -273,7 +338,7 @@ fun ExtensionsScreen(
             if (extensions.isEmpty()) {
                 item {
                     Text(
-                        "No extensions installed yet. Search above to add one.",
+                        "No extensions yet. Tap Get extensions, then Add to Firefox on a page, or install from a file.",
                         color = browserColors().SecondaryText,
                         fontSize = 14.sp
                     )
