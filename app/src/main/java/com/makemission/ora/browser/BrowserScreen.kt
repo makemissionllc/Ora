@@ -504,7 +504,8 @@ private fun BrowserContent(
         swipeScope.launch {
             when (swipeTarget) {
                 AddressSwipeTarget.TABS -> {
-                    val list = tabs.tabs
+                    // A swipe moves only through tabs in the current space, so it never crosses into private tabs or back.
+                    val list = tabsInSpace(tabs.tabs, { it.isPrivate }, selected.isPrivate)
                     val canSwitch = list.size > 1
                     val index = list.indexOfFirst { it.id == selectedId }
                     val next = if (canSwitch) list[Math.floorMod(index + delta, list.size)] else null

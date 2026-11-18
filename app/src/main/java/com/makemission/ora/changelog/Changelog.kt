@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Swiping the address bar moves only between tabs in the current space. From a normal tab it no longer lands on a private tab, and from a private tab it no longer lands on a normal one.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "Links and images opened from a private tab (Open in new tab, Open in background tab, Open image in new tab) now open as private tabs instead of normal tabs. Nothing about them is logged.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "Searches are no longer written to the log with the words you typed. The log now says only which search engine was used, for example \"Searched with Google\". Searches from a private tab leave no log line at all.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "The app icon is no longer cropped on the home screen. The Ora mark now sits in the middle of Android's icon shape on its own charcoal background, and it also works with themed icons.  (`3232d02`)"),

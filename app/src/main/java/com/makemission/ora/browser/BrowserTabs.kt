@@ -395,6 +395,10 @@ data class ClosedTab(val id: Long, val url: String, val title: String, val state
 /** A link and/or image under a long press, with the press position in page pixels. */
 data class PressTarget(val linkUri: String?, val imageUri: String?, val x: Int, val y: Int)
 
+/** The tabs in one space (normal or private), in their order. Address-bar swipes move only within it. */
+internal fun <T> tabsInSpace(items: List<T>, isPrivate: (T) -> Boolean, currentPrivate: Boolean): List<T> =
+    items.filter { isPrivate(it) == currentPrivate }
+
 /** Owns every open tab and which one is selected. Survives recomposition; created once by the screen. */
 class BrowserTabs(
     private val context: Context,
