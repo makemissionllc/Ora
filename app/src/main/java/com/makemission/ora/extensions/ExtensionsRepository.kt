@@ -17,6 +17,12 @@ data class ExtensionInfo(
     val description: String,
     val enabled: Boolean,
     val builtIn: Boolean,
+    /** Whether the extension also runs in private tabs. Off unless the user turns it on. */
+    val allowedInPrivate: Boolean = false,
+    /** What it can do, in plain words, from its permissions. */
+    val abilities: List<String> = emptyList(),
+    /** Its own settings page (a moz-extension address), or null. */
+    val optionsUrl: String? = null,
 )
 
 /**
@@ -81,6 +87,15 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
         result.accept({ refresh() }, { error -> reportError(action, error, "Could not change this extension") })
     }
 
+    /** Lets an extension run in private tabs, or stops it. GeckoView keeps the choice. */
+    fun setAllowedInPrivate(id: String, allowed: Boolean) {
+        val extension = extensionsById[id] ?: return
+        controller.setAllowedInPrivateBrowsing(extension, allowed).accept(
+            { BrowserLog.info("extensions", "${if (allowed) "Allowed" else "Stopped"} $id in private tabs"); refresh() },
+            { error -> reportError("Changing private access for $id", error, "Could not change private tab access") }
+        )
+    }
+
     fun uninstall(id: String) {
         val extension = extensionsById[id] ?: return
         controller.uninstall(extension).accept(
@@ -105,5 +120,38 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
         description = metaData?.description.orEmpty(),
         enabled = metaData?.enabled ?: false,
         builtIn = isBuiltIn,
+        allowedInPrivate = metaData?.allowedInPrivateBrowsing ?: false,
+        abilities = describeAbilities(metaData?.requiredPermissions.orEmpty().toList(), metaData?.requiredOrigins.orEmpty().toList()),
+        optionsUrl = metaData?.optionsPageUrl?.takeIf { it.isNotBlank() },
     )
+
+    /** Turns permission names into short plain sentences. Unknown ones are shown as named. */
+    private fun describeAbilities(permissions: List<String>, origins: List<String>): List<String> = buildList {
+        if (origins.any { it == "<all_urls>" || it.startsWith("*://*/") || it == "*://*/*" }) add("Read and change data on all sites")
+        else if (origins.isNotEmpty()) add("Read and change data on ${origins.size} ${if (origins.size == 1) "site" else "sites"}")
+        permissions.forEach { permission ->
+            add(
+                when (permission) {
+                    "tabs" -> "See your open tabs"
+                    "activeTab" -> "Use the tab you tap it on"
+                    "webRequest", "webRequestBlocking" -> "Watch and block page requests"
+                    "declarativeNetRequest", "declarativeNetRequestWithHostAccess" -> "Block page requests"
+                    "storage", "unlimitedStorage" -> "Keep its own settings"
+                    "cookies" -> "Read and change cookies"
+                    "notifications" -> "Show notifications"
+                    "scripting" -> "Run scripts on pages"
+                    "clipboardWrite" -> "Copy to the clipboard"
+                    "contextMenus", "menus" -> "Add items to menus"
+                    "downloads" -> "Manage downloads"
+                    "history" -> "Read your history"
+                    "bookmarks" -> "Read and change your bookmarks"
+                    "alarms" -> "Run things on a schedule"
+                    "privacy" -> "Change privacy settings"
+                    "proxy" -> "Control how Ora connects"
+                    "nativeMessaging" -> "Talk to other apps on this device"
+                    else -> permission
+                }
+            )
+        }
+    }.distinct()
 }

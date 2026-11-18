@@ -1160,7 +1160,9 @@ private fun BrowserContent(
                         )
                         PhoneOverlay.EXTENSIONS -> ExtensionsScreen(
                             repository = extensions,
-                            onDone = { showExtensions = false }
+                            onDone = { showExtensions = false },
+                            tablet = isTablet,
+                            onOpenUrl = { url -> tabs.newTab(url) },
                         )
                         PhoneOverlay.NONE -> Unit
                     }

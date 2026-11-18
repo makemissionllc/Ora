@@ -1,6 +1,15 @@
 package com.makemission.ora.extensions
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -59,6 +68,10 @@ import kotlinx.coroutines.launch
 fun ExtensionsScreen(
     repository: ExtensionsRepository,
     onDone: () -> Unit,
+    /** Tablet: the list and an extension's detail sit side by side. Phone: the detail is its own screen. */
+    tablet: Boolean = false,
+    /** Opens an address in a new tab. "Get extensions" and an extension's own settings page use it. */
+    onOpenUrl: (String) -> Unit = {},
 ) {
     val extensions by repository.extensions.collectAsState()
     val error by repository.lastError.collectAsState()
@@ -71,6 +84,10 @@ fun ExtensionsScreen(
     var searchedQuery by remember { mutableStateOf<String?>(null) }
     var address by remember { mutableStateOf("") }
     var pendingRemoval by remember { mutableStateOf<ExtensionInfo?>(null) }
+    var filter by remember { mutableStateOf("") }
+    var openId by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf<String?>(null) }
+    // Tablet shows the first extension's detail until another is chosen; phone opens a detail only on a tap.
+    val detail = extensions.firstOrNull { it.id == (openId ?: if (tablet) extensions.firstOrNull()?.id else null) }
 
     fun runSearch() {
         val text = query.trim()
@@ -111,7 +128,27 @@ fun ExtensionsScreen(
         }
         Spacer(Modifier.height(12.dp))
 
+        val listPane: @Composable () -> Unit = {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item {
+                com.makemission.ora.browser.SidebarSearch(query = filter, placeholder = "Search installed extensions", pill = true, onQueryChange = { filter = it })
+            }
+            // Opens Firefox Add-ons in a new tab.
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(52.dp)
+                        .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+                        .background(browserColors().AddressBarBackground)
+                        .clickable { onOpenUrl("https://addons.mozilla.org/android/"); onDone() }
+                        .padding(horizontal = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("Get extensions", modifier = Modifier.weight(1f), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                    Text("addons.mozilla.org", fontSize = 12.sp, color = browserColors().SecondaryText)
+                }
+            }
             // Store search card (design: the Firefox Add-ons store).
             item {
                 Column(
@@ -240,13 +277,40 @@ fun ExtensionsScreen(
                     )
                 }
             } else {
-                itemsIndexed(extensions, key = { _, ext -> ext.id }) { _, extension ->
+                val shown = extensions.filter { filter.isBlank() || it.name.contains(filter.trim(), ignoreCase = true) }
+                if (shown.isEmpty()) item { Text("No installed extension matches \"${filter.trim()}\".", color = browserColors().SecondaryText, fontSize = 14.sp) }
+                itemsIndexed(shown, key = { _, ext -> ext.id }) { _, extension ->
                     ExtensionRow(
                         extension = extension,
+                        selected = tablet && extension.id == detail?.id,
+                        onOpen = { openId = extension.id },
                         onToggle = { enabled -> repository.setEnabled(extension.id, enabled) },
-                        onRemove = { pendingRemoval = extension }
                     )
                 }
+            }
+        }
+        }
+        if (tablet) {
+            Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Box(Modifier.weight(0.45f)) { listPane() }
+                Box(Modifier.weight(0.55f)) {
+                    if (detail != null) ExtensionDetail(detail, repository, onBack = null, onOpenUrl = { onOpenUrl(it); onDone() }, onRemove = { pendingRemoval = detail })
+                    else Text("Select an extension to see its details.", color = browserColors().SecondaryText, fontSize = 14.sp)
+                }
+            }
+        } else {
+            // The detail grows out of the list and shrinks back into it on the shared overlay timings.
+            AnimatedContent(
+                targetState = detail?.id,
+                transitionSpec = {
+                    (fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE))
+                        .togetherWith(fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE))
+                },
+                label = "extension detail",
+            ) { shownId ->
+                val shown = extensions.firstOrNull { it.id == shownId }
+                if (shown != null) ExtensionDetail(shown, repository, onBack = { openId = null }, onOpenUrl = { onOpenUrl(it); onDone() }, onRemove = { pendingRemoval = shown })
+                else listPane()
             }
         }
     }
@@ -260,8 +324,9 @@ fun ExtensionsScreen(
                 TextButton(onClick = {
                     repository.uninstall(extension.id)
                     pendingRemoval = null
+                    openId = null
                 }) {
-                    Text("Remove", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+                    Text("Remove", color = com.makemission.ora.ui.theme.Mineral.Ember, fontWeight = FontWeight.SemiBold)
                 }
             },
             dismissButton = {
@@ -320,15 +385,17 @@ private fun StoreRow(addon: StoreAddon, installed: Boolean, onAdd: () -> Unit) {
 @Composable
 private fun ExtensionRow(
     extension: ExtensionInfo,
+    selected: Boolean,
+    onOpen: () -> Unit,
     onToggle: (Boolean) -> Unit,
-    onRemove: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(BrowserTokens.CardRadius))
-            .background(browserColors().AddressBarBackground)
-            .padding(start = 14.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+            .background(if (selected) browserColors().SidebarSelected else browserColors().AddressBarBackground)
+            .clickable(onClick = onOpen)
+            .padding(start = 14.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
@@ -347,10 +414,78 @@ private fun ExtensionRow(
             Text(subtitle, fontSize = 12.sp, color = browserColors().SecondaryText)
         }
         Switch(checked = extension.enabled, onCheckedChange = onToggle)
-        if (!extension.builtIn) {
-            IconButton(onClick = onRemove, modifier = Modifier.size(40.dp)) {
-                Icon(Icons.Filled.Delete, contentDescription = "Remove ${extension.name}", tint = browserColors().SecondaryText)
+    }
+}
+
+/**
+ * One extension's page: version, the switch, "Allow in private tabs" (off unless turned on), what it can do,
+ * its own settings and Remove in Ember. [onBack] is null beside the list on a tablet.
+ */
+@Composable
+private fun ExtensionDetail(
+    extension: ExtensionInfo,
+    repository: ExtensionsRepository,
+    onBack: (() -> Unit)?,
+    onOpenUrl: (String) -> Unit,
+    onRemove: () -> Unit,
+) {
+    val colors = browserColors()
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        if (onBack != null) {
+            Row(
+                modifier = Modifier.height(40.dp).clip(RoundedCornerShape(50)).clickable(onClick = onBack).padding(end = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = colors.SecondaryText, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.size(6.dp))
+                Text("Extensions", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
             }
         }
+        Text(extension.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = colors.AddressBarText)
+        Text(listOfNotNull(extension.version.takeIf { it.isNotBlank() }?.let { "Version $it" }, if (extension.builtIn) "Built in" else null).joinToString(" · "), fontSize = 13.sp, color = colors.SecondaryText)
+        if (extension.description.isNotBlank()) Text(extension.description, fontSize = 14.sp, color = colors.AddressBarText)
+        DetailSwitchRow("On", extension.enabled) { repository.setEnabled(extension.id, it) }
+        DetailSwitchRow("Allow in private tabs", extension.allowedInPrivate, note = "Off unless you turn it on. Private tabs keep nothing, but the extension may.") {
+            repository.setAllowedInPrivate(extension.id, it)
+        }
+        if (extension.abilities.isNotEmpty()) {
+            Text("What it can do", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
+            Column(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.AddressBarBackground).padding(14.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                extension.abilities.forEach { Text(it, fontSize = 14.sp, color = colors.AddressBarText) }
+            }
+        }
+        extension.optionsUrl?.let { url ->
+            Row(
+                Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.AddressBarBackground).clickable { onOpenUrl(url) }.padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) { Text("Extension settings", fontSize = 15.sp, color = colors.AddressBarText) }
+        }
+        if (!extension.builtIn) {
+            Row(
+                Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.AddressBarBackground).clickable(onClick = onRemove).padding(horizontal = 14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) { Text("Remove", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = com.makemission.ora.ui.theme.Mineral.Ember) }
+        }
+    }
+}
+
+@Composable
+private fun DetailSwitchRow(label: String, checked: Boolean, note: String? = null, onChange: (Boolean) -> Unit) {
+    val colors = browserColors()
+    Row(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.AddressBarBackground).padding(start = 14.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(label, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText)
+            if (note != null) Text(note, fontSize = 12.sp, color = colors.SecondaryText)
+        }
+        Switch(checked = checked, onCheckedChange = onChange)
     }
 }
