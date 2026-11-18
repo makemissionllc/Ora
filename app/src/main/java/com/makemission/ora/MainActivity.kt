@@ -12,7 +12,6 @@ import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
 import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.security.AppLock
-import com.makemission.ora.security.LockScreen
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.OraTheme
 
@@ -31,7 +30,6 @@ class MainActivity : ComponentActivity() {
             OraTheme {
                 val profiles = remember { ProfilesRepository(applicationContext) }
                 BrowserScreen(settings = settings, profiles = profiles)
-                LockScreen(settings)
             }
         }
     }

@@ -164,6 +164,7 @@ import com.makemission.ora.profiles.ProfileSwitcher
 import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.extensions.ExtensionsRepository
 import com.makemission.ora.extensions.ExtensionsScreen
+import com.makemission.ora.security.LockScreen
 import com.makemission.ora.settings.AddressSwipeEffect
 import com.makemission.ora.settings.AddressSwipeTarget
 import com.makemission.ora.settings.BarStyle
@@ -258,6 +259,8 @@ fun BrowserScreen(
     }
     CompositionLocalProvider(LocalBrowserColors provides palette) {
         BrowserContent(settings, profiles, modifier)
+        // Drawn inside the palette so the lock follows Light, Dark and Pure dark like everything else.
+        LockScreen(settings)
     }
 }
 
