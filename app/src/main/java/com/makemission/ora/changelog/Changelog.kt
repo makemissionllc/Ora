@@ -12,6 +12,16 @@ data class ChangeDay(val date: String, val items: List<ChangeItem>)
 /** Newest first. Keep in step with CHANGELOG.md, per AGENTS.md rule 20. */
 val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
+        date = "19 Nov 2026",
+        items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Downloads keep going when you leave Ora. A notification shows how many are running, with Pause all and Cancel all.  (`0c93cda`)"),
+            ChangeItem(ChangeKind.ADDED, "Paused downloads come back after a restart, and a download can be resumed from where it stopped.  (`b5403e8`, `d4bd14c`)"),
+            ChangeItem(ChangeKind.ADDED, "A download whose file changed on the server starts again, and the row says so.  (`0a8d9c5`)"),
+            ChangeItem(ChangeKind.ADDED, "A dropped connection is retried after 2, 5, 15 and 30 seconds, then every minute, up to ten times. When the network is gone, it waits and resumes when it comes back.  (`665274c`)"),
+            ChangeItem(ChangeKind.CHANGED, "Downloads use the same sign-in and cookies as the tab that started them. Private-tab downloads share nothing with normal tabs and are not saved to the list after a restart.  (`94ff36b`, `0c93cda`)"),
+        ),
+    ),
+    ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "Passkeys with Bitwarden: Ora now declares the two Android permissions that let sites' passkey register and sign-in go through your passkey app. Tested with Bitwarden on the phone. Google Password Manager may still refuse until Google approves Ora.  (`0840e06`)"),
