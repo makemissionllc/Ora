@@ -5,6 +5,7 @@ The status board for Ora. Update it with every change: move items between sectio
 Last updated: 2026-11-18, at commit `55c62be`.
 
 ## Done
+- Mineral design, step 3g (`3ad3c58`): Settings restyled (Slate 20 dp cards, 16/14 sp rows, `MineralSwitch` everywhere with a haptic tick, round back button and Chalk Done pill, Chalk pill for the tablet rail's open category, Ember Clear browsing data, palette-coloured radios). Not built: Seam dividers between rows, chevron rows with a value, Passwords and Video rail entries. Not checked: Light and Pure dark; the other tablet categories; dialogs.
 - Mineral design, step 3f (`9205d78`): tablet sidebar restyled (Chalk profile chip, outlined "+" for a new profile, pill Tabs/Bookmarks/History control and search on Basalt, rows with site chips, Shale fill and a Chalk dot on the open tab, solid SidebarSelected in all three palettes). The phone tab overview shares the profile chips. Not checked: Light and Pure dark; the Bookmarks and History panels; long-press a profile chip; the "+" tap.
 - Mineral design, step 3e (`d466b61`): App lock restyled (Ora mark, dot row, 76 dp Slate keypad, Chalk unlock key, delete key; hold delete clears the PIN). The whole-app lock moved inside the palette provider, which fixes it always showing Light. Not checked: Light and Pure dark; a wrong PIN and the lockout countdown; hold-to-clear; the private-tab lock variant with the "Go to a regular tab" button; PINs over four digits.
 - Mineral design, step 3d (`3040ffc`): site permission card restyled (Slate sheet, icon circle, Ember Block, Shale Not now, Chalk Allow; note that Not now asks again). Not checked: Light and Pure dark, the notifications and microphone icons, a two-permission prompt, a private-tab prompt.
@@ -77,7 +78,7 @@ Last updated: 2026-11-18, at commit `55c62be`.
 
 ## In progress
 
-- Mineral design, remaining steps in order: Settings. Reader view is planned as its own task after these.
+- Mineral design: all planned steps are done. Reader view is planned as its own task next.
 - Documentation set: README, CHANGELOG, PROGRESS, and the AGENTS.md rule that keeps them current.
 - In-app "What's new" page, built from the same entries as CHANGELOG.md.
 - Phone Compact top fade under the status bar, and page clipping (`01de1e1`): the bottom fade was removed (`2a47c6a`). Phone (reddit.com, portrait, not scrolled): no fade under the bar, and page text ends at the bar's top edge. Phone (google.com and theverge.com, portrait): the page starts below the status bar at the top, and content fades under the status bar while scrolled. The page under the folded bar at the page end is open; see Known issues. Not checked: tablet; scrolling back up. The earlier google.com screenshot with page content under the status bar was not seen again at the top.
@@ -133,6 +134,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-18 | `3ad3c58` (Mineral Settings) | Phone (CPH2745, USB): Appearance list with Chalk Done pill, round back button, Chalk and Basalt switches and Shale off switch (screenshot). Other sections not scrolled | Tablet (USB): Appearance shown with a Chalk Appearance pill, Slate card and the segmented theme control; Privacy pill and cards shown after tapping the rail; a switch flipped off and on again. Taps near the left edge of the rail (x below about 200 px) did nothing; tapping further right worked. Haptic tick not felt or measured |
 | 2026-11-18 | `3040ffc` (Mineral permission card) | Phone (CPH2745, USB): local test page at 127.0.0.1 via adb reverse; Location and Camera prompts shown with the icon, title, note and the three buttons (screenshots). Not checked: Allow and Block taps, private tab wording, Light, Pure dark | Tablet (7ba8e294, USB): Location prompt under the address bar with the new card (screenshot); the Camera tap showed no card, probably because the tablet has no camera, not investigated. Not checked: Light, Pure dark |
 | 2026-11-18 | `d466b61` (Mineral App lock) | Phone (CPH2745, USB): whole-app lock in Dark after the fix, four filled dots with the Chalk unlock key, and unlocking with PIN 2468 reached the page (screenshots). Before the fix the same screen showed Light. Not checked: Light, Pure dark, wrong PIN, hold-to-clear | Not checked: tablet not connected over ADB this session |
 | 2026-11-18 | `9205d78` (Mineral tablet sidebar) | Phone (CPH2745, USB): tab overview shows the Chalk Personal chip, grey School chip and outlined "+" (screenshot). Not checked: Light, Pure dark | Tablet (7ba8e294, USB): sidebar with Personal/Anime chips (Anime Chalk), outlined "+", pill Tabs control, pill search, 10 tab rows with site chips and the open row with a Shale fill and dot (screenshots). Not checked: Bookmarks and History panels, Light, Pure dark |
