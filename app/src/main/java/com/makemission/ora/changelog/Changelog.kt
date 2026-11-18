@@ -14,6 +14,11 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Fast downloads over http: Settings > Privacy > Network has a new switch, off by default. On, plain http:// files download in parts and can be paused and resumed, the same as https files. Off, plain http files download on one connection and cannot be paused. Their data is not encrypted, and the switch says so.  (`352ab8d`)"),
+            ChangeItem(ChangeKind.ADDED, "Downloads are split into parts when the site allows it, and a dropped connection is retried. Unfinished downloads come back paused after Ora restarts, so you choose when to continue.  (`352ab8d`)"),
+            ChangeItem(ChangeKind.ADDED, "A \"Download started\" note appears at the bottom when a download begins and fades away by itself. Swipe it away if it covers something, or tap it to open Downloads.  (`352ab8d`)"),
+            ChangeItem(ChangeKind.CHANGED, "On phone, the Downloads page opens as a sheet from the bottom that you can drag up to full screen. Pause is shown only on downloads that can pause.  (`352ab8d`)"),
+            ChangeItem(ChangeKind.FIXED, "A download that failed before it started is kept in the list after Ora restarts, so Retry is still there.  (`352ab8d`)"),
             ChangeItem(ChangeKind.ADDED, "Swipe down on the tablet's Compact row to see all your tabs. A swipe up on the phone's address bar already did this; now the tablet's top bar works the same way in reverse."),
             ChangeItem(ChangeKind.FIXED, "Tabs that were waiting to load when Ora was closed no longer lose their pages: they could be saved as blank, and open as a blank page."),
             ChangeItem(ChangeKind.CHANGED, "The Downloads page now matches the design: a summary of what is moving (count, speed and bytes left), an All, Active, Done and Failed filter, Active and Today sections, and rows with a file-type tile and a four-part progress bar. Finished files open on tap and share on a long press, and each filter has its own empty message. Pause, resume and retry are not in yet. Phone only so far."),

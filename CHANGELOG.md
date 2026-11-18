@@ -9,6 +9,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
+- Fast downloads over http: Settings > Privacy > Network has a new switch, off by default. On, plain http:// files download in parts and can be paused and resumed, the same as https files. Off, plain http files download on one connection and cannot be paused. Their data is not encrypted, and the switch says so.  (`352ab8d`)
+- Downloads are split into parts when the site allows it, and a dropped connection is retried. Unfinished downloads come back paused after Ora restarts, so you choose when to continue.  (`352ab8d`)
+- A "Download started" note appears at the bottom when a download begins and fades away by itself. Swipe it away if it covers something, or tap it to open Downloads.  (`352ab8d`)
 - Swipe down on the tablet's Compact row to see all your tabs. A swipe up on the phone's address bar already did this; now the tablet's top bar works the same way in reverse.  (`84bf99b`)
 - Search tabs, bookmarks and history in one field: on tablet, the sidebar's Tabs search now also lists matching bookmarks and history entries under your tabs, so you can find a page without choosing the right list first.  (`dae97f0`)
 - Drag a tab into a group: touch and hold a tab, then move your finger to pick it up, and drop it on a group card in the overview or on a group's header in the tablet sidebar. The group lights up as you hover over it. In the sidebar, drop a tab on "Not in a group" to take it out of its group. Holding a tab still without moving still opens Add to group, as before.  (`e2e298a`)
@@ -22,10 +25,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card.  (`2fdaa3d`)
 
 **Changed**
+- On phone, the Downloads page opens as a sheet from the bottom that you can drag up to full screen. Pause is shown only on downloads that can pause.  (`352ab8d`)
 - The Downloads page now matches the design: a summary of what is moving (count, speed and bytes left), an All, Active, Done and Failed filter, Active and Today sections, and rows with a file-type tile and a four-part progress bar. Finished files open on tap and share on a long press, and each filter has its own empty message. Pause, resume and retry are not in yet. Phone only so far.  (`c59ddf0`)
 - The Downloads page opens from the toolbar button and shrinks back into it when closed, and it has a Copy link action with a short confirmation on the details page. The tablet layout is not checked on a device yet.  (`e182fda`)
 
 **Fixed**
+- A download that failed before it started is kept in the list after Ora restarts, so Retry is still there.  (`352ab8d`)
 - Tabs that were waiting to load when Ora was closed no longer lose their pages: they could be saved as blank, and open as a blank page.  (`e57a556`)
 - Find in page now waits for you to finish typing, so a word that is on the page no longer shows "No matches", and the count starts at 1 instead of moving on with every letter you type.  (`c59ddf0`)
 - Tabs waiting to load after Ora reopens now show their website name in the tablet sidebar and the tab list, instead of "about:blank".  (`32b298f`)
