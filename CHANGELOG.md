@@ -9,6 +9,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Changed**
+- Switching tabs now fades the page in instead of cutting over. With Remove animations on, it is instant. (`HASH`)
+- With a keyboard attached, Ctrl+Tab moves to the next open tab. (`HASH`)
+
+**Changed**
 - On tablet, the sidebar now grows out of the sidebar button and shrinks back into it when it closes. (`6e5bc92`)
 - On a tablet with a keyboard, Escape closes the sidebar. (`6e5bc92`)
 

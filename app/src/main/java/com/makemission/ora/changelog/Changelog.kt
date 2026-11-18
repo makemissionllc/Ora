@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.CHANGED, "Switching tabs now fades the page in instead of cutting over. With Remove animations on, it is instant."),
+            ChangeItem(ChangeKind.CHANGED, "With a keyboard attached, Ctrl+Tab moves to the next open tab."),
             ChangeItem(ChangeKind.CHANGED, "On tablet, the sidebar now grows out of the sidebar button and shrinks back into it when it closes."),
             ChangeItem(ChangeKind.CHANGED, "On a tablet with a keyboard, Escape closes the sidebar."),
             ChangeItem(ChangeKind.FIXED, "Auto-fill on a login page now reaches your password app. It no longer stops with \"Contents can't be auto-filled\"."),

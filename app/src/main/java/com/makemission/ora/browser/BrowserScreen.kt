@@ -83,6 +83,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -760,9 +761,15 @@ private fun BrowserContent(
         },
         bottomBar = { if (isTablet) bottomBarContent() }
     ) { innerPadding ->
-        // Quality of life: Escape on a hardware keyboard closes the sidebar.
+        // Quality of life: with a hardware keyboard, Ctrl+Tab moves to the next open tab, and Escape closes the sidebar.
         Box(modifier = Modifier.fillMaxSize().onPreviewKeyEvent { e ->
-            if (isTablet && showSidebar && e.key == Key.Escape && e.type == KeyEventType.KeyUp) {
+            if (e.isCtrlPressed && e.key == Key.Tab && e.type == KeyEventType.KeyDown && tabs.tabs.size > 1) {
+                val i = tabs.tabs.indexOfFirst { it.id == tabs.selectedId }
+                val next = tabs.tabs[(i + 1) % tabs.tabs.size]
+                BrowserLog.info("tabs", "Ctrl+Tab to tab ${next.id}")
+                tabs.select(next.id)
+                true
+            } else if (isTablet && showSidebar && e.key == Key.Escape && e.type == KeyEventType.KeyUp) {
                 BrowserLog.info("ui", "Sidebar closed with Escape")
                 settings.setTabletSidebar(false)
                 true
@@ -1183,6 +1190,18 @@ private fun BrowserPage(
         animationSpec = if (fadePagesIn && tab.pageRevealed) OraMotion.enter<Float>() else OraMotion.exit<Float>(),
         label = "page reveal",
     )
+    // Switching tabs: the page area fades in on the shared enter motion instead of cutting over. The first tab shown
+    // starts fully visible. With Remove animations on, the fade takes no time.
+    val switchAlpha = remember { Animatable(1f) }
+    var shownTabId by remember { mutableStateOf(tab.id) }
+    LaunchedEffect(tab.id) {
+        if (shownTabId != tab.id) {
+            shownTabId = tab.id
+            BrowserLog.info("tabs", "Tab switch fade to tab ${tab.id}")
+            switchAlpha.snapTo(0f)
+            switchAlpha.animateTo(1f, OraMotion.overlayFadeIn())
+        }
+    }
     // Pull to refresh: pulling down from the top of the page reloads it. A small indicator follows the finger
     // and stays while the page reloads. The page itself keeps scrolling as before.
     var pull by remember { mutableStateOf(0.dp) }
@@ -1221,7 +1240,7 @@ private fun BrowserPage(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer {
-                    alpha = pageAlpha
+                    alpha = pageAlpha * switchAlpha.value
                     translationY = zoneHeight.toPx() * zoneFraction
                 },
             factory = { ctx ->
@@ -1259,7 +1278,7 @@ private fun BrowserPage(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(statusInset)
-                    .graphicsLayer { alpha = startAlpha }
+                    .graphicsLayer { alpha = startAlpha * switchAlpha.value }
                     .background(browserColors().GridBackground)
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
