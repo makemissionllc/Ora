@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Close all: the tab overview has a Close all button. It asks first, then opens one start page. The last 10 pages can be brought back from Reopen closed tab."),
             ChangeItem(ChangeKind.ADDED, "Add to home screen: a row in the ⋯ menu pins a shortcut to the current page, named after its title."),
             ChangeItem(ChangeKind.ADDED, "Text size on web pages: Settings > Appearance has − and + buttons that make page text smaller or larger, from 50% to 200%. Reset returns to 100% in one tap. It applies at once, with no reload."),
             ChangeItem(ChangeKind.ADDED, "Copy page address: a row in the ⋯ menu copies the current page's address in one tap."),
