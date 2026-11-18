@@ -95,12 +95,12 @@ object BrowserTokens {
     val GridPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 24.dp, bottom = 12.dp)
     val GridSpacing = 16.dp
     /** Tablet tab overview header: sits above the grid, same side insets. */
-    val TabHeaderPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp)
+    val TabHeaderPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
     val TabTileHeight = 196.dp
     val TabTileShape = RoundedCornerShape(BrowserTokens.RadiusMedium)
     val TabTileElevation = 2.dp
-    val SelectionWidth = 3.dp
-    val CloseBadgeSize = 28.dp
+    val SelectionWidth = 2.dp
+    val CloseBadgeSize = 32.dp
 
     // Sidebar (tablet)
     val SidebarWidth = 272.dp

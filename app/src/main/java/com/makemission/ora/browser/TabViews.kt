@@ -54,6 +54,7 @@ import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.history.HistoryEntry
 import androidx.compose.material3.AlertDialog
 import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.Mineral
 import com.makemission.ora.ui.theme.browserColors
 
 /**
@@ -91,7 +92,7 @@ fun TabGrid(
                     confirmCloseAll = false
                     tabs.closeAllToStart()
                     onDone()
-                }) { Text("Close all", color = browserColors().CloseBadge, fontWeight = FontWeight.SemiBold) }
+                }) { Text("Close all", color = Mineral.Ember, fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = { TextButton(onClick = { confirmCloseAll = false }) { Text("Cancel") } },
         )
@@ -110,16 +111,14 @@ fun TabGrid(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 TextButton(onClick = { confirmCloseAll = true }, enabled = allTabs.size > 1) {
-                    Text("Close all", color = browserColors().CloseBadge, fontWeight = FontWeight.SemiBold)
+                    Text("Close all", color = Mineral.Ember, fontWeight = FontWeight.SemiBold)
                 }
                 Text(text = countText, color = browserColors().AddressBarText, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                TextButton(onClick = onDone) {
-                    Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
-                }
+                PillButton("Done", onClick = onDone)
             }
         }
         Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-            SidebarSearch(query = query, placeholder = "Search open tabs", onQueryChange = { query = it })
+            SidebarSearch(query = query, placeholder = "Search ${allTabs.size} open tabs", onQueryChange = { query = it })
         }
         if (tabList.isEmpty() && needle.isNotEmpty()) {
             EmptySidebarText("No tabs match \"$needle\"")
@@ -147,42 +146,56 @@ fun TabGrid(
                     .padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                TextButton(
-                    onClick = onNewTab,
-                    modifier = Modifier.background(browserColors().AddressBarBackground, RoundedCornerShape(BrowserTokens.RadiusSmall))
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = null, tint = browserColors().Accent)
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text("New tab", color = browserColors().AddressBarText, fontSize = 14.sp)
-                }
+                PillButton("New tab", onClick = onNewTab, primary = true, icon = Icons.Filled.Add)
             }
             return@Column
         }
+        // Bottom bar (design: UI v2 phone tab overview): Close all in Ember, a Chalk New tab pill, then Done.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(browserColors().ToolbarBackground)
-                .padding(BrowserTokens.ToolbarPadding),
+                .background(browserColors().GridBackground)
+                .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onNewTab, modifier = Modifier.size(BrowserTokens.ToolbarButtonSize)) {
-                    Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
-                }
-                TextButton(onClick = { confirmCloseAll = true }, enabled = allTabs.size > 1) {
-                    Text("Close all", color = browserColors().CloseBadge)
+            TextButton(onClick = { confirmCloseAll = true }, enabled = allTabs.size > 1, modifier = Modifier.height(48.dp)) {
+                Text("Close all", color = if (allTabs.size > 1) Mineral.Ember else browserColors().DisabledIcon, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            }
+            Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 64.dp, height = 52.dp)
+                        .clip(RoundedCornerShape(26.dp))
+                        .background(browserColors().Accent)
+                        .clickable(onClick = onNewTab),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().GridBackground, modifier = Modifier.size(24.dp))
                 }
             }
-            Text(
-                text = countText,
-                color = browserColors().SecondaryText,
-                fontSize = 14.sp
-            )
-            TextButton(onClick = onDone) {
-                Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
-            }
+            PillButton("Done", onClick = onDone)
         }
+    }
+}
+
+/** Pill button from the Mineral design: Chalk fill with dark text when primary, Shale fill with Chalk text otherwise. */
+@Composable
+private fun PillButton(text: String, onClick: () -> Unit, primary: Boolean = false, icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
+    val fill = if (primary) browserColors().Accent else browserColors().AddressBarBackground
+    val content = if (primary) browserColors().GridBackground else browserColors().AddressBarText
+    Row(
+        modifier = Modifier
+            .height(48.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .background(fill)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 22.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        if (icon != null) Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(18.dp))
+        Text(text, color = content, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -208,7 +221,6 @@ private fun TabTile(
                 ),
             shape = BrowserTokens.TabTileShape,
             color = browserColors().AddressBarBackground,
-            shadowElevation = BrowserTokens.TabTileElevation
         ) {
             Box(modifier = Modifier.fillMaxSize()) {
                 // Preview of the page, cropped to the tile. Falls back to the plain card until captured.
@@ -226,29 +238,37 @@ private fun TabTile(
                         .align(Alignment.TopEnd)
                         .padding(6.dp)
                         .size(BrowserTokens.CloseBadgeSize)
-                        .background(browserColors().CloseBadge, RoundedCornerShape(50))
+                        .background(browserColors().GridBackground.copy(alpha = 0.6f), RoundedCornerShape(50))
                         .clickable(onClick = onClose),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         Icons.Filled.Close,
                         contentDescription = "Close tab",
-                        tint = Color.White,
-                        modifier = Modifier.size(12.dp)
+                        tint = browserColors().AddressBarText,
+                        modifier = Modifier.size(14.dp)
                     )
                 }
             }
         }
-        Text(
-            text = title,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            color = browserColors().AddressBarText
-        )
+        // Initial chip and left-aligned title, as in the design.
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(
+                modifier = Modifier.size(20.dp).clip(RoundedCornerShape(6.dp)).background(browserColors().AddressBarBackground),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(title.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "•", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
+            }
+            Text(
+                text = title,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = browserColors().AddressBarText
+            )
+        }
     }
 }
 
