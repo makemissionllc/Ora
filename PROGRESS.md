@@ -5,6 +5,7 @@ The status board for Ora. Update it with every change: move items between sectio
 Last updated: 2026-11-18, at commit `55c62be`.
 
 ## Done
+- Lazy tab loading: reopened background tabs wait (`deferLoad`) and load on first select; their saved address and history are kept untouched and re-saved as they were.
 - Single startup: MainActivity startup runs once per process, manifest configChanges widened (density, fontScale, locale, layoutDirection, colorMode, navigation, touchscreen), a recreation is logged. Still open: a recreated window builds new tabs, because tabs live in the composition.
 - Quick resume fix: tabs are not saved while reopened tabs are still loading (20 s limit), an empty snapshot never overwrites a save, and `SessionStoreTest` saves and restores 5 different tabs.
 - Private space, phase 3: `privateBrowserColors` (Obsidian `#111214`, surfaces `#1B1C20`, Dark and tinted dark only) applied app-wide while a private tab is selected (`PrivateSpace.active`); `Modifier.dashedOutline` (`ui/theme/Dashed.kt`) gives the capsule a 1.5 dp dashed Fog border and a Private chip; `PrivateSpacePanel` (rows with dashed icon outline, note, dashed New private tab, Lock private tabs via App lock, Close private); `BrowserTabs.closePrivate()` (logged); overview segmented "N tabs | M private"; tablet sidebar pinned "Private tabs (N)" row opening the space with Back to tabs. Quality-of-life: Close private in one tap. Not done: the dashed Chalk outline on the bottom New tab pill (it is a filled pill in the private overview), extension rules for private tabs (phase 5).
@@ -218,3 +219,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | 2026-11-18 | Quick resume save gate | Not checked: host unit tests and assembleDebug only; the phone and tablet are in use by other sessions, so no tap or screenshot was made | Not checked: see Phone |
 | 2026-11-18 | Single startup | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |
+| 2026-11-18 | Lazy tab loading | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |

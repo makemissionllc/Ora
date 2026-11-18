@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.CHANGED, "Tabs reopened at start, or when you switch profile, now load only the tab you were on. The others load the first time you open them, so Ora starts faster and uses less data and memory. The notice says so."),
             ChangeItem(ChangeKind.FIXED, "Ora no longer starts twice when Android rebuilds its window right after launch: startup (crash handler, usage counts, app lock) runs once, and the window now survives font, density, language and similar changes. If a rebuild still happens, the log says so."),
             ChangeItem(ChangeKind.FIXED, "Quick resume no longer saves your tabs while they are still coming back, and an empty list never replaces a good save, so reopened tabs keep their own pages and history. Ora now says \"Reopened N tabs\" when it restores several."),
             ChangeItem(ChangeKind.ADDED, "Private space: a private tab turns the whole app Obsidian (Dark look only), its address bar gets a dashed Fog border and a \"Private\" chip, and the tab overview has a \"tabs | private\" switch. The private side lists tabs as rows with a dashed icon outline and no thumbnails, has a note on what is not saved, a dashed New private tab button, Lock private tabs (when App lock is set) and Close private, which closes every private tab in one tap. On tablet the sidebar has a pinned \"Private tabs (N)\" row that opens the same space inside the sidebar, with Back to tabs."),

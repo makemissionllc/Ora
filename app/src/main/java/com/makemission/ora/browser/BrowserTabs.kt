@@ -40,6 +40,8 @@ class BrowserTab(
     private val sitePermissions: SitePermissionStore,
     /** True for a tab reopened by quick resume. It is not saved again until its page has loaded (or [RESTORE_GRACE_MS] passed). */
     restoring: Boolean = false,
+    /** A reopened background tab waits: it loads when it is first selected, so start-up loads one page, not nine. */
+    deferLoad: Boolean = false,
 ) {
     val session: GeckoSession = if (isPrivate) {
         GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build())
@@ -53,7 +55,11 @@ class BrowserTab(
 
     var url by mutableStateOf(initialUrl)
     private val createdAt = System.currentTimeMillis()
-    private var restorePending = restoring && initialUrl != BrowserTabs.START_URL
+    private var restorePending = restoring && initialUrl != BrowserTabs.START_URL && !deferLoad
+    private var restoreStateText: String? = restoreState
+    /** False while a reopened tab is waiting for its first selection. Its saved address and history stay as saved. */
+    var loaded = !(deferLoad && initialUrl != BrowserTabs.START_URL)
+        private set
 
     /**
      * True while a reopened tab is still coming back, so its address and history are not yet the saved ones.
@@ -313,10 +319,24 @@ class BrowserTab(
         }
         session.open(GeckoEngine.runtime(context))
         // The start page is drawn natively, so it never goes to GeckoView.
-        if (initialUrl != BrowserTabs.START_URL) {
-            val restored = restoreState != null && restoreHistory(restoreState)
-            if (!restored) session.loadUri(initialUrl)
-        }
+        if (loaded && initialUrl != BrowserTabs.START_URL) loadNow()
+        // A waiting tab keeps its saved history text, so saving again before it loads loses nothing.
+        else if (!loaded) sessionState = restoreState
+    }
+
+    private fun loadNow() {
+        val state = restoreStateText
+        val restored = state != null && restoreHistory(state)
+        if (!restored) session.loadUri(url)
+    }
+
+    /** Loads a tab that was waiting. Does nothing if it already loaded. */
+    fun ensureLoaded() {
+        if (loaded) return
+        loaded = true
+        restorePending = true
+        BrowserLog.info("session", "Loading tab $id on first open")
+        loadNow()
     }
 
     /** Puts a saved history back into the session. Returns false if the saved state cannot be read. */
@@ -390,11 +410,11 @@ class BrowserTabs(
     init {
         val saved = restore
         if (saved != null && saved.tabs.isNotEmpty()) {
-            val reopened = saved.tabs.map { newTab(it.url, select = false, restoreState = it.state, restoring = true) }
+            val reopened = saved.tabs.map { newTab(it.url, select = false, restoreState = it.state, restoring = true, deferLoad = true) }
             select(reopened[saved.selected.coerceIn(0, reopened.lastIndex)].id)
             BrowserLog.info("session", "Quick resume reopened ${reopened.size} tabs")
             // Quality of life: say what came back, so a restored session is never a surprise.
-            if (reopened.size > 1) InAppNotices.show("Reopened ${reopened.size} tabs")
+            if (reopened.size > 1) InAppNotices.show("Reopened ${reopened.size} tabs. Each loads when you open it")
         } else {
             newTab(START_URL)
         }
@@ -416,8 +436,8 @@ class BrowserTabs(
     val selected: BrowserTab?
         get() = tabs.firstOrNull { it.id == selectedId }
 
-    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null, restoring: Boolean = false): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions, restoring)
+    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null, restoring: Boolean = false, deferLoad: Boolean = false): BrowserTab {
+        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions, restoring, deferLoad)
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.
@@ -427,7 +447,8 @@ class BrowserTabs(
     }
 
     fun select(id: Long) {
-        if (tabs.none { it.id == id }) return
+        val tab = tabs.firstOrNull { it.id == id } ?: return
+        tab.ensureLoaded()
         selectedId = id
     }
 
