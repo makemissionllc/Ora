@@ -75,6 +75,7 @@ fun ExtensionsScreen(
 ) {
     val extensions by repository.extensions.collectAsState()
     val error by repository.lastError.collectAsState()
+    val installingNow by repository.installing.collectAsState()
     val scope = rememberCoroutineScope()
 
     var query by remember { mutableStateOf("") }
@@ -209,6 +210,7 @@ fun ExtensionsScreen(
                             StoreRow(
                                 addon = addon,
                                 installed = isInstalled(addon),
+                                busy = addon.xpiUrl.trim() in installingNow,
                                 onAdd = { repository.install(addon.xpiUrl) }
                             )
                         }
@@ -247,7 +249,7 @@ fun ExtensionsScreen(
                                 repository.install(address)
                                 address = ""
                             },
-                            enabled = address.isNotBlank()
+                            enabled = address.isNotBlank() && address.trim() !in installingNow
                         ) {
                             Text("Install", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
                         }
@@ -339,7 +341,7 @@ fun ExtensionsScreen(
 }
 
 @Composable
-private fun StoreRow(addon: StoreAddon, installed: Boolean, onAdd: () -> Unit) {
+private fun StoreRow(addon: StoreAddon, installed: Boolean, busy: Boolean, onAdd: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -375,8 +377,13 @@ private fun StoreRow(addon: StoreAddon, installed: Boolean, onAdd: () -> Unit) {
                 color = browserColors().SecondaryText
             )
         } else {
-            TextButton(onClick = onAdd) {
-                Text("Add", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+            // Quality of life: while this add-on installs the button says so and ignores taps.
+            TextButton(onClick = onAdd, enabled = !busy) {
+                Text(
+                    if (busy) "Adding…" else "Add",
+                    color = if (busy) browserColors().SecondaryText else browserColors().Accent,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
     }

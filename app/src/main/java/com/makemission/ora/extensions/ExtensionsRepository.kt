@@ -29,6 +29,15 @@ data class ExtensionInfo(
  * Single source of truth for installed extensions. Wraps GeckoView's
  * WebExtensionController so screens only see [ExtensionInfo] and a StateFlow.
  */
+/**
+ * The text shown for a failed extension action. GeckoView sometimes gives an error with an empty message, which
+ * used to show as a blank line; that case gets the fallback sentence and a hint to check the address.
+ */
+internal fun readableFailure(message: String?, fallback: String): String {
+    val trimmed = message?.trim().orEmpty()
+    return if (trimmed.isEmpty()) "$fallback Check the address and your connection, then try again." else trimmed
+}
+
 class ExtensionsRepository(runtime: GeckoRuntime) {
 
     private val controller: WebExtensionController = runtime.webExtensionController
@@ -39,6 +48,10 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
 
     private val _lastError = MutableStateFlow<String?>(null)
     val lastError: StateFlow<String?> = _lastError.asStateFlow()
+
+    /** Addresses with an install in progress. Buttons read this to show "Adding…" and ignore repeat taps. */
+    private val _installing = MutableStateFlow<Set<String>>(emptySet())
+    val installing: StateFlow<Set<String>> = _installing.asStateFlow()
 
     init {
         // The user typed the address and chose Install, so accept the requested permissions.
@@ -67,17 +80,32 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
         )
     }
 
-    /** Installs from an https URL or a resource address. */
+    /** Installs from an https URL or a resource address. A tap while the same address is already installing is ignored. */
     fun install(url: String) {
         val trimmed = url.trim()
         if (trimmed.isEmpty()) return
+        if (trimmed in _installing.value) {
+            BrowserLog.info("extensions", "Install already running for $trimmed, ignoring the repeat tap")
+            return
+        }
         _lastError.value = null
+        _installing.value = _installing.value + trimmed
         BrowserLog.info("extensions", "Installing from $trimmed")
         controller.install(trimmed).accept(
-            { BrowserLog.info("extensions", "Installed from $trimmed"); refresh() },
-            { error -> reportError("Installing $trimmed", error, "Could not install this extension") }
+            {
+                _installing.value = _installing.value - trimmed
+                BrowserLog.info("extensions", "Installed from $trimmed")
+                refresh()
+            },
+            { error ->
+                _installing.value = _installing.value - trimmed
+                reportError("Installing $trimmed", error, "Could not install this extension")
+            }
         )
     }
+
+    /** True while [url] is being installed, so its button can show that it is busy. */
+    fun isInstalling(url: String): Boolean = url.trim() in _installing.value
 
     fun setEnabled(id: String, enabled: Boolean) {
         val extension = extensionsById[id] ?: return
@@ -110,7 +138,7 @@ class ExtensionsRepository(runtime: GeckoRuntime) {
 
     private fun reportError(action: String, error: Throwable?, fallback: String) {
         BrowserLog.error("extensions", "$action failed", error)
-        _lastError.value = error?.message ?: fallback
+        _lastError.value = readableFailure(error?.message, fallback)
     }
 
     private fun WebExtension.toInfo(): ExtensionInfo = ExtensionInfo(
