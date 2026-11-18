@@ -16,6 +16,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card.
 
 **Fixed**
+- Quick resume no longer saves your tabs while they are still coming back, and an empty list never replaces a good save, so reopened tabs keep their own pages and history. Ora now says "Reopened N tabs" when it restores several.
 - The speckled grain behind tiles and rows (the start page, Lab and Diagnostics) is gone. It was Android's press ripple; the press now only shrinks the tile a little.
 
 **Added**

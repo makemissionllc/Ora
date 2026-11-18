@@ -347,11 +347,17 @@ private fun BrowserContent(
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_STOP && settings.quickResume.value) {
+                var savedCount = 0
                 tabsByProfile.forEach { (id, profileTabs) ->
+                    // Null means tabs are still being restored; the earlier save stays as it is.
                     val saved = profileTabs.savableSnapshot()
-                    sessionStore.save(id, saved.tabs, saved.selected)
+                    if (saved == null) {
+                        BrowserLog.info("session", "Skipped saving a profile: its tabs are still being restored")
+                    } else if (sessionStore.save(id, saved.tabs, saved.selected)) {
+                        savedCount++
+                    }
                 }
-                BrowserLog.info("session", "Saved tabs for ${tabsByProfile.size} profile(s)")
+                BrowserLog.info("session", "Saved tabs for $savedCount of ${tabsByProfile.size} profile(s)")
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

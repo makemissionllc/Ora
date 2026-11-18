@@ -38,6 +38,8 @@ class BrowserTab(
     private val onVisited: (String, String) -> Unit = { _, _ -> },
     /** The profile's saved answers to site permission prompts. Private tabs read and write none of it. */
     private val sitePermissions: SitePermissionStore,
+    /** True for a tab reopened by quick resume. It is not saved again until its page has loaded (or [RESTORE_GRACE_MS] passed). */
+    restoring: Boolean = false,
 ) {
     val session: GeckoSession = if (isPrivate) {
         GeckoSession(GeckoSessionSettings.Builder().usePrivateMode(true).build())
@@ -50,6 +52,15 @@ class BrowserTab(
     val reader = com.makemission.ora.extensions.ReaderState { url }
 
     var url by mutableStateOf(initialUrl)
+    private val createdAt = System.currentTimeMillis()
+    private var restorePending = restoring && initialUrl != BrowserTabs.START_URL
+
+    /**
+     * True while a reopened tab is still coming back, so its address and history are not yet the saved ones.
+     * Saving at this point would write half-restored state over a good save.
+     */
+    val isRestoring: Boolean
+        get() = restorePending && System.currentTimeMillis() - createdAt < RESTORE_GRACE_MS
     /** Latest session state from GeckoView, kept so quick resume can save this tab's history. */
     var sessionState: String? = null
     var title by mutableStateOf("")
@@ -248,6 +259,7 @@ class BrowserTab(
             override fun onPageStop(session: GeckoSession, success: Boolean) {
                 loading = false
                 pageRevealed = true
+                restorePending = false
                 // Progress stays where it is: the bar fades out in place instead of sweeping to full first.
                 if (success) {
                     BrowserLog.info("page", "Loaded ${this@BrowserTab.url}")
@@ -333,6 +345,9 @@ class BrowserTab(
 /** Scroll distance in pixels before the bars fold or reappear, so small jitters do not flicker them. */
 private const val SCROLL_FOLD_THRESHOLD_PX = 24
 
+/** How long a reopened tab may take to load before quick resume stops waiting for it and saves anyway. */
+const val RESTORE_GRACE_MS = 20_000L
+
 /** Load progress at which a page is faded in. Earlier than this the page is still mostly blank. */
 const val REVEAL_PROGRESS_PERCENT = 50
 
@@ -375,9 +390,11 @@ class BrowserTabs(
     init {
         val saved = restore
         if (saved != null && saved.tabs.isNotEmpty()) {
-            val reopened = saved.tabs.map { newTab(it.url, select = false, restoreState = it.state) }
+            val reopened = saved.tabs.map { newTab(it.url, select = false, restoreState = it.state, restoring = true) }
             select(reopened[saved.selected.coerceIn(0, reopened.lastIndex)].id)
             BrowserLog.info("session", "Quick resume reopened ${reopened.size} tabs")
+            // Quality of life: say what came back, so a restored session is never a surprise.
+            if (reopened.size > 1) InAppNotices.show("Reopened ${reopened.size} tabs")
         } else {
             newTab(START_URL)
         }
@@ -386,9 +403,12 @@ class BrowserTabs(
     /**
      * The addresses of the tabs quick resume may keep (private tabs are left out), and the position
      * of the selected tab among them. A private selection falls back to the first tab.
+     * Null while any reopened tab is still loading: saving then would overwrite a good save with half-restored state.
      */
-    fun savableSnapshot(): SessionStore.Saved {
-        val kept = tabs.filterNot { it.isPrivate }
+    fun savableSnapshot(): SessionStore.Saved? {
+        if (tabs.any { it.isRestoring }) return null
+        val kept = tabs.filterNot { it.isPrivate || it.url.isBlank() }
+        if (kept.isEmpty()) return null
         val selectedIndex = kept.indexOfFirst { it.id == selectedId }.coerceAtLeast(0)
         return SessionStore.Saved(kept.map { SessionStore.SavedTab(it.url, it.sessionState) }, selectedIndex)
     }
@@ -396,8 +416,8 @@ class BrowserTabs(
     val selected: BrowserTab?
         get() = tabs.firstOrNull { it.id == selectedId }
 
-    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions)
+    fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null, restoring: Boolean = false): BrowserTab {
+        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions, restoring)
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.
