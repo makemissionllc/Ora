@@ -2,7 +2,7 @@
 
 The status board for Ora. Update it with every change: move items between sections, and add a line to the verification log.
 
-Last updated: 2026-11-18, at commit `9b91073`.
+Last updated: 2026-11-18, at commit `dbe6cf2`.
 
 ## Done
 - Pop-up card and per-site Always allow (`9b91073`): GeckoView starts with Gecko's own pop-up blocker off (`GeckoEngine.kt`, through `gecko-config.yaml` in app storage; if the file cannot be written, the card does not appear and the log says so). `BrowserTabs` decides each pop-up with `popupDecision`: a tap, or a site on the allow list, opens a tab that is selected (private from a private tab); anything else asks through `PopupCard.kt`, and until it is answered no window opens. Open, Always allow and Block are logged with the domain only. Always allow is kept per site and per profile in `ora_popups_<profileId>` (`PopupStore.kt`), and Settings > Privacy > Pop-ups and ads lists it with Remove. Block pop-up windows off opens every pop-up as a tab. Quality-of-life: the card says the page opened the window on its own, and an empty list says how to add a site. Motion: the card eases in and out from the bottom edge on the shared overlay motion (`PopupCardHost`), because the page raised it and there is no button to grow from. Not done: image long-press (see Pending). Not checked: the tablet; the card on a private tab; the "chose Always allow" log line on the latest build; the enter and exit frames (not captured).
@@ -127,7 +127,7 @@ Last updated: 2026-11-18, at commit `9b91073`.
 
 ### Carried over
 
-- Image long-press: a long press on an image with no link does not show the image menu. Not started. The next step logs the press, confirms it on the phone, then fixes it through `ContentDelegate.onContextMenu`.
+- Image long-press, tablet: on the phone a long press on an image with no link shows the image menu (verification log, `dbe6cf2`), and the code needed no change. Not checked: the tablet.
 - Warm error pages (one card per cause, with a connectivity check first). Not started.
 - Design artifact `5927e31d` (Browser Wireframes): nothing built from it yet beyond the pop-up card.
 - Auto-fill on the tablet (`55c62be`): not checked. The phone-only test was requested.
@@ -170,6 +170,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-18 | Image long-press menu (`dbe6cf2`; no code change) | Phone (CPH2745, serial 3C15C5000LM00000, USB): `localhost/image-test.html`, a 240 px red image with no link around it. A long press on the image opened the image menu with Open image in new tab, Copy image address and Share image (screenshot `longpress-2-after.png`). Checked on a build of `dbe6cf2` with one extra diagnostic log line, which was removed afterwards; the log showed "Long press reported: type 1, link false, image address true" and "Long press on localhost". Not checked: tapping the three menu rows; the image menu on an image inside a link | Not checked: tablet not connected over ADB this session |
 | 2026-11-18 | Pop-up card and per-site Always allow (`9b91073`) | Phone (CPH2745, serial 3C15C5000LM00000, USB): test page at localhost through `adb reverse`. A no-tap pop-up showed the card "localhost wants to open a new tab" (log "Pop-up asked from localhost with no tap: localhost"). Always allow opened it as a tab and added localhost to Settings > Privacy > Pop-ups and ads (log "Always allow pop-ups from localhost"). Remove emptied the list to its "No sites yet" line (log "Stopped allowing pop-ups from localhost"). Block opened no window (log "Blocked a pop-up from localhost when the user chose Block"). Block pop-up windows off opened the pop-up as a tab (log "Pop-up opened for an allowed site: localhost"); on again (log "Pop-up blocking on"). A tap opened a tab (log "Pop-up opened from a tap: localhost", seen earlier in this session). Host tests: `PopupDecisionTest`, 6 of 6. Latest build, with the card's enter and exit motion: the card showed on a no-tap pop-up at localhost (screenshot `popup-motion-1.png`), and Block removed it and logged "Blocked a pop-up from localhost when the user chose Block" (screenshot `popup-motion-2-after-block.png`). Not checked: the enter and exit frames; the "chose Always allow" log line on the latest build; the card on a private tab; Light and Pure dark | Not checked: tablet not connected over ADB this session |
 | 2026-11-18 | Download log lines name the site and size, not the file name (Fix 9, `fb8d03c`) | Not checked: the phone was not connected | Host tests pass (`DownloadLogTest`, 3 of 3); assembleDebug passes. Tablet: not checked yet |
 | 2026-11-18 | Log noise: pull "not at top" counted, not logged; Reader page report logged on change (Fix 8, `7d8fdd3`) | Not checked: the phone was not connected | Host tests pass (`ReaderReportTest`, 3 of 3). Tablet: not checked yet |
