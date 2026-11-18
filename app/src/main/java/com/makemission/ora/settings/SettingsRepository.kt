@@ -141,6 +141,55 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Pop-up blocking ${if (enabled) "on" else "off"}")
     }
 
+    // First-launch setup. A fresh install (nothing saved yet) runs it; an install that already has data is marked
+    // done at once and can use Settings > About > Run setup again. Decided once, before anything else is written.
+    init {
+        if (!prefs.contains(KEY_ONBOARDING_DONE)) {
+            val profilesFile = context.applicationContext.getSharedPreferences("ora_profiles", Context.MODE_PRIVATE)
+            val fresh = prefs.all.isEmpty() && profilesFile.all.isEmpty()
+            prefs.edit().putInt(KEY_ONBOARDING_DONE, if (fresh) 0 else com.makemission.ora.onboarding.ONBOARDING_VERSION).apply()
+            BrowserLog.info("onboarding", if (fresh) "Fresh install: setup will run" else "Existing install: setup not run")
+        }
+    }
+
+    private val _onboardingDone = MutableStateFlow(prefs.getInt(KEY_ONBOARDING_DONE, 0))
+    /** The setup version that was finished, 0 while setup is still to do. */
+    val onboardingDoneVersion: StateFlow<Int> = _onboardingDone.asStateFlow()
+
+    private val _onboardingStep = MutableStateFlow(prefs.getString(KEY_ONBOARDING_STEP, "welcome") ?: "welcome")
+    /** The last setup step reached, so closing Ora midway resumes there. */
+    val onboardingStep: StateFlow<String> = _onboardingStep.asStateFlow()
+
+    fun setOnboardingStep(step: String) {
+        prefs.edit().putString(KEY_ONBOARDING_STEP, step).apply()
+        _onboardingStep.value = step
+    }
+
+    fun finishOnboarding(version: Int) {
+        prefs.edit().putInt(KEY_ONBOARDING_DONE, version).putString(KEY_ONBOARDING_STEP, "welcome").apply()
+        _onboardingDone.value = version
+        BrowserLog.info("onboarding", "Onboarding finished")
+    }
+
+    /** Settings > About > Run setup again. Choices already made stay; each step starts from them. */
+    fun restartOnboarding() {
+        prefs.edit().putInt(KEY_ONBOARDING_DONE, 0).putString(KEY_ONBOARDING_STEP, "welcome").apply()
+        _onboardingStep.value = "welcome"
+        _onboardingDone.value = 0
+        BrowserLog.info("onboarding", "Setup started again from Settings")
+    }
+
+    private val _tipsSeen = MutableStateFlow(prefs.getStringSet(KEY_TIPS_SEEN, emptySet()) ?: emptySet())
+    /** Ids of the first-use tips already shown and dismissed. */
+    val tipsSeen: StateFlow<Set<String>> = _tipsSeen.asStateFlow()
+
+    fun markTipSeen(id: String) {
+        val next = _tipsSeen.value + id
+        prefs.edit().putStringSet(KEY_TIPS_SEEN, next).apply()
+        _tipsSeen.value = next
+        BrowserLog.info("onboarding", "Tip seen: $id")
+    }
+
     private val _noticeVersion = MutableStateFlow(prefs.getInt(KEY_NOTICE_VERSION, 0))
     /** The notice version the user accepted, 0 if never. A newer notice version shows it again. */
     val noticeAcceptedVersion: StateFlow<Int> = _noticeVersion.asStateFlow()
@@ -531,6 +580,9 @@ class SettingsRepository(context: Context) {
         private const val KEY_WEBSITE_THEME = "website_theme"
         private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"
         private const val KEY_BLOCK_POPUPS = "block_popups"
+        private const val KEY_ONBOARDING_DONE = "onboarding_done_version"
+        private const val KEY_ONBOARDING_STEP = "onboarding_step"
+        private const val KEY_TIPS_SEEN = "tips_seen"
         private const val KEY_NOTICE_VERSION = "notice_version"
         private const val KEY_NOTICE_DATE = "notice_date"
         private const val KEY_OPEN_LINKS_IN_APPS = "open_links_in_apps"

@@ -1282,6 +1282,23 @@ fun SettingsScreen(
                             val accepted = settings.noticeAcceptedDate()
                             Text(if (accepted.isEmpty()) "›" else "Accepted $accepted ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable {
+                                    // Setup starts from what is set now, so nothing changes unless a choice is changed.
+                                    settings.restartOnboarding()
+                                    onDone()
+                                }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Run setup again", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                            Text("›", fontSize = 14.sp, color = browserColors().SecondaryText)
+                        }
                     }
                 }
             }

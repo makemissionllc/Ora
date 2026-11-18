@@ -287,7 +287,7 @@ fun BrowserScreen(
     }
     CompositionLocalProvider(LocalBrowserColors provides palette) {
         // The notice comes first on a first launch; nothing of the browser is composed until it is accepted.
-        com.makemission.ora.onboarding.FirstRunHost(settings) { BrowserContent(settings, profiles, modifier) }
+        com.makemission.ora.onboarding.FirstRunHost(settings, profiles) { BrowserContent(settings, profiles, modifier) }
         // Drawn inside the palette so the lock follows Light, Dark and Pure dark like everything else.
         val wholeApp by settings.appLockWholeApp.collectAsState()
         LockScreen(settings, visible = AppLock.locked && wholeApp)
@@ -1041,6 +1041,19 @@ private fun BrowserContent(
                     onStay = { link -> tabs.answerAppLink(link, open = false) },
                     onAlways = { link -> tabs.answerAppLink(link, open = true, remember = true) },
                     onOpen = { link -> tabs.answerAppLink(link, open = true) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+                )
+                // First-use tips: one at a time on the first real page, each with its own seen flag.
+                val tipsSeen by settings.tipsSeen.collectAsState()
+                FirstUseTipHost(
+                    seen = tipsSeen,
+                    tablet = isTablet,
+                    ready = selected.url != BrowserTabs.START_URL && !selected.loading && !selected.isPrivate &&
+                        tabs.pendingAppLink == null && tabs.pendingPopup == null &&
+                        phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen,
+                    onGotIt = { settings.markTipSeen(it) },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
