@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Pull to refresh reloads a page after a shorter pull, about 15% less than before, and a short haptic tick marks the moment the pull is far enough to reload.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "With the PIN lock on, asking for a private tab now shows the lock screen even when you are on a regular tab, so you can unlock from there. Before, the lock could stay on with no way to enter the PIN, and private tabs would not open.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "Swiping the address bar moves only between tabs in the current space. From a normal tab it no longer lands on a private tab, and from a private tab it no longer lands on a normal one.  (commit pending)"),
             ChangeItem(ChangeKind.FIXED, "Links and images opened from a private tab (Open in new tab, Open in background tab, Open image in new tab) now open as private tabs instead of normal tabs. Nothing about them is logged.  (commit pending)"),

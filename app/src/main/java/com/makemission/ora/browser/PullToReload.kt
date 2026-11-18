@@ -20,6 +20,8 @@ fun Modifier.pullToReload(
     canPull: () -> Boolean,
     onDistance: (Dp) -> Unit,
     onRefresh: () -> Unit,
+    /** Called once per pull, the first time the finger reaches the threshold (a haptic tick on the phone and tablet). */
+    onThreshold: () -> Unit = {},
 ): Modifier = pointerInput(canPull) {
     val threshold = BrowserTokens.PullRefreshThreshold.toPx()
     awaitEachGesture {
@@ -28,6 +30,7 @@ fun Modifier.pullToReload(
         val pulling = canPull()
         var distance = 0f
         var downward = 0f
+        var reached = false
         while (true) {
             val event = awaitPointerEvent(PointerEventPass.Initial)
             val change = event.changes.firstOrNull { it.id == down.id } ?: break
@@ -46,6 +49,10 @@ fun Modifier.pullToReload(
             }
             if (pulling) {
                 distance = (distance + change.positionChange().y).coerceAtLeast(0f)
+                if (!reached && distance >= threshold) {
+                    reached = true
+                    onThreshold()
+                }
                 onDistance(distance.toDp())
             } else {
                 downward += change.positionChange().y

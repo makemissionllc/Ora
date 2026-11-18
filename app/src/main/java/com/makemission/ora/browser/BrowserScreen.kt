@@ -110,6 +110,8 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
@@ -1407,6 +1409,7 @@ private fun BrowserPage(
     // Pull to refresh: pulling down from the top of the page reloads it. A small indicator follows the finger
     // and stays while the page reloads. The page itself keeps scrolling as before.
     var pull by remember { mutableStateOf(0.dp) }
+    val pullHaptics = LocalHapticFeedback.current
     val indicatorVisible = pull > 0.dp || tab.loading
     Box(
         modifier = Modifier
@@ -1420,7 +1423,9 @@ private fun BrowserPage(
                 onRefresh = {
                     BrowserLog.info("page", "Pull to refresh: ${tab.url}")
                     tab.session.reload()
-                }
+                },
+                // Quality of life: one short tick when the pull is far enough to reload, so the release feels sure.
+                onThreshold = { pullHaptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
             )
     ) {
         // The space above the page, filled with the page's top colour. The page moves down by the same height, so

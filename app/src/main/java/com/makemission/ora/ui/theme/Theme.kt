@@ -91,7 +91,8 @@ object BrowserTokens {
     /** Thickness of the load bar along the bottom of the address field. */
     val LoadBarHeight = 3.dp
     // Pull to refresh: how far a page must be pulled down at the top to reload, and the indicator size.
-    val PullRefreshThreshold = 96.dp
+    // 82 dp (was 96 dp, about 15% less): the old value was 1 to 12 px short on the tablet's drags.
+    val PullRefreshThreshold = 82.dp
     val PullRefreshIndicatorSize = 36.dp
     /** Space kept above the floating bottom bar, so the selection card sits clear of it. */
     val SelectionMenuBottomInset = 96.dp
