@@ -16,6 +16,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.outlined.AddToHomeScreen
 import androidx.compose.material.icons.outlined.Article
+import androidx.compose.material.icons.outlined.OpenInBrowser
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DesktopWindows
@@ -110,6 +111,8 @@ fun BrowserMenuSheet(
     onReader: () -> Unit,
     onCopyAddress: () -> Unit,
     onAddToHome: () -> Unit,
+    /** Null hides the row; set on https pages only (see [MainBrowserHandoff]). */
+    onOpenInMainBrowser: (() -> Unit)? = null,
     /** Title of the tab "Reopen closed tab" would bring back, or null when no tab was closed this run. */
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
@@ -139,6 +142,7 @@ fun BrowserMenuSheet(
             onReader = { act(onReader) },
             onCopyAddress = { act(onCopyAddress) },
             onAddToHome = { act(onAddToHome) },
+            onOpenInMainBrowser = onOpenInMainBrowser?.let { open -> { act(open) } },
             closedTabTitle = closedTabTitle,
             onReopenClosed = { act(onReopenClosed) },
         )
@@ -178,6 +182,7 @@ private fun BrowserMenuItems(
     onReader: () -> Unit,
     onCopyAddress: () -> Unit,
     onAddToHome: () -> Unit,
+    onOpenInMainBrowser: (() -> Unit)?,
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
 ) {
@@ -210,6 +215,10 @@ private fun BrowserMenuItems(
             // Quality of life: one tap copies the page's address, without opening Share first.
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)
+            // Quality of life: when a site's passkey sign-in fails in Ora, one tap carries the page to another browser.
+            if (onOpenInMainBrowser != null) {
+                MenuRow(Icons.Outlined.OpenInBrowser, "Passkey not working? Open in main browser", onOpenInMainBrowser)
+            }
             // Tapping with nothing closed explains itself (the screen shows a snackbar) rather than doing nothing.
             MenuRow(
                 Icons.Outlined.History, "Reopen closed tab", onReopenClosed,

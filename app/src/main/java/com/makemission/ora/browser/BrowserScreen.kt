@@ -1187,6 +1187,12 @@ private fun BrowserContent(
                                 HomeShortcut.add(context, url, selected.title)
                             }
                         },
+                        onOpenInMainBrowser = selected.url.takeIf { MainBrowserHandoff.isOffered(it) }?.let { url ->
+                            {
+                                UsageStats.count("menu.open_in_main_browser")
+                                if (!MainBrowserHandoff.open(context, url, selected.isPrivate)) InAppNotices.show("No other browser found")
+                            }
+                        },
                         onCopyAddress = {
                             val url = selected.url
                             if (url == BrowserTabs.START_URL || url.isBlank()) {
