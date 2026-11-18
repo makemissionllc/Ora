@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Profile tints: each profile can take a tint (Basalt, Moss, Clay, Tide or Plum) that colours Ora's own bars, sidebar and sheets in the Dark look. Web pages are never tinted, and Light and Pure dark ignore it. Long-press a profile chip to open its page: rename it, pick a tint and see it applied as you pick, with Cancel putting the old tint back. The + chip opens the same page for a new profile."),
             ChangeItem(ChangeKind.ADDED, "Find in page on tablet: it opens in the address bar's place, with the search icon, the text field, \"1 of 4\", previous, next and Done, and the field is ready to type at once. Back or Done brings the address bar back."),
             ChangeItem(ChangeKind.FIXED, "The ⋯ menu panel on tablet no longer cuts off its top row: it starts below the top bar, has even space inside, and scrolls if it is taller than the screen."),
             ChangeItem(ChangeKind.CHANGED, "With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card."),

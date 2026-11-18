@@ -2,6 +2,7 @@ package com.makemission.ora.profiles
 
 import android.content.Context
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.ui.theme.ProfileTint
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -9,7 +10,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 /** A profile keeps its own open tabs and bookmarks. History, cookies and logins are shared for now. */
-data class Profile(val id: String, val name: String)
+data class Profile(val id: String, val name: String, val tint: ProfileTint = ProfileTint.BASALT)
 
 /**
  * Keeps the list of profiles and which one is active, in private preferences.
@@ -37,13 +38,30 @@ class ProfilesRepository(context: Context) {
     }
 
     /** Adds a profile and makes it active. Blank names are replaced with a numbered one. */
-    fun add(name: String): Profile {
+    fun add(name: String, tint: ProfileTint = ProfileTint.BASALT): Profile {
         val clean = name.trim().ifEmpty { "Profile ${_profiles.value.size + 1}" }
-        val profile = Profile("p" + System.currentTimeMillis(), clean)
+        val profile = Profile("p" + System.currentTimeMillis(), clean, tint)
         save(_profiles.value + profile)
         select(profile.id)
-        BrowserLog.info("profiles", "Added profile $clean")
+        BrowserLog.info("profiles", "Added profile $clean with tint ${tint.label}")
         return profile
+    }
+
+    /** Changes a profile's tint. The colours of the whole app follow at once when it is the active profile. */
+    fun setTint(id: String, tint: ProfileTint) {
+        val current = _profiles.value.firstOrNull { it.id == id } ?: return
+        if (current.tint == tint) return
+        save(_profiles.value.map { if (it.id == id) it.copy(tint = tint) else it })
+        BrowserLog.info("profiles", "Profile ${current.name} tint is now ${tint.label}")
+    }
+
+    /** Renames a profile. A blank name is ignored. */
+    fun rename(id: String, name: String) {
+        val clean = name.trim()
+        val current = _profiles.value.firstOrNull { it.id == id } ?: return
+        if (clean.isEmpty() || clean == current.name) return
+        save(_profiles.value.map { if (it.id == id) it.copy(name = clean) else it })
+        BrowserLog.info("profiles", "Renamed profile ${current.name} to $clean")
     }
 
     /** Removes a profile. The default one cannot be removed, and removing the active one switches to the default. */
@@ -58,7 +76,7 @@ class ProfilesRepository(context: Context) {
 
     private fun save(list: List<Profile>) {
         val array = JSONArray()
-        list.forEach { array.put(JSONObject().put("id", it.id).put("name", it.name)) }
+        list.forEach { array.put(JSONObject().put("id", it.id).put("name", it.name).put("tint", it.tint.key)) }
         prefs.edit().putString(KEY_LIST, array.toString()).apply()
         _profiles.value = list
     }
@@ -69,7 +87,7 @@ class ProfilesRepository(context: Context) {
             val array = JSONArray(text)
             List(array.length()) { i ->
                 val obj = array.getJSONObject(i)
-                Profile(obj.getString("id"), obj.getString("name"))
+                Profile(obj.getString("id"), obj.getString("name"), ProfileTint.fromKey(obj.optString("tint", null)))
             }
         }.orEmpty()
         return if (saved.any { it.id == DEFAULT_ID }) saved else listOf(Profile(DEFAULT_ID, "Personal")) + saved

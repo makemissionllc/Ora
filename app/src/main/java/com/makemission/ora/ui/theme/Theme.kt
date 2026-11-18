@@ -273,6 +273,39 @@ val DarkBrowserColors = BrowserColors(
     Scrim = Color(0x8C1A1B1E),
 )
 
+/**
+ * The five profile tints from the UI v2 design. A tint recolours only Ora's own surfaces in the dark themes, never web
+ * pages. Chalk, Fog, Lichen and Ember stay the same in every tint. [marker] is the small dot beside a profile's name.
+ */
+enum class ProfileTint(val key: String, val label: String, val base: Color, val surface: Color, val raised: Color, val marker: Color) {
+    BASALT("basalt", "Basalt", Color(0xFF1A1B1E), Color(0xFF232528), Color(0xFF2D3034), Color(0xFF9A968F)),
+    MOSS("moss", "Moss", Color(0xFF1A1E19), Color(0xFF232922), Color(0xFF2D342B), Color(0xFF8FA77A)),
+    CLAY("clay", "Clay", Color(0xFF201B19), Color(0xFF2A2321), Color(0xFF352C29), Color(0xFFC98E72)),
+    TIDE("tide", "Tide", Color(0xFF191C21), Color(0xFF21262D), Color(0xFF2B3139), Color(0xFF7E9BB8)),
+    PLUM("plum", "Plum", Color(0xFF1E1A21), Color(0xFF28222C), Color(0xFF332B38), Color(0xFFA88BB8));
+
+    companion object {
+        fun fromKey(key: String?): ProfileTint = entries.firstOrNull { it.key == key } ?: BASALT
+    }
+}
+
+/**
+ * The browser palette for a mode and a profile tint. Tints apply to the Dark palette only: Light keeps Stone, Paper
+ * and Ink, and Pure dark ignores tints. [ProfileTint.BASALT] is the Dark palette as it already is.
+ */
+fun browserColors(base: BrowserColors, tint: ProfileTint): BrowserColors {
+    if (base != DarkBrowserColors || tint == ProfileTint.BASALT) return base
+    return base.copy(
+        GridBackground = tint.base,
+        ToolbarBackground = tint.surface,
+        SidebarBackground = tint.surface,
+        Surface = tint.surface,
+        AddressBarBackground = tint.raised,
+        SidebarSelected = tint.raised,
+        ToolbarBorder = base.ToolbarBorder,
+    )
+}
+
 /** Pure (OLED) black variant: same layout as dark, with true black chrome and surfaces, and the same Mineral text. */
 val PureDarkBrowserColors = BrowserColors(
     Accent = Mineral.Chalk,

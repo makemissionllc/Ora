@@ -175,11 +175,12 @@ import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.DarkBrowserColors
 import com.makemission.ora.ui.theme.LightBrowserColors
 import com.makemission.ora.ui.theme.LocalBrowserColors
+import com.makemission.ora.ui.theme.ProfileTint
+import com.makemission.ora.ui.theme.browserColors
 import com.makemission.ora.ui.theme.PaletteStyle
 import com.makemission.ora.ui.theme.materialBrowserColors
 import com.makemission.ora.ui.theme.oraColorScheme
 import com.makemission.ora.ui.theme.PureDarkBrowserColors
-import com.makemission.ora.ui.theme.browserColors
 import com.makemission.ora.settings.AppearanceMode
 import com.makemission.ora.settings.SettingsScreen
 import com.makemission.ora.settings.SearchEngine
@@ -244,10 +245,15 @@ fun BrowserScreen(
     // Material controls use the Material scheme for the same light or dark mode as the chosen appearance.
     val context = LocalContext.current
     val materialScheme = remember(isDark) { oraColorScheme(context, isDark) }
+    // The active profile's tint recolours Ora's own surfaces in Dark (never web pages).
+    val profileList by profiles.profiles.collectAsState()
+    val activeProfileId by profiles.activeId.collectAsState()
+    val activeTint = profileList.firstOrNull { it.id == activeProfileId }?.tint ?: ProfileTint.BASALT
+    val tinted = browserColors(original, activeTint)
     val palette = if (paletteStyle == PaletteStyle.MATERIAL) {
-        materialBrowserColors(materialScheme, original)
+        materialBrowserColors(materialScheme, tinted)
     } else {
-        original
+        tinted
     }
     // Web pages follow the app's light or dark palette (or the system setting when the toggle is off).
     val websiteTheme by settings.websiteTheme.collectAsState()
@@ -865,7 +871,8 @@ private fun BrowserContent(
                         profiles = profileList,
                         activeId = profileId,
                         onSelect = { id -> profiles.select(id) },
-                        onAdd = { name -> profiles.add(name) },
+                        onAdd = { name, tint -> profiles.add(name, tint) },
+                        onEdit = { id, name, tint -> profiles.rename(id, name); profiles.setTint(id, tint) },
                         onRemove = { id -> profiles.remove(id) },
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -1269,7 +1276,8 @@ private fun TabOverviewContent(
             profiles = profileList,
             activeId = profileId,
             onSelect = { id -> profiles.select(id) },
-            onAdd = { name -> profiles.add(name) },
+            onAdd = { name, tint -> profiles.add(name, tint) },
+                        onEdit = { id, name, tint -> profiles.rename(id, name); profiles.setTint(id, tint) },
             onRemove = { id -> profiles.remove(id) },
         )
         TabGrid(
