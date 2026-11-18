@@ -78,7 +78,7 @@ Last updated: 2026-11-18, at commit `55c62be`.
 
 ## In progress
 
-- Mineral design: all planned steps are done. Reader view is planned as its own task next.
+- Mineral design: all planned steps are done, including Reader view.
 - Documentation set: README, CHANGELOG, PROGRESS, and the AGENTS.md rule that keeps them current.
 - In-app "What's new" page, built from the same entries as CHANGELOG.md.
 - Phone Compact top fade under the status bar, and page clipping (`01de1e1`): the bottom fade was removed (`2a47c6a`). Phone (reddit.com, portrait, not scrolled): no fade under the bar, and page text ends at the bar's top edge. Phone (google.com and theverge.com, portrait): the page starts below the status bar at the top, and content fades under the status bar while scrolled. The page under the folded bar at the page end is open; see Known issues. Not checked: tablet; scrolling back up. The earlier google.com screenshot with page content under the status bar was not seen again at the top.
@@ -110,7 +110,7 @@ Last updated: 2026-11-18, at commit `55c62be`.
 
 - Auto-fill on the tablet (`55c62be`): not checked. The phone-only test was requested.
 - Tablet check for the Secure DNS row in Settings > Privacy (see verification log).
-- Reader mode. The approach is undecided. GeckoView `about:reader` has not been tested.
+- Reader view: the top "Reader <host>" pill from the mockup is not built. Extraction is greedy on very long pages (a Wikipedia article reads as hundreds of minutes). Light and Pure dark not checked.
 - Shrink-on-scroll on tablet: bars currently hide completely. The design calls for shrinking to smaller controls.
 - Tablet Tabs section in Settings, not re-checked since the rail change.
 - Preloading (for example, prefetching a link on long press). Needs a design, and it must not load pages the user did not ask for.
@@ -134,6 +134,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-18 | `6e24dae` (Reader view) | Phone (CPH2745, USB): menu row says "3 min read"; Reader draws the article on Stone with "4 min read", the bar sits above the address bar, Serif/Sans switch restyles it, the close button returns the page (screenshots). Not checked: Light, Pure dark, Back key, Settings section | Tablet: seen on an earlier build (Dark, Wikipedia): menu row, overlay, Sans and Basalt restyle, close. Not re-checked after the last fix (messages to every tab on the same address) |
 | 2026-11-18 | `3ad3c58` (Mineral Settings) | Phone (CPH2745, USB): Appearance list with Chalk Done pill, round back button, Chalk and Basalt switches and Shale off switch (screenshot). Other sections not scrolled | Tablet (USB): Appearance shown with a Chalk Appearance pill, Slate card and the segmented theme control; Privacy pill and cards shown after tapping the rail; a switch flipped off and on again. Taps near the left edge of the rail (x below about 200 px) did nothing; tapping further right worked. Haptic tick not felt or measured |
 | 2026-11-18 | `3040ffc` (Mineral permission card) | Phone (CPH2745, USB): local test page at 127.0.0.1 via adb reverse; Location and Camera prompts shown with the icon, title, note and the three buttons (screenshots). Not checked: Allow and Block taps, private tab wording, Light, Pure dark | Tablet (7ba8e294, USB): Location prompt under the address bar with the new card (screenshot); the Camera tap showed no card, probably because the tablet has no camera, not investigated. Not checked: Light, Pure dark |
 | 2026-11-18 | `d466b61` (Mineral App lock) | Phone (CPH2745, USB): whole-app lock in Dark after the fix, four filled dots with the Chalk unlock key, and unlocking with PIN 2468 reached the page (screenshots). Before the fix the same screen showed Light. Not checked: Light, Pure dark, wrong PIN, hold-to-clear | Not checked: tablet not connected over ADB this session |

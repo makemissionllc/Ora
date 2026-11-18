@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Reader view: the ⋯ menu has a Reader view row that shows the article without the clutter and says how long it takes to read. A bar at the bottom changes the text size, Sans or Serif, and the page colour. Your choices are kept in Settings > Appearance."),
             ChangeItem(ChangeKind.ADDED, "App lock: Settings > Privacy can ask for a PIN when Ora opens and whenever you come back to it. The PIN is kept only as a salted hash, never as the number itself. After five wrong tries you wait 30 seconds, then longer each time, and the lock screen counts it down."),
             ChangeItem(ChangeKind.ADDED, "HTTPS-only mode: a Privacy switch that loads pages over a secure connection only."),
             ChangeItem(ChangeKind.ADDED, "Close all: the tab overview has a Close all button. It asks first, then opens one start page. The last 10 pages can be brought back from Reopen closed tab."),
