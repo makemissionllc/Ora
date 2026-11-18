@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.history.HistoryEntry
+import androidx.compose.material3.AlertDialog
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.browserColors
 
@@ -78,6 +79,23 @@ fun TabGrid(
         allTabs.size == 1 -> "1 tab"
         else -> "${allTabs.size} tabs"
     }
+    // Closing every tab asks first, since it cannot be undone with one tap. The tabs stay in "Reopen closed tab".
+    var confirmCloseAll by remember { mutableStateOf(false) }
+    if (confirmCloseAll) {
+        AlertDialog(
+            onDismissRequest = { confirmCloseAll = false },
+            title = { Text("Close all ${allTabs.size} tabs?") },
+            text = { Text("You can bring back the last 10 from \"Reopen closed tab\" in the menu. Private tabs are not kept.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmCloseAll = false
+                    tabs.closeAllToStart()
+                    onDone()
+                }) { Text("Close all", color = browserColors().CloseBadge, fontWeight = FontWeight.SemiBold) }
+            },
+            dismissButton = { TextButton(onClick = { confirmCloseAll = false }) { Text("Cancel") } },
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -91,7 +109,9 @@ fun TabGrid(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Spacer(modifier = Modifier.width(64.dp))
+                TextButton(onClick = { confirmCloseAll = true }, enabled = allTabs.size > 1) {
+                    Text("Close all", color = browserColors().CloseBadge, fontWeight = FontWeight.SemiBold)
+                }
                 Text(text = countText, color = browserColors().AddressBarText, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
                 TextButton(onClick = onDone) {
                     Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
@@ -146,8 +166,13 @@ fun TabGrid(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            IconButton(onClick = onNewTab, modifier = Modifier.size(BrowserTokens.ToolbarButtonSize)) {
-                Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = onNewTab, modifier = Modifier.size(BrowserTokens.ToolbarButtonSize)) {
+                    Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
+                }
+                TextButton(onClick = { confirmCloseAll = true }, enabled = allTabs.size > 1) {
+                    Text("Close all", color = browserColors().CloseBadge)
+                }
             }
             Text(
                 text = countText,

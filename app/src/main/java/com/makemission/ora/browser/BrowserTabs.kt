@@ -461,6 +461,26 @@ class BrowserTabs(
         }
     }
 
+    /**
+     * Closes every tab and opens one start page. Each page that could come back is kept for "Reopen closed tab"
+     * (the last [MAX_CLOSED_HISTORY]); start pages and private tabs are not, as with a single close.
+     */
+    fun closeAllToStart() {
+        val count = tabs.size
+        UsageStats.count("tab.close_all")
+        tabs.forEach { tab ->
+            if (tab.url != START_URL && !tab.isPrivate) {
+                closedHistory.add(ClosedTab(tab.id, tab.url, tab.title, tab.sessionState))
+                if (closedHistory.size > MAX_CLOSED_HISTORY) closedHistory.removeAt(0)
+            }
+            tab.close()
+        }
+        tabs.clear()
+        recentlyClosed = null
+        BrowserLog.info("tabs", "Closed all $count tabs")
+        newTab(START_URL)
+    }
+
     fun closeAll() {
         tabs.forEach { it.close() }
         tabs.clear()
