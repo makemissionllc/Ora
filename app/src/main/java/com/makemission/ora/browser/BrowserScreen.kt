@@ -1187,7 +1187,7 @@ private fun BrowserContent(
                                 HomeShortcut.add(context, url, selected.title)
                             }
                         },
-                        onOpenInMainBrowser = selected.url.takeIf { MainBrowserHandoff.isOffered(it) }?.let { url ->
+                        onOpenInMainBrowser = selected.url.takeIf { remember(it) { MainBrowserHandoff.isAvailable(context, it) } }?.let { url ->
                             {
                                 UsageStats.count("menu.open_in_main_browser")
                                 if (!MainBrowserHandoff.open(context, url, selected.isPrivate)) InAppNotices.show("No other browser found")
