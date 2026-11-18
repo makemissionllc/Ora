@@ -11,24 +11,35 @@ import com.makemission.ora.browser.ExternalLinks
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
 import com.makemission.ora.profiles.ProfilesRepository
+import com.makemission.ora.security.AppLock
+import com.makemission.ora.security.LockScreen
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.theme.OraTheme
 
 class MainActivity : ComponentActivity() {
+    private val settings by lazy { SettingsRepository(applicationContext) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         BrowserLog.installCrashHandler()
         BrowserLog.info("app", "Started")
         UsageStats.init(applicationContext)
+        AppLock.init(settings)
         handleLink(intent)
         enableEdgeToEdge()
         setContent {
             OraTheme {
-                val settings = remember { SettingsRepository(applicationContext) }
                 val profiles = remember { ProfilesRepository(applicationContext) }
                 BrowserScreen(settings = settings, profiles = profiles)
+                LockScreen(settings)
             }
         }
+    }
+
+    // Lock again whenever Ora leaves the screen, so a phone put down mid-browse is not left open.
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) AppLock.lockIfEnabled(settings)
     }
 
     // Ora is singleTask, so a link opened from another app arrives here while the browser is running.

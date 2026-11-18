@@ -206,6 +206,34 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Secure DNS ${if (enabled) "on" else "off"}")
     }
 
+    private val _appLockRecord = MutableStateFlow(prefs.getString(KEY_APP_LOCK, null))
+    /** Salted PBKDF2 record of the app lock PIN, or null when the lock is off. The PIN itself is never stored. */
+    val appLockRecord: StateFlow<String?> = _appLockRecord.asStateFlow()
+
+    fun setAppLockRecord(record: String?) {
+        prefs.edit().apply { if (record == null) remove(KEY_APP_LOCK) else putString(KEY_APP_LOCK, record) }.apply()
+        _appLockRecord.value = record
+        UsageStats.count("setting.app_lock")
+        BrowserLog.info("settings", "App lock ${if (record != null) "on" else "off"}")
+    }
+
+    fun appLockFailures(): Int = prefs.getInt(KEY_APP_LOCK_FAILS, 0)
+    fun appLockLockedUntil(): Long = prefs.getLong(KEY_APP_LOCK_UNTIL, 0L)
+    fun setAppLockFailures(count: Int, lockedUntil: Long) {
+        prefs.edit().putInt(KEY_APP_LOCK_FAILS, count).putLong(KEY_APP_LOCK_UNTIL, lockedUntil).apply()
+    }
+
+    private val _httpsOnly = MutableStateFlow(prefs.getBoolean(KEY_HTTPS_ONLY, false))
+    /** When on, pages load over HTTPS only. A site that has no HTTPS version shows a warning instead of loading unencrypted. */
+    val httpsOnly: StateFlow<Boolean> = _httpsOnly.asStateFlow()
+
+    fun setHttpsOnly(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_HTTPS_ONLY, enabled).apply()
+        _httpsOnly.value = enabled
+        UsageStats.count("setting.https_only")
+        BrowserLog.info("settings", "HTTPS-only mode ${if (enabled) "on" else "off"}")
+    }
+
     private val _globalPrivacyControl = MutableStateFlow(prefs.getBoolean(KEY_GLOBAL_PRIVACY_CONTROL, true))
     /** When on, pages receive the Global Privacy Control signal, asking sites not to sell or share your data. */
     val globalPrivacyControl: StateFlow<Boolean> = _globalPrivacyControl.asStateFlow()
@@ -438,6 +466,10 @@ class SettingsRepository(context: Context) {
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
+        private const val KEY_APP_LOCK = "app_lock_record"
+        private const val KEY_APP_LOCK_FAILS = "app_lock_fails"
+        private const val KEY_APP_LOCK_UNTIL = "app_lock_until"
+        private const val KEY_HTTPS_ONLY = "https_only"
         private const val KEY_DEVICE_FONT_WEB = "device_font_web"
         private const val KEY_TEXT_SIZE_PERCENT = "text_size_percent"
         const val TEXT_SIZE_MIN = 50

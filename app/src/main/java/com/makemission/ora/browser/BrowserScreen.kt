@@ -295,6 +295,12 @@ private fun BrowserContent(
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
+    val httpsOnly by settings.httpsOnly.collectAsState()
+    LaunchedEffect(httpsOnly) {
+        GeckoEngine.runtime(context).settings.setAllowInsecureConnections(
+            if (httpsOnly) GeckoRuntimeSettings.HTTPS_ONLY else GeckoRuntimeSettings.ALLOW_ALL
+        )
+    }
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val downloads = remember { DownloadsRepository(context) }

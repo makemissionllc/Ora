@@ -113,6 +113,9 @@ fun SettingsScreen(
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
+    val httpsOnly by settings.httpsOnly.collectAsState()
+    val appLockRecord by settings.appLockRecord.collectAsState()
+    var appLockDialog by remember { mutableStateOf(false) }
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val quickResume by settings.quickResume.collectAsState()
     val saveHistory by settings.saveHistory.collectAsState()
@@ -700,6 +703,43 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .clickable { appLockDialog = true }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Text("App lock", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        if (appLockRecord != null) "On. Ora asks for your PIN when you open it. Tap to turn off."
+                                        else "Ask for a PIN when Ora opens or you come back to it. The PIN is kept only as a salted hash.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = appLockRecord != null, onCheckedChange = { appLockDialog = true })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setHttpsOnly(!httpsOnly) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Text("HTTPS-only mode", fontSize = 15.sp, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Loads pages over a secure connection only. A site with no secure version shows a warning first, so it never loads unencrypted by surprise.",
+                                        fontSize = 12.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                Switch(checked = httpsOnly, onCheckedChange = { settings.setHttpsOnly(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
                                     .clickable { settings.setGlobalPrivacyControl(!globalPrivacyControl) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
@@ -1025,6 +1065,14 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (appLockDialog) {
+        com.makemission.ora.security.AppLockDialog(
+            settings = settings,
+            turningOff = appLockRecord != null,
+            onDismiss = { appLockDialog = false }
+        )
     }
 
     if (confirmClearSites) {
