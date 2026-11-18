@@ -85,6 +85,8 @@ object BrowserTokens {
     val ToolbarButtonSize = 48.dp
     /** Leading file tile and round row buttons on the Downloads page. */
     val RowIconSize = 44.dp
+    /** Widest the download start notice gets, so it stays a small pill on tablets. */
+    val DownloadNoticeMaxWidth = 360.dp
     val AddressBarHeight = 48.dp
     /** Thickness of the load bar along the bottom of the address field. */
     val LoadBarHeight = 3.dp

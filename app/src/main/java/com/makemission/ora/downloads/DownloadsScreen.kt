@@ -44,13 +44,20 @@ import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Pause
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,6 +82,7 @@ import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.Mineral
 import com.makemission.ora.ui.theme.browserColors
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -88,11 +96,14 @@ private enum class DownloadFilter(val label: String, val emptyText: String) {
 
     fun matches(item: DownloadItem): Boolean = when (this) {
         ALL -> true
-        ACTIVE -> item.status == DownloadStatus.RUNNING
+        ACTIVE -> item.status == DownloadStatus.RUNNING || item.status == DownloadStatus.PAUSED
         DONE -> item.status == DownloadStatus.DONE
         FAILED -> item.status == DownloadStatus.FAILED || item.status == DownloadStatus.CANCELLED
     }
 }
+
+/** Running or paused: still on its way to the file, so it belongs in the Active section. */
+private val DownloadItem.isLive: Boolean get() = status == DownloadStatus.RUNNING || status == DownloadStatus.PAUSED
 
 /** How many parts the progress bar is drawn in. Each part fills as the file passes its share. */
 private const val PROGRESS_PARTS = 4
@@ -103,6 +114,7 @@ private const val PROGRESS_PARTS = 4
  * Phone: summary, filter and rows; tapping a finished row opens the file.
  * Tablet: the same list on the left and the selected file's details on the right.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadsScreen(
     repository: DownloadsRepository,
@@ -121,8 +133,8 @@ fun DownloadsScreen(
     val running = all.filter { it.status == DownloadStatus.RUNNING }
     val finishedCount = all.size - running.size
     val visible = all.filter { filter.matches(it) }
-    val activeRows = visible.filter { it.status == DownloadStatus.RUNNING }
-    val otherRows = visible.filterNot { it.status == DownloadStatus.RUNNING }
+    val activeRows = visible.filter { it.isLive }
+    val otherRows = visible.filterNot { it.isLive }
     // Tablet keeps one file selected: the one chosen, else the first in the visible list.
     val selected = if (tablet) visible.firstOrNull { it.id == selectedId } ?: visible.firstOrNull() else null
 
@@ -134,12 +146,15 @@ fun DownloadsScreen(
 
     val rowActions = RowActions(
         onCancel = { repository.cancel(it.id) },
+        onPause = { repository.pause(it.id) },
+        onResume = { repository.resume(it.id) },
         onOpen = { openFile(context, it) },
         onShare = { shareFile(context, it) },
         onDelete = { confirmDelete = it },
     )
 
-    Dialog(
+    // Tablet: a full-screen overlay that grows from the toolbar button.
+    if (tablet) Dialog(
         onDismissRequest = { visibleState.targetState = false },
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
@@ -187,6 +202,42 @@ fun DownloadsScreen(
         }
     }
 
+    // Phone: a bottom sheet that opens halfway and drags up to full screen. Same list and actions as the tablet.
+    if (!tablet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+        val scope = rememberCoroutineScope()
+        ModalBottomSheet(
+            onDismissRequest = onDismiss,
+            sheetState = sheetState,
+            containerColor = colors.GridBackground,
+            dragHandle = {
+                Box(
+                    Modifier
+                        .padding(top = 10.dp, bottom = 6.dp)
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(CircleShape)
+                        .background(colors.SecondaryText.copy(alpha = 0.4f))
+                )
+            },
+        ) {
+            Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+                PhonePage(
+                    running = running,
+                    filter = filter,
+                    onFilter = { filter = it },
+                    visible = visible,
+                    activeRows = activeRows,
+                    otherRows = otherRows,
+                    emptyText = filter.emptyText,
+                    finishedCount = finishedCount,
+                    onClearFinished = { confirmClear = true },
+                    onDone = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
+                    actions = rowActions,
+                )
+            }
+        }
+    }
+
     confirmDelete?.let { item ->
         AlertDialog(
             onDismissRequest = { confirmDelete = null },
@@ -225,6 +276,8 @@ fun DownloadsScreen(
 /** The four row actions, bundled so both layouts share them. */
 private class RowActions(
     val onCancel: (DownloadItem) -> Unit,
+    val onPause: (DownloadItem) -> Unit,
+    val onResume: (DownloadItem) -> Unit,
     val onOpen: (DownloadItem) -> Unit,
     val onShare: (DownloadItem) -> Unit,
     val onDelete: (DownloadItem) -> Unit,
@@ -314,8 +367,8 @@ private fun TabletPage(
                 if (visible.isEmpty()) {
                     Text(emptyText, modifier = Modifier.padding(horizontal = 4.dp), fontSize = 14.sp, color = colors.SecondaryText)
                 }
-                val activeRows = visible.filter { it.status == DownloadStatus.RUNNING }
-                val otherRows = visible.filterNot { it.status == DownloadStatus.RUNNING }
+                val activeRows = visible.filter { it.isLive }
+                val otherRows = visible.filterNot { it.isLive }
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp), contentPadding = PaddingValues(bottom = 16.dp)) {
                     if (activeRows.isNotEmpty()) {
                         item(key = "label-active") { SectionLabel("Active") }
@@ -588,7 +641,7 @@ private fun DownloadRow(
                 fontWeight = FontWeight.SemiBold,
                 color = colors.AddressBarText,
             )
-            if (item.status == DownloadStatus.RUNNING) SegmentBar(item.progress, height = 6.dp)
+            if (item.isLive) SegmentBar(item.progress, height = 6.dp)
             Text(
                 statusLine(item),
                 fontSize = 13.sp,
@@ -597,11 +650,24 @@ private fun DownloadRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
-        when (item.status) {
-            DownloadStatus.RUNNING -> IconTile(Icons.Outlined.Close, "Cancel download") { actions.onCancel(item) }
-            DownloadStatus.DONE -> if (onTap == null) IconTile(Icons.Outlined.Delete, "Delete file") { actions.onDelete(item) }
-                else Icon(Icons.Outlined.Check, contentDescription = "Done", tint = Mineral.Lichen, modifier = Modifier.size(18.dp))
-            DownloadStatus.FAILED, DownloadStatus.CANCELLED -> IconTile(Icons.Outlined.Delete, "Remove from list") { actions.onDelete(item) }
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            when (item.status) {
+                DownloadStatus.RUNNING -> {
+                    if (item.pausable) IconTile(Icons.Outlined.Pause, "Pause download") { actions.onPause(item) }
+                    IconTile(Icons.Outlined.Close, "Cancel download") { actions.onCancel(item) }
+                }
+                DownloadStatus.PAUSED -> {
+                    IconTile(Icons.Outlined.PlayArrow, "Resume download") { actions.onResume(item) }
+                    IconTile(Icons.Outlined.Close, "Cancel download") { actions.onCancel(item) }
+                }
+                DownloadStatus.DONE -> if (onTap == null) IconTile(Icons.Outlined.Delete, "Delete file") { actions.onDelete(item) }
+                    else Icon(Icons.Outlined.Check, contentDescription = "Done", tint = Mineral.Lichen, modifier = Modifier.size(18.dp))
+                DownloadStatus.FAILED -> {
+                    IconTile(Icons.Outlined.Refresh, "Retry download") { actions.onResume(item) }
+                    IconTile(Icons.Outlined.Delete, "Remove from list") { actions.onDelete(item) }
+                }
+                DownloadStatus.CANCELLED -> IconTile(Icons.Outlined.Delete, "Remove from list") { actions.onDelete(item) }
+            }
         }
     }
 }
@@ -651,13 +717,24 @@ private fun DownloadDetail(item: DownloadItem, actions: RowActions, onCopyLink: 
         Box(Modifier.weight(1f))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             when (item.status) {
-                DownloadStatus.RUNNING -> DetailPill("Cancel download", Mineral.Ember) { actions.onCancel(item) }
+                DownloadStatus.RUNNING -> {
+                    if (item.pausable) DetailPill("Pause", colors.AddressBarText) { actions.onPause(item) }
+                    DetailPill("Cancel download", Mineral.Ember) { actions.onCancel(item) }
+                }
+                DownloadStatus.PAUSED -> {
+                    DetailPill("Resume", colors.Accent, filled = true) { actions.onResume(item) }
+                    DetailPill("Cancel download", Mineral.Ember) { actions.onCancel(item) }
+                }
                 DownloadStatus.DONE -> {
                     DetailPill("Open", colors.Accent, filled = true) { actions.onOpen(item) }
                     DetailPill("Share", colors.AddressBarText) { actions.onShare(item) }
                     DetailPill("Delete file", Mineral.Ember) { actions.onDelete(item) }
                 }
-                DownloadStatus.FAILED, DownloadStatus.CANCELLED -> DetailPill("Remove from list", Mineral.Ember) { actions.onDelete(item) }
+                DownloadStatus.FAILED -> {
+                    DetailPill("Retry", colors.Accent, filled = true) { actions.onResume(item) }
+                    DetailPill("Remove from list", Mineral.Ember) { actions.onDelete(item) }
+                }
+                DownloadStatus.CANCELLED -> DetailPill("Remove from list", Mineral.Ember) { actions.onDelete(item) }
             }
             Box(Modifier.weight(1f))
             DetailPill("Copy link", colors.AddressBarText, onClick = onCopyLink)
@@ -769,6 +846,7 @@ private fun statusLine(item: DownloadItem): String {
                 parts.joinToString(", ")
             }
         }
+        DownloadStatus.PAUSED -> "Paused · ${DownloadsRepository.sizeLabel(item.bytes)} of ${if (item.totalBytes > 0) size else "unknown size"}"
         DownloadStatus.DONE -> "Done · $size · Downloads/Ora"
         DownloadStatus.FAILED -> "Failed: ${item.error ?: "unknown error"}"
         DownloadStatus.CANCELLED -> "Cancelled"

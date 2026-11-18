@@ -115,6 +115,7 @@ fun SettingsScreen(
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
+    val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val httpsOnly by settings.httpsOnly.collectAsState()
     val appLockRecord by settings.appLockRecord.collectAsState()
@@ -757,6 +758,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = secureDns, label = "Switch", onChange = { settings.setSecureDns(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setFastHttpDownloads(!fastHttpDownloads) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Fast downloads over http", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Plain http:// files use several connections at once, and can pause and resume. Their data is not encrypted, so anyone on the network can read or change it. Off: plain http files download on one connection and cannot pause. https files are always fast.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = fastHttpDownloads, label = "Switch", onChange = { settings.setFastHttpDownloads(it) })
                             }
                         }
                     }

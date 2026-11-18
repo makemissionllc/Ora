@@ -6,19 +6,25 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import com.makemission.ora.log.BrowserLog
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.mozilla.geckoview.WebResponse
+import java.io.File
 import java.io.IOException
+import java.io.RandomAccessFile
 import java.util.concurrent.ConcurrentHashMap
 
-enum class DownloadStatus { RUNNING, DONE, FAILED, CANCELLED }
+enum class DownloadStatus { RUNNING, PAUSED, DONE, FAILED, CANCELLED }
 
 /** One file the browser is saving. Progress is in bytes; [totalBytes] is -1 when the server did not say. */
 data class DownloadItem(
@@ -33,6 +39,8 @@ data class DownloadItem(
     val status: DownloadStatus = DownloadStatus.RUNNING,
     val contentUri: Uri? = null,
     val error: String? = null,
+    /** False when the server cannot resume a part, so the download can only be cancelled. */
+    val pausable: Boolean = true,
     /** When the save began, in epoch milliseconds. Shown as "Started" on the details page. */
     val startedAt: Long = System.currentTimeMillis(),
 ) {
@@ -41,49 +49,181 @@ data class DownloadItem(
 }
 
 /**
- * Saves files the pages hand to the browser (links to files, downloads started by scripts)
- * into the public Downloads folder, with progress, cancel, open and delete.
- * Logs every start, finish, failure and cancel through [BrowserLog].
+ * Saves files the pages hand to the browser into the public Downloads folder. Each file is fetched in
+ * parallel parts when the server allows range requests, so it is quicker, and it can be paused, resumed
+ * after a restart, and retried without starting over. Unfinished downloads are kept in app storage.
+ * Logs every start, pause, resume, finish, failure and cancel through [BrowserLog].
  */
-class DownloadsRepository(private val context: Context) {
+class DownloadsRepository(
+    private val context: Context,
+    /** Read when a download starts or resumes: true lets plain http:// files use the parts engine. */
+    private val fastHttp: () -> Boolean = { false },
+) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val dir = File(context.filesDir, "downloads").apply { mkdirs() }
+    private val engine = DownloadEngine()
+    private val store = DownloadStore(File(dir, "queue.json"))
     private val jobs = ConcurrentHashMap<Long, Job>()
-    /** Ids the user cancelled; the copy loop checks this between reads. */
-    private val cancelled: MutableSet<Long> = ConcurrentHashMap.newKeySet()
+    /** The parts and validator for each unfinished download. Kept on failure so a retry resumes. */
+    private val tasks = ConcurrentHashMap<Long, Task>()
+    /** Ids the user paused; their job stops and is marked paused instead of cancelled. */
+    private val pausing: MutableSet<Long> = ConcurrentHashMap.newKeySet()
+    private val lock = Any()
     private var nextId = 1L
+    @Volatile private var lastSave = 0L
 
     private val _items = MutableStateFlow<List<DownloadItem>>(emptyList())
     /** Newest first. */
     val items: StateFlow<List<DownloadItem>> = _items.asStateFlow()
 
-    /** Starts saving a response that the page handed over as a file. */
+    private val _started = MutableSharedFlow<DownloadItem>(extraBufferCapacity = 8)
+    /** Fires once for each download that begins, so the start notice can show its name. */
+    val started: SharedFlow<DownloadItem> = _started.asSharedFlow()
+
+    init {
+        // Downloads left unfinished by an earlier run come back paused, so the user decides when to continue.
+        val saved = store.load()
+        nextId = (saved.maxOfOrNull { it.id } ?: 0L) + 1
+        val restored = saved.map { s ->
+            tasks[s.id] = Task(s.url, s.etag, s.ranged, s.totalBytes, s.parts.mapIndexed { i, seg -> Part(i, seg) }.toMutableList())
+            DownloadItem(
+                id = s.id,
+                fileName = s.fileName,
+                url = s.url,
+                mimeType = s.mimeType,
+                totalBytes = s.totalBytes,
+                bytes = s.parts.sumOf { doneOf(it) },
+                status = DownloadStatus.PAUSED,
+                startedAt = s.startedAt,
+                pausable = s.ranged,
+            )
+        }
+        _items.value = restored
+        if (restored.isNotEmpty()) BrowserLog.info("download", "Restored ${restored.size} unfinished downloads as paused")
+    }
+
+    /** Starts saving a response that the page handed over as a file. The page's own stream is not used. */
     fun start(response: WebResponse, pageUrl: String) {
         val url = response.uri
         val mime = header(response, "content-type")?.substringBefore(';')?.trim()
         val name = fileNameFor(response)
         val total = header(response, "content-length")?.toLongOrNull() ?: -1L
+        runCatching { response.body?.close() }
         val item = DownloadItem(id = nextId++, fileName = name, url = url, mimeType = mime, totalBytes = total)
         update { listOf(item) + it }
         BrowserLog.info("download", "Started $name from $url (${sizeLabel(total)})")
+        _started.tryEmit(item)
+        launch(item.id)
+    }
 
-        jobs[item.id] = scope.launch {
+    /** Pauses a running download. Its saved parts stay on disk, so Resume continues from the same bytes. */
+    fun pause(id: Long) {
+        val job = jobs[id]?.takeIf { it.isActive } ?: return
+        if (find(id)?.pausable != true) return
+        pausing.add(id)
+        job.cancel()
+    }
+
+    /** Continues a paused or failed download from where it stopped. */
+    fun resume(id: Long) {
+        val item = find(id) ?: return
+        if (item.status != DownloadStatus.PAUSED && item.status != DownloadStatus.FAILED) return
+        BrowserLog.info("download", "Resumed ${item.fileName}")
+        launch(id)
+    }
+
+    /** Stops a download and removes its partial file. */
+    fun cancel(id: Long) {
+        val item = find(id) ?: return
+        if (item.status != DownloadStatus.RUNNING && item.status != DownloadStatus.PAUSED && item.status != DownloadStatus.FAILED) return
+        jobs[id]?.cancel()
+        partFile(id).delete()
+        tasks.remove(id)
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.CANCELLED, speed = 0) else it } }
+        saveNow()
+        BrowserLog.warn("download", "Cancelled ${item.fileName}")
+    }
+
+    /** Deletes the saved file and removes the row. An unfinished download is cancelled first. */
+    fun remove(id: Long) {
+        val item = find(id) ?: return
+        if (item.status == DownloadStatus.RUNNING || item.status == DownloadStatus.PAUSED) cancel(id)
+        item.contentUri?.let { context.contentResolver.delete(it, null, null) }
+        partFile(id).delete()
+        tasks.remove(id)
+        update { list -> list.filterNot { it.id == id } }
+        saveNow()
+        BrowserLog.info("download", "Deleted ${item.fileName}")
+    }
+
+    /** Removes finished, failed and cancelled rows. Files stay on disk. */
+    fun clearFinished() {
+        val before = _items.value.size
+        val gone = _items.value.filter { it.status == DownloadStatus.DONE || it.status == DownloadStatus.FAILED || it.status == DownloadStatus.CANCELLED }
+        gone.forEach { partFile(it.id).delete(); tasks.remove(it.id) }
+        update { list -> list.filterNot { it in gone } }
+        saveNow()
+        BrowserLog.info("download", "Cleared ${before - _items.value.size} finished downloads from the list")
+    }
+
+    private fun launch(id: Long) {
+        if (jobs[id]?.isActive == true) return
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.RUNNING, error = null) else it } }
+        jobs[id] = scope.launch {
             try {
-                save(item, response)
-            } catch (e: CancelledDownload) {
-                // cancel() already updated the row and logged it.
-            } catch (e: IOException) {
-                fail(item.id, e.message ?: "Read failed")
+                run(id)
+            } catch (e: CancellationException) {
+                if (id in pausing) {
+                    pausing.remove(id)
+                    update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.PAUSED, speed = 0) else it } }
+                    saveNow()
+                    BrowserLog.info("download", "Paused ${find(id)?.fileName ?: "download $id"}")
+                }
+                throw e
+            } catch (e: FileChangedException) {
+                // The saved parts no longer match the server's file, so the next Retry starts again.
+                tasks.remove(id)
+                partFile(id).delete()
+                fail(id, e.message ?: "The file changed on the server")
             } catch (e: Exception) {
-                fail(item.id, e.message ?: e.javaClass.simpleName)
+                fail(id, e.message ?: e.javaClass.simpleName)
             } finally {
-                jobs.remove(item.id)
-                cancelled.remove(item.id)
+                jobs.remove(id)
             }
         }
     }
 
-    private fun save(item: DownloadItem, response: WebResponse) {
+    private suspend fun run(id: Long) {
+        val item = find(id) ?: return
+        val part = partFile(id)
+        var task = tasks[id]
+        // Plain http without the setting: one connection, no probe, no range requests.
+        val plainHttp = item.url.startsWith("http://", ignoreCase = true) && !fastHttp()
+        if (task != null && !task.ranged) {
+            // A stream without ranges cannot continue from its bytes, so it starts over.
+            task.parts.forEach { it.seg = it.seg.copy(done = 0, finished = false) }
+        }
+        if (task == null || task.parts.isEmpty() || !part.exists()) {
+            val probe = if (plainHttp) Probe(item.totalBytes, null, false) else engine.probe(item.url)
+            val total = if (probe.total > 0) probe.total else item.totalBytes
+            task = Task(item.url, probe.etag, probe.ranges && total > 0, total, mutableListOf())
+            RandomAccessFile(part, "rw").use { raf -> if (total > 0) raf.setLength(total) }
+            task.parts += engine.plan(total, task.ranged).mapIndexed { i, s -> Part(i, s) }
+            tasks[id] = task
+            BrowserLog.info("download", "Plan ${item.fileName}: ${task.parts.size} part(s), ${if (task.ranged) "range requests" else "one stream, cannot pause"}")
+        }
+        val active = task
+        update { list -> list.map { if (it.id == id) it.copy(totalBytes = active.total, status = DownloadStatus.RUNNING, pausable = active.ranged) else it } }
+        saveNow()
+
+        engine.download(active.url, active.etag, active.ranged, part, active.parts) { onProgress(id, active) }
+
+        publish(id, item, part, active)
+    }
+
+    /** Copies the finished part file into Downloads/Ora and marks the row done. */
+    private fun publish(id: Long, item: DownloadItem, part: File, task: Task) {
         val resolver = context.contentResolver
         val values = ContentValues().apply {
             put(MediaStore.Downloads.DISPLAY_NAME, item.fileName)
@@ -93,84 +233,97 @@ class DownloadsRepository(private val context: Context) {
         }
         val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
             ?: throw IOException("Could not create file in Downloads")
-        update { list -> list.map { if (it.id == item.id) it.copy(contentUri = uri) else it } }
-
-        var written = 0L
-        var lastReport = 0L
-        var sampleTime = System.nanoTime()
-        var sampleBytes = 0L
-        val body = response.body ?: throw IOException("No response body")
-        resolver.openOutputStream(uri)?.use { out ->
-            body.use { input ->
-                val buffer = ByteArray(64 * 1024)
-                while (true) {
-                    if (item.id in cancelled) throw CancelledDownload()
-                    val read = input.read(buffer)
-                    if (read < 0) break
-                    out.write(buffer, 0, read)
-                    written += read
-                    // Throttle UI updates to about one per 256 KB, with the speed measured over that window.
-                    if (written - lastReport >= 256 * 1024) {
-                        lastReport = written
-                        val w = written
-                        val now = System.nanoTime()
-                        val seconds = (now - sampleTime) / 1_000_000_000.0
-                        val speed = if (seconds > 0) ((w - sampleBytes) / seconds).toLong() else 0L
-                        sampleTime = now
-                        sampleBytes = w
-                        update { list -> list.map { if (it.id == item.id) it.copy(bytes = w, speed = speed) else it } }
-                    }
-                }
-            }
-        } ?: throw IOException("Could not open file for writing")
-
+        try {
+            val out = resolver.openOutputStream(uri) ?: throw IOException("Could not open file for writing")
+            out.use { output -> part.inputStream().use { it.copyTo(output, 64 * 1024) } }
+        } catch (e: IOException) {
+            resolver.delete(uri, null, null)
+            throw e
+        }
         values.clear()
         values.put(MediaStore.Downloads.IS_PENDING, 0)
         resolver.update(uri, values, null, null)
+        val size = part.length()
+        part.delete()
+        tasks.remove(id)
         update { list ->
-            list.map { if (it.id == item.id) it.copy(status = DownloadStatus.DONE, bytes = written, speed = 0, contentUri = uri) else it }
+            list.map { if (it.id == id) it.copy(status = DownloadStatus.DONE, bytes = size, speed = 0, contentUri = uri) else it }
         }
-        BrowserLog.info("download", "Saved ${item.fileName} (${sizeLabel(written)}) to Downloads/Ora")
+        saveNow()
+        BrowserLog.info("download", "Saved ${item.fileName} (${sizeLabel(size)}) to Downloads/Ora")
+        if (task.parts.size > 1) BrowserLog.info("download", "Finished ${item.fileName} in ${task.parts.size} parts")
     }
 
-    /** Stops a running download and removes its partial file. */
-    fun cancel(id: Long) {
-        if (jobs[id] == null) return
-        cancelled.add(id)
-        val item = _items.value.firstOrNull { it.id == id } ?: return
-        item.contentUri?.let { context.contentResolver.delete(it, null, null) }
-        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.CANCELLED) else it } }
-        BrowserLog.warn("download", "Cancelled ${item.fileName}")
-    }
-
-    /** Deletes the saved file and removes the row. */
-    fun remove(id: Long) {
-        val item = _items.value.firstOrNull { it.id == id } ?: return
-        item.contentUri?.let { context.contentResolver.delete(it, null, null) }
-        update { list -> list.filterNot { it.id == id } }
-        BrowserLog.info("download", "Deleted ${item.fileName}")
-    }
-
-    /** Removes finished, failed and cancelled rows. Files stay on disk. */
-    fun clearFinished() {
-        val before = _items.value.size
-        update { list -> list.filter { it.status == DownloadStatus.RUNNING } }
-        BrowserLog.info("download", "Cleared ${before - _items.value.size} finished downloads from the list")
+    /** Called by the parts as bytes arrive. Throttled, so the list redraws about four times a second. */
+    private fun onProgress(id: Long, task: Task) {
+        val now = System.currentTimeMillis()
+        if (now - task.lastUi < 250) return
+        task.lastUi = now
+        val bytes = task.parts.sumOf { doneOf(it.seg) }
+        val seconds = (now - task.lastTime) / 1000.0
+        val speed = if (task.lastTime > 0 && seconds > 0) ((bytes - task.lastBytes) / seconds).toLong() else 0L
+        task.lastBytes = bytes
+        task.lastTime = now
+        update { list -> list.map { if (it.id == id) it.copy(bytes = bytes, speed = speed) else it } }
+        if (now - lastSave > 3000) saveNow()
     }
 
     private fun fail(id: Long, message: String) {
-        val item = _items.value.firstOrNull { it.id == id } ?: return
-        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.FAILED, error = message) else it } }
-        BrowserLog.error("download", "Failed ${item.fileName}: $message")
+        val name = find(id)?.fileName ?: return
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.FAILED, error = message, speed = 0) else it } }
+        saveNow()
+        BrowserLog.error("download", "Failed $name: $message")
     }
 
-    private fun update(change: (List<DownloadItem>) -> List<DownloadItem>) {
+    private fun partFile(id: Long) = File(dir, "$id.part")
+
+    private fun find(id: Long): DownloadItem? = _items.value.firstOrNull { it.id == id }
+
+    /** Writes the unfinished downloads to the queue file, so they come back after a restart. */
+    private fun saveNow() = synchronized(lock) {
+        lastSave = System.currentTimeMillis()
+        val saved = _items.value.mapNotNull { item ->
+            if (item.status != DownloadStatus.RUNNING && item.status != DownloadStatus.PAUSED && item.status != DownloadStatus.FAILED) return@mapNotNull null
+            // A download that failed before its plan was made is saved with no parts, so it can be retried after a restart.
+            val task = tasks[item.id]
+            SavedDownload(
+                id = item.id,
+                fileName = item.fileName,
+                url = item.url,
+                mimeType = item.mimeType,
+                totalBytes = task?.total ?: item.totalBytes,
+                etag = task?.etag,
+                ranged = task?.ranged ?: false,
+                startedAt = item.startedAt,
+                parts = task?.parts?.map { it.seg } ?: emptyList(),
+            )
+        }
+        store.save(saved)
+    }
+
+    private fun update(change: (List<DownloadItem>) -> List<DownloadItem>) = synchronized(lock) {
         _items.value = change(_items.value)
     }
 
-    private class CancelledDownload : IOException("cancelled")
+    /** The state one download needs to continue: where it comes from, how it was checked, and its parts. */
+    private class Task(
+        val url: String,
+        val etag: String?,
+        val ranged: Boolean,
+        val total: Long,
+        val parts: MutableList<Part>,
+    ) {
+        @Volatile var lastUi = 0L
+        @Volatile var lastTime = 0L
+        @Volatile var lastBytes = 0L
+    }
 
     companion object {
+        /** Bytes of a part that are on disk, never more than its size. */
+        private fun doneOf(part: Part): Long = doneOf(part.seg)
+
+        private fun doneOf(s: Segment): Long = if (s.end >= 0) minOf(s.done, s.size) else s.done
+
         /** Name from Content-Disposition, else the last URL segment, else a fallback. */
         fun fileNameFor(response: WebResponse): String {
             val disposition = header(response, "content-disposition")

@@ -194,6 +194,7 @@ import com.makemission.ora.settings.SettingsScreen
 import com.makemission.ora.settings.SearchEngine
 import com.makemission.ora.settings.isSearchInput
 import com.makemission.ora.downloads.DownloadsRepository
+import com.makemission.ora.downloads.DownloadStartedNotice
 import com.makemission.ora.downloads.DownloadsScreen
 import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.UsageStats
@@ -325,7 +326,7 @@ private fun BrowserContent(
     }
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
-    val downloads = remember { DownloadsRepository(context) }
+    val downloads = remember { DownloadsRepository(context) { settings.fastHttpDownloads.value } }
     var showDownloads by remember { mutableStateOf(false) }
     // Where the Downloads page grows from: the toolbar button's centre, or the top-right menu corner.
     var downloadsOrigin by remember { mutableStateOf(TransformOrigin(1f, 0f)) }
@@ -973,6 +974,15 @@ private fun BrowserContent(
                         onDismiss = { showDownloads = false },
                     )
                 }
+                // Chrome-style start notice: a small pill near the bottom edge that fades out, or swipes away.
+                // On phone Compact it sits above the floating row.
+                DownloadStartedNotice(
+                    repository = downloads,
+                    onOpen = { downloadsOrigin = TransformOrigin(1f, 0f); showDownloads = true },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = if (phoneCompact) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+                )
                 // Long press on a link or image opens the quick menu at the press point (both layouts).
                 selected.pressTarget?.let { target ->
                     key(target) {

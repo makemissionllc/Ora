@@ -237,6 +237,20 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Secure DNS ${if (enabled) "on" else "off"}")
     }
 
+    private val _fastHttpDownloads = MutableStateFlow(prefs.getBoolean(KEY_FAST_HTTP_DOWNLOADS, false))
+    /**
+     * When on, files from plain http:// links use Ora's fast download (parts, pause, resume). Off by default,
+     * because plain http can be read or changed on the network. Those files then use one stream without pause.
+     * https:// files always use the fast download.
+     */
+    val fastHttpDownloads: StateFlow<Boolean> = _fastHttpDownloads.asStateFlow()
+
+    fun setFastHttpDownloads(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_FAST_HTTP_DOWNLOADS, enabled).apply()
+        _fastHttpDownloads.value = enabled
+        BrowserLog.info("settings", "Fast downloads for plain http ${if (enabled) "on" else "off"}")
+    }
+
     private val _appLockRecord = MutableStateFlow(prefs.getString(KEY_APP_LOCK, null))
     /** Salted PBKDF2 record of the app lock PIN, or null when the lock is off. The PIN itself is never stored. */
     val appLockRecord: StateFlow<String?> = _appLockRecord.asStateFlow()
@@ -509,6 +523,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_ADDRESS_SWIPE_EFFECT = "address_swipe_effect"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
+        private const val KEY_FAST_HTTP_DOWNLOADS = "fast_http_downloads"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
         private const val KEY_APP_LOCK = "app_lock_record"

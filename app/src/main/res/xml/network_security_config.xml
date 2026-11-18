@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Ora's own requests (downloads) may use plain http://. Whether a plain http download is
+  started is decided in the app by the "Fast downloads over http" setting, not here.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>
