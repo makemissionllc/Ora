@@ -5,6 +5,7 @@ The status board for Ora. Update it with every change: move items between sectio
 Last updated: 2026-11-18, at commit `55c62be`.
 
 ## Done
+- Private tabs: own ids (-2 downward) and counts, logged per kind; newTab refuses a private tab while AppLock.locked; pop-ups from a private tab stay private. Private tabs are never saved, so none exist before unlock.
 - Lazy tab loading: reopened background tabs wait (`deferLoad`) and load on first select; their saved address and history are kept untouched and re-saved as they were.
 - Single startup: MainActivity startup runs once per process, manifest configChanges widened (density, fontScale, locale, layoutDirection, colorMode, navigation, touchscreen), a recreation is logged. Still open: a recreated window builds new tabs, because tabs live in the composition.
 - Quick resume fix: tabs are not saved while reopened tabs are still loading (20 s limit), an empty snapshot never overwrites a save, and `SessionStoreTest` saves and restores 5 different tabs.
@@ -220,3 +221,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-18 | Quick resume save gate | Not checked: host unit tests and assembleDebug only; the phone and tablet are in use by other sessions, so no tap or screenshot was made | Not checked: see Phone |
 | 2026-11-18 | Single startup | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |
 | 2026-11-18 | Lazy tab loading | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |
+| 2026-11-18 | Private tab separation | Not checked: host tests and assembleDebug only; devices in use by other sessions | Not checked: same reason |

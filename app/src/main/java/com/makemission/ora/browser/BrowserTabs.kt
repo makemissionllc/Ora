@@ -2,6 +2,7 @@ package com.makemission.ora.browser
 
 import android.content.Context
 import com.makemission.ora.notice.InAppNotices
+import com.makemission.ora.security.AppLock
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -394,6 +395,8 @@ class BrowserTabs(
     private val sitePermissions: SitePermissionStore,
 ) {
     private var nextId = 0L
+    /** Private tabs have their own ids, counting down from -2 (-1 means "none selected"), so they never share the normal numbering. */
+    private var nextPrivateId = -2L
     val tabs = mutableStateListOf<BrowserTab>()
 
     companion object {
@@ -437,12 +440,18 @@ class BrowserTabs(
         get() = tabs.firstOrNull { it.id == selectedId }
 
     fun newTab(url: String, select: Boolean = true, isPrivate: Boolean = false, restoreState: String? = null, restoring: Boolean = false, deferLoad: Boolean = false): BrowserTab {
-        val tab = BrowserTab(nextId++, context, url, popupsBlocked, { popup -> newTab(popup) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions, restoring, deferLoad)
+        // A private tab is never created while the app is locked: it could not be shown, and nothing may load behind the lock.
+        if (isPrivate && AppLock.locked) {
+            BrowserLog.warn("tabs", "Did not open a private tab: the app is locked")
+            InAppNotices.show("Unlock Ora to open a private tab")
+            return selected ?: tabs.first()
+        }
+        val tab = BrowserTab(if (isPrivate) nextPrivateId-- else nextId++, context, url, popupsBlocked, { popup -> newTab(popup, isPrivate = isPrivate) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions, restoring, deferLoad)
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.
-        if (isPrivate) BrowserLog.info("tabs", "Opened private tab ${tab.id} (${tabs.size} open)")
-        else BrowserLog.info("tabs", "Opened tab ${tab.id} (${tabs.size} open)")
+        if (isPrivate) BrowserLog.info("tabs", "Opened private tab ${-tab.id - 1} (${tabs.count { it.isPrivate }} private open)")
+        else BrowserLog.info("tabs", "Opened tab ${tab.id} (${tabs.count { !it.isPrivate }} open)")
         return tab
     }
 
@@ -497,7 +506,8 @@ class BrowserTabs(
             if (closedHistory.size > MAX_CLOSED_HISTORY) closedHistory.removeAt(0)
         }
         tabs.removeAt(index).close()
-        BrowserLog.info("tabs", "Closed tab $id (${tabs.size} open)")
+        if (closing.isPrivate) BrowserLog.info("tabs", "Closed private tab ${-id - 1} (${tabs.count { it.isPrivate }} private open)")
+        else BrowserLog.info("tabs", "Closed tab $id (${tabs.count { !it.isPrivate }} open)")
         if (tabs.isEmpty()) {
             newTab(START_URL)
         } else if (selectedId == id) {
