@@ -379,38 +379,50 @@ fun LibraryScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(browserColors().GridBackground)
-            .padding(top = 24.dp, start = 16.dp, end = 16.dp)
+            .statusBarsPadding()
+            .padding(top = 8.dp, start = 16.dp, end = 16.dp)
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().height(52.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text("Library", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
-            TextButton(onClick = onDone) {
-                Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+            Text("Library", fontSize = 30.sp, fontWeight = FontWeight.SemiBold, color = browserColors().AddressBarText)
+            Box(
+                modifier = Modifier
+                    .height(44.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .background(browserColors().AddressBarBackground)
+                    .clickable(onClick = onDone)
+                    .padding(horizontal = 18.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Done", color = browserColors().AddressBarText, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             }
         }
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(14.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(BrowserTokens.SidebarSegmentHeight)
-                .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
-                .background(browserColors().AddressBarBackground),
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(browserColors().ToolbarBackground)
+                .padding(4.dp)
+                .height(38.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Switching lists clears the search, as the tablet sidebar does.
-            SegmentLabel("Bookmarks", selected = !showHistory, modifier = Modifier.weight(1f)) { showHistory = false; query = "" }
-            SegmentLabel("History", selected = showHistory, modifier = Modifier.weight(1f)) { showHistory = true; query = "" }
+            SegmentLabel("Bookmarks", selected = !showHistory, modifier = Modifier.weight(1f), pill = true) { showHistory = false; query = "" }
+            SegmentLabel("History", selected = showHistory, modifier = Modifier.weight(1f), pill = true) { showHistory = true; query = "" }
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(14.dp))
         SidebarSearch(
             query = query,
             placeholder = if (showHistory) "Search history" else "Search bookmarks",
+            pill = true,
             onQueryChange = { query = it }
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(14.dp))
         if (showHistory) {
             HistoryList(
                 entries = history,
@@ -424,7 +436,6 @@ fun LibraryScreen(
         } else {
             LazyColumn(
                 modifier = Modifier.weight(1f).fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (shownBookmarks.isEmpty()) {
                     item {
@@ -439,12 +450,13 @@ fun LibraryScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                            .background(browserColors().AddressBarBackground)
-                            .clickable { onOpen(bookmark.url) }
-                            .padding(start = 14.dp, end = 4.dp, top = 6.dp, bottom = 6.dp),
+                            .heightIn(min = 60.dp)
+                            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+                            .clickable { onOpen(bookmark.url) },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
+                        SiteChip(bookmark.title.ifBlank { displayUrl(bookmark.url) }, bookmark.url)
+                        Spacer(Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 bookmark.title.ifBlank { displayUrl(bookmark.url) },
@@ -462,8 +474,8 @@ fun LibraryScreen(
                                 color = browserColors().SecondaryText
                             )
                         }
-                        IconButton(onClick = { onRemoveBookmark(bookmark.url) }) {
-                            Icon(Icons.Filled.Close, contentDescription = "Remove bookmark", tint = browserColors().SecondaryText)
+                        IconButton(onClick = { onRemoveBookmark(bookmark.url) }, modifier = Modifier.size(40.dp)) {
+                            Icon(Icons.Filled.Close, contentDescription = "Remove bookmark", tint = browserColors().SecondaryText, modifier = Modifier.size(16.dp))
                         }
                     }
                 }

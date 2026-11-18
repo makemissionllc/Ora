@@ -216,6 +216,8 @@ object Mineral {
     val Lichen = Color(0xFFA9C08C)
     /** Destructive actions: Block, Close all, Clear. Meaning only, never decoration. */
     val Ember = Color(0xFFE58A6B)
+    /** Soft tints behind a site's initial in lists. Decoration chosen per host, always with Basalt text. */
+    val SiteTints = listOf(Color(0xFFCBD8C6), Color(0xFFCDD6E2), Color(0xFFD9D2E2), Color(0xFFE6D5C0), Color(0xFFDCDCD6))
     val Stone = Color(0xFFE9E8E4)
     val Paper = Color(0xFFF6F5F2)
     val Ink = Color(0xFF1A1B1E)

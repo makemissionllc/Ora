@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -127,7 +128,7 @@ internal fun HistoryList(
                     Text(
                         label,
                         color = colors.SecondaryText,
-                        fontSize = 13.sp,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(start = 12.dp, top = 10.dp, bottom = 2.dp)
                     )
@@ -138,20 +139,27 @@ internal fun HistoryList(
             }
             if (entries.isNotEmpty()) {
                 item(key = "clear") {
-                    TextButton(
-                        onClick = {
-                            // The confirmation grows out of this button, so its position is measured from the list.
-                            clearOrigin = geometry.clearCentre - geometry.origin
-                            confirmClear = true
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .onGloballyPositioned { coords ->
-                                geometry.clearCentre = coords.positionInWindow() +
-                                    Offset(coords.size.width / 2f, coords.size.height / 2f)
-                            }
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(start = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Clear history", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.SemiBold)
+                        // Quality of life: say what history never holds, so private browsing is not a worry here.
+                        Text("Private tabs are never saved.", color = colors.SecondaryText, fontSize = 13.sp, modifier = Modifier.weight(1f))
+                        TextButton(
+                            onClick = {
+                                // The confirmation grows out of this button, so its position is measured from the list.
+                                clearOrigin = geometry.clearCentre - geometry.origin
+                                confirmClear = true
+                            },
+                            modifier = Modifier
+                                .height(44.dp)
+                                .onGloballyPositioned { coords ->
+                                    geometry.clearCentre = coords.positionInWindow() +
+                                        Offset(coords.size.width / 2f, coords.size.height / 2f)
+                                }
+                        ) {
+                            Text("Clear history", color = com.makemission.ora.ui.theme.Mineral.Ember, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
             }
@@ -279,6 +287,8 @@ private fun HistoryRow(entry: HistoryEntry, onOpen: () -> Unit, onRemove: () -> 
             .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        SiteChip(entry.title.ifBlank { displayUrl(entry.url) }, entry.url)
+        Spacer(Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 entry.title.ifBlank { displayUrl(entry.url) },
@@ -289,15 +299,15 @@ private fun HistoryRow(entry: HistoryEntry, onOpen: () -> Unit, onRemove: () -> 
                 color = colors.AddressBarText
             )
             Text(
-                "${displayUrl(entry.url)} · ${timeOf(entry.visitedAt)}",
+                "${displayUrl(entry.url)}, ${timeOf(entry.visitedAt)}",
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                fontSize = 12.sp,
+                fontSize = 13.sp,
                 color = colors.SecondaryText
             )
         }
-        IconButton(onClick = onRemove) {
-            Icon(Icons.Filled.Close, contentDescription = "Remove from history", tint = colors.SecondaryText)
+        IconButton(onClick = onRemove, modifier = Modifier.size(40.dp)) {
+            Icon(Icons.Filled.Close, contentDescription = "Remove from history", tint = colors.SecondaryText, modifier = Modifier.size(16.dp))
         }
     }
 }
@@ -317,3 +327,24 @@ private fun timeOf(epochMillis: Long): String =
         .atZone(ZoneId.systemDefault())
         .toLocalTime()
         .format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))
+
+/** A rounded square with the site's first letter, tinted by host, as in the Mineral lists. */
+@Composable
+internal fun SiteChip(title: String, url: String) {
+    val host = displayUrl(url)
+    val tints = com.makemission.ora.ui.theme.Mineral.SiteTints
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(RoundedCornerShape(9.dp))
+            .background(tints[Math.floorMod(host.hashCode(), tints.size)]),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            title.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "•",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = com.makemission.ora.ui.theme.Mineral.Ink
+        )
+    }
+}

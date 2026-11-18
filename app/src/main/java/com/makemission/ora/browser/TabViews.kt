@@ -398,26 +398,26 @@ fun TabSidebar(
 private enum class SidebarPanel { TABS, BOOKMARKS, HISTORY }
 
 @Composable
-internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, onClick: () -> Unit) {
+internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, pill: Boolean = false, onClick: () -> Unit) {
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
-            .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
+            .clip(if (pill) androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .background(if (selected) (if (pill) browserColors().Accent else browserColors().SidebarSelected) else Color.Transparent)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text,
-            fontSize = 13.sp,
+            fontSize = if (pill) 14.sp else 13.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            color = if (selected) browserColors().AddressBarText else browserColors().SecondaryText
+            color = if (selected) (if (pill) browserColors().GridBackground else browserColors().AddressBarText) else browserColors().SecondaryText
         )
     }
 }
 
 @Composable
-internal fun SidebarSearch(query: String, placeholder: String, onQueryChange: (String) -> Unit) {
+internal fun SidebarSearch(query: String, placeholder: String, pill: Boolean = false, onQueryChange: (String) -> Unit) {
     BasicTextField(
         value = query,
         onValueChange = onQueryChange,
@@ -426,10 +426,10 @@ internal fun SidebarSearch(query: String, placeholder: String, onQueryChange: (S
         cursorBrush = SolidColor(browserColors().Accent),
         modifier = Modifier
             .fillMaxWidth()
-            .height(BrowserTokens.SidebarSegmentHeight)
-            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .height(if (pill) 44.dp else BrowserTokens.SidebarSegmentHeight)
+            .clip(if (pill) androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(BrowserTokens.RadiusSmall))
             .background(browserColors().AddressBarBackground)
-            .padding(horizontal = 10.dp),
+            .padding(horizontal = if (pill) 16.dp else 10.dp),
         decorationBox = { inner ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.Search, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(16.dp))
