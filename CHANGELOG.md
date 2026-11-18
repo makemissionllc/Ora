@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
+- Swipe down on the tablet's Compact row to see all your tabs. A swipe up on the phone's address bar already did this; now the tablet's top bar works the same way in reverse.  (`84bf99b`)
 - Search tabs, bookmarks and history in one field: on tablet, the sidebar's Tabs search now also lists matching bookmarks and history entries under your tabs, so you can find a page without choosing the right list first.  (`dae97f0`)
 - Drag a tab into a group: touch and hold a tab, then move your finger to pick it up, and drop it on a group card in the overview or on a group's header in the tablet sidebar. The group lights up as you hover over it. In the sidebar, drop a tab on "Not in a group" to take it out of its group. Holding a tab still without moving still opens Add to group, as before.  (`e2e298a`)
 - Inactive tabs: a tab you haven't opened for 14 days moves out of the way into a folded "Inactive tabs (N)" row, in the tab overview and in the tablet sidebar. Tap the row to open or fold it, and tap a tab inside to open it. Searching still finds them, tabs inside a group stay in their group, and private tabs are never moved.  (`f8d3eb6`)
