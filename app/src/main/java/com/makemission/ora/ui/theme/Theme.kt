@@ -6,6 +6,8 @@ import android.os.Build
 import androidx.compose.material3.ColorScheme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -41,6 +43,7 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun OraTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -53,7 +56,9 @@ fun OraTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
-        content = content
+        // Surfaces are flat: no ripple. Android 12+ draws its ripple with a speckled "sparkle" noise, which
+        // showed as grain behind tiles. The press response is the 94% scale from pressFeedback() only.
+        content = { CompositionLocalProvider(LocalRippleConfiguration provides null, content = content) }
     )
 }
 
@@ -107,7 +112,7 @@ object BrowserTokens {
     val CloseBadgeSize = 32.dp
 
     // Sidebar (tablet)
-    val SidebarWidth = 272.dp
+    val SidebarWidth = 300.dp
     // The sidebar is a panel with rounded edges on its open (right) side, so it reads as a surface, not a stripe.
     val SidebarShape = RoundedCornerShape(topEnd = RadiusLarge, bottomEnd = RadiusLarge)
     val SidebarPadding = PaddingValues(horizontal = 12.dp, vertical = 20.dp)
@@ -131,8 +136,11 @@ object BrowserTokens {
     /** Width of the Theme segmented control. Wider than the mockup's 220 dp so every mode label fits. */
     val SettingsSegmentWidth = 280.dp
     /** Tablet side panels (the ⋯ menu) slide in from the right edge at this width. */
-    val SidePanelWidth = 360.dp
-    val SidePanelRadius = RadiusLarge
+    val SidePanelWidth = 380.dp
+    val SidePanelRadius = 22.dp
+    /** Gap around the tablet ⋯ panel and around the page card beside the sidebar. */
+    val PanelInset = 12.dp
+    val PageCardRadius = 22.dp
 
     // Link quick menu (long press on a link or image)
     val QuickMenuWidth = 260.dp
@@ -179,6 +187,8 @@ object BrowserTokens {
     val FloatingBarElevation = 8.dp
     /** Widest the find-in-page bar grows on a tablet. */
     val FindBarMaxWidth = 480.dp
+    /** The tablet find bar takes the address capsule's slot at this width. */
+    val TabletFindWidth = 560.dp
     // Profile switcher above the tab overview.
     val ProfileChipHeight = 36.dp
     val ProfileChipPadding = PaddingValues(horizontal = 14.dp)

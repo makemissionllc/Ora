@@ -54,6 +54,15 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 22. **The status bar is frozen.** Do not change the status bar, its implementation, or its fade. That covers `StatusBar.kt`, the top-strip tint and theme-colour sampling (`ThemeColor.kt`, `assets/theme-color/`), the status-icon light/dark switching, the 84 dp scroll fade, and the page inset under the bar. Keep all of it exactly as it is in the current code.
 23. **Ask before touching the status bar.** If a task appears to need a status-bar change, stop and check with the user first, every time, even when the change looks small. Do not edit status-bar code without that yes.
 
+## Layout rules (protected)
+
+24. Overlays and panels start below the floating Compact row and never clip their own content. Too tall means scroll, never cut.
+25. The tablet sidebar holds its own sidebar, back and forward buttons. The floating row never draws over the sidebar.
+26. Find in page replaces the address capsule in place.
+27. Surfaces are flat. No grain, noise, texture or ripple. The press response is the 94% scale only.
+28. Dashed lines mean private or temporary and are used for nothing else.
+29. Tints change Ora's surfaces only, never web content.
+
 ## Attribution
 
 Commits made by an agent end with:

@@ -338,17 +338,21 @@ private fun BrowserMenuSidePanel(
         exit = slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit()),
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
+            // 12 dp from the right and bottom edges, below the floating row. Only the panel's own shape clips;
+            // content taller than the panel scrolls instead of being cut off.
+            val shape = RoundedCornerShape(BrowserTokens.SidePanelRadius)
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(top = topInset)
+                    .then(if (topInset == 0.dp) Modifier.statusBarsPadding() else Modifier.padding(top = topInset))
+                    .navigationBarsPadding()
+                    .padding(top = BrowserTokens.PanelInset, end = BrowserTokens.PanelInset, bottom = BrowserTokens.PanelInset)
                     .width(BrowserTokens.SidePanelWidth)
-                    .shadow(BrowserTokens.FloatingBarElevation, RoundedCornerShape(topStart = BrowserTokens.SidePanelRadius, bottomStart = BrowserTokens.SidePanelRadius))
-                    .clip(RoundedCornerShape(topStart = BrowserTokens.SidePanelRadius, bottomStart = BrowserTokens.SidePanelRadius))
+                    .shadow(BrowserTokens.FloatingBarElevation, shape)
+                    .clip(shape)
                     .background(browserColors().Surface)
                     .verticalScroll(rememberScrollState())
-                    .then(if (topInset == 0.dp) Modifier.statusBarsPadding() else Modifier)
-                    .navigationBarsPadding()
+                    .padding(top = 16.dp)
             ) {
                 content(act)
             }

@@ -14,6 +14,10 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "18 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Find in page on tablet: it opens in the address bar's place, with the search icon, the text field, \"1 of 4\", previous, next and Done, and the field is ready to type at once. Back or Done brings the address bar back."),
+            ChangeItem(ChangeKind.FIXED, "The ⋯ menu panel on tablet no longer cuts off its top row: it starts below the top bar, has even space inside, and scrolls if it is taller than the screen."),
+            ChangeItem(ChangeKind.CHANGED, "With the sidebar open on tablet, its button, Back and Forward move into the sidebar. The address bar, Tabs and ⋯ sit over the page, and the page sits in a rounded card."),
+            ChangeItem(ChangeKind.FIXED, "The speckled grain behind tiles and rows (the start page, Lab and Diagnostics) is gone. It was Android's press ripple; the press now only shrinks the tile a little."),
             ChangeItem(ChangeKind.ADDED, "Private tab lock: with the PIN lock on, you can lock only private tabs instead of the whole app. A locked private tab has a Go to a regular tab button."),
             ChangeItem(ChangeKind.ADDED, "Reader view: the ⋯ menu has a Reader view row that shows the article without the clutter and says how long it takes to read. A bar at the bottom changes the text size, Sans or Serif, and the page colour. Your choices are kept in Settings > Appearance."),
             ChangeItem(ChangeKind.ADDED, "App lock: Settings > Privacy can ask for a PIN when Ora opens and whenever you come back to it. The PIN is kept only as a salted hash, never as the number itself. After five wrong tries you wait 30 seconds, then longer each time, and the lock screen counts it down."),

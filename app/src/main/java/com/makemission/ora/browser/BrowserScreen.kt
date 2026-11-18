@@ -27,6 +27,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -623,6 +624,8 @@ private fun BrowserContent(
         selected.stepBack()
     }
     // Quality of life: on tablet, Back closes an open sidebar before it steps back through history.
+    // Back closes find in page first; the capsule returns in its slot.
+    BackHandler(enabled = showFind && phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen && !backExitsVideo) { showFind = false }
     BackHandler(enabled = isTablet && showSidebar && phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen && !backExitsVideo) {
         settings.setTabletSidebar(false)
     }
@@ -699,6 +702,12 @@ private fun BrowserContent(
         }
     }
 
+    // Tablet: the floating row starts past the sidebar (300 dp + 12 dp gap), because the sidebar holds its own buttons.
+    val sidebarInset by animateDpAsState(
+        targetValue = if (isTablet && showSidebar) BrowserTokens.SidebarWidth else 0.dp,
+        animationSpec = OraMotion.enter(),
+        label = "sidebar inset",
+    )
     val tabletCompactRow: @Composable () -> Unit = {
         FloatingCompactRow(
             tab = selected,
@@ -712,7 +721,11 @@ private fun BrowserContent(
             onTabs = openTabs,
             onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
             showSidebar = showSidebar,
-            pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth
+            pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth,
+            startInset = sidebarInset,
+            findBar = if (showFind) {
+                { key(selected.id) { FindBar(session = selected.session, onClose = { showFind = false }, embedded = true) } }
+            } else null,
         )
     }
     // In-app messages (formerly toasts) show as a snackbar. A new message replaces the one on screen, so a
@@ -797,7 +810,7 @@ private fun BrowserContent(
                 true
             } else false
         }) {
-        Row(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        Row(modifier = Modifier.fillMaxSize().then(if (isTablet && showSidebar) Modifier.background(browserColors().GridBackground) else Modifier).padding(innerPadding)) {
             // The sidebar slides in and out from its left edge, using the shared overlay motion.
             AnimatedVisibility(
                 visible = isTablet && showSidebar,
@@ -822,7 +835,31 @@ private fun BrowserContent(
                         .clip(BrowserTokens.SidebarShape)
                         .background(browserColors().SidebarBackground)
                 ) {
-                    if (tabletCompact) Spacer(Modifier.height(compactRowHeight))
+                    if (tabletCompact) {
+                        // The sidebar holds its own buttons, so the floating row never draws over it.
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = BrowserTokens.PhoneCompactPadding, bottom = BrowserTokens.PhoneCompactPadding),
+                            horizontalArrangement = Arrangement.spacedBy(BrowserTokens.PhoneCompactGap),
+                        ) {
+                            FloatingCircleButton(onClick = { settings.setTabletSidebar(false) }, enabled = true, description = "Hide sidebar") {
+                                Icon(Icons.Filled.Menu, contentDescription = null)
+                            }
+                            FloatingCircleButton(
+                                onClick = { selected.stepBack() },
+                                enabled = selected.canStepBack,
+                                description = "Back",
+                                onLongClick = {
+                                    BrowserLog.info("nav", "Long-press Back: opened start page from ${selected.url}")
+                                    selected.url = BrowserTabs.START_URL
+                                },
+                            ) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null) }
+                            FloatingCircleButton(
+                                onClick = { selected.session.goForward() },
+                                enabled = selected.canGoForward,
+                                description = "Forward",
+                            ) { Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null) }
+                        }
+                    }
                     // Chips scroll sideways when they are wider than the sidebar, so "+ New profile" stays reachable.
                     ProfileSwitcher(
                         profiles = profileList,
@@ -848,7 +885,17 @@ private fun BrowserContent(
                     }
                 }
             }
-            Box(modifier = Modifier.weight(1f).fillMaxSize().addressSwipeEffect(swipeMotion, swipeEffect)) {
+            // With the sidebar open the page sits in a rounded card, inset 12 dp from the sidebar, right and bottom.
+            val cardInset by animateDpAsState(if (isTablet && showSidebar) BrowserTokens.PanelInset else 0.dp, OraMotion.enter(), label = "page card inset")
+            val cardShape = RoundedCornerShape(if (isTablet && showSidebar) BrowserTokens.PageCardRadius else 0.dp)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+                    .padding(start = cardInset, end = cardInset, bottom = cardInset)
+                    .clip(cardShape)
+                    .addressSwipeEffect(swipeMotion, swipeEffect)
+            ) {
                 BrowserPage(
                     tab = selected,
                     pageView = pageView,
@@ -956,7 +1003,7 @@ private fun BrowserContent(
                         modifier = Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom = if (isTablet) 28.dp else BrowserTokens.SelectionMenuBottomInset),
                     )
                 }
-                if (showFind) {
+                if (showFind && !tabletCompact) {
                     // Keyed on the tab, so switching tabs closes the bar and clears its highlights.
                     key(selected.id) {
                         FindBar(
@@ -1754,6 +1801,10 @@ private fun FloatingCompactRow(
     /** Tablet only: a button that shows or hides the tab sidebar, placed before Back. */
     onToggleSidebar: (() -> Unit)? = null,
     showSidebar: Boolean = false,
+    /** Tablet: with the sidebar open, it holds the sidebar, Back and Forward buttons, and this row starts past it. */
+    startInset: Dp = 0.dp,
+    /** Tablet: find in page, drawn in the address capsule's slot while it is open. */
+    findBar: (@Composable () -> Unit)? = null,
 ) {
     // 0 = full bar, 1 = shrunk. Shrinking uses the exit easing, growing back the enter easing.
     val shrink by animateFloatAsState(
@@ -1771,7 +1822,7 @@ private fun FloatingCompactRow(
             .fillMaxWidth()
             .windowInsetsPadding(insets)
             .padding(
-                start = BrowserTokens.PhoneCompactPadding,
+                start = BrowserTokens.PhoneCompactPadding + startInset,
                 end = BrowserTokens.PhoneCompactPadding,
                 top = if (top) lerp(BrowserTokens.PhoneCompactPadding, BrowserTokens.TabletCompactShrunkPadding, shrink) else BrowserTokens.PhoneCompactPadding,
                 bottom = if (top) {
@@ -1783,7 +1834,7 @@ private fun FloatingCompactRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(lerp(BrowserTokens.PhoneCompactGap, 0.dp, shrink))
     ) {
-        if (onToggleSidebar != null) {
+        if (onToggleSidebar != null && !showSidebar) {
             CompactSlot(shrink) {
                 FloatingCircleButton(
                     onClick = onToggleSidebar,
@@ -1794,7 +1845,7 @@ private fun FloatingCompactRow(
                 }
             }
         }
-        CompactSlot(shrink) {
+        if (!(onToggleSidebar != null && showSidebar)) CompactSlot(shrink) {
             FloatingCircleButton(
                 onClick = { tab.stepBack() },
                 enabled = tab.canStepBack && shrink < 0.5f,
@@ -1809,7 +1860,7 @@ private fun FloatingCompactRow(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
             }
         }
-        if (onTabs != null) {
+        if (onTabs != null && !showSidebar) {
             CompactSlot(shrink) {
                 FloatingCircleButton(
                     onClick = { tab.session.goForward() },
@@ -1824,10 +1875,21 @@ private fun FloatingCompactRow(
         // centre, as Safari does, instead of letting it widen into the space the round buttons leave.
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
             Box(
-                modifier = (if (pillMaxWidth != null) Modifier.widthIn(max = pillMaxWidth) else Modifier)
+                modifier = (if (pillMaxWidth != null) Modifier.widthIn(max = if (findBar != null) BrowserTokens.TabletFindWidth else pillMaxWidth) else Modifier)
                     .fillMaxWidth(1f + (BrowserTokens.PhoneCompactShrunkWidthFraction - 1f) * shrink)
             ) {
-                AddressBar(
+                // Find in page and the address capsule trade places in this slot, on the shared overlay timings.
+                AnimatedContent(
+                    targetState = findBar != null,
+                    transitionSpec = {
+                        (fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), OraMotion.MORPH_SCALE)) togetherWith
+                            (fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), OraMotion.MORPH_SCALE))
+                    },
+                    label = "find-or-address",
+                ) { finding ->
+                    if (finding && findBar != null) {
+                        Surface(shape = BrowserTokens.PhoneCompactPill, color = browserColors().AddressBarBackground, modifier = Modifier.fillMaxWidth()) { findBar() }
+                    } else AddressBar(
                     currentUrl = tab.url,
                     loading = tab.loading,
                     onSubmit = onSubmit,
@@ -1841,6 +1903,7 @@ private fun FloatingCompactRow(
                     shape = BrowserTokens.PhoneCompactPill,
                     centered = true
                 )
+                }
                 // Quality of life: while the row is shrunk (tablet top or phone bottom), a tap on the pill brings the full
                 // toolbar back instead of opening the address for editing. The overlay sits only over the pill.
                 if (shrunk) {
