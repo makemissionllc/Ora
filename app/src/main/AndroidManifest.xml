@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Passkeys: GeckoView asks Android's Credential Manager on a page's behalf. SET_ORIGIN lets it name the page's
+         address (setOrigin); QUERY_CANDIDATE_CREDENTIALS lets it read whether a provider has a matching passkey.
+         Both are normal permissions on Android 14+, granted at install. -->
+    <uses-permission android:name="android.permission.CREDENTIAL_MANAGER_SET_ORIGIN" />
+    <uses-permission android:name="android.permission.CREDENTIAL_MANAGER_QUERY_CANDIDATE_CREDENTIALS" />
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Lets the error page tell "no network" from "site not answering" before it picks a card. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
