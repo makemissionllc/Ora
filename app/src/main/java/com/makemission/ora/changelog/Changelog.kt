@@ -25,6 +25,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.CHANGED, "Ora now uses the Instrument Sans font throughout."),
             ChangeItem(ChangeKind.CHANGED, "On phones, the ⋯ menu has a new look: tiles for the main actions, plain rows below, and a Desktop site switch. A bookmarked page lights its Bookmark tile."),
             ChangeItem(ChangeKind.CHANGED, "The tab overview has the Mineral look on phone and tablet: the open tab has a Chalk ring, each tab shows an initial and a round close button, New tab is Chalk and Close all is red. The search box says how many tabs you have open, such as \"Search 9 open tabs\"."),
+            ChangeItem(ChangeKind.CHANGED, "The Library has the Mineral look: round Bookmarks and History tabs, a round search box and a coloured letter beside each page. The History list on the tablet sidebar matches. Under your history it now says \"Private tabs are never saved.\""),
             ChangeItem(ChangeKind.CHANGED, "Switching tabs now fades the page in instead of cutting over. With Remove animations on, it is instant."),
             ChangeItem(ChangeKind.CHANGED, "With a keyboard attached, Ctrl+Tab moves to the next open tab."),
             ChangeItem(ChangeKind.CHANGED, "On tablet, the sidebar now grows out of the sidebar button and shrinks back into it when it closes."),

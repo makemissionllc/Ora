@@ -22,6 +22,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Ora now uses the Instrument Sans font throughout. (`c8a18fd`)
 - On phones, the ⋯ menu has a new look: tiles for the main actions, plain rows below, and a Desktop site switch. A bookmarked page lights its Bookmark tile. (`c511758`)
 - The tab overview has the Mineral look on phone and tablet: the open tab has a Chalk ring, each tab shows an initial and a round close button, New tab is Chalk and Close all is red. The search box says how many tabs you have open, such as "Search 9 open tabs". (`470a20c`)
+- The Library has the Mineral look: round Bookmarks and History tabs, a round search box and a coloured letter beside each page. The History list on the tablet sidebar matches. Under your history it now says "Private tabs are never saved." (`37594fb`)
 - Switching tabs now fades the page in instead of cutting over. With Remove animations on, it is instant. (`638b37c`)
 - With a keyboard attached, Ctrl+Tab moves to the next open tab. (`638b37c`)
 
