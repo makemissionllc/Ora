@@ -391,13 +391,14 @@ data class PressTarget(val linkUri: String?, val imageUri: String?, val x: Int, 
 /** Owns every open tab and which one is selected. Survives recomposition; created once by the screen. */
 class BrowserTabs(
     private val context: Context,
-    private val popupsBlocked: () -> Boolean,
-    private val onDownload: (WebResponse, String) -> Unit,
+    /** The three callbacks are replaced by [rebind] when a new window takes over these tabs, so none points at a destroyed window. */
+    var popupsBlocked: () -> Boolean,
+    var onDownload: (WebResponse, String) -> Unit,
     private val desktopByDefault: Boolean = false,
     /** Tabs saved by quick resume, reopened in place of a single start page. Null starts fresh. */
     private val restore: SessionStore.Saved? = null,
     /** Receives each page a tab finishes loading, for the profile's history. */
-    private val onVisited: (String, String) -> Unit = { _, _ -> },
+    var onVisited: (String, String) -> Unit = { _, _ -> },
     /** The profile's saved site permission answers, handed to each tab. */
     private val sitePermissions: SitePermissionStore,
 ) {
@@ -416,6 +417,17 @@ class BrowserTabs(
 
     var selectedId by mutableLongStateOf(-1L)
         private set
+
+    /** A new window takes over these tabs: its callbacks replace the destroyed window's. */
+    fun rebind(
+        popupsBlocked: () -> Boolean,
+        onDownload: (WebResponse, String) -> Unit,
+        onVisited: (String, String) -> Unit,
+    ) {
+        this.popupsBlocked = popupsBlocked
+        this.onDownload = onDownload
+        this.onVisited = onVisited
+    }
 
     init {
         val saved = restore
@@ -453,7 +465,7 @@ class BrowserTabs(
             InAppNotices.show("Unlock Ora to open a private tab")
             return selected ?: tabs.first()
         }
-        val tab = BrowserTab(if (isPrivate) nextPrivateId-- else nextId++, context, url, popupsBlocked, { popup -> newTab(popup, isPrivate = isPrivate) }, onDownload, desktopByDefault, isPrivate, restoreState, onVisited, sitePermissions, restoring, deferLoad)
+        val tab = BrowserTab(if (isPrivate) nextPrivateId-- else nextId++, context, url, { popupsBlocked() }, { popup -> newTab(popup, isPrivate = isPrivate) }, { response, page -> onDownload(response, page) }, desktopByDefault, isPrivate, restoreState, { page, title -> onVisited(page, title) }, sitePermissions, restoring, deferLoad)
         tabs.add(tab)
         if (select) select(tab.id)
         // Private tabs log no address, so the log does not record what was browsed privately.
@@ -567,4 +579,12 @@ private class TabLog(private val silent: Boolean) {
     fun error(tag: String, message: String, error: Throwable? = null) {
         if (!silent) BrowserLog.error(tag, message, error) else BrowserLog.error(tag, "A private tab hit an error")
     }
+}
+
+/**
+ * The open tabs of every profile, kept for the life of the process. A recreated window (Android rebuilds it for some
+ * system changes) picks these up instead of opening every tab a second time.
+ */
+object TabRegistry {
+    val byProfile = HashMap<String, BrowserTabs>()
 }

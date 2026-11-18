@@ -324,13 +324,13 @@ private fun BrowserContent(
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val downloads = remember { DownloadsRepository(context) }
     var showDownloads by remember { mutableStateOf(false) }
-    val tabsByProfile = remember { HashMap<String, BrowserTabs>() }
+    val tabsByProfile = TabRegistry.byProfile
     val sessionStore = remember { SessionStore(context) }
     val quickResume by settings.quickResume.collectAsState()
     val tabs = remember(profileId) {
         tabsByProfile.getOrPut(profileId) {
             BrowserTabs(
-                context,
+                context.applicationContext,
                 { settings.blockPopups.value },
                 { response, pageUrl -> downloads.start(response, pageUrl) },
                 desktopByDefault = isTablet,
@@ -339,6 +339,13 @@ private fun BrowserContent(
                 // Finished pages are listed in this profile's history, when saving is on.
                 onVisited = { url, title -> if (settings.saveHistory.value) historyFor(profileId).record(url, title) },
                 sitePermissions = sitePermissionsFor(profileId),
+            )
+        }.also {
+            // After a window is recreated these tabs still exist; point their callbacks at this window's objects.
+            it.rebind(
+                { settings.blockPopups.value },
+                { response, pageUrl -> downloads.start(response, pageUrl) },
+                { url, title -> if (settings.saveHistory.value) historyFor(profileId).record(url, title) },
             )
         }
     }
@@ -1409,6 +1416,8 @@ private fun BrowserPage(
                     alpha = pageAlpha * switchAlpha.value
                     translationY = zoneHeight.toPx() * zoneFraction
                 },
+            // A destroyed window lets go of the session so the next window can take it over.
+            onRelease = { it.releaseSession() },
             factory = { ctx ->
                 GeckoView(ctx).also {
                     // Lets Android's autofill service (Bitwarden, Google and others) see the page's login fields.
