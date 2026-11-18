@@ -752,6 +752,7 @@ private fun BrowserContent(
             onMore = toggleMenu,
             onSwipeUp = openTabs,
             onSwitchTab = switchTab,
+            onSwipeDown = openTabs,
             onTabs = openTabs,
             onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
             showSidebar = showSidebar,
@@ -1869,6 +1870,8 @@ private fun FloatingCompactRow(
     onMore: () -> Unit,
     onSwipeUp: () -> Unit,
     onSwitchTab: (Int) -> Unit,
+    /** Tablet only: a swipe down on the pill opens the tab overview. Null on phone. */
+    onSwipeDown: (() -> Unit)? = null,
     /** Tablet only: when set, Forward and Tabs sit beside the pill and this opens the tab overview. */
     onTabs: (() -> Unit)? = null,
     /** Caps the pill width on wide screens, so the row stays a compact floating control. */
@@ -1976,6 +1979,7 @@ private fun FloatingCompactRow(
                     height = lerp(BrowserTokens.AddressBarHeight, if (top) BrowserTokens.TabletCompactShrunkHeight else BrowserTokens.PhoneCompactShrunkHeight, shrink),
                     onSwipeUp = onSwipeUp,
                     onSwitchTab = onSwitchTab,
+                    onSwipeDown = onSwipeDown,
                     shape = BrowserTokens.PhoneCompactPill,
                     centered = true
                 )
@@ -2056,8 +2060,12 @@ private fun FloatingCircleButton(
  * Address bar gestures that never consume the touch, so text selection keeps working:
  * a swipe up calls [onSwipeUp]; a sideways swipe calls [onSwitchTab] with +1 (left) or -1 (right).
  */
-private fun Modifier.addressSwipes(onSwipeUp: () -> Unit, onSwitchTab: (Int) -> Unit): Modifier =
-    pointerInput(onSwipeUp, onSwitchTab) {
+private fun Modifier.addressSwipes(
+    onSwipeUp: () -> Unit,
+    onSwitchTab: (Int) -> Unit,
+    onSwipeDown: (() -> Unit)? = null,
+): Modifier =
+    pointerInput(onSwipeUp, onSwitchTab, onSwipeDown) {
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
             var dx = 0f
@@ -2078,6 +2086,11 @@ private fun Modifier.addressSwipes(onSwipeUp: () -> Unit, onSwitchTab: (Int) -> 
                 BrowserLog.info("tabs", "Swipe up on address bar: all tabs")
                 UsageStats.gesture("address_swipe", "registered", "up", detail)
                 onSwipeUp()
+            } else if (onSwipeDown != null && abs(dy) > abs(dx) && dy > threshold) {
+                // Tablet Compact sits at the top, so a swipe down from its pill opens the tab overview.
+                BrowserLog.info("tabs", "Swipe down on address bar: all tabs")
+                UsageStats.gesture("address_swipe", "registered", "down", detail)
+                onSwipeDown()
             } else if (abs(dx) > abs(dy) && abs(dx) > threshold) {
                 UsageStats.gesture("address_swipe", "registered", if (dx < 0) "left" else "right", detail)
                 onSwitchTab(if (dx < 0) 1 else -1)
@@ -2122,6 +2135,8 @@ private fun AddressBar(
     height: Dp = BrowserTokens.AddressBarHeight,
     onSwipeUp: () -> Unit = {},
     onSwitchTab: (Int) -> Unit = {},
+    /** Tablet Compact only: a swipe down opens the tab overview. Null elsewhere, so a downward swipe is ignored. */
+    onSwipeDown: (() -> Unit)? = null,
     shape: androidx.compose.ui.graphics.Shape = BrowserTokens.AddressBarShape,
     /** Centres the URL in the pill (phone Compact bar). */
     centered: Boolean = false,
@@ -2158,7 +2173,7 @@ private fun AddressBar(
     val suggestions = if (focused && !suggestionsHidden) addressSuggestions(typed, candidates) else emptyList()
 
     Box(
-        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } }
+        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } }
     ) {
     Surface(
         modifier = Modifier
