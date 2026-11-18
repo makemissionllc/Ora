@@ -9,6 +9,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-18
 
 **Added**
+- Messages such as "Page didn't finish loading" now sit above the bottom bar on the phone, not under it.
 - Closing a group now says how many tabs closed ("2 tabs closed"), and Undo brings back all of them, not just the last one.
 - Passkeys with Bitwarden: Ora now declares the two Android permissions that let sites' passkey register and sign-in go through your passkey app. Tested with Bitwarden on the phone. Google Password Manager may still refuse until Google approves Ora.  (`0840e06`)
 - Passkey not working? Open in main browser: on a page that uses https, the ⋯ menu has a row that opens the same page in another browser you choose. Some sites' passkey sign-in does not work in Ora yet, so this gets you in without leaving the page behind. It is hidden on pages that are not https, and says so if no other browser is installed.  (`94fc3b0`)

@@ -800,7 +800,11 @@ private fun BrowserContent(
         // Tablet Compact floats over the browser grid colour, so no strip shows behind the row or beside the sidebar.
         containerColor = if (tabletCompact) Color.Transparent else MaterialTheme.colorScheme.background,
         snackbarHost = {
-            SnackbarHost(hostState = notices) { data ->
+            // On the phone the bottom bar floats over the page, so the message sits above it instead of under it.
+            SnackbarHost(
+                hostState = notices,
+                modifier = Modifier.padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 0.dp),
+            ) { data ->
                 Snackbar(
                     snackbarData = data,
                     shape = RoundedCornerShape(BrowserTokens.RadiusMedium),
