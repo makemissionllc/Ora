@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "19 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Hints: the first time a bottom sheet is taller than its half height, it lifts a little and a caption says Pull up for more. It plays once per hint and never blocks anything. Turn hints off or replay them with the Hints switch in Settings.  (`9c147f8`)"),
             ChangeItem(ChangeKind.ADDED, "One shared bottom sheet for the menu, Downloads, groups, profiles and the search chooser. It rises on a spring, follows your finger, pulls up from half to full height, and a flick down drops it away. Tapping outside or Back closes it the same way.  (`8adfd4a`)"),
             ChangeItem(ChangeKind.ADDED, "Downloads keep going when you leave Ora. A notification shows how many are running, with Pause all and Cancel all.  (`0c93cda`)"),
             ChangeItem(ChangeKind.ADDED, "Paused downloads come back after a restart, and a download can be resumed from where it stopped.  (`b5403e8`, `d4bd14c`)"),

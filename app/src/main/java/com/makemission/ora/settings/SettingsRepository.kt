@@ -309,6 +309,28 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Secure DNS ${if (enabled) "on" else "off"}")
     }
 
+    private val _hints = MutableStateFlow(prefs.getBoolean(KEY_HINTS, true))
+    /** When on, a short gesture cue plays once on a control the first time it could help. Turning it on again replays them. */
+    val hints: StateFlow<Boolean> = _hints.asStateFlow()
+
+    fun setHints(enabled: Boolean) {
+        val edit = prefs.edit().putBoolean(KEY_HINTS, enabled)
+        if (enabled) edit.remove(KEY_SEEN_HINTS)
+        edit.apply()
+        _hints.value = enabled
+        BrowserLog.info("settings", "Hints ${if (enabled) "on, replaying from the start" else "off"}")
+    }
+
+    /** True when hints are on and [id] has not played yet. */
+    fun shouldShowHint(id: String): Boolean =
+        _hints.value && id !in prefs.getStringSet(KEY_SEEN_HINTS, emptySet()).orEmpty()
+
+    fun markHintSeen(id: String) {
+        val seen = prefs.getStringSet(KEY_SEEN_HINTS, emptySet()).orEmpty() + id
+        prefs.edit().putStringSet(KEY_SEEN_HINTS, seen).apply()
+        BrowserLog.info("hints", "Hint shown: $id")
+    }
+
     private val _fastHttpDownloads = MutableStateFlow(prefs.getBoolean(KEY_FAST_HTTP_DOWNLOADS, false))
     /**
      * When on, files from plain http:// links use Ora's fast download (parts, pause, resume). Off by default,
@@ -615,6 +637,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_ADDRESS_SWIPE_EFFECT = "address_swipe_effect"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
+        private const val KEY_HINTS = "hints_enabled"
+        private const val KEY_SEEN_HINTS = "hints_seen"
         private const val KEY_FAST_HTTP_DOWNLOADS = "fast_http_downloads"
         private const val KEY_DOWNLOAD_NOTIFICATIONS = "download_notifications"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"

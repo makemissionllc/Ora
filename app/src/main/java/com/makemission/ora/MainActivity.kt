@@ -45,8 +45,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             OraTheme {
+              androidx.compose.runtime.CompositionLocalProvider(com.makemission.ora.browser.LocalHints provides settings) {
                 val profiles = remember { ProfilesRepository(applicationContext) }
                 BrowserScreen(settings = settings, profiles = profiles)
+              }
             }
         }
     }

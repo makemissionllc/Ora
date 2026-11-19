@@ -126,6 +126,7 @@ fun SettingsScreen(
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
+    val hintsOn by settings.hints.collectAsState()
     val downloadNotifications by settings.downloadNotifications.collectAsState()
     val noticeContext = LocalContext.current
     // Android can block Ora's notifications on its own, so the row re-reads that when the screen comes back.
@@ -887,6 +888,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = secureDns, label = "Switch", onChange = { settings.setSecureDns(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setHints(!hintsOn) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Hints", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "A short gesture cue plays once on a control, such as pulling a sheet up. Turning this on again replays them.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = hintsOn, label = "Switch", onChange = { settings.setHints(it) })
                             }
                             Row(
                                 modifier = Modifier
