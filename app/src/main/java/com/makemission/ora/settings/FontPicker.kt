@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.CheckMark
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -115,7 +116,7 @@ fun FontPicker(settings: SettingsRepository) {
                             Text(font.label, fontFamily = font.family, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                             Text(font.note, fontFamily = font.family, fontSize = 13.sp, color = browserColors().SecondaryText)
                         }
-                        if (font == current) Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
+                        CheckMark(font == current, "Selected")
                     }
                 }
             }

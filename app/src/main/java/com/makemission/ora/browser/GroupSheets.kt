@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.CheckMark
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -126,7 +127,7 @@ private fun SheetRow(label: String, dot: GroupColor? = null, checked: Boolean = 
         if (dot != null) Box(Modifier.size(12.dp).clip(CircleShape).background(dot.color))
         if (icon) Icon(Icons.Filled.Add, contentDescription = null, tint = colors.AddressBarText, modifier = Modifier.size(18.dp))
         Text(label, modifier = Modifier.weight(1f), fontSize = 16.sp, color = if (ember) Mineral.Ember else colors.AddressBarText)
-        if (checked) Icon(Icons.Filled.Check, contentDescription = "In this group", tint = colors.Accent, modifier = Modifier.size(18.dp))
+        CheckMark(checked, "In this group", size = 18.dp)
     }
 }
 
