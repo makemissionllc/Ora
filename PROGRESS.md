@@ -189,7 +189,6 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 - Tablet: the Compact floating row overlapping the page's navigation links was not seen on 2026-11-18 (en.wikipedia.org and google.com, page top, sidebar open): the page starts below the row, and tapping Images on google.com opened Google Images. Not checked: scrolled pages and a page with links at the very top edge. Kept open until the original page is found.
 - Site permissions: during tests a card was answered with no tap recorded (tablet about 18:21, phone about 18:24, both on the test page). Cause not found. On the phone, an older saved camera choice from test data could explain an automatic Allow. Not reproduced.
 - Phone Compact bar, page clip (`01de1e1`, `2a47c6a`): on google.com the expanded bar shows a cut-off sliver of footer text just below its bottom edge at the page end. With the bar folded on theverge.com, page text and the 'OUR SITES' box show under and below the floating pill while scrolled and at the page end. Not decided whether the folded bar should clip above itself as the expanded bar does.
-- Downloads: Delete file and Clear finished still use the standard dialog. AGENTS.md rule 10 says these should grow from their button like the open warning card does. Not converted yet.
 
 ## Verification log
 
@@ -197,6 +196,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-19 | Downloads confirmation cards morph (`7527665`, `feature/downloads-confirm-morph`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
 | 2026-11-19 | Tab overview search over bookmarks and history (`394bb9f`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
 | 2026-11-19 | Download safety, checksum and http mark (`4834f3f`) | Not checked: built, not checked on a device (no adb in this session). `assembleDebug` and all host tests pass, including `DownloadSafetyTest`, `DownloadNotificationTextTest`, `DownloadJobServiceTest`, `DownloadSystemStopTest`. | Not checked: built, not checked on a device. |
 | 2026-11-19 | Downloads gaps: Referer after restart (`69ea180`), Android 14+ user-initiated job (`5bc0a47`) | Not checked: built, not checked on a device. Host tests pass (all eight download test classes, 0 failures), including the Room round trip with the referrer. Not tested: the version 1 to 2 Room migration on a device with a saved queue; the job scheduling and its notification on Android 14+. | Not checked: built, not checked on a device. The tablet has the build from before these two commits. |

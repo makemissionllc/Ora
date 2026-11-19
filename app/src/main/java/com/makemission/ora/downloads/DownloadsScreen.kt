@@ -66,7 +66,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -89,6 +88,9 @@ import kotlinx.coroutines.withContext
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -157,6 +159,8 @@ fun DownloadsScreen(
     var confirmOpen by remember { mutableStateOf<DownloadItem?>(null) }
     // Where the tapped Open control sits, so the warning card grows out of it.
     var openFrom by remember { mutableStateOf(Offset.Zero) }
+    // Where the last press landed, so the Delete and Clear cards grow out of the control that asked.
+    var tapAt by remember { mutableStateOf(Offset.Zero) }
     // The download whose details the phone shows as its own screen, if any.
     var phoneDetailId by rememberSaveable { mutableStateOf<Long?>(null) }
     val phoneListState = rememberLazyListState()
@@ -198,7 +202,42 @@ fun DownloadsScreen(
 
     // The check before a file type that can run code opens. It is drawn inside whichever overlay is showing.
     val openWarning: @Composable () -> Unit = {
-        confirmOpen?.let { item -> OpenWarningCard(item = item, origin = openFrom, onDismissed = { confirmOpen = null }) }
+        confirmOpen?.let { item ->
+            ConfirmCard(
+                title = "Open ${item.fileName}?",
+                body = "This type of file can harm your device. Only open it if you trust the site it came from.",
+                confirmLabel = "Open anyway",
+                origin = openFrom,
+                onCancel = { BrowserLog.info("download", downloadLogLine("Kept closed after a safety warning", item.url)) },
+                onConfirm = {
+                    BrowserLog.warn("download", downloadLogLine("Opened after a safety warning", item.url))
+                    openFile(context, item)
+                },
+                onDismissed = { confirmOpen = null },
+            )
+        }
+        confirmDelete?.let { item ->
+            ConfirmCard(
+                title = "Delete ${item.fileName}?",
+                body = "The file is removed from Downloads/Ora. This can't be undone.",
+                confirmLabel = "Delete",
+                origin = tapAt,
+                onCancel = { BrowserLog.info("download", downloadLogLine("Delete cancelled", item.url)) },
+                onConfirm = { repository.remove(item.id) },
+                onDismissed = { confirmDelete = null },
+            )
+        }
+        if (confirmClear) {
+            ConfirmCard(
+                title = "Clear finished downloads?",
+                body = "Removes $finishedCount from this list. The files stay in Downloads/Ora.",
+                confirmLabel = "Clear",
+                origin = tapAt,
+                onCancel = {},
+                onConfirm = { repository.clearFinished() },
+                onDismissed = { confirmClear = false },
+            )
+        }
     }
 
     // Tablet: a full-screen overlay that grows from the toolbar button.
@@ -214,7 +253,7 @@ fun DownloadsScreen(
             exit = fadeOut(OraMotion.overlayFadeOut()) +
                 scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE, transformOrigin = origin),
         ) {
-            Box(Modifier.fillMaxSize().background(colors.GridBackground).statusBarsPadding().navigationBarsPadding()) {
+            Box(Modifier.fillMaxSize().background(colors.GridBackground).statusBarsPadding().navigationBarsPadding().trackPress { tapAt = it }) {
                 if (tablet) {
                     TabletPage(
                         all = all,
@@ -270,7 +309,7 @@ fun DownloadsScreen(
                 )
             },
         ) {
-            Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
+            Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().trackPress { tapAt = it }) {
                 // A row's details replace the list in place; Back returns to the list before it closes the sheet.
                 val detail = all.firstOrNull { it.id == phoneDetailId }
                 BackHandler(enabled = detail != null) { phoneDetailId = null }
@@ -310,40 +349,6 @@ fun DownloadsScreen(
                 openWarning()
             }
         }
-    }
-
-    confirmDelete?.let { item ->
-        AlertDialog(
-            onDismissRequest = { confirmDelete = null },
-            title = { Text("Delete ${item.fileName}?") },
-            text = { Text("The file is removed from Downloads/Ora. This can't be undone.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    repository.remove(item.id)
-                    confirmDelete = null
-                }) { Text("Delete", color = Mineral.Ember, fontWeight = FontWeight.SemiBold) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmDelete = null }) { Text("Cancel", color = colors.SecondaryText) }
-            }
-        )
-    }
-
-    if (confirmClear) {
-        AlertDialog(
-            onDismissRequest = { confirmClear = false },
-            title = { Text("Clear finished downloads?") },
-            text = { Text("Removes $finishedCount from this list. The files stay in Downloads/Ora.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    repository.clearFinished()
-                    confirmClear = false
-                }) { Text("Clear", color = Mineral.Ember, fontWeight = FontWeight.SemiBold) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmClear = false }) { Text("Cancel", color = colors.SecondaryText) }
-            }
-        )
     }
 }
 
@@ -1141,6 +1146,21 @@ private fun ChecksumCheck(item: DownloadItem) {
     }
 }
 
+/** Reports where each press lands, in window coordinates, without consuming it. */
+private fun Modifier.trackPress(onPress: (Offset) -> Unit): Modifier = composed {
+    var topLeft by remember { mutableStateOf(Offset.Zero) }
+    this
+        .onGloballyPositioned { topLeft = it.positionInWindow() }
+        .pointerInput(Unit) {
+            awaitPointerEventScope {
+                while (true) {
+                    val event = awaitPointerEvent(PointerEventPass.Initial)
+                    event.changes.firstOrNull { it.pressed && !it.previousPressed }?.let { onPress(topLeft + it.position) }
+                }
+            }
+        }
+}
+
 /** Remembers where a control sits in its window, so a card can grow out of it when the control is tapped. */
 private class TriggerAnchor {
     var coords: LayoutCoordinates? = null
@@ -1151,13 +1171,20 @@ private class TriggerAnchor {
 }
 
 /**
- * The check before a file type that can run code opens (AGENTS.md rule 10). The card grows out of the control that
+ * A confirmation card (AGENTS.md rule 10), used for the open warning, Delete file and Clear finished. The card grows out of the control that
  * asked, from [origin] in window coordinates, and shrinks back into it on Cancel, a tap outside, Back or Open anyway.
  */
 @Composable
-private fun OpenWarningCard(item: DownloadItem, origin: Offset, onDismissed: () -> Unit) {
+private fun ConfirmCard(
+    title: String,
+    body: String,
+    confirmLabel: String,
+    origin: Offset,
+    onCancel: () -> Unit,
+    onConfirm: () -> Unit,
+    onDismissed: () -> Unit,
+) {
     val colors = browserColors()
-    val context = LocalContext.current
     val visibleState = remember { MutableTransitionState(false).apply { targetState = true } }
     var cardTopLeft by remember { mutableStateOf(Offset.Zero) }
     var cardSize by remember { mutableStateOf(IntSize.Zero) }
@@ -1207,7 +1234,7 @@ private fun OpenWarningCard(item: DownloadItem, origin: Offset, onDismissed: () 
                     .padding(20.dp),
             ) {
                 Text(
-                    "Open ${item.fileName}?",
+                    title,
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = colors.AddressBarText,
@@ -1216,23 +1243,22 @@ private fun OpenWarningCard(item: DownloadItem, origin: Offset, onDismissed: () 
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "This type of file can harm your device. Only open it if you trust the site it came from.",
+                    body,
                     fontSize = 14.sp,
                     color = colors.SecondaryText,
                 )
                 Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = {
-                        BrowserLog.info("download", downloadLogLine("Kept closed after a safety warning", item.url))
+                        onCancel()
                         close()
                     }) {
                         Text("Cancel", color = colors.Accent)
                     }
                     TextButton(onClick = {
-                        BrowserLog.warn("download", downloadLogLine("Opened after a safety warning", item.url))
-                        openFile(context, item)
+                        onConfirm()
                         close()
                     }) {
-                        Text("Open anyway", color = Mineral.Ember, fontWeight = FontWeight.SemiBold)
+                        Text(confirmLabel, color = Mineral.Ember, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
