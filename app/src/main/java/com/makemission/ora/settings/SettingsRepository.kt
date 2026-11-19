@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.theme.AppFont
 import android.content.Context
 import android.content.SharedPreferences
 import com.makemission.ora.log.BrowserLog
@@ -307,6 +308,17 @@ class SettingsRepository(context: Context) {
         prefs.edit().putBoolean(KEY_SECURE_DNS, enabled).apply()
         _secureDns.value = enabled
         BrowserLog.info("settings", "Secure DNS ${if (enabled) "on" else "off"}")
+    }
+
+    private val _font = MutableStateFlow(AppFont.fromKey(prefs.getString(KEY_FONT, null)))
+    /** The typeface used on Ora's own screens. Web pages keep their own fonts. */
+    val font: StateFlow<AppFont> = _font.asStateFlow()
+
+    fun setFont(font: AppFont) {
+        prefs.edit().putString(KEY_FONT, font.key).apply()
+        _font.value = font
+        UsageStats.count("setting.font")
+        BrowserLog.info("settings", "Font set to ${font.label}")
     }
 
     private val _hints = MutableStateFlow(prefs.getBoolean(KEY_HINTS, true))
@@ -637,6 +649,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_ADDRESS_SWIPE_EFFECT = "address_swipe_effect"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
+        private const val KEY_FONT = "app_font"
         private const val KEY_HINTS = "hints_enabled"
         private const val KEY_SEEN_HINTS = "hints_seen"
         private const val KEY_FAST_HTTP_DOWNLOADS = "fast_http_downloads"

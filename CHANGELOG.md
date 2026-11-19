@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-19
 
+**Added**
+- Font: pick a typeface for Ora in Settings > Appearance. Choose from Instrument Sans, Inter (close to San Francisco), Manrope, DM Sans, Newsreader and Fraunces (serifs), or JetBrains Mono. Every font is shown in its own letters with a live preview, and it works offline. Web pages keep their own fonts. (`a563112`)
+
 **Changed**
 - Confirmation cards now grow out of the button you pressed and shrink back into it, instead of popping up. Back closes a card the same way and changes nothing. (`38c6bf8`)
 

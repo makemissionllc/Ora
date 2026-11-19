@@ -131,6 +131,9 @@ Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google'
 4. When it is approved, rerun register and sign-in on webauthn.io with Google Password Manager and with Bitwarden, and note whether Bitwarden asks to trust Ora.
 5. Decide whether to route WebAuthn through `androidx.credentials` with `setOrigin`; nothing was built for it.
 
+### Fonts
+- San Francisco and Apple's New York cannot be bundled (Apple's licence forbids it); Inter and Newsreader stand in. Address text stays in condensed Instrument Sans. Custom animated components beyond the font preview cross-fade are not built yet.
+
 ### Motion
 - Bars opening from their origin (the sidebar now does; see Done). The tablet and phone bars still only fade and fold.
 - Layout changes (bar style, Compact shrink) still cut over without a shared transition. Tab switches now fade (see Done).
@@ -197,6 +200,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-19 | `a563112` | Font setting (`ui/theme/AppFonts.kt`, `settings/FontPicker.kt`): 7 families, Inter chosen | Settings > Appearance: Font row opened, preview and list drawn in each font, Inter picked and every Settings label changed to Inter. Light and Pure dark, the other fonts and the preview box background (looked flat after switching) not checked | Not checked (the 600 MB wireless install did not finish) |
 | 2026-11-19 | `38c6bf8` | Confirmation cards (`ui/OraDialog.kt`) grow from the last press and shrink back; replaces AlertDialog at 10 call sites; Back closes with the shrink | Close all card opened from the tab overview and rendered; Back dismissed it, still in Ora with 6 tabs kept. Grow/shrink frames not captured. Buttons that clear caller state remove the card at once (no exit animation) | Not checked |
 | 2026-11-19 | `fd16c3c` | Sheet drag from content, stepwise flick down (code landed in the link fix commit by mistake) | Menu sheet: swipe up on the list grew it to full; fast swipe down went to half; second closed it; 6 rapid open/Back cycles plus a drag, no crash | Not checked (tablet menu is a side panel) |
 | 2026-11-19 | `bd5cc53` | Link stress: 16 odd links by intent (bad, empty, 5,000 character, javascript, file, content, data, ftp, market), kill and relaunch | No crash or ANR; blank-tab, silent-drop and duplicate-tab problems found and fixed; session restored after kill | Same checks, no crash; downloads restored as paused after kill |

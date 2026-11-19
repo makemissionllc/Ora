@@ -61,3 +61,7 @@ Mockups are in the `Designs/` folder and in the Browser Wireframes artifacts nam
 - `browser/OraSheet.kt`: the shared phone bottom sheet (spring rise, finger-following drag, half to full height). New sheets use it, not `ModalBottomSheet`. Spring values are `OraMotion.sheetSpring/sheetSnap/sheetExit`.
 
 - Hints: `OraSheet` takes a `hintId`; `SettingsRepository.shouldShowHint/markHintSeen` track which cues played, and the Hints switch in Settings turns them off or replays them. `LocalHints` carries the repository to composables.
+
+## Fonts
+
+Ora's own screens can use Instrument Sans, Inter, Manrope, DM Sans, Newsreader, Fraunces or JetBrains Mono (Settings > Appearance > Font). The fonts are variable TTFs in `app/src/main/res/font`, taken from the Google Fonts repository under the SIL Open Font License 1.1. The catalog is `ui/theme/AppFonts.kt`; add a font by dropping a TTF in `res/font` and adding an `AppFont` entry.
