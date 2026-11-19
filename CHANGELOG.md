@@ -26,7 +26,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - On the phone, a finished download has an Info button that opens its details, with the same checksum check as the tablet. (`4834f3f`)
 
 **Changed**
-- On the phone, Downloads is now a full-screen page that grows out of the menu and shrinks back into it, like the tablet, instead of a bottom sheet. (`HASH`)
+- On the phone, Downloads is now a full-screen page that grows out of the menu and shrinks back into it, like the tablet, instead of a bottom sheet. (`506a54f`)
 - Profile rules now also apply when you open a bookmark, a history entry or a search match from the tab overview, not only a typed address. (`3d177c8`)
 - Delete file and Clear finished in Downloads now ask with a card that grows out of the button you pressed and shrinks back into it, like the open warning. (`7527665`)
 - On Android 14 and later, downloads keep running in the background as a system-managed download job, with the same Pause all and Cancel notification buttons.  (`5bc0a47`)
