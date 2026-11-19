@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "19 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.CHANGED, "Confirmation cards now grow out of the button you pressed and shrink back into it, instead of popping up. Back closes a card the same way and changes nothing.  (`38c6bf8`)"),
             ChangeItem(ChangeKind.ADDED, "Bottom sheets can be dragged from anywhere, not only the handle: pull the list up to grow the sheet, and pull down at the top of the list to shrink it. A fast flick down from full height lands on half height first; a second flick closes it.  (`fd16c3c`)"),
             ChangeItem(ChangeKind.FIXED, "Sharing the same link to Ora twice now switches to the tab that already has it, not a new copy. Links with no site address, or that are not web links, are ignored and noted in Diagnostics instead of opening a blank tab.  (`bd5cc53`)"),
             ChangeItem(ChangeKind.ADDED, "Hints: the first time a bottom sheet is taller than its half height, it lifts a little and a caption says Pull up for more. It plays once per hint and never blocks anything. Turn hints off or replay them with the Hints switch in Settings.  (`9c147f8`)"),
