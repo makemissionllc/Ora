@@ -65,6 +65,21 @@ fun FontPicker(settings: SettingsRepository) {
             }
             Row(Modifier.rotate(turn)) { DisclosureChevron() }
         }
+        val onWeb by settings.webFont.collectAsState()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { settings.setWebFont(!onWeb) }
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                Text("Use font on websites", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                Text("Overrides each site's own font. Icons and code are left alone.", fontSize = 14.sp, color = browserColors().SecondaryText)
+            }
+            com.makemission.ora.browser.MineralSwitch(checked = onWeb, label = "Switch", onChange = { settings.setWebFont(it) })
+        }
         AnimatedVisibility(
             visible = open,
             enter = fadeIn(OraMotion.enter()) + expandVertically(OraMotion.enter()),

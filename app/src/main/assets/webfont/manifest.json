@@ -1,0 +1,13 @@
+{
+  "manifest_version": 2,
+  "name": "Web font",
+  "version": "1.0",
+  "description": "Shows web pages in the font chosen in Ora's settings.",
+  "browser_specific_settings": { "gecko": { "id": "web-font@ora.makemission.com" } },
+  "permissions": ["nativeMessaging", "geckoViewAddons", "tabs", "<all_urls>"],
+  "web_accessible_resources": ["fonts/*.ttf"],
+  "background": { "scripts": ["background.js"] },
+  "content_scripts": [
+    { "matches": ["<all_urls>"], "js": ["content.js"], "run_at": "document_start", "all_frames": true }
+  ]
+}

@@ -48,6 +48,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val font by settings.font.collectAsState()
+            val webFont by settings.webFont.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(font, webFont) {
+                com.makemission.ora.extensions.WebFontBridge.apply(if (webFont) font.key else null)
+            }
             OraTheme(font = font) {
               androidx.compose.runtime.CompositionLocalProvider(com.makemission.ora.browser.LocalHints provides settings) {
                 val profiles = remember { ProfilesRepository(applicationContext) }

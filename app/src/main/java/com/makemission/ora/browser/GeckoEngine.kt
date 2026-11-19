@@ -28,6 +28,8 @@ object GeckoEngine {
             VideoControlBridge.install(it)
             // Bundled helper that finds a page's article for Reader view.
             ReaderBridge.install(it)
+            // Bundled helper that shows pages in the font chosen in Settings, when that is switched on.
+            com.makemission.ora.extensions.WebFontBridge.install(it)
         }
 
     /**
