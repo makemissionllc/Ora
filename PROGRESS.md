@@ -196,7 +196,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
-| 2026-11-19 | Downloads confirmation cards morph (`HASH`, `feature/downloads-confirm-morph`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
+| 2026-11-19 | Downloads confirmation cards morph (`7527665`, `feature/downloads-confirm-morph`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
 | 2026-11-19 | Tab overview search over bookmarks and history (`394bb9f`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
 | 2026-11-19 | Download safety, checksum and http mark (`4834f3f`) | Not checked: built, not checked on a device (no adb in this session). `assembleDebug` and all host tests pass, including `DownloadSafetyTest`, `DownloadNotificationTextTest`, `DownloadJobServiceTest`, `DownloadSystemStopTest`. | Not checked: built, not checked on a device. |
 | 2026-11-19 | Downloads gaps: Referer after restart (`69ea180`), Android 14+ user-initiated job (`5bc0a47`) | Not checked: built, not checked on a device. Host tests pass (all eight download test classes, 0 failures), including the Room round trip with the referrer. Not tested: the version 1 to 2 Room migration on a device with a saved queue; the job scheduling and its notification on Android 14+. | Not checked: built, not checked on a device. The tablet has the build from before these two commits. |
