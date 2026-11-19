@@ -11,7 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-19
 
 **Added**
-- The Downloads list ends with a totals line, such as "4 saved · 1.2 GB · 1 failed", on phone and tablet. (`c415203`)
+- The Downloads list ends with a totals line, such as 4 saved, 1.2 GB and 1 failed, on phone and tablet. (`c415203`)
 - Each download now has its own notification, with Pause or Resume and Cancel while it runs, Retry when it fails, and Open when it is done. A private download never shows its file name. (`20e7f5f`)
 - A slim row of chips for the other tabs in the open tab's group floats at the bottom of the page, so you can switch within the group in one tap. It only shows for a group of two or more tabs, never for private tabs. (`cf0f67c`)
 - Downloads keep going when you leave Ora. A notification shows how many are running, with Pause all and Cancel all. (`0c93cda`)
