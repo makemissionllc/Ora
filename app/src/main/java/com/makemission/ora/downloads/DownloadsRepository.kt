@@ -146,8 +146,12 @@ class DownloadsRepository(
         val keep = saved.map { it.id.toString() }.toSet()
         dir.listFiles { f -> f.name.endsWith(".part") && f.name.removeSuffix(".part") !in keep }?.forEach { it.delete() }
         current = this
+        DownloadNotifier(context, this, scope)
         if (restored.isNotEmpty()) BrowserLog.info("download", "Restored ${restored.size} unfinished downloads as paused")
     }
+
+    /** True for a download started in a private tab. */
+    fun isPrivate(id: Long): Boolean = id in privateIds
 
     /** Starts saving a response that the page handed over as a file. The page's own stream is not used. */
     fun start(response: WebResponse, pageUrl: String, isPrivate: Boolean = false) {
