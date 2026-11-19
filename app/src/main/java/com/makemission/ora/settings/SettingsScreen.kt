@@ -66,12 +66,8 @@ import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.DiagnosticsScreen
 import com.makemission.ora.passwords.PasswordStore
 import com.makemission.ora.passwords.PasswordsScreen
-<<<<<<< Updated upstream
 import com.makemission.ora.notice.InAppNotices
 import com.makemission.ora.permissions.SitePermissionStore
-=======
-import com.makemission.ora.stats.BlockStats
->>>>>>> Stashed changes
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.Mineral
 import com.makemission.ora.ui.theme.MotionStyle
@@ -160,13 +156,7 @@ fun SettingsScreen(
     var appLockDialog by remember { mutableStateOf(false) }
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val quickResume by settings.quickResume.collectAsState()
-<<<<<<< Updated upstream
     val saveHistory by settings.saveHistory.collectAsState()
-=======
-    val statAds by settings.statAds.collectAsState()
-    val statTrackers by settings.statTrackers.collectAsState()
-    val statFingerprinting by settings.statFingerprinting.collectAsState()
->>>>>>> Stashed changes
     val deviceFontWeb by settings.deviceFontWeb.collectAsState()
     val textSize by settings.textSizePercent.collectAsState()
     val autofillPasswords by settings.autofillPasswords.collectAsState()
@@ -176,14 +166,10 @@ fun SettingsScreen(
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
     var homeDraft by remember(homePage) { mutableStateOf(homePage) }
     var confirmClear by remember { mutableStateOf(false) }
-<<<<<<< Updated upstream
     var confirmClearSites by remember { mutableStateOf(false) }
     val siteChoices by sitePermissions.choices.collectAsState()
     val siteCount = SitePermissionStore.countSites(siteChoices)
     val siteLabel = if (siteCount == 1) "1 site" else "$siteCount sites"
-=======
-    var confirmResetStats by remember { mutableStateOf(false) }
->>>>>>> Stashed changes
     var showDiagnostics by remember { mutableStateOf(false) }
     var showPasswords by remember { mutableStateOf(false) }
     var showChangelog by remember { mutableStateOf(false) }
@@ -1117,51 +1103,6 @@ fun SettingsScreen(
                             MineralSwitch(checked = quickResume, label = "Switch", onChange = { settings.setQuickResume(it) })
                         }
                     }
-                    if (shown(SettingsCategory.HOME)) item {
-                        SectionTitle("Start page stats")
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
-                                .background(browserColors().AddressBarBackground)
-                        ) {
-                            ToggleRow(
-                                title = "Ads blocked",
-                                description = "Show how many ads Ora has blocked on the start page.",
-                                checked = statAds,
-                                onChange = { settings.setStatAds(it) },
-                            )
-                            ToggleRow(
-                                title = "Trackers blocked",
-                                description = "Show how many trackers Ora has blocked on the start page.",
-                                checked = statTrackers,
-                                onChange = { settings.setStatTrackers(it) },
-                            )
-                            ToggleRow(
-                                title = "Fingerprinting blocked",
-                                description = "Show how many attempts to identify your device Ora has stopped. Counts only while Fingerprinting protection is on in Privacy.",
-                                checked = statFingerprinting,
-                                onChange = { settings.setStatFingerprinting(it) },
-                            )
-                            // Clearing is asked for first, since the totals cannot be recovered.
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { confirmResetStats = true }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-                                    Text("Reset counts", fontSize = 15.sp, color = browserColors().AddressBarText)
-                                    Text(
-                                        "Sets the ad, tracker and fingerprinting totals back to zero.",
-                                        fontSize = 12.sp,
-                                        color = browserColors().SecondaryText
-                                    )
-                                }
-                            }
-                        }
-                    }
                     if (shown(SettingsCategory.SEARCH)) item {
                         SectionTitle("Search engines")
                         Column(
@@ -1440,7 +1381,6 @@ fun SettingsScreen(
         }
     }
 
-<<<<<<< Updated upstream
     if (appLockDialog) {
         com.makemission.ora.security.AppLockDialog(
             settings = settings,
@@ -1465,23 +1405,6 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { confirmClearSites = false }) {
-=======
-    if (confirmResetStats) {
-        AlertDialog(
-            onDismissRequest = { confirmResetStats = false },
-            title = { Text("Reset block counts?") },
-            text = { Text("The ad, tracker and fingerprinting totals on the start page go back to zero. This can't be undone.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmResetStats = false
-                    BlockStats.reset()
-                }) {
-                    Text("Reset", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmResetStats = false }) {
->>>>>>> Stashed changes
                     Text("Cancel", color = browserColors().SecondaryText)
                 }
             }
@@ -1610,24 +1533,6 @@ private fun SectionTitle(text: String) {
         fontWeight = FontWeight.SemiBold,
         color = browserColors().SecondaryText
     )
-}
-
-/** A switch row: the whole row toggles, and a short plain-words line says what the setting does. */
-@Composable
-private fun ToggleRow(title: String, description: String, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(title, fontSize = 15.sp, color = browserColors().AddressBarText)
-            Text(description, fontSize = 12.sp, color = browserColors().SecondaryText)
-        }
-        Switch(checked = checked, onCheckedChange = onChange)
-    }
 }
 
 /** One cookie policy choice: a radio button, a title and a short plain-words description. Tapping the row selects it. */

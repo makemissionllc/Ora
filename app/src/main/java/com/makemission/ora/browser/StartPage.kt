@@ -38,7 +38,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
-import com.makemission.ora.stats.BlockCounts
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.browserColors
 
@@ -53,12 +52,6 @@ fun StartPage(
     onSubmit: (String) -> Unit,
     /** Private tabs say so on the start page, so the user knows what is not kept. */
     isPrivate: Boolean = false,
-    /** Totals of what the blocking has stopped on this device. */
-    stats: BlockCounts = BlockCounts(),
-    /** Each stat tile can be hidden in Settings > Home page. */
-    showAdStats: Boolean = true,
-    showTrackerStats: Boolean = true,
-    showFingerprintStats: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val colors = browserColors()
@@ -140,14 +133,6 @@ fun StartPage(
                         }
                     }
                 }
-                val tiles = listOfNotNull(
-                    if (showAdStats) "Ads blocked" to stats.ads else null,
-                    if (showTrackerStats) "Trackers blocked" to stats.trackers else null,
-                    if (showFingerprintStats) "Fingerprinting blocked" to stats.fingerprinting else null,
-                )
-                if (tiles.isNotEmpty()) {
-                    BlockStatTiles(tiles)
-                }
                 Row(horizontalArrangement = Arrangement.spacedBy(BrowserTokens.StartCardSpacing)) {
                     StatusCard(
                         label = "PRIVACY",
@@ -192,41 +177,6 @@ private fun ShortcutTile(bookmark: Bookmark, onClick: () -> Unit) {
             maxLines = 1,
             textAlign = TextAlign.Center
         )
-    }
-}
-
-/**
- * One tile per enabled stat, each with its count. With nothing counted yet, a note says the counts will
- * grow, so the zeros do not look broken.
- */
-@Composable
-private fun BlockStatTiles(tiles: List<Pair<String, Long>>) {
-    val colors = browserColors()
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(BrowserTokens.StartCardSpacing)) {
-            tiles.forEach { (label, count) ->
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(RoundedCornerShape(BrowserTokens.CardRadius))
-                        .background(colors.Surface)
-                        .padding(BrowserTokens.StartCardPadding),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text(label, color = colors.SecondaryText, fontSize = 12.sp, maxLines = 2)
-                    Text(
-                        "%,d".format(count),
-                        color = colors.AddressBarText,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                    )
-                }
-            }
-        }
-        if (tiles.all { it.second == 0L }) {
-            Text("Nothing blocked yet. The counts grow as pages load.", color = colors.SecondaryText, fontSize = 12.sp)
-        }
     }
 }
 

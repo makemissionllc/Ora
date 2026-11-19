@@ -12,14 +12,9 @@ import com.makemission.ora.log.BrowserLog
 import com.makemission.ora.log.LogPrivacy
 import org.mozilla.geckoview.AllowOrDeny
 import com.makemission.ora.log.UsageStats
-<<<<<<< Updated upstream
 import com.makemission.ora.permissions.SitePermissionDelegate
 import com.makemission.ora.permissions.SitePermissionStore
 import com.makemission.ora.permissions.SitePrompts
-=======
-import com.makemission.ora.stats.BlockStats
-import org.mozilla.geckoview.ContentBlocking
->>>>>>> Stashed changes
 import org.mozilla.geckoview.GeckoResult
 import org.mozilla.geckoview.GeckoSession
 import org.mozilla.geckoview.GeckoSessionSettings
@@ -251,12 +246,6 @@ class BrowserTab(
                 // One card per cause, in place of GeckoView's blank error page.
                 if (failed.isBlank() || failed.startsWith("data:")) return null
                 return GeckoResult.fromValue(ErrorPage.uriFor(failed, error, host, online))
-            }
-        }
-        // Counts what the blocking stops, for the start page tiles. Private tabs are left out, so they keep nothing.
-        session.contentBlockingDelegate = object : ContentBlocking.Delegate {
-            override fun onContentBlocked(session: GeckoSession, event: ContentBlocking.BlockEvent) {
-                if (!isPrivate && event.isBlocking) BlockStats.record(event.antiTrackingCategory)
             }
         }
         session.scrollDelegate = object : GeckoSession.ScrollDelegate {
