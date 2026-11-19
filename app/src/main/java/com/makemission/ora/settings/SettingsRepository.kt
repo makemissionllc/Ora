@@ -486,6 +486,36 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Page fade-in ${if (enabled) "on" else "off"}")
     }
 
+    private val _statAds = MutableStateFlow(prefs.getBoolean(KEY_STAT_ADS, true))
+    /** Start page tile for ads blocked. */
+    val statAds: StateFlow<Boolean> = _statAds.asStateFlow()
+
+    fun setStatAds(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_STAT_ADS, enabled).apply()
+        _statAds.value = enabled
+        BrowserLog.info("settings", "Start page ads stat ${if (enabled) "on" else "off"}")
+    }
+
+    private val _statTrackers = MutableStateFlow(prefs.getBoolean(KEY_STAT_TRACKERS, true))
+    /** Start page tile for trackers blocked. */
+    val statTrackers: StateFlow<Boolean> = _statTrackers.asStateFlow()
+
+    fun setStatTrackers(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_STAT_TRACKERS, enabled).apply()
+        _statTrackers.value = enabled
+        BrowserLog.info("settings", "Start page trackers stat ${if (enabled) "on" else "off"}")
+    }
+
+    private val _statFingerprinting = MutableStateFlow(prefs.getBoolean(KEY_STAT_FINGERPRINTING, true))
+    /** Start page tile for fingerprinting attempts blocked. */
+    val statFingerprinting: StateFlow<Boolean> = _statFingerprinting.asStateFlow()
+
+    fun setStatFingerprinting(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_STAT_FINGERPRINTING, enabled).apply()
+        _statFingerprinting.value = enabled
+        BrowserLog.info("settings", "Start page fingerprinting stat ${if (enabled) "on" else "off"}")
+    }
+
     private val _motionStyle = MutableStateFlow(MotionStyle.fromKey(prefs.getString(KEY_MOTION_STYLE, null)))
     /** How transitions are timed and eased: Smooth, Elegant, Fast or Premium. */
     val motionStyle: StateFlow<MotionStyle> = _motionStyle.asStateFlow()
@@ -630,7 +660,13 @@ class SettingsRepository(context: Context) {
         private const val KEY_READER_PAGE = "reader_page"
         private const val KEY_FADE_PAGES_IN = "fade_pages_in"
         private const val KEY_QUICK_RESUME = "quick_resume"
+<<<<<<< Updated upstream
         private const val KEY_SAVE_HISTORY = "save_history"
+=======
+        private const val KEY_STAT_ADS = "stat_ads"
+        private const val KEY_STAT_TRACKERS = "stat_trackers"
+        private const val KEY_STAT_FINGERPRINTING = "stat_fingerprinting"
+>>>>>>> Stashed changes
         private const val KEY_EDGE_SWIPE_SIDEBAR = "edge_swipe_sidebar"
         private const val KEY_MOTION_STYLE = "motion_style"
         private const val KEY_ADDRESS_SWIPE_TARGET = "address_swipe_target"

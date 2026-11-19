@@ -11,6 +11,7 @@ import androidx.compose.runtime.remember
 import com.makemission.ora.browser.BrowserScreen
 import com.makemission.ora.browser.ExternalLinks
 import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.stats.BlockStats
 import com.makemission.ora.log.UsageStats
 import com.makemission.ora.profiles.ProfilesRepository
 import com.makemission.ora.security.AppLock
@@ -28,6 +29,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+<<<<<<< Updated upstream
         // Startup work runs once per process. If Android recreates the activity (a setting changed, memory
         // pressure) the second onCreate must not install the crash handler again, log "Started" again or
         // lock the app again; it is logged as a recreation so the cause shows in the log.
@@ -41,6 +43,12 @@ class MainActivity : ComponentActivity() {
         } else {
             BrowserLog.info("app", "Window recreated (saved state ${if (savedInstanceState != null) "present" else "absent"}); startup not repeated")
         }
+=======
+        BrowserLog.installCrashHandler()
+        BrowserLog.info("app", "Started")
+        UsageStats.init(applicationContext)
+        BlockStats.init(applicationContext)
+>>>>>>> Stashed changes
         handleLink(intent)
         enableEdgeToEdge()
         setContent {
