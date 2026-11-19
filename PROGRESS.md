@@ -197,6 +197,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-19 | `fd16c3c` | Sheet drag from content, stepwise flick down (code landed in the link fix commit by mistake) | Menu sheet: swipe up on the list grew it to full; fast swipe down went to half; second closed it; 6 rapid open/Back cycles plus a drag, no crash | Not checked (tablet menu is a side panel) |
 | 2026-11-19 | `bd5cc53` | Link stress: 16 odd links by intent (bad, empty, 5,000 character, javascript, file, content, data, ftp, market), kill and relaunch | No crash or ANR; blank-tab, silent-drop and duplicate-tab problems found and fixed; session restored after kill | Same checks, no crash; downloads restored as paused after kill |
 | 2026-11-19 | `9c147f8` | Pull-up hint on sheets, Hints setting | Menu sheet: lift and caption seen once after opening; not seen again is Not checked. Settings row: Not checked | Not checked |
 | 2026-11-19 | `8adfd4a` | Shared spring/drag bottom sheet (`browser/OraSheet.kt`) | Main menu sheet opened and seen at half height with the scrim. Drag, flick, full height and the other four sheets: Not checked | Not checked |
