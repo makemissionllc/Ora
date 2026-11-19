@@ -13,6 +13,10 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView, with Kotli
 
 Keep these four up to date with every change. [AGENTS.md](AGENTS.md) has the rule.
 
+## Branches and releases
+
+`main` is the stable line and `develop` is the working branch. Each feature or fix gets its own branch off `develop`, named `feature/<name>`, `fix/<name>`, `docs/<name>` or `chore/<name>`. Changes to a feature go back on that feature's branch, then it is merged into `develop` with `git merge --no-ff`. `develop` is merged into `main` when it builds and is checked. [AGENTS.md](AGENTS.md) has the full Branch rules (30 to 36).
+
 ## Build
 
 ```bash
