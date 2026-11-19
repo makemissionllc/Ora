@@ -23,6 +23,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "A finished download can be checked against the SHA-256 or MD5 its website publishes. Paste it under the file, and Ora says whether it matches.  (`4834f3f`)"),
             ChangeItem(ChangeKind.ADDED, "A download that came over plain http is marked in its details, because anyone on the network can change what arrives.  (`4834f3f`)"),
             ChangeItem(ChangeKind.ADDED, "On the phone, a finished download has an Info button that opens its details, with the same checksum check as the tablet.  (`4834f3f`)"),
+            ChangeItem(ChangeKind.CHANGED, "Delete file and Clear finished in Downloads now ask with a card that grows out of the button you pressed and shrinks back into it, like the open warning.  (`HASH`)"),
             ChangeItem(ChangeKind.CHANGED, "On Android 14 and later, downloads keep running in the background as a system-managed download job, with the same Pause all and Cancel notification buttons.  (`5bc0a47`)"),
             ChangeItem(ChangeKind.CHANGED, "A download paused or failed before an app restart keeps the page it came from, so resuming still sends the right Referer.  (`69ea180`)"),
             ChangeItem(ChangeKind.CHANGED, "Downloads use the same sign-in and cookies as the tab that started them. Private-tab downloads share nothing with normal tabs and are not saved to the list after a restart.  (`94ff36b`, `0c93cda`)"),
