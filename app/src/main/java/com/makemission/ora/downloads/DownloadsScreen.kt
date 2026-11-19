@@ -68,14 +68,11 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -241,8 +238,8 @@ fun DownloadsScreen(
         }
     }
 
-    // Tablet: a full-screen overlay that grows from the toolbar button.
-    if (tablet) Dialog(
+    // A full-screen page that grows from the toolbar button or the menu corner, on phone and tablet.
+    Dialog(
         onDismissRequest = { visibleState.targetState = false },
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
@@ -273,81 +270,42 @@ fun DownloadsScreen(
                         onClearFinished = { confirmClear = true },
                     )
                 } else {
-                    PhonePage(
-                        running = running,
-                        filter = filter,
-                        onFilter = { filter = it },
-                        visible = visible,
-                        activeRows = activeRows,
-                        otherRows = otherRows,
-                        emptyText = filter.emptyText,
-                        finishedCount = finishedCount,
-                        footer = footer,
-                        onClearFinished = { confirmClear = true },
-                        onDone = { visibleState.targetState = false },
-                        actions = rowActions,
-                        listState = phoneListState,
-                    )
-                }
-                openWarning()
-            }
-        }
-    }
-
-    // Phone: a bottom sheet that opens halfway and drags up to full screen. Same list and actions as the tablet.
-    if (!tablet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-        val scope = rememberCoroutineScope()
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            containerColor = colors.GridBackground,
-            dragHandle = {
-                Box(
-                    Modifier
-                        .padding(top = 10.dp, bottom = 6.dp)
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(CircleShape)
-                        .background(colors.SecondaryText.copy(alpha = 0.4f))
-                )
-            },
-        ) {
-            Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().trackPress { tapAt = it }) {
-                // A row's details replace the list in place; Back returns to the list before it closes the sheet.
-                val detail = all.firstOrNull { it.id == phoneDetailId }
-                BackHandler(enabled = detail != null) { phoneDetailId = null }
-                AnimatedContent(
-                    targetState = detail,
-                    contentKey = { it?.id },
-                    transitionSpec = {
-                        (fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE))
-                            .togetherWith(fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE))
-                    },
-                    label = "phone download detail",
-                ) { shown ->
-                    if (shown == null) {
-                        PhonePage(
-                            running = running,
-                            filter = filter,
-                            onFilter = { filter = it },
-                            visible = visible,
-                            activeRows = activeRows,
-                            otherRows = otherRows,
-                            emptyText = filter.emptyText,
-                            finishedCount = finishedCount,
-                        footer = footer,
-                            onClearFinished = { confirmClear = true },
-                            onDone = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
-                            actions = rowActions,
-                            listState = phoneListState,
-                        )
-                    } else {
-                        PhoneDetail(
-                            item = shown,
-                            actions = rowActions,
-                            onCopyLink = { copyLink(context, shown) },
-                            onBack = { phoneDetailId = null },
-                        )
+                    // A row's details replace the list in place; Back returns to the list before it closes the page.
+                    val detail = all.firstOrNull { it.id == phoneDetailId }
+                    BackHandler(enabled = detail != null) { phoneDetailId = null }
+                    AnimatedContent(
+                        targetState = detail,
+                        contentKey = { it?.id },
+                        transitionSpec = {
+                            (fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE))
+                                .togetherWith(fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE))
+                        },
+                        label = "phone download detail",
+                    ) { shown ->
+                        if (shown == null) {
+                            PhonePage(
+                                running = running,
+                                filter = filter,
+                                onFilter = { filter = it },
+                                visible = visible,
+                                activeRows = activeRows,
+                                otherRows = otherRows,
+                                emptyText = filter.emptyText,
+                                finishedCount = finishedCount,
+                                footer = footer,
+                                onClearFinished = { confirmClear = true },
+                                onDone = { visibleState.targetState = false },
+                                actions = rowActions,
+                                listState = phoneListState,
+                            )
+                        } else {
+                            PhoneDetail(
+                                item = shown,
+                                actions = rowActions,
+                                onCopyLink = { copyLink(context, shown) },
+                                onBack = { phoneDetailId = null },
+                            )
+                        }
                     }
                 }
                 openWarning()
