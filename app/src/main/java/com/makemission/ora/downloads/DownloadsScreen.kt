@@ -168,6 +168,7 @@ fun DownloadsScreen(
 
     val running = all.filter { it.status == DownloadStatus.RUNNING }
     val finishedCount = all.size - running.size
+    val footer = DownloadStats.footer(all)
     val visible = all.filter { filter.matches(it) }
     val activeRows = visible.filter { it.isLive }
     val otherRows = visible.filterNot { it.isLive }
@@ -268,6 +269,7 @@ fun DownloadsScreen(
                         onCopyLink = { copyLink(context, it) },
                         emptyText = filter.emptyText,
                         finishedCount = finishedCount,
+                        footer = footer,
                         onClearFinished = { confirmClear = true },
                     )
                 } else {
@@ -280,6 +282,7 @@ fun DownloadsScreen(
                         otherRows = otherRows,
                         emptyText = filter.emptyText,
                         finishedCount = finishedCount,
+                        footer = footer,
                         onClearFinished = { confirmClear = true },
                         onDone = { visibleState.targetState = false },
                         actions = rowActions,
@@ -332,6 +335,7 @@ fun DownloadsScreen(
                             otherRows = otherRows,
                             emptyText = filter.emptyText,
                             finishedCount = finishedCount,
+                        footer = footer,
                             onClearFinished = { confirmClear = true },
                             onDone = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
                             actions = rowActions,
@@ -377,6 +381,7 @@ private fun PhonePage(
     otherRows: List<DownloadItem>,
     emptyText: String,
     finishedCount: Int,
+    footer: String?,
     onClearFinished: () -> Unit,
     onDone: () -> Unit,
     actions: RowActions,
@@ -422,7 +427,20 @@ private fun PhonePage(
                 DownloadRow(item = item, selected = false, onTap = null, actions = actions, modifier = Modifier.animateItem())
             }
         }
+        if (footer != null) item(key = "footer") { StatsFooter(footer) }
     }
+}
+
+/** The totals line at the end of the list. */
+@Composable
+private fun StatsFooter(text: String) {
+    Text(
+        text,
+        modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
+        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+        fontSize = 12.sp,
+        color = browserColors().SecondaryText,
+    )
 }
 
 @Composable
@@ -439,6 +457,7 @@ private fun TabletPage(
     onCopyLink: (DownloadItem) -> Unit,
     emptyText: String,
     finishedCount: Int,
+    footer: String?,
     onClearFinished: () -> Unit,
 ) {
     val colors = browserColors()
@@ -488,6 +507,7 @@ private fun TabletPage(
                             )
                         }
                     }
+                    if (footer != null) item(key = "footer") { StatsFooter(footer) }
                 }
             }
             Box(Modifier.weight(0.58f).fillMaxHeight()) {

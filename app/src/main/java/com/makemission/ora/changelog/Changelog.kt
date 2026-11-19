@@ -19,6 +19,7 @@ val Changelog: List<ChangeDay> = listOf(
             ChangeItem(ChangeKind.ADDED, "A download whose file changed on the server starts again, and the row says so.  (`0a8d9c5`)"),
             ChangeItem(ChangeKind.ADDED, "A dropped connection is retried after 2, 5, 15 and 30 seconds, then every minute, up to ten times. When the network is gone, it waits and resumes when it comes back.  (`665274c`)"),
             ChangeItem(ChangeKind.ADDED, "Search in the tab overview also finds bookmarks and history, on phone and tablet. Matches show under the tabs, and the field says when nothing matches.  (`394bb9f`)"),
+            ChangeItem(ChangeKind.ADDED, "The Downloads list ends with a totals line, such as "4 saved · 1.2 GB · 1 failed", on phone and tablet.  (`HASH`)"),
             ChangeItem(ChangeKind.ADDED, "Each download now has its own notification, with Pause or Resume and Cancel while it runs, Retry when it fails, and Open when it is done. A private download never shows its file name.  (`20e7f5f`)"),
             ChangeItem(ChangeKind.ADDED, "A slim row of chips for the other tabs in the open tab's group floats at the bottom of the page, so you can switch within the group in one tap. It only shows for a group of two or more tabs, never for private tabs.  (`cf0f67c`)"),
             ChangeItem(ChangeKind.ADDED, "Files that can run code, such as .apk, .exe, .sh or .jar, ask before they open. A card says the type can harm your device, with Cancel and Open anyway.  (`4834f3f`)"),
