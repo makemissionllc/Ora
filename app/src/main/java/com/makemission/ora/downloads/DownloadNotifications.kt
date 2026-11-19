@@ -18,6 +18,9 @@ object DownloadNotifications {
     const val NOTIFICATION_ID = 4101
     const val ACTION_PAUSE_ALL = "com.makemission.ora.downloads.PAUSE_ALL"
     const val ACTION_CANCEL_ALL = "com.makemission.ora.downloads.CANCEL_ALL"
+    const val ACTION_ITEM = "com.makemission.ora.downloads.ITEM_ACTION"
+    const val EXTRA_ID = "download_id"
+    const val EXTRA_ACTION = "download_action"
 
     fun createChannel(context: Context) {
         context.getSystemService(NotificationManager::class.java)?.createNotificationChannel(
@@ -57,6 +60,18 @@ class DownloadActionReceiver : BroadcastReceiver() {
         when (intent.action) {
             DownloadNotifications.ACTION_PAUSE_ALL -> repository.pauseAll()
             DownloadNotifications.ACTION_CANCEL_ALL -> repository.cancelAll()
+            DownloadNotifications.ACTION_ITEM -> {
+                val id = intent.getLongExtra(DownloadNotifications.EXTRA_ID, -1L)
+                val action = runCatching {
+                    DownloadNotificationText.Action.valueOf(intent.getStringExtra(DownloadNotifications.EXTRA_ACTION).orEmpty())
+                }.getOrNull() ?: return
+                when (action) {
+                    DownloadNotificationText.Action.PAUSE -> repository.pause(id)
+                    DownloadNotificationText.Action.RESUME, DownloadNotificationText.Action.RETRY -> repository.resume(id)
+                    DownloadNotificationText.Action.CANCEL -> repository.cancel(id)
+                    DownloadNotificationText.Action.OPEN -> Unit
+                }
+            }
         }
     }
 }
