@@ -174,7 +174,7 @@ Priority 1 (do first):
 - Site tweaks: per-site switches to hide elements, force dark, change font and widen text.
 - Element zapper: long-press an element, "Hide on this site".
 - Command bar: ">" in the address bar runs actions.
-- Profile rules: built for typed addresses (`32c2e34`, `feature/profile-site-rules`). Links tapped on a page, bookmarks and history entries do not follow a rule yet.
+- Profile rules: built for typed addresses (`32c2e34`, `feature/profile-site-rules`). Bookmarks, history entries and overview search matches follow a rule too (`HASH`, `feature/profile-rules-everywhere`). Links tapped on a page do not yet.
 
 Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to build yet; the order is for the user to set.
 
@@ -196,6 +196,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-19 | Profile rules for saved sites (`HASH`, `feature/profile-rules-everywhere`) | Not checked: built (`assembleDebug` passes); not seen on the phone. | Not checked: no tablet attached. |
 | 2026-11-19 | Profile rules (`32c2e34`, `feature/profile-site-rules`) | Not checked: built; `assembleDebug` and `ProfileRulesTest` pass. The Settings section and the profile switch were not seen on the phone. | Not checked: no tablet attached. |
 | 2026-11-19 | Downloads stats footer (`c415203`, `feature/downloads-stats-footer`) | Not checked: built; `assembleDebug` and `DownloadStatsTest` pass. Not seen on the phone. | Not checked: no tablet attached. |
 | 2026-11-19 | Per-download notifications (`20e7f5f`, `feature/downloads-notifications`) | Not checked: built, `assembleDebug` and all host tests pass. No download was started on the phone, so no notification was seen. | Not checked: no tablet attached. |

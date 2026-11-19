@@ -625,6 +625,19 @@ private fun BrowserContent(
             tabs.tabs.map { AddressSuggestion(it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url), it.url) }
         ).distinctBy { it.target }
 
+    /** Opens a saved address, a bookmark or a history entry, in a profile of its own when a rule says so. */
+    fun openSaved(url: String, inNewTab: Boolean = false) {
+        val target = if (selected.isPrivate) null else profileRules.profileFor(url)
+        if (target != null && target != profileId && profileList.any { it.id == target }) {
+            BrowserLog.info("profiles", "A rule opened a saved site in another profile")
+            profiles.openIn(target, url)
+        } else if (inNewTab) {
+            tabs.newTab(url)
+        } else {
+            selected.session.loadUri(url)
+        }
+    }
+
     /** Loads typed text: searches through the chooser or default engine, or opens a URL. */
     fun submitAddress(input: String) {
         // A profile rule sends the site to its own profile, unless this is a private tab.
@@ -966,8 +979,8 @@ private fun BrowserContent(
                             history = historyList,
                             historyOff = !saveHistory,
                             onNewTab = onNewTab,
-                            onOpenBookmark = { url -> selected.session.loadUri(url) },
-                            onOpenHistory = { url -> selected.session.loadUri(url) },
+                            onOpenBookmark = { url -> openSaved(url) },
+                            onOpenHistory = { url -> openSaved(url) },
                             onRemoveHistory = { url -> history.remove(url) },
                             onClearHistory = { history.clear() },
                             onNewPrivateTab = onNewPrivateTab,
@@ -1287,7 +1300,7 @@ private fun BrowserContent(
                             history = historyList,
                             historyOff = !saveHistory,
                             onOpen = { url ->
-                                selected.session.loadUri(url)
+                                openSaved(url)
                                 showLibrary = false
                             },
                             onRemoveBookmark = { url -> bookmarks.remove(url) },
@@ -1308,6 +1321,7 @@ private fun BrowserContent(
                             insets = Modifier.statusBarsPadding(),
                             bookmarks = bookmarkList,
                             history = historyList,
+                            onOpenUrl = { url -> openSaved(url, inNewTab = true); showTabGrid = false },
                         )
                         PhoneOverlay.EXTENSIONS -> ExtensionsScreen(
                             repository = extensions,
@@ -1419,6 +1433,7 @@ private fun BrowserContent(
             insets = Modifier.statusBarsPadding().navigationBarsPadding(),
             bookmarks = bookmarkList,
             history = historyList,
+            onOpenUrl = { url -> openSaved(url, inNewTab = true); showTabGrid = false },
         )
     }
     // With the PIN lock on, a private tab stays behind the lock screen until the PIN is entered.
@@ -1458,6 +1473,7 @@ private fun TabOverviewContent(
     insets: Modifier,
     bookmarks: List<Bookmark>,
     history: List<HistoryEntry>,
+    onOpenUrl: (String) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -1490,7 +1506,7 @@ private fun TabOverviewContent(
             onDone = onDone,
             bookmarks = bookmarks,
             history = history,
-            onOpenUrl = { url -> tabs.newTab(url); onDone() },
+            onOpenUrl = onOpenUrl,
         )
     }
 }
