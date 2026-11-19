@@ -321,6 +321,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Font set to ${font.label}")
     }
 
+    private val _webFont = MutableStateFlow(prefs.getBoolean(KEY_WEB_FONT, false))
+    /** When on, web pages are shown in [font] too. Off by default, since it overrides every site's own look. */
+    val webFont: StateFlow<Boolean> = _webFont.asStateFlow()
+
+    fun setWebFont(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_WEB_FONT, enabled).apply()
+        _webFont.value = enabled
+        BrowserLog.info("settings", "Font on websites ${if (enabled) "on" else "off"}")
+    }
+
     private val _hints = MutableStateFlow(prefs.getBoolean(KEY_HINTS, true))
     /** When on, a short gesture cue plays once on a control the first time it could help. Turning it on again replays them. */
     val hints: StateFlow<Boolean> = _hints.asStateFlow()
@@ -649,6 +659,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_ADDRESS_SWIPE_EFFECT = "address_swipe_effect"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
+        private const val KEY_WEB_FONT = "web_font"
         private const val KEY_FONT = "app_font"
         private const val KEY_HINTS = "hints_enabled"
         private const val KEY_SEEN_HINTS = "hints_seen"

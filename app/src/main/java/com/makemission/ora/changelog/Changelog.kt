@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "19 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Use font on websites: a new switch under Font shows web pages in your chosen font too. It changes open pages at once, leaves icons and code alone, and is off by default.  (`c81ef1f`)"),
             ChangeItem(ChangeKind.ADDED, "Font: pick a typeface for Ora in Settings > Appearance. Choose from Instrument Sans, Inter (close to San Francisco), Manrope, DM Sans, Newsreader and Fraunces (serifs), or JetBrains Mono. Every font is shown in its own letters with a live preview, and it works offline. Web pages keep their own fonts.  (`a563112`)"),
             ChangeItem(ChangeKind.CHANGED, "Confirmation cards now grow out of the button you pressed and shrink back into it, instead of popping up. Back closes a card the same way and changes nothing.  (`38c6bf8`)"),
             ChangeItem(ChangeKind.ADDED, "Bottom sheets can be dragged from anywhere, not only the handle: pull the list up to grow the sheet, and pull down at the top of the list to shrink it. A fast flick down from full height lands on half height first; a second flick closes it.  (`fd16c3c`)"),

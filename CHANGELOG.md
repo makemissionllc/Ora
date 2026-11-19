@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-19
 
 **Added**
+- Use font on websites: a new switch under Font shows web pages in your chosen font too. It changes open pages at once, leaves icons and code alone, and is off by default. (`c81ef1f`)
 - Font: pick a typeface for Ora in Settings > Appearance. Choose from Instrument Sans, Inter (close to San Francisco), Manrope, DM Sans, Newsreader and Fraunces (serifs), or JetBrains Mono. Every font is shown in its own letters with a live preview, and it works offline. Web pages keep their own fonts. (`a563112`)
 
 **Changed**
