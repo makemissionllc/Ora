@@ -1,5 +1,6 @@
 package com.makemission.ora.ui.theme
 
+import androidx.compose.runtime.remember
 import android.app.Activity
 import android.content.Context
 import android.os.Build
@@ -52,13 +53,14 @@ fun OraTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = true,
+    font: AppFont = AppFont.INSTRUMENT_SANS,
     content: @Composable () -> Unit
 ) {
     val colorScheme = oraColorScheme(LocalContext.current, darkTheme, dynamicColor)
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = remember(font) { typographyFor(font) },
         // Surfaces are flat: no ripple. Android 12+ draws its ripple with a speckled "sparkle" noise, which
         // showed as grain behind tiles. The press response is the 94% scale from pressFeedback() only.
         content = { CompositionLocalProvider(LocalRippleConfiguration provides null, content = content) }

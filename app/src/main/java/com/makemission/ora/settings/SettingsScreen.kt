@@ -294,6 +294,7 @@ fun SettingsScreen(
                                     }
                                 }
                             }
+                            FontPicker(settings)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()

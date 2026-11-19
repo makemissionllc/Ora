@@ -47,7 +47,8 @@ class MainActivity : ComponentActivity() {
         handleLink(intent)
         enableEdgeToEdge()
         setContent {
-            OraTheme {
+            val font by settings.font.collectAsState()
+            OraTheme(font = font) {
               androidx.compose.runtime.CompositionLocalProvider(com.makemission.ora.browser.LocalHints provides settings) {
                 val profiles = remember { ProfilesRepository(applicationContext) }
                 androidx.compose.foundation.layout.Box(
