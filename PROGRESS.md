@@ -4,6 +4,9 @@ The status board for Ora. Update it with every change: move items between sectio
 
 Last updated: 2026-11-18, at commit `a1f02a2`.
 
+## Branches
+Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every feature so far). Each new feature gets `feature/<name>` off `develop`; see AGENTS.md Branch rules 30 to 36. Older branches (`browser-geckoview`, `fix-quick-resume-log`, `passkeys-credman`, `status-bar-frozen`) are left as they were.
+
 ## Done
 - Pop-up card queue (`BrowserTabs.kt` `popupQueue`, `PopupCard.kt`): pop-ups a page opens without a tap wait in order, up to 20; the card shows "N more pop-ups wait after this one" and each one comes up after the choice. Built with `./gradlew assembleDebug`. Not checked on a device: no adb or phone connected in this session.
 - Messages sit above the phone bottom bar (`BrowserScreen.kt` snackbar host, padded by `bottomBarPx`). Built with `./gradlew assembleDebug`. Not checked on a device: no adb or phone connected in this session.

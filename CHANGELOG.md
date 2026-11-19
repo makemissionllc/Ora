@@ -2,6 +2,8 @@
 
 All notable changes to Ora. Newest first. The in-app "What's new" page shows the same entries, written for people using the browser rather than building it.
 
+Each entry is written on the feature's own branch (`feature/<name>`, `fix/<name>`) and names that branch's commit hash. The entry reaches `develop` when the branch is merged, and `main` when `develop` is released. See the Branch rules in [AGENTS.md](AGENTS.md).
+
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates are commit dates.
 
 ## Unreleased

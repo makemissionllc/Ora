@@ -4,7 +4,7 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 
 ## Working rules
 
-1. **Commit after every change.** Each change set gets its own commit on the working branch. Push it after committing. Don't batch unrelated changes into one commit.
+1. **Commit after every change.** Each change set gets its own commit on its feature branch (see Branch rules). Push it after committing. Don't batch unrelated changes into one commit.
 2. **Phone and tablet together.** Every change is implemented and verified on both the phone and the tablet in the same change set. Don't ship a feature to one form factor and leave the other for later.
 3. **Look before you tap.** Take a screenshot of the device before every tap, and tap only at coordinates read from that screenshot. Never tap blind.
 4. **Keep temp files out of the repo.** Screenshots and scratch files go in the scratchpad directory, or are deleted before committing.
@@ -68,6 +68,18 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 28. Dashed lines mean private or temporary and are used for nothing else.
 29. Tints change Ora's surfaces only, never web content.
 
+## Branch rules
+
+Every feature lives on its own branch, so one feature can be fixed or reverted without touching another.
+
+30. **`main` is the stable line; `develop` is the working branch.** `develop` holds every finished feature and is what new branches start from. Nobody commits feature work straight to `develop` or `main`.
+31. **One branch per feature, named `<type>/<short-kebab-name>`.** Types: `feature/` (new work, such as `feature/phone-overview-search`), `fix/` (a bug, `fix/download-resume-referer`), `docs/` (documents only, `docs/branch-workflow`), `chore/` (build or tooling). The name says what the branch is for; lower-case, no dates, no issue-less words like `stuff` or `wip`. A branch holds that one feature and nothing else.
+32. **Start from an up-to-date `develop`.** `git checkout develop && git pull`, then `git checkout -b feature/<name>`. Before starting, check `git status`: if there are uncommitted changes that belong to another feature, commit them on their own branch first, never carry them into a new one.
+33. **Changing an existing feature means going back to its branch.** Check out the feature's branch (`git checkout feature/<name>`, recreate it from the merge commit in `git log` if it was deleted), make the change there, and merge again. Don't patch a feature from a different feature's branch.
+34. **Merge back with a merge commit, after the checks.** When the feature is done (rule 14 build passes, devices checked or marked Not checked, documents updated), merge it into `develop` with `git merge --no-ff feature/<name>`, push `develop`, and keep the feature branch on GitHub so it can be reopened. Merge `develop` into the feature branch first if `develop` moved, and fix conflicts on the feature branch.
+35. **`develop` reaches `main` only when it builds and its features are checked.** Merge with `--no-ff` and push. Tag a release on `main`.
+36. **Commit hashes in the documents are the feature branch's commits.** The CHANGELOG and in-app entries name the commit on the feature branch (the merge commit is not used), so they stay valid after the merge. Never force-push `develop` or `main`.
+
 ## Building new components, pages and features
 
 Follow this recipe so new work looks and moves like the rest of Ora. The examples name real code to copy from.
@@ -107,7 +119,7 @@ Follow this recipe so new work looks and moves like the rest of Ora. The example
 3. Opens and closes with the shared motion from its trigger; has a stable-key list.
 4. Empty state, confirmation for destructive actions, and the one named quality-of-life feature.
 5. State in a repository, a Settings row if it has a preference, `BrowserLog` calls.
-6. `./gradlew assembleDebug` passes (check the APK time), then CHANGELOG, `Changelog.kt`, PROGRESS and README updated, commit with the hash recorded, pushed.
+6. `./gradlew assembleDebug` passes (check the APK time), then CHANGELOG, `Changelog.kt`, PROGRESS and README updated, commit with the hash recorded, pushed on the feature branch, then merged into `develop` (rule 34).
 
 ## Attribution
 
