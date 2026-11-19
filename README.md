@@ -57,3 +57,5 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 ## Design sources
 
 Mockups are in the `Designs/` folder and in the Browser Wireframes artifacts named in [AGENTS.md](AGENTS.md).
+
+- `browser/OraSheet.kt`: the shared phone bottom sheet (spring rise, finger-following drag, half to full height). New sheets use it, not `ModalBottomSheet`. Spring values are `OraMotion.sheetSpring/sheetSnap/sheetExit`.

@@ -34,7 +34,7 @@ fun SearchChooserSheet(
     onChoose: (SearchEngine) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = browserColors().AddressBarBackground) {
+    OraSheet(onDismiss = onDismiss, tag = "search", containerColor = browserColors().AddressBarBackground) { _ ->
         Column(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 24.dp)) {
             Text(
                 "Search for \"$query\"",

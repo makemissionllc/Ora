@@ -150,13 +150,8 @@ fun BrowserMenuSheet(
     if (isTablet) {
         BrowserMenuSidePanel(onDismiss = onDismiss, topInset = topInset, closeRequests = closeRequests, content = items)
     } else {
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            containerColor = browserColors().Surface,
-            shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
-            dragHandle = { Box(Modifier.padding(vertical = 10.dp).size(width = 36.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(browserColors().ToolbarBorder.copy(alpha = 0.5f))) },
-        ) {
-            items { action -> onDismiss(); action() }
+        OraSheet(onDismiss = onDismiss, tag = "menu", containerColor = browserColors().Surface) { close ->
+            items { action -> close(); action() }
         }
     }
 }

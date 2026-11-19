@@ -119,6 +119,7 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 
 ## Pending
 
+- Hints: non-blocking nudge animations shown once each, with a Settings switch. Then move the stock AlertDialogs to ConfirmCard, and animate bar-style changes.
 - Optional: read the page's theme-color for the status-bar tint (see archive/browser-geckoview be8efc6). Needs my yes (rule 22).
 - Release signing: waiting on the keystore (owner task).
 
@@ -196,6 +197,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-19 | `8adfd4a` | Shared spring/drag bottom sheet (`browser/OraSheet.kt`) | Main menu sheet opened and seen at half height with the scrim. Drag, flick, full height and the other four sheets: Not checked | Not checked |
 | 2026-11-19 | Profile rules for saved sites (`3d177c8`, `feature/profile-rules-everywhere`) | Not checked: built (`assembleDebug` passes); not seen on the phone. | Not checked: no tablet attached. |
 | 2026-11-19 | Profile rules (`32c2e34`, `feature/profile-site-rules`) | Not checked: built; `assembleDebug` and `ProfileRulesTest` pass. The Settings section and the profile switch were not seen on the phone. | Not checked: no tablet attached. |
 | 2026-11-19 | Downloads stats footer (`c415203`, `feature/downloads-stats-footer`) | Not checked: built; `assembleDebug` and `DownloadStatsTest` pass. Not seen on the phone. | Not checked: no tablet attached. |

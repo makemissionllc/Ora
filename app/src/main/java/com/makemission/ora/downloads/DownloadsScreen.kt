@@ -68,10 +68,9 @@ import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ModalBottomSheet
+import com.makemission.ora.browser.OraSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -296,22 +295,7 @@ fun DownloadsScreen(
 
     // Phone: a bottom sheet that opens halfway and drags up to full screen. Same list and actions as the tablet.
     if (!tablet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-        val scope = rememberCoroutineScope()
-        ModalBottomSheet(
-            onDismissRequest = onDismiss,
-            sheetState = sheetState,
-            containerColor = colors.GridBackground,
-            dragHandle = {
-                Box(
-                    Modifier
-                        .padding(top = 10.dp, bottom = 6.dp)
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(CircleShape)
-                        .background(colors.SecondaryText.copy(alpha = 0.4f))
-                )
-            },
-        ) {
+        OraSheet(onDismiss = onDismiss, tag = "downloads", containerColor = colors.GridBackground, fill = true) { close ->
             Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().trackPress { tapAt = it }) {
                 // A row's details replace the list in place; Back returns to the list before it closes the sheet.
                 val detail = all.firstOrNull { it.id == phoneDetailId }
@@ -337,7 +321,7 @@ fun DownloadsScreen(
                             finishedCount = finishedCount,
                         footer = footer,
                             onClearFinished = { confirmClear = true },
-                            onDone = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
+                            onDone = close,
                             actions = rowActions,
                             listState = phoneListState,
                         )
