@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -104,16 +105,57 @@ fun OraSheet(
     }
 
     val travelPx = (fullPx - halfPx).coerceAtLeast(1f)
-    val dragState = rememberDraggableState { delta ->
+    /** Moves the sheet by a finger delta (px, positive = down). Up lifts it back from a drop first, then grows it; down shrinks it, then drops it. */
+    fun applyDelta(delta: Float) {
         scope.launch {
-            if (delta < 0f && drop.value > 0f) {
-                drop.snapTo((drop.value + delta / halfPx).coerceAtLeast(0f))
-            } else if (delta < 0f) {
-                expand.snapTo((expand.value - delta / travelPx).coerceIn(0f, 1f))
-            } else if (expand.value > 0f) {
-                expand.snapTo((expand.value - delta / travelPx).coerceIn(0f, 1f))
-            } else {
-                drop.snapTo((drop.value + delta / halfPx).coerceIn(0f, 1f))
+            if (delta < 0f && drop.value > 0f) drop.snapTo((drop.value + delta / halfPx).coerceAtLeast(0f))
+            else if (delta < 0f || expand.value > 0f) expand.snapTo((expand.value - delta / travelPx).coerceIn(0f, 1f))
+            else drop.snapTo((drop.value + delta / halfPx).coerceIn(0f, 1f))
+        }
+    }
+
+    /** Settles after a drag or fling: a flick or a long pull down closes, a flick or past-halfway pull up goes full, otherwise back to half. */
+    fun settle(velocity: Float) {
+        scope.launch {
+            when {
+                // From full height a downward flick comes back to half first; a second one closes. Never skip a step.
+                velocity > 1400f && expand.value > 0.05f && drop.value < 0.05f -> {
+                    expand.animateTo(0f, OraMotion.sheetSnap())
+                }
+                velocity > 1400f || (drop.value > 0.25f && velocity > -600f) -> close()
+                velocity < -900f || expand.value > 0.5f -> {
+                    launch { drop.animateTo(0f, OraMotion.sheetSnap()) }
+                    expand.animateTo(1f, OraMotion.sheetSnap())
+                }
+                else -> {
+                    launch { drop.animateTo(0f, OraMotion.sheetSnap()) }
+                    expand.animateTo(0f, OraMotion.sheetSnap())
+                }
+            }
+        }
+    }
+    val dragState = rememberDraggableState { applyDelta(it) }
+
+    // Dragging the content works as well as dragging the handle: the sheet takes the pull before the list scrolls up,
+    // and takes the leftover when the list is already at its top, so a long list never fights the sheet.
+    val nested = remember {
+        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+            override fun onPreScroll(available: androidx.compose.ui.geometry.Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                val dy = available.y
+                val canGrow = dy < 0f && (expand.value < 1f || drop.value > 0f)
+                return if (canGrow) { applyDelta(dy); androidx.compose.ui.geometry.Offset(0f, dy) } else androidx.compose.ui.geometry.Offset.Zero
+            }
+            override fun onPostScroll(consumed: androidx.compose.ui.geometry.Offset, available: androidx.compose.ui.geometry.Offset, source: androidx.compose.ui.input.nestedscroll.NestedScrollSource): androidx.compose.ui.geometry.Offset {
+                val dy = available.y
+                return if (dy > 0f) { applyDelta(dy); androidx.compose.ui.geometry.Offset(0f, dy) } else androidx.compose.ui.geometry.Offset.Zero
+            }
+            override suspend fun onPreFling(available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
+                if (drop.value > 0f || expand.value in 0.001f..0.999f) { settle(available.y); return available }
+                return androidx.compose.ui.unit.Velocity.Zero
+            }
+            override suspend fun onPostFling(consumed: androidx.compose.ui.unit.Velocity, available: androidx.compose.ui.unit.Velocity): androidx.compose.ui.unit.Velocity {
+                if (available.y > 1400f || available.y < -900f) { settle(available.y); return available }
+                return androidx.compose.ui.unit.Velocity.Zero
             }
         }
     }
@@ -147,27 +189,13 @@ fun OraSheet(
                         .draggable(
                             state = dragState,
                             orientation = Orientation.Vertical,
-                            onDragStopped = { velocity ->
-                                scope.launch {
-                                    when {
-                                        velocity > 1400f || (drop.value > 0.25f && velocity > -600f) -> close()
-                                        velocity < -900f || expand.value > 0.5f -> {
-                                            launch { drop.animateTo(0f, OraMotion.sheetSnap()) }
-                                            expand.animateTo(1f, OraMotion.sheetSnap())
-                                        }
-                                        else -> {
-                                            launch { drop.animateTo(0f, OraMotion.sheetSnap()) }
-                                            expand.animateTo(0f, OraMotion.sheetSnap())
-                                        }
-                                    }
-                                }
-                            },
+                            onDragStopped = { velocity -> settle(velocity) },
                         ),
                     contentAlignment = Alignment.Center,
                 ) {
                     Box(Modifier.size(width = 36.dp, height = 4.dp).clip(RoundedCornerShape(2.dp)).background(colors.SecondaryText.copy(alpha = 0.4f)))
                 }
-                Box(Modifier.padding(top = 28.dp).let { if (fill) it.fillMaxSize() else it.verticalScroll(scroll) }) {
+                Box(Modifier.padding(top = 28.dp).nestedScroll(nested).let { if (fill) it.fillMaxSize() else it.verticalScroll(scroll) }) {
                     content { close() }
                 }
             }
