@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.CheckMark
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -53,9 +54,7 @@ fun SearchChooserSheet(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(engine.label, fontSize = 15.sp, color = browserColors().AddressBarText)
-                    if (engine == default) {
-                        Icon(Icons.Filled.Check, contentDescription = "Default", tint = browserColors().Accent)
-                    }
+                    CheckMark(engine == default, "Default")
                 }
             }
         }
