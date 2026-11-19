@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-19
 
 **Added**
+- Hints: the first time a bottom sheet is taller than its half height, it lifts a little and a caption says Pull up for more. It plays once per hint and never blocks anything. Settings has a Hints switch; turning it on again replays them. (`HASH`)
 - One shared bottom sheet for the menu, Downloads, groups, profiles and the search chooser. It rises on a spring, follows your finger, pulls up from half to full height, and a flick down drops it away. Tapping outside or Back closes it the same way. (`8adfd4a`)
 - Profile rules: in Settings > Tabs, choose a site and a profile, and typing that site in the address bar opens it in that profile. Private tabs never follow a rule. (`32c2e34`)
 - The Downloads list ends with a totals line, such as 4 saved, 1.2 GB and 1 failed, on phone and tablet. (`c415203`)
