@@ -1369,6 +1369,13 @@ private fun BrowserContent(
             .align(Alignment.BottomCenter)
             .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
     )
+    // Tabs in the open tab's group, one tap away. It floats above the phone's bottom row, or near the page's bottom on tablet.
+    GroupTabStrip(
+        tabs = tabs,
+        modifier = Modifier
+            .align(Alignment.BottomCenter)
+            .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+    )
     // Tablet tab overview covers the whole window, toolbar and sidebar included. It grows out of the tabs button.
     AnimatedVisibility(
         visible = tabletTabsOpen,
