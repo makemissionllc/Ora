@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
+import com.makemission.ora.ui.OraDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -35,7 +35,7 @@ fun AppLockDialog(settings: SettingsRepository, turningOff: Boolean, onDismiss: 
     val digits: (String) -> String = { it.filter(Char::isDigit).take(12) }
     val keyboard = KeyboardOptions(keyboardType = KeyboardType.NumberPassword)
 
-    AlertDialog(
+    OraDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (turningOff) "Turn off app lock?" else "Set a PIN") },
         text = {

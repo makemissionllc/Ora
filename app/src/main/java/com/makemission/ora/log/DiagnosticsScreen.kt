@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import com.makemission.ora.ui.OraDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -188,7 +188,7 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
     }
 
     if (confirmClearUsage) {
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { confirmClearUsage = false },
             title = { Text("Clear feature use?") },
             text = { Text("All feature-use counts will be removed. The log is kept. This can't be undone.") },
@@ -210,7 +210,7 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
     }
 
     if (confirmClear) {
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { confirmClear = false },
             title = { Text("Clear the log?") },
             text = { Text("All ${entries.size} entries will be removed. This can't be undone.") },

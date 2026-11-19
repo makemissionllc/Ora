@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-19
 
+**Changed**
+- Confirmation cards now grow out of the button you pressed and shrink back into it, instead of popping up. Back closes a card the same way and changes nothing. (`38c6bf8`)
+
 **Fixed**
 - Sharing the same link to Ora twice now switches to the tab that already has it, not a new copy. Links with no site address, or that are not web links, are ignored and noted in Diagnostics instead of opening a blank tab. (`bd5cc53`)
 

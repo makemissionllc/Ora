@@ -31,7 +31,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
+import com.makemission.ora.ui.OraDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -383,7 +383,7 @@ fun ExtensionsScreen(
     }
 
     pendingRemoval?.let { extension ->
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { pendingRemoval = null },
             title = { Text("Remove ${extension.name}?") },
             text = { Text("It will be uninstalled from Ora. You can install it again later.") },

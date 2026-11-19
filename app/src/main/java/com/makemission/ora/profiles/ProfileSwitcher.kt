@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import com.makemission.ora.ui.OraDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -114,7 +114,7 @@ fun ProfileSwitcher(
     }
 
     removing?.let { profile ->
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { removing = null },
             title = { Text("Remove ${profile.name}?") },
             text = { Text("Its tabs and bookmarks are removed. This can't be undone.") },
