@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pulse
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -398,6 +399,9 @@ private fun TabTile(
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
                     )
+                } else {
+                    // No preview yet: the plain card breathes so it reads as waiting, not broken.
+                    Box(Modifier.fillMaxSize().pulse(true).background(browserColors().GridBackground.copy(alpha = 0.35f)))
                 }
                 // Plain box instead of IconButton: IconButton's minimum touch target clipped the badge.
                 Box(

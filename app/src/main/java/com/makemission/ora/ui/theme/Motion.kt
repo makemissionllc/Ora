@@ -133,4 +133,16 @@ object OraMotion {
     fun <T> pressRelease(): FiniteAnimationSpec<T> =
         if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow)
         else tween(durationMillis = 0)
+
+    /** One slow breath of the "still loading" pulse. Instant when the system has animations turned off. */
+    const val PULSE_MS = 1100
+    /** Lowest opacity of the pulse; the placeholder stays readable at its dimmest. */
+    const val PULSE_LOW = 0.6f
+
+    /** One slow breath of a placeholder: a quiet fade between 0.55 and 1 and back, never a moving gradient. */
+    fun pulse(): androidx.compose.animation.core.InfiniteRepeatableSpec<Float> =
+        androidx.compose.animation.core.infiniteRepeatable(
+            animation = tween(durationMillis = if (ValueAnimator.areAnimatorsEnabled()) 1100 else 0, easing = FastOutSlowInEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
+        )
 }
