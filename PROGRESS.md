@@ -197,7 +197,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
-| 2026-11-19 | `HASH` | Shared spring/drag bottom sheet (`browser/OraSheet.kt`) | Main menu sheet opened and seen at half height with the scrim. Drag, flick, full height and the other four sheets: Not checked | Not checked |
+| 2026-11-19 | `8adfd4a` | Shared spring/drag bottom sheet (`browser/OraSheet.kt`) | Main menu sheet opened and seen at half height with the scrim. Drag, flick, full height and the other four sheets: Not checked | Not checked |
 | 2026-11-19 | Profile rules for saved sites (`3d177c8`, `feature/profile-rules-everywhere`) | Not checked: built (`assembleDebug` passes); not seen on the phone. | Not checked: no tablet attached. |
 | 2026-11-19 | Profile rules (`32c2e34`, `feature/profile-site-rules`) | Not checked: built; `assembleDebug` and `ProfileRulesTest` pass. The Settings section and the profile switch were not seen on the phone. | Not checked: no tablet attached. |
 | 2026-11-19 | Downloads stats footer (`c415203`, `feature/downloads-stats-footer`) | Not checked: built; `assembleDebug` and `DownloadStatsTest` pass. Not seen on the phone. | Not checked: no tablet attached. |

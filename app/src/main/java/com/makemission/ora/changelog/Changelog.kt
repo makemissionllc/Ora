@@ -14,7 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "19 Nov 2026",
         items = listOf(
-            ChangeItem(ChangeKind.ADDED, "One shared bottom sheet for the menu, Downloads, groups, profiles and the search chooser. It rises on a spring, follows your finger, pulls up from half to full height, and a flick down drops it away. Tapping outside or Back closes it the same way.  (`HASH`)"),
+            ChangeItem(ChangeKind.ADDED, "One shared bottom sheet for the menu, Downloads, groups, profiles and the search chooser. It rises on a spring, follows your finger, pulls up from half to full height, and a flick down drops it away. Tapping outside or Back closes it the same way.  (`8adfd4a`)"),
             ChangeItem(ChangeKind.ADDED, "Downloads keep going when you leave Ora. A notification shows how many are running, with Pause all and Cancel all.  (`0c93cda`)"),
             ChangeItem(ChangeKind.ADDED, "Paused downloads come back after a restart, and a download can be resumed from where it stopped.  (`b5403e8`, `d4bd14c`)"),
             ChangeItem(ChangeKind.ADDED, "A download whose file changed on the server starts again, and the row says so.  (`0a8d9c5`)"),
