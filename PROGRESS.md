@@ -130,7 +130,7 @@ Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google'
 ### Motion
 - Bars opening from their origin (the sidebar now does; see Done). The tablet and phone bars still only fade and fold.
 - Layout changes (bar style, Compact shrink) still cut over without a shared transition. Tab switches now fade (see Done).
-- The History "Clear history" confirmation is a standard dialog. It does not morph from its button yet (AGENTS.md rule 10).
+- History "Clear history": the confirmation already grows from its button (`HistoryViews.kt`, shared by phone and tablet lists). The old note here was stale. Not checked on a device in this session.
 
 ### Tab management (from the Chrome and Safari comparison)
 
