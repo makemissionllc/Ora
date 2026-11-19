@@ -137,7 +137,7 @@ Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google'
 
 ### Tab management (from the Chrome and Safari comparison)
 
-- Mini tab switcher: built as `GroupTabStrip.kt` on `feature/group-tab-strip` (`HASH`), floating above the phone's bottom row and near the page bottom on tablet. Not merged: the strip has not been seen on screen yet.
+- Mini tab switcher: built as `GroupTabStrip.kt` on `feature/group-tab-strip` (`cf0f67c`), floating above the phone's bottom row and near the page bottom on tablet. Not merged: the strip has not been seen on screen yet.
 - Recent tabs: list tabs open on other devices signed into the same account. Needs a sync design first.
 - Search bookmarks and history from one search field. Open-tab and history search are done (see Done); a single field across tabs, bookmarks and history is done on the tablet sidebar and the tab overview (phone and tablet).
 
@@ -196,7 +196,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
-| 2026-11-19 | Group tab strip (`HASH`, `feature/group-tab-strip`) | Phone (CPH2745, USB): debug build installed and Ora launched on a plain page. Not checked: the strip itself, because it needs a tab group of two or more tabs and none was made. | Not checked: no tablet was attached. |
+| 2026-11-19 | Group tab strip (`cf0f67c`, `feature/group-tab-strip`) | Phone (CPH2745, USB): debug build installed and Ora launched on a plain page. Not checked: the strip itself, because it needs a tab group of two or more tabs and none was made. | Not checked: no tablet was attached. |
 | 2026-11-19 | Downloads confirmation cards morph (`7527665`, `feature/downloads-confirm-morph`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
 | 2026-11-19 | Tab overview search over bookmarks and history (`394bb9f`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
 | 2026-11-19 | Download safety, checksum and http mark (`4834f3f`) | Not checked: built, not checked on a device (no adb in this session). `assembleDebug` and all host tests pass, including `DownloadSafetyTest`, `DownloadNotificationTextTest`, `DownloadJobServiceTest`, `DownloadSystemStopTest`. | Not checked: built, not checked on a device. |
