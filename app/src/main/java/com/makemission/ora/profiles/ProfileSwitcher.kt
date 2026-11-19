@@ -185,11 +185,7 @@ private fun ProfileSheet(
     val colors = browserColors()
     var name by remember { mutableStateOf(profile?.name ?: "") }
     var tint by remember { mutableStateOf(profile?.tint ?: ProfileTint.BASALT) }
-    androidx.compose.material3.ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = colors.Surface,
-        shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
-    ) {
+    com.makemission.ora.browser.OraSheet(onDismiss = onDismiss, tag = "profiles", containerColor = colors.Surface) { _ ->
         Column(
             modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, bottom = 20.dp),
             verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(14.dp),

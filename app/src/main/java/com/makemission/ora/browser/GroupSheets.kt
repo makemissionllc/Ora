@@ -65,11 +65,7 @@ class GroupDialogState {
 fun GroupDialogs(tabs: BrowserTabs, state: GroupDialogState, onGroupClosed: () -> Unit = {}) {
     val colors = browserColors()
     state.addTo?.let { tab ->
-        ModalBottomSheet(
-            onDismissRequest = { state.addTo = null },
-            containerColor = colors.Surface,
-            shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
-        ) {
+        OraSheet(onDismiss = { state.addTo = null }, tag = "groups", containerColor = colors.Surface) { _ ->
             Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("Add to group", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
                 if (tabs.groups.isEmpty()) {
@@ -141,11 +137,7 @@ private fun GroupEditorSheet(initial: TabGroup?, onDismiss: () -> Unit, onSave: 
     val colors = browserColors()
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var color by remember { mutableStateOf(initial?.color ?: GroupColor.LICHEN) }
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        containerColor = colors.Surface,
-        shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp),
-    ) {
+    OraSheet(onDismiss = onDismiss, tag = "groups", containerColor = colors.Surface) { _ ->
         Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(if (initial == null) "New group" else "Edit group", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
             OutlinedTextField(value = name, onValueChange = { name = it }, singleLine = true, placeholder = { Text("Name") }, modifier = Modifier.fillMaxWidth())

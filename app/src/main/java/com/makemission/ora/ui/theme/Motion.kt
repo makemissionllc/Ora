@@ -79,6 +79,17 @@ object OraMotion {
         tween(durationMillis = ENTER_MS, delayMillis = LOAD_BAR_DELAY_MS, easing = enterEasing())
     fun <T> exit(): FiniteAnimationSpec<T> = tween(durationMillis = EXIT_MS, easing = exitEasing())
 
+    /** Spring a bottom sheet rises and settles with. Slightly under-damped so it lands with a small, natural give. */
+    fun <T> sheetSpring(): FiniteAnimationSpec<T> =
+        if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.82f, stiffness = 380f) else tween(0)
+
+    /** Spring a sheet snaps between half and full height, or back to rest after a drag. */
+    fun <T> sheetSnap(): FiniteAnimationSpec<T> =
+        if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.9f, stiffness = 520f) else tween(0)
+
+    /** Sheet leaving: a short ease-in so it drops away instead of bouncing. */
+    fun <T> sheetExit(): FiniteAnimationSpec<T> = overlayTween(EXIT_MS, exitEasing())
+
     /** Overlay timings on Smooth, from AGENTS.md rule 11. The other styles scale them by their own tempo. */
     private const val OVERLAY_FADE_IN_MS = 220
     private const val OVERLAY_SCALE_IN_MS = 280
