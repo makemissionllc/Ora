@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "19 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Sharing the same link to Ora twice now switches to the tab that already has it, not a new copy. Links with no site address, or that are not web links, are ignored and noted in Diagnostics instead of opening a blank tab.  (`HASH`)"),
             ChangeItem(ChangeKind.ADDED, "Hints: the first time a bottom sheet is taller than its half height, it lifts a little and a caption says Pull up for more. It plays once per hint and never blocks anything. Turn hints off or replay them with the Hints switch in Settings.  (`9c147f8`)"),
             ChangeItem(ChangeKind.ADDED, "One shared bottom sheet for the menu, Downloads, groups, profiles and the search chooser. It rises on a spring, follows your finger, pulls up from half to full height, and a flick down drops it away. Tapping outside or Back closes it the same way.  (`8adfd4a`)"),
             ChangeItem(ChangeKind.ADDED, "Downloads keep going when you leave Ora. A notification shows how many are running, with Pause all and Cancel all.  (`0c93cda`)"),

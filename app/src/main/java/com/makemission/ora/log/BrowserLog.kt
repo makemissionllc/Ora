@@ -26,6 +26,8 @@ data class LogEntry(
  * The Diagnostics page in Settings reads [entries]; copy and clear live there too.
  */
 object BrowserLog {
+    /** One entry never passes this many characters, so a 5,000 character address cannot fill the log. */
+    private const val MAX_LINE = 400
     private const val MAX_ENTRIES = 5000
     /** The file is trimmed to the newest [MAX_ENTRIES] lines once it passes this size, so about two days of use fit. */
     private const val MAX_FILE_BYTES = 1_000_000L
@@ -87,7 +89,7 @@ object BrowserLog {
 
     private fun add(level: LogLevel, tag: String, message: String, error: Throwable?) {
         // Addresses become domains before anything is shown, copied, written to disk or sent to logcat.
-        val full = LogPrivacy.redact(if (error != null) "$message: ${error.javaClass.simpleName}: ${error.message.orEmpty()}" else message)
+        val full = LogPrivacy.redact(if (error != null) "$message: ${error.javaClass.simpleName}: ${error.message.orEmpty()}" else message).let { if (it.length > MAX_LINE) it.take(MAX_LINE) + "…" else it }
         when (level) {
             LogLevel.INFO -> Log.i(LOGCAT_TAG, "[$tag] $full")
             LogLevel.WARN -> Log.w(LOGCAT_TAG, "[$tag] $full", error)
