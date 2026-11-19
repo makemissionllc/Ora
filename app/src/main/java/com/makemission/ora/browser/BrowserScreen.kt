@@ -183,6 +183,7 @@ import com.makemission.ora.security.AppLock
 import com.makemission.ora.security.LockScreen
 import com.makemission.ora.security.lockScreenVisible
 import com.makemission.ora.settings.SettingsRepository
+import com.makemission.ora.stats.BlockStats
 import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.DarkBrowserColors
 import com.makemission.ora.ui.theme.LightBrowserColors
@@ -325,8 +326,14 @@ private fun BrowserContent(
         sitePermissionStores.getOrPut(id) { SitePermissionStore(context, id) }
 
     val blockAds by settings.blockAds.collectAsState()
+<<<<<<< Updated upstream
     val videoGestures by settings.videoGestures.collectAsState()
     val videoBackExits by settings.videoBackExits.collectAsState()
+=======
+    val statAds by settings.statAds.collectAsState()
+    val statTrackers by settings.statTrackers.collectAsState()
+    val statFingerprinting by settings.statFingerprinting.collectAsState()
+>>>>>>> Stashed changes
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
@@ -1013,6 +1020,9 @@ private fun BrowserContent(
                     pageView = pageView,
                     bookmarks = bookmarkList,
                     blockAds = blockAds,
+                    statAds = statAds,
+                    statTrackers = statTrackers,
+                    statFingerprinting = statFingerprinting,
                     fadePagesIn = fadePagesIn,
                     androidAutofill = autofillPasswords,
                     // Phone Compact and Bottom let the page run up under the status bar; push it below, as the fade ends there.
@@ -1526,6 +1536,9 @@ private fun BrowserPage(
     pageView: PageView,
     bookmarks: List<Bookmark>,
     blockAds: Boolean,
+    statAds: Boolean,
+    statTrackers: Boolean,
+    statFingerprinting: Boolean,
     fadePagesIn: Boolean,
     androidAutofill: Boolean,
     belowStatusBar: Boolean,
@@ -1542,6 +1555,7 @@ private fun BrowserPage(
 ) {
     // The start page's content starts below the status bar on phones. Web pages run up under it: the strip behind
     // the bar takes the page's top colour, so the page reads as starting below it.
+    val blockCounts by BlockStats.counts.collectAsState()
     val statusInset = if (belowStatusBar) Modifier.statusBarsPadding() else Modifier
     // The start page and a web page cross-fade instead of cutting over. The web layer stays composed, so the
     // GeckoView keeps its session while the start page is shown on top of it.
@@ -1664,6 +1678,10 @@ private fun BrowserPage(
                     blockAds = blockAds,
                     onSubmit = onSubmit,
                     isPrivate = tab.isPrivate,
+                    stats = blockCounts,
+                    showAdStats = statAds,
+                    showTrackerStats = statTrackers,
+                    showFingerprintStats = statFingerprinting,
                     modifier = Modifier.fillMaxSize().padding(top = topInset),
                 )
             }
