@@ -357,6 +357,7 @@ private fun BrowserContent(
     val quickResume by settings.quickResume.collectAsState()
     val popupStore = PopupStore.forProfile(context, profileId)
     val appLinkStore = AppLinkStore.forProfile(context, profileId)
+    val profileRules = remember { com.makemission.ora.profiles.ProfileRules(context) }
     val tabs = remember(profileId) {
         tabsByProfile.getOrPut(profileId) {
             BrowserTabs(
@@ -484,6 +485,16 @@ private fun BrowserContent(
     val pageView = remember { PageView() }
 
     val appLockSet = settings.appLockRecord.collectAsState().value != null
+    // A profile rule switched profiles: open its address in this profile once its tabs are ready.
+    val pendingOpen by profiles.pendingOpen.collectAsState()
+    LaunchedEffect(pendingOpen, tabs) {
+        pendingOpen?.let { url ->
+            profiles.pendingOpen.value = null
+            tabs.newTab(url)
+        }
+    }
+    // A removed profile takes its rules with it.
+    LaunchedEffect(profileList) { profileRules.dropMissing(profileList.map { it.id }.toSet()) }
     val selected = tabs.selected ?: return
     SideEffect { PrivateSpace.active = selected.isPrivate }
     val selectedId = tabs.selectedId
@@ -616,6 +627,16 @@ private fun BrowserContent(
 
     /** Loads typed text: searches through the chooser or default engine, or opens a URL. */
     fun submitAddress(input: String) {
+        // A profile rule sends the site to its own profile, unless this is a private tab.
+        if (!isSearchInput(input) && !selected.isPrivate) {
+            val loadable = toLoadableUrl(input, defaultEngine.template)
+            val target = profileRules.profileFor(loadable)
+            if (target != null && target != profileId && profileList.any { it.id == target }) {
+                BrowserLog.info("profiles", "A rule opened a site in another profile")
+                profiles.openIn(target, loadable)
+                return
+            }
+        }
         selected.markStartPageBehind()
         if (isSearchInput(input) && askEachSearch && searchEngines.size > 1) {
             pendingSearch = input.trim()
@@ -1258,6 +1279,8 @@ private fun BrowserContent(
                             sitePermissions = sitePermissionsFor(profileId),
                             popups = popupStore,
                             appLinks = appLinkStore,
+                            profileRules = profileRules,
+                            profiles = profiles,
                         )
                         PhoneOverlay.LIBRARY -> LibraryScreen(
                             bookmarks = bookmarkList,

@@ -30,6 +30,15 @@ class ProfilesRepository(context: Context) {
     private val _activeId = MutableStateFlow(prefs.getString(KEY_ACTIVE, DEFAULT_ID) ?: DEFAULT_ID)
     val activeId: StateFlow<String> = _activeId.asStateFlow()
 
+    /** An address waiting to open in the profile just switched to. The screen opens it once that profile's tabs are ready. */
+    val pendingOpen = MutableStateFlow<String?>(null)
+
+    /** Switches to a profile and opens [url] there, for a profile rule. */
+    fun openIn(id: String, url: String) {
+        pendingOpen.value = url
+        select(id)
+    }
+
     fun select(id: String) {
         if (_profiles.value.none { it.id == id } || id == _activeId.value) return
         prefs.edit().putString(KEY_ACTIVE, id).apply()
