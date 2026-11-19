@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -17,6 +18,23 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.positionInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -63,6 +81,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.TextStyle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -131,6 +154,12 @@ fun DownloadsScreen(
     var filter by rememberSaveable { mutableStateOf(DownloadFilter.ALL) }
     var selectedId by rememberSaveable { mutableStateOf<Long?>(null) }
     var confirmDelete by remember { mutableStateOf<DownloadItem?>(null) }
+    var confirmOpen by remember { mutableStateOf<DownloadItem?>(null) }
+    // Where the tapped Open control sits, so the warning card grows out of it.
+    var openFrom by remember { mutableStateOf(Offset.Zero) }
+    // The download whose details the phone shows as its own screen, if any.
+    var phoneDetailId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val phoneListState = rememberLazyListState()
     var confirmClear by remember { mutableStateOf(false) }
 
     val running = all.filter { it.status == DownloadStatus.RUNNING }
@@ -151,10 +180,26 @@ fun DownloadsScreen(
         onCancel = { repository.cancel(it.id) },
         onPause = { repository.pause(it.id) },
         onResume = { repository.resume(it.id) },
-        onOpen = { if (it.isExtensionFile) onInstall(it) else openFile(context, it) },
+        onOpen = { item, from ->
+            when {
+                item.isExtensionFile -> onInstall(item)
+                // A file type that can run code asks first, from the control that asked (AGENTS.md rule 10).
+                DownloadSafety.isRisky(item.fileName) -> {
+                    openFrom = from
+                    confirmOpen = item
+                }
+                else -> openFile(context, item)
+            }
+        },
+        onDetails = { phoneDetailId = it.id },
         onShare = { shareFile(context, it) },
         onDelete = { confirmDelete = it },
     )
+
+    // The check before a file type that can run code opens. It is drawn inside whichever overlay is showing.
+    val openWarning: @Composable () -> Unit = {
+        confirmOpen?.let { item -> OpenWarningCard(item = item, origin = openFrom, onDismissed = { confirmOpen = null }) }
+    }
 
     // Tablet: a full-screen overlay that grows from the toolbar button.
     if (tablet) Dialog(
@@ -199,8 +244,10 @@ fun DownloadsScreen(
                         onClearFinished = { confirmClear = true },
                         onDone = { visibleState.targetState = false },
                         actions = rowActions,
+                        listState = phoneListState,
                     )
                 }
+                openWarning()
             }
         }
     }
@@ -224,19 +271,43 @@ fun DownloadsScreen(
             },
         ) {
             Box(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding()) {
-                PhonePage(
-                    running = running,
-                    filter = filter,
-                    onFilter = { filter = it },
-                    visible = visible,
-                    activeRows = activeRows,
-                    otherRows = otherRows,
-                    emptyText = filter.emptyText,
-                    finishedCount = finishedCount,
-                    onClearFinished = { confirmClear = true },
-                    onDone = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
-                    actions = rowActions,
-                )
+                // A row's details replace the list in place; Back returns to the list before it closes the sheet.
+                val detail = all.firstOrNull { it.id == phoneDetailId }
+                BackHandler(enabled = detail != null) { phoneDetailId = null }
+                AnimatedContent(
+                    targetState = detail,
+                    contentKey = { it?.id },
+                    transitionSpec = {
+                        (fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE))
+                            .togetherWith(fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE))
+                    },
+                    label = "phone download detail",
+                ) { shown ->
+                    if (shown == null) {
+                        PhonePage(
+                            running = running,
+                            filter = filter,
+                            onFilter = { filter = it },
+                            visible = visible,
+                            activeRows = activeRows,
+                            otherRows = otherRows,
+                            emptyText = filter.emptyText,
+                            finishedCount = finishedCount,
+                            onClearFinished = { confirmClear = true },
+                            onDone = { scope.launch { sheetState.hide() }.invokeOnCompletion { onDismiss() } },
+                            actions = rowActions,
+                            listState = phoneListState,
+                        )
+                    } else {
+                        PhoneDetail(
+                            item = shown,
+                            actions = rowActions,
+                            onCopyLink = { copyLink(context, shown) },
+                            onBack = { phoneDetailId = null },
+                        )
+                    }
+                }
+                openWarning()
             }
         }
     }
@@ -285,7 +356,8 @@ private class RowActions(
     val onCancel: (DownloadItem) -> Unit,
     val onPause: (DownloadItem) -> Unit,
     val onResume: (DownloadItem) -> Unit,
-    val onOpen: (DownloadItem) -> Unit,
+    val onOpen: (DownloadItem, Offset) -> Unit,
+    val onDetails: (DownloadItem) -> Unit,
     val onShare: (DownloadItem) -> Unit,
     val onDelete: (DownloadItem) -> Unit,
 )
@@ -303,9 +375,11 @@ private fun PhonePage(
     onClearFinished: () -> Unit,
     onDone: () -> Unit,
     actions: RowActions,
+    listState: LazyListState,
 ) {
     val colors = browserColors()
     LazyColumn(
+        state = listState,
         modifier = Modifier.fillMaxSize().padding(horizontal = BrowserTokens.RadiusSmall),
         contentPadding = PaddingValues(bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -613,6 +687,7 @@ private fun DownloadRow(
 ) {
     val colors = browserColors()
     val interaction = remember { MutableInteractionSource() }
+    val anchor = remember { TriggerAnchor() }
     val background by animateColorAsState(
         if (selected) colors.AddressBarBackground else Color.Transparent,
         OraMotion.enter(),
@@ -620,6 +695,7 @@ private fun DownloadRow(
     )
     Row(
         modifier = modifier
+            .onGloballyPositioned { anchor.coords = it }
             .fillMaxWidth()
             .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
             .background(background)
@@ -629,7 +705,8 @@ private fun DownloadRow(
                 onClick = {
                     when {
                         onTap != null -> onTap()
-                        item.status == DownloadStatus.DONE -> actions.onOpen(item)
+                        item.status == DownloadStatus.DONE -> actions.onOpen(item, anchor.centre())
+                        else -> actions.onDetails(item)
                     }
                 },
                 onLongClick = { if (onTap == null && item.status == DownloadStatus.DONE) actions.onShare(item) },
@@ -673,8 +750,9 @@ private fun DownloadRow(
                         color = colors.Accent,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.height(44.dp).clickable { actions.onOpen(item) }.padding(horizontal = 10.dp).wrapContentHeight(Alignment.CenterVertically),
+                        modifier = Modifier.height(44.dp).clickable { actions.onOpen(item, anchor.centre()) }.padding(horizontal = 10.dp).wrapContentHeight(Alignment.CenterVertically),
                     )
+                    IconTile(Icons.Outlined.Info, "Show details") { actions.onDetails(item) }
                     IconTile(Icons.Outlined.Delete, "Delete file") { actions.onDelete(item) }
                 } else Icon(Icons.Outlined.Check, contentDescription = "Done", tint = Mineral.Lichen, modifier = Modifier.size(18.dp))
                 DownloadStatus.FAILED -> {
@@ -687,16 +765,32 @@ private fun DownloadRow(
     }
 }
 
-/** Tablet details: the file, its progress, what is known about it, and the actions that apply. */
+/**
+ * Details for one file: the file, its progress, what is known about it, the checksum check and the actions that
+ * apply. The tablet shows it as one pane. The phone shows it as its own screen ([compact]): it scrolls, and the stats
+ * and buttons wrap onto more lines instead of sharing one row.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun DownloadDetail(item: DownloadItem, actions: RowActions, onCopyLink: () -> Unit) {
+private fun DownloadDetail(
+    item: DownloadItem,
+    actions: RowActions,
+    onCopyLink: () -> Unit,
+    modifier: Modifier = Modifier.fillMaxSize(),
+    compact: Boolean = false,
+) {
     val colors = browserColors()
+    val openAnchor = remember { TriggerAnchor() }
+    val speed = if (item.speed > 0) speedLabel(item.speed) else "Not measured"
+    val size = if (item.totalBytes > 0) DownloadsRepository.sizeLabel(item.totalBytes) else "Not sent by the site"
+    val source = sourceHost(item.url)
+    val started = timeLabel(item.startedAt)
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .clip(RoundedCornerShape(BrowserTokens.RadiusLarge))
             .background(colors.Surface)
-            .padding(horizontal = 30.dp, vertical = 26.dp),
+            .then(if (compact) Modifier.verticalScroll(rememberScrollState()) else Modifier)
+            .padding(horizontal = if (compact) 20.dp else 30.dp, vertical = if (compact) 20.dp else 26.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -711,7 +805,7 @@ private fun DownloadDetail(item: DownloadItem, actions: RowActions, onCopyLink: 
                     color = colors.AddressBarText,
                 )
                 Text(
-                    "From ${sourceHost(item.url)}, saved to Downloads/Ora",
+                    "From $source, saved to Downloads/Ora",
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     fontSize = 14.sp,
@@ -722,38 +816,81 @@ private fun DownloadDetail(item: DownloadItem, actions: RowActions, onCopyLink: 
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             SegmentBar(item.progress, height = 10.dp)
             Text(statusLine(item), fontSize = 15.sp, color = if (item.status == DownloadStatus.FAILED) Mineral.Ember else colors.AddressBarText)
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            DetailStat("Speed", if (item.speed > 0) speedLabel(item.speed) else "Not measured", Modifier.weight(1f))
-            DetailStat("Size", if (item.totalBytes > 0) DownloadsRepository.sizeLabel(item.totalBytes) else "Not sent by the site", Modifier.weight(1f))
-            DetailStat("Source", sourceHost(item.url), Modifier.weight(1f))
-            DetailStat("Started", timeLabel(item.startedAt), Modifier.weight(1f))
-        }
-        Box(Modifier.weight(1f))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            when (item.status) {
-                DownloadStatus.RUNNING -> {
-                    if (item.pausable) DetailPill("Pause", colors.AddressBarText) { actions.onPause(item) }
-                    DetailPill("Cancel download", Mineral.Ember) { actions.onCancel(item) }
-                }
-                DownloadStatus.PAUSED -> {
-                    DetailPill("Resume", colors.Accent, filled = true) { actions.onResume(item) }
-                    DetailPill("Cancel download", Mineral.Ember) { actions.onCancel(item) }
-                }
-                DownloadStatus.DONE -> {
-                    DetailPill(if (item.isExtensionFile) "Install" else "Open", colors.Accent, filled = true) { actions.onOpen(item) }
-                    DetailPill("Share", colors.AddressBarText) { actions.onShare(item) }
-                    DetailPill("Delete file", Mineral.Ember) { actions.onDelete(item) }
-                }
-                DownloadStatus.FAILED -> {
-                    DetailPill("Retry", colors.Accent, filled = true) { actions.onResume(item) }
-                    DetailPill("Remove from list", Mineral.Ember) { actions.onDelete(item) }
-                }
-                DownloadStatus.CANCELLED -> DetailPill("Remove from list", Mineral.Ember) { actions.onDelete(item) }
+            if (item.status == DownloadStatus.DONE && DownloadSafety.isRisky(item.fileName)) {
+                Text(
+                    "This type of file can harm your device. Check where it came from before you open it.",
+                    fontSize = 14.sp,
+                    color = Mineral.Ember,
+                )
             }
-            Box(Modifier.weight(1f))
-            DetailPill("Copy link", colors.AddressBarText, onClick = onCopyLink)
+            if (DownloadSafety.isPlainHttp(item.url)) {
+                Text(
+                    "Sent over an unencrypted connection. Check the file against a published checksum before you trust it.",
+                    fontSize = 14.sp,
+                    color = colors.SecondaryText,
+                )
+            }
         }
+        if (compact) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                DetailStat("Speed", speed, Modifier.widthIn(min = 120.dp))
+                DetailStat("Size", size, Modifier.widthIn(min = 120.dp))
+                DetailStat("Source", source, Modifier.widthIn(min = 120.dp))
+                DetailStat("Started", started, Modifier.widthIn(min = 120.dp))
+            }
+        } else {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                DetailStat("Speed", speed, Modifier.weight(1f))
+                DetailStat("Size", size, Modifier.weight(1f))
+                DetailStat("Source", source, Modifier.weight(1f))
+                DetailStat("Started", started, Modifier.weight(1f))
+            }
+        }
+        if (item.status == DownloadStatus.DONE) ChecksumCheck(item)
+        if (compact) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatusPills(item, actions, openAnchor)
+                DetailPill("Copy link", colors.AddressBarText, onClick = onCopyLink)
+            }
+        } else {
+            Box(Modifier.weight(1f))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                StatusPills(item, actions, openAnchor)
+                Box(Modifier.weight(1f))
+                DetailPill("Copy link", colors.AddressBarText, onClick = onCopyLink)
+            }
+        }
+    }
+}
+
+/** The buttons that suit the file's state: pause or cancel, open, retry, share or delete. */
+@Composable
+private fun StatusPills(item: DownloadItem, actions: RowActions, openAnchor: TriggerAnchor) {
+    val colors = browserColors()
+    when (item.status) {
+        DownloadStatus.RUNNING -> {
+            if (item.pausable) DetailPill("Pause", colors.AddressBarText) { actions.onPause(item) }
+            DetailPill("Cancel download", Mineral.Ember) { actions.onCancel(item) }
+        }
+        DownloadStatus.PAUSED -> {
+            DetailPill("Resume", colors.Accent, filled = true) { actions.onResume(item) }
+            DetailPill("Cancel download", Mineral.Ember) { actions.onCancel(item) }
+        }
+        DownloadStatus.DONE -> {
+            DetailPill(
+                if (item.isExtensionFile) "Install" else "Open",
+                colors.Accent,
+                filled = true,
+                anchor = openAnchor,
+            ) { actions.onOpen(item, openAnchor.centre()) }
+            DetailPill("Share", colors.AddressBarText) { actions.onShare(item) }
+            DetailPill("Delete file", Mineral.Ember) { actions.onDelete(item) }
+        }
+        DownloadStatus.FAILED -> {
+            DetailPill("Retry", colors.Accent, filled = true) { actions.onResume(item) }
+            DetailPill("Remove from list", Mineral.Ember) { actions.onDelete(item) }
+        }
+        DownloadStatus.CANCELLED -> DetailPill("Remove from list", Mineral.Ember) { actions.onDelete(item) }
     }
 }
 
@@ -766,12 +903,16 @@ private fun DetailStat(label: String, value: String, modifier: Modifier = Modifi
     }
 }
 
-/** A round-cornered pill button: Accent filled when [filled], otherwise a quiet AddressBarBackground pill. */
+/**
+ * A round-cornered pill button: Accent filled when [filled], otherwise a quiet AddressBarBackground pill.
+ * [anchor] remembers where the pill sits, so a card can grow out of it.
+ */
 @Composable
-private fun DetailPill(label: String, textColor: Color, filled: Boolean = false, onClick: () -> Unit) {
+private fun DetailPill(label: String, textColor: Color, filled: Boolean = false, anchor: TriggerAnchor? = null, onClick: () -> Unit) {
     val colors = browserColors()
     Box(
         modifier = Modifier
+            .onGloballyPositioned { anchor?.coords = it }
             .height(BrowserTokens.ToolbarButtonSize)
             .clip(CircleShape)
             .background(if (filled) colors.Accent else colors.AddressBarBackground)
@@ -861,7 +1002,7 @@ private fun statusLine(item: DownloadItem): String {
                 parts.joinToString(", ")
             }
         }
-        DownloadStatus.PAUSED -> "Paused · ${DownloadsRepository.sizeLabel(item.bytes)} of ${if (item.totalBytes > 0) size else "unknown size"}"
+        DownloadStatus.PAUSED -> if (item.pausedBySystem) "Paused by Android · resumes automatically" else "Paused · ${DownloadsRepository.sizeLabel(item.bytes)} of ${if (item.totalBytes > 0) size else "unknown size"}"
         DownloadStatus.DONE -> "Done · $size · Downloads/Ora"
         DownloadStatus.FAILED -> "Failed: ${item.error ?: "unknown error"}"
         DownloadStatus.CANCELLED -> "Cancelled"
@@ -914,4 +1055,217 @@ private fun copyLink(context: Context, item: DownloadItem) {
     clipboard.setPrimaryClip(ClipData.newPlainText("Download link", item.url))
     BrowserLog.info("download", downloadLogLine("Copied the link for", item.url))
     Toast.makeText(context, "Link copied", Toast.LENGTH_SHORT).show()
+}
+
+/**
+ * Optional check: paste the SHA-256 or MD5 the site publishes. Ora reads the saved file once, when a complete hash is
+ * first entered. Every later edit only compares against that result, so typing does not read the file again.
+ */
+@Composable
+private fun ChecksumCheck(item: DownloadItem) {
+    val colors = browserColors()
+    val context = LocalContext.current
+    var pasted by rememberSaveable(item.id) { mutableStateOf("") }
+    val algorithm = DownloadSafety.algorithmFor(pasted)
+    // The file is read once, the first time a complete hash is typed. Later edits only compare against that result.
+    var outcome by remember(item.contentUri) { mutableStateOf<Result<FileHashes>?>(null) }
+    LaunchedEffect(item.contentUri, algorithm != null) {
+        val uri = item.contentUri ?: return@LaunchedEffect
+        if (algorithm != null && outcome == null) {
+            outcome = withContext(Dispatchers.IO) {
+                runCatching {
+                    context.contentResolver.openInputStream(uri)?.use { DownloadSafety.hashes(it) }
+                        ?: error("The file could not be opened")
+                }
+            }
+        }
+    }
+    val hashes = outcome?.getOrNull()
+    val verdict: Boolean? = hashes?.let { DownloadSafety.compare(pasted, it) }
+    val failed = outcome?.isFailure == true
+    LaunchedEffect(verdict) {
+        when (verdict) {
+            true -> BrowserLog.info("download", downloadLogLine("Checksum matched for", item.url))
+            false -> BrowserLog.warn("download", downloadLogLine("Checksum did not match for", item.url))
+            null -> Unit
+        }
+    }
+    LaunchedEffect(outcome) {
+        outcome?.exceptionOrNull()?.let {
+            BrowserLog.error("download", downloadLogLine("Could not read the file to check it for", item.url), it)
+        }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Check the file (optional)", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
+        BasicTextField(
+            value = pasted,
+            onValueChange = { pasted = it },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+            textStyle = TextStyle(fontSize = 15.sp, color = colors.AddressBarText),
+            cursorBrush = SolidColor(colors.Accent),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(BrowserTokens.ToolbarButtonSize)
+                .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+                .background(colors.AddressBarBackground)
+                .padding(horizontal = 20.dp),
+            decorationBox = { inner ->
+                Box(contentAlignment = Alignment.CenterStart) {
+                    if (pasted.isEmpty()) Text("Paste a SHA-256 or MD5 from the website", fontSize = 15.sp, color = colors.SecondaryText)
+                    inner()
+                }
+            },
+        )
+        val message: String? = when {
+            pasted.isBlank() -> null
+            algorithm == null -> "Paste the full SHA-256 (64 characters) or MD5 (32 characters)."
+            item.contentUri == null -> "The file is missing from Downloads/Ora."
+            failed -> "The file could not be read, so it cannot be checked."
+            verdict == null -> "Checking the file…"
+            verdict == true -> "Matches"
+            else -> "Doesn't match"
+        }
+        message?.let {
+            Text(
+                it,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = when {
+                    failed || verdict == false -> Mineral.Ember
+                    verdict == true -> Mineral.Lichen
+                    else -> colors.SecondaryText
+                },
+            )
+        }
+    }
+}
+
+/** Remembers where a control sits in its window, so a card can grow out of it when the control is tapped. */
+private class TriggerAnchor {
+    var coords: LayoutCoordinates? = null
+
+    /** The middle of the control in window coordinates. Zero until the control has been placed. */
+    fun centre(): Offset =
+        coords?.let { it.positionInWindow() + Offset(it.size.width / 2f, it.size.height / 2f) } ?: Offset.Zero
+}
+
+/**
+ * The check before a file type that can run code opens (AGENTS.md rule 10). The card grows out of the control that
+ * asked, from [origin] in window coordinates, and shrinks back into it on Cancel, a tap outside, Back or Open anyway.
+ */
+@Composable
+private fun OpenWarningCard(item: DownloadItem, origin: Offset, onDismissed: () -> Unit) {
+    val colors = browserColors()
+    val context = LocalContext.current
+    val visibleState = remember { MutableTransitionState(false).apply { targetState = true } }
+    var cardTopLeft by remember { mutableStateOf(Offset.Zero) }
+    var cardSize by remember { mutableStateOf(IntSize.Zero) }
+    LaunchedEffect(visibleState.isIdle, visibleState.currentState) {
+        if (visibleState.isIdle && !visibleState.currentState) onDismissed()
+    }
+    val close = { visibleState.targetState = false }
+    BackHandler(onBack = close)
+    // The pivot is the trigger's position inside the card's own box, so the card scales out of that point.
+    val pivot = if (cardSize.width > 0 && cardSize.height > 0) {
+        TransformOrigin(
+            ((origin.x - cardTopLeft.x) / cardSize.width).coerceIn(0f, 1f),
+            ((origin.y - cardTopLeft.y) / cardSize.height).coerceIn(0f, 1f),
+        )
+    } else {
+        TransformOrigin.Center
+    }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        AnimatedVisibility(
+            visibleState = visibleState,
+            modifier = Modifier.matchParentSize(),
+            enter = fadeIn(OraMotion.overlayFadeIn()),
+            exit = fadeOut(OraMotion.overlayFadeOut()),
+        ) {
+            Box(Modifier.fillMaxSize().background(colors.Scrim).clickable(onClick = close))
+        }
+        AnimatedVisibility(
+            visibleState = visibleState,
+            modifier = Modifier.align(Alignment.Center),
+            enter = fadeIn(OraMotion.overlayFadeIn()) +
+                scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE, transformOrigin = pivot),
+            exit = fadeOut(OraMotion.overlayFadeOut()) +
+                scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE, transformOrigin = pivot),
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(BrowserTokens.QuickMenuWidth)
+                    .onGloballyPositioned {
+                        cardTopLeft = it.positionInWindow()
+                        cardSize = it.size
+                    }
+                    .clip(RoundedCornerShape(BrowserTokens.QuickMenuRadius))
+                    .background(colors.AddressBarBackground)
+                    // Taps on the card do not reach the scrim behind it.
+                    .clickable(onClick = {})
+                    .padding(20.dp),
+            ) {
+                Text(
+                    "Open ${item.fileName}?",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colors.AddressBarText,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "This type of file can harm your device. Only open it if you trust the site it came from.",
+                    fontSize = 14.sp,
+                    color = colors.SecondaryText,
+                )
+                Row(modifier = Modifier.fillMaxWidth().padding(top = 16.dp), horizontalArrangement = Arrangement.End) {
+                    TextButton(onClick = {
+                        BrowserLog.info("download", downloadLogLine("Kept closed after a safety warning", item.url))
+                        close()
+                    }) {
+                        Text("Cancel", color = colors.Accent)
+                    }
+                    TextButton(onClick = {
+                        BrowserLog.warn("download", downloadLogLine("Opened after a safety warning", item.url))
+                        openFile(context, item)
+                        close()
+                    }) {
+                        Text("Open anyway", color = Mineral.Ember, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** A phone download's details as their own screen, reached from its row. Back returns to the list. */
+@Composable
+private fun PhoneDetail(item: DownloadItem, actions: RowActions, onCopyLink: () -> Unit, onBack: () -> Unit) {
+    val colors = browserColors()
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = BrowserTokens.RadiusSmall),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(52.dp).padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(BrowserTokens.ToolbarButtonSize)
+                    .clip(CircleShape)
+                    .background(colors.Surface)
+                    .pressFeedback()
+                    .clickable(onClick = onBack),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to downloads", tint = colors.IconColor, modifier = Modifier.size(20.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            Text("Details", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = colors.AddressBarText)
+        }
+        DownloadDetail(item = item, actions = actions, onCopyLink = onCopyLink, modifier = Modifier.weight(1f), compact = true)
+    }
 }

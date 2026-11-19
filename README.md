@@ -48,6 +48,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `browser/AppLinks.kt` finds the app for a link and keeps each profile's "Always" sites in `ora_app_links_<profileId>`; `browser/AppLinkCard.kt` is the card that asks, and `BrowserTabs.appLinkDecision` decides whether to open, ask or stay.
 - `browser/PopupCard.kt` draws the card that asks before a page opens a window without a tap. `browser/PopupStore.kt` keeps each profile's "Always allow" sites in `ora_popups_<profileId>`, and `popupDecision` in the same file decides open or ask. `GeckoEngine.kt` starts GeckoView with Gecko's own pop-up blocker off, through a config file it writes to app storage, so those pop-ups reach Ora.
 - `browser/ErrorPage.kt` builds the card for a failed load: one card per cause, after a connection check (ConnectivityManager). It is a data: URI page, so it needs no network, and its colours are CSS copies of the Mineral values.
+- `downloads/`: the download list and engine. `DownloadsRepository.kt` owns the list and the saved queue, and `DownloadEngine.kt` fetches a file in parallel parts with retries. `DownloadStore.kt` and `DownloadDatabase.kt` keep the queue in Room. `DownloadService.kt` and `DownloadJobService.kt` keep downloads running in the background. `DownloadSafety.kt` holds the file-type, plain-http and checksum checks, and `DownloadsScreen.kt` draws the Downloads page on phone and tablet.
 
 ## Design sources
 

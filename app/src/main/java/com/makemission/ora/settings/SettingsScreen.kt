@@ -25,6 +25,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.DisposableEffect
 import android.content.ActivityNotFoundException
+import android.content.Intent
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -122,6 +124,28 @@ fun SettingsScreen(
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
+    val downloadNotifications by settings.downloadNotifications.collectAsState()
+    val noticeContext = LocalContext.current
+    // Android can block Ora's notifications on its own, so the row re-reads that when the screen comes back.
+    var notificationsAllowed by remember { mutableStateOf(NotificationManagerCompat.from(noticeContext).areNotificationsEnabled()) }
+    val noticeLifecycle = LocalLifecycleOwner.current
+    DisposableEffect(noticeLifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) notificationsAllowed = NotificationManagerCompat.from(noticeContext).areNotificationsEnabled()
+        }
+        noticeLifecycle.lifecycle.addObserver(observer)
+        onDispose { noticeLifecycle.lifecycle.removeObserver(observer) }
+    }
+    val openNotificationSettings: () -> Unit = {
+        val intent = Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, noticeContext.packageName)
+        try {
+            noticeContext.startActivity(intent)
+            BrowserLog.info("settings", "Opened Android's notification settings for Ora")
+        } catch (e: ActivityNotFoundException) {
+            BrowserLog.error("settings", "No system screen for Ora's notifications: ${e.message}")
+        }
+    }
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val httpsOnly by settings.httpsOnly.collectAsState()
     val appLockRecord by settings.appLockRecord.collectAsState()
@@ -876,6 +900,34 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = fastHttpDownloads, label = "Switch", onChange = { settings.setFastHttpDownloads(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setDownloadNotifications(!downloadNotifications) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Download notifications", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Each download has its own notification with Pause, Resume and Cancel. A finished or failed download is announced. Private downloads show no file name.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                    if (downloadNotifications && !notificationsAllowed) {
+                                        Text(
+                                            "Android has notifications off for Ora. Tap to turn them on.",
+                                            fontSize = 14.sp,
+                                            color = Mineral.Ember,
+                                            modifier = Modifier
+                                                .padding(top = 4.dp)
+                                                .clickable { openNotificationSettings() }
+                                        )
+                                    }
+                                }
+                                MineralSwitch(checked = downloadNotifications, label = "Switch", onChange = { settings.setDownloadNotifications(it) })
                             }
                         }
                     }

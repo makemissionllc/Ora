@@ -24,6 +24,8 @@ class DownloadRetryTest {
     private val body = Random(13).nextBytes(9 * 1024 * 1024)
     /** How many of the next range requests are cut short halfway, like a Wi-Fi drop mid-transfer. */
     private val dropsLeft = AtomicInteger(0)
+    /** What a dropped request still sends. The default is half of its slice, like a connection cut in the middle. */
+    @Volatile private var keepOnDrop: (ByteArray) -> ByteArray = { it.copyOf(it.size / 2) }
     private val out = File(System.getProperty("java.io.tmpdir"), "ora-retry-test.part")
 
     @Before
@@ -37,7 +39,7 @@ class DownloadRetryTest {
                 val end = m.groupValues[2].toIntOrNull() ?: (body.size - 1)
                 val slice = body.copyOfRange(start, end + 1)
                 val drop = dropsLeft.getAndDecrement() > 0
-                val sent = if (drop) slice.copyOf(slice.size / 2) else slice
+                val sent = if (drop) keepOnDrop(slice) else slice
                 return MockResponse().setResponseCode(206)
                     .setHeader("Content-Range", "bytes $start-$end/${body.size}")
                     .setHeader("ETag", "\"v1\"")
@@ -86,6 +88,8 @@ class DownloadRetryTest {
         val parts = engine.plan(probe.total, probe.ranges).mapIndexed { i, s -> Part(i, s) }
         java.io.RandomAccessFile(out, "rw").use { it.setLength(probe.total) }
 
+        // Each drop sends nothing, so no attempt saves a byte and the retries run out.
+        keepOnDrop = { ByteArray(0) }
         dropsLeft.set(100_000)
         try {
             engine.download(url, probe.etag, true, out, parts) {}
@@ -93,5 +97,21 @@ class DownloadRetryTest {
         } catch (e: IOException) {
             // Expected: the first try and 10 retries failed, so the error goes up to the repository.
         }
+    }
+
+    @Test
+    fun aDownloadThatKeepsMovingSurvivesMoreDropsThanTheRetryLimit() = runBlocking {
+        val url = server.url("/file.bin").toString()
+        val engine = DownloadEngine(retryDelayMs = { 1L })
+        val probe = engine.probe(url)
+        val parts = engine.plan(probe.total, probe.ranges).mapIndexed { i, s -> Part(i, s) }
+        java.io.RandomAccessFile(out, "rw").use { it.setLength(probe.total) }
+
+        // Every request is cut after 64 KB. Each part needs about 35 drops, far past the ten retries, but each drop saved bytes.
+        keepOnDrop = { it.copyOf(minOf(it.size, 64 * 1024)) }
+        dropsLeft.set(100_000)
+        engine.download(url, probe.etag, true, out, parts) {}
+
+        assertArrayEquals(body, out.readBytes())
     }
 }

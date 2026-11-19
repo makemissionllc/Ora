@@ -13,6 +13,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Paused downloads come back after a restart, and a download can be resumed from where it stopped. (`b5403e8`, `d4bd14c`)
 - A download whose file changed on the server starts again, and the row says so. (`0a8d9c5`)
 - A dropped connection is retried after 2, 5, 15 and 30 seconds, then every minute, up to ten times. When the network is gone, it waits and resumes when it comes back. (`665274c`)
+- Files that can run code, such as .apk, .exe, .sh or .jar, ask before they open. A card says the type can harm your device, with Cancel and Open anyway. (`(this commit)`)
+- A finished download can be checked against the SHA-256 or MD5 its website publishes. Paste it under the file, and Ora says whether it matches. (`(this commit)`)
+- A download that came over plain http is marked in its details, because anyone on the network can change what arrives. (`(this commit)`)
+- On the phone, a finished download has an Info button that opens its details, with the same checksum check as the tablet. (`(this commit)`)
 
 **Changed**
 - On Android 14 and later, downloads keep running in the background as a system-managed download job, with the same Pause all and Cancel notification buttons.  (`5bc0a47`)

@@ -12,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -59,6 +60,8 @@ data class DownloadItem(
     val notice: String? = null,
     /** False when the server cannot resume a part, so the download can only be cancelled. */
     val pausable: Boolean = true,
+    /** True when Android paused this download because it stopped the background job. It starts again when Android restarts the job. */
+    val pausedBySystem: Boolean = false,
     /** When the save began, in epoch milliseconds. Shown as "Started" on the details page. */
     val startedAt: Long = System.currentTimeMillis(),
 ) {
@@ -172,6 +175,8 @@ class DownloadsRepository(
 
     /** Pauses every running download that can resume. Called from the notification's Pause action. */
     fun pauseAll() {
+        // A download Android paused is no longer waiting for its restart, so the user's pause covers it too.
+        update { list -> list.map { if (it.pausedBySystem) it.copy(pausedBySystem = false) else it } }
         _items.value.filter { it.status == DownloadStatus.RUNNING && it.pausable }.forEach { pause(it.id) }
     }
 
@@ -182,11 +187,27 @@ class DownloadsRepository(
 
     /** Pauses a running download. Its saved parts stay on disk, so Resume continues from the same bytes. */
     fun pause(id: Long) {
-        val job = jobs[id]?.takeIf { it.isActive } ?: return
-        if (find(id)?.pausable != true) return
-        pausing.add(id)
-        waitingForNetwork.remove(id)
-        job.cancel()
+        stopTransfer(id)
+    }
+
+    /**
+     * Pauses the running downloads because Android stopped the background job. Each one is flagged as paused by
+     * Android, so [resumeAfterSystemStop] starts it again when Android restarts the job.
+     */
+    fun pauseForSystemStop() {
+        _items.value.filter { it.status == DownloadStatus.RUNNING && it.pausable }.forEach { item ->
+            // Flagged before the transfer stops, so the job stays scheduled for its restart.
+            flagSystemPause(item.id, true)
+            if (!stopTransfer(item.id)) flagSystemPause(item.id, false)
+        }
+    }
+
+    /** Starts again the downloads Android paused. Called when Android restarts the job, so nothing waits for a tap. */
+    fun resumeAfterSystemStop() {
+        val ids = _items.value.filter { it.pausedBySystem && it.status == DownloadStatus.PAUSED }.map { it.id }
+        if (ids.isEmpty()) return
+        BrowserLog.info("download", "Android restarted the background job, so ${ids.size} paused download(s) continue")
+        ids.forEach { resume(it) }
     }
 
     /** Continues a paused or failed download from where it stopped. */
@@ -197,6 +218,19 @@ class DownloadsRepository(
         launch(id)
     }
 
+    /** Stops the transfer of a running download. False when there was nothing to stop. */
+    private fun stopTransfer(id: Long): Boolean {
+        val job = jobs[id]?.takeIf { it.isActive } ?: return false
+        if (find(id)?.pausable != true) return false
+        pausing.add(id)
+        waitingForNetwork.remove(id)
+        job.cancel()
+        return true
+    }
+
+    private fun flagSystemPause(id: Long, flagged: Boolean) =
+        update { list -> list.map { if (it.id == id) it.copy(pausedBySystem = flagged) else it } }
+
     /** Stops a download and removes its partial file. */
     fun cancel(id: Long) {
         val item = find(id) ?: return
@@ -204,7 +238,7 @@ class DownloadsRepository(
         jobs[id]?.cancel()
         partFile(id).delete()
         tasks.remove(id)
-        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.CANCELLED, speed = 0) else it } }
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.CANCELLED, speed = 0, pausedBySystem = false) else it } }
         saveNow()
         BrowserLog.warn("download", downloadLogLine("Cancelled", item.url))
     }
@@ -233,7 +267,7 @@ class DownloadsRepository(
 
     private fun launch(id: Long) {
         if (jobs[id]?.isActive == true) return
-        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.RUNNING, error = null) else it } }
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.RUNNING, error = null, pausedBySystem = false) else it } }
         jobs[id] = scope.launch {
             try {
                 run(id, restarted = false)
@@ -254,7 +288,8 @@ class DownloadsRepository(
                 if (e is IOException) waitingForNetwork.add(id)
                 fail(id, e.message ?: e.javaClass.simpleName)
             } finally {
-                jobs.remove(id)
+                // Removes only this run's job, so a resume that started a newer run is not dropped from the map.
+                currentCoroutineContext()[Job]?.let { jobs.remove(id, it) }
             }
         }
     }
@@ -391,7 +426,8 @@ class DownloadsRepository(
      * a data-sync foreground service before that. Started and stopped only when the state changes.
      */
     private fun syncService() {
-        val running = activeCount() > 0
+        // A download Android paused still needs the job, so the job stays scheduled until Android restarts it.
+        val running = activeCount() > 0 || _items.value.any { it.pausedBySystem }
         if (running == serviceRunning) return
         serviceRunning = running
         runCatching {
@@ -410,6 +446,8 @@ class DownloadsRepository(
             .setUserInitiated(true)
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
             .setEstimatedNetworkBytes(JobInfo.NETWORK_BYTES_UNKNOWN.toLong(), JobInfo.NETWORK_BYTES_UNKNOWN.toLong())
+            // When Android stops the job, it starts it again after this short wait, not after a long back-off.
+            .setBackoffCriteria(RESTART_BACKOFF_MILLIS, JobInfo.BACKOFF_POLICY_LINEAR)
             .build()
         val result = scheduler.schedule(job)
         if (result != JobScheduler.RESULT_SUCCESS) {
@@ -438,6 +476,8 @@ class DownloadsRepository(
     companion object {
         const val FILE_CHANGED_NOTICE = "The file changed, so it restarted"
         const val FAILED_TAP_TO_RETRY = "Failed: tap to retry"
+        /** The shortest wait the system allows before it starts a stopped download job again. */
+        private const val RESTART_BACKOFF_MILLIS = 10_000L
 
         /** The repository the service's notification buttons act on. Set when a repository is created. */
         @Volatile var current: DownloadsRepository? = null

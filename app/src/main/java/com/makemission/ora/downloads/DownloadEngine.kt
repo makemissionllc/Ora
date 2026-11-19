@@ -57,7 +57,7 @@ class DownloadEngine(
         /** Files smaller than this are fetched in one piece. */
         const val SPLIT_THRESHOLD = 4L * 1024 * 1024
         const val MAX_PARTS = 4
-        /** Retries after the first failure: 2 s, 5 s, 15 s, 30 s, then every 60 s, ten in all. */
+        /** Failures in a row before a part gives up: 2 s, 5 s, 15 s, 30 s, then every 60 s. Bytes saved between failures reset the count. */
         const val MAX_RETRIES = 10
         private const val BUFFER = 64 * 1024
     }
@@ -123,6 +123,7 @@ class DownloadEngine(
     ) {
         var attempt = 0
         while (true) {
+            val before = part.seg.done
             try {
                 fetchOnce(url, etag, ranged, file, part, onBytes)
                 return
@@ -130,7 +131,9 @@ class DownloadEngine(
                 throw e
             } catch (e: IOException) {
                 currentCoroutineContext().ensureActive()
-                attempt++
+                // A ranged part that saved bytes before the drop keeps them, so its count starts again. Only
+                // failures in a row use up the retries, which lets a long download survive occasional drops.
+                attempt = if (ranged && part.seg.end >= 0 && part.seg.done > before) 1 else attempt + 1
                 if (attempt > MAX_RETRIES) throw e
                 BrowserLog.warn("download", "Part ${part.index + 1} stopped (${e.message ?: "network error"}), retry $attempt of $MAX_RETRIES")
                 // A stream without ranges has no offset to resume from, so it starts over.
