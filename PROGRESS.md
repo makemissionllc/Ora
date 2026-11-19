@@ -148,7 +148,7 @@ Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google'
 
 ### Downloads (`ORA-DOWNLOADS-SPEC.md`, phase 1 onward)
 - Pause, resume and retry on rows and in the summary ("Pause all"). Needs resumable segments (phase 1), so no button is shown yet.
-- Per-download notifications are built (`DownloadNotifier.kt`, `HASH`, `feature/downloads-notifications`). A stats footer on the list is not started.
+- Per-download notifications are built (`DownloadNotifier.kt`, `20e7f5f`, `feature/downloads-notifications`). A stats footer on the list is not started.
 - Per-connection split progress (phase 3): the bar is an overall split for now.
 - Tablet two-pane Downloads: built in `e182fda` (list and details, Copy link). Open folder is Not done (it has no platform API), so it is left out. The checksum check is in Done.
 - Morph from the toolbar button and the ⋯ menu corner is done in `e182fda`; the menu row's origin is the top-right corner, not the row itself (rule 10 partly met).
@@ -196,7 +196,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
-| 2026-11-19 | Per-download notifications (`HASH`, `feature/downloads-notifications`) | Not checked: built, `assembleDebug` and all host tests pass. No download was started on the phone, so no notification was seen. | Not checked: no tablet attached. |
+| 2026-11-19 | Per-download notifications (`20e7f5f`, `feature/downloads-notifications`) | Not checked: built, `assembleDebug` and all host tests pass. No download was started on the phone, so no notification was seen. | Not checked: no tablet attached. |
 | 2026-11-19 | Group tab strip (`cf0f67c`, `feature/group-tab-strip`) | Phone (CPH2745, USB): debug build installed and Ora launched on a plain page. Not checked: the strip itself, because it needs a tab group of two or more tabs and none was made. | Not checked: no tablet was attached. |
 | 2026-11-19 | Downloads confirmation cards morph (`7527665`, `feature/downloads-confirm-morph`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
 | 2026-11-19 | Tab overview search over bookmarks and history (`394bb9f`) | Not checked: built (`assembleDebug` passes), not checked on a device (no adb). | Not checked: same. |
