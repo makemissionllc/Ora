@@ -165,6 +165,7 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.compose.ui.viewinterop.AndroidView
 import com.makemission.ora.bookmarks.Bookmark
+import com.makemission.ora.history.HistoryEntry
 import com.makemission.ora.bookmarks.BookmarksRepository
 import com.makemission.ora.history.HistoryRepository
 import com.makemission.ora.profiles.Profile
@@ -1282,6 +1283,8 @@ private fun BrowserContent(
                             onLockPrivate = if (appLockSet) ({ AppLock.lockIfEnabled(settings) }) else null,
                             onDone = { showTabGrid = false },
                             insets = Modifier.statusBarsPadding(),
+                            bookmarks = bookmarkList,
+                            history = historyList,
                         )
                         PhoneOverlay.EXTENSIONS -> ExtensionsScreen(
                             repository = extensions,
@@ -1384,6 +1387,8 @@ private fun BrowserContent(
                             onLockPrivate = if (appLockSet) ({ AppLock.lockIfEnabled(settings) }) else null,
             onDone = { showTabGrid = false },
             insets = Modifier.statusBarsPadding().navigationBarsPadding(),
+            bookmarks = bookmarkList,
+            history = historyList,
         )
     }
     // With the PIN lock on, a private tab stays behind the lock screen until the PIN is entered.
@@ -1421,6 +1426,8 @@ private fun TabOverviewContent(
     onLockPrivate: (() -> Unit)?,
     onDone: () -> Unit,
     insets: Modifier,
+    bookmarks: List<Bookmark>,
+    history: List<HistoryEntry>,
 ) {
     Column(
         modifier = Modifier
@@ -1451,6 +1458,9 @@ private fun TabOverviewContent(
             onNewPrivateTab = onAddPrivateTab,
             onLockPrivate = onLockPrivate,
             onDone = onDone,
+            bookmarks = bookmarks,
+            history = history,
+            onOpenUrl = { url -> tabs.newTab(url); onDone() },
         )
     }
 }

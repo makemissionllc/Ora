@@ -94,6 +94,11 @@ fun TabGrid(
     onNewPrivateTab: () -> Unit = onNewTab,
     /** Locks the private tabs with the app PIN; null when no PIN is set. */
     onLockPrivate: (() -> Unit)? = null,
+    /** Saved pages and visits the search can also match. Empty lists keep it to tabs only. */
+    bookmarks: List<Bookmark> = emptyList(),
+    history: List<HistoryEntry> = emptyList(),
+    /** Opens a bookmark or history address in a new tab. */
+    onOpenUrl: (String) -> Unit = {},
 ) {
     // Search open tabs by title or address, as the sidebar does; the grid shows only the matches.
     var query by rememberSaveable { mutableStateOf("") }
@@ -209,7 +214,7 @@ fun TabGrid(
             }
         } else {
             Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
-                SidebarSearch(query = query, placeholder = "Search ${allTabs.size} open tabs", onQueryChange = { query = it })
+                SidebarSearch(query = query, placeholder = "Search tabs, bookmarks and history", onQueryChange = { query = it })
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.End) {
                 TextButton(onClick = { groupState.newGroup() }) {
@@ -218,8 +223,8 @@ fun TabGrid(
                     Text("New group", color = browserColors().SecondaryText, fontSize = 14.sp)
                 }
             }
-            if (tabList.isEmpty() && needle.isNotEmpty()) {
-                EmptySidebarText("No tabs match \"$needle\"")
+            if (tabList.isEmpty() && needle.isNotEmpty() && bookmarks.none { it.title.contains(needle, true) || it.url.contains(needle, true) } && history.none { it.title.contains(needle, true) || it.url.contains(needle, true) }) {
+                EmptySidebarText("Nothing matches \"$needle\"")
             }
         }
         // Inside a group: its tabs. With a search: every match, flat. Otherwise: group cards, then loose tabs.
@@ -256,6 +261,19 @@ fun TabGrid(
                     groupColor = tabs.groups.firstOrNull { it.id == tab.groupId }?.color?.color,
                     dragTabId = tab.id.takeIf { !tab.isPrivate },
                 )
+            }
+            // One search field: bookmarks and history that match are listed under the tabs (up to five each).
+            if (shownGroup == null && needle.isNotEmpty() && !inPrivate) {
+                val foundBookmarks = bookmarks.filter { it.title.contains(needle, true) || it.url.contains(needle, true) }.take(5)
+                val foundHistory = history.filter { it.title.contains(needle, true) || it.url.contains(needle, true) }.take(5)
+                if (foundBookmarks.isNotEmpty()) {
+                    item(key = "found_bookmarks", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { FoundLabel("In bookmarks") }
+                    gridItems(foundBookmarks, key = { "fb_" + it.url }, span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { b -> SidebarRow(b.title.ifBlank { displayUrl(b.url) }, b.url, false, onClick = { onOpenUrl(b.url) }) }
+                }
+                if (foundHistory.isNotEmpty()) {
+                    item(key = "found_history", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { FoundLabel("In history") }
+                    gridItems(foundHistory, key = { "fh_" + it.url + it.visitedAt }, span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) { h -> SidebarRow(h.title.ifBlank { displayUrl(h.url) }, h.url, false, onClick = { onOpenUrl(h.url) }) }
+                }
             }
             if (inactiveTabs.isNotEmpty()) {
                 item(key = "inactive_header", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {

@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Paused downloads come back after a restart, and a download can be resumed from where it stopped. (`b5403e8`, `d4bd14c`)
 - A download whose file changed on the server starts again, and the row says so. (`0a8d9c5`)
 - A dropped connection is retried after 2, 5, 15 and 30 seconds, then every minute, up to ten times. When the network is gone, it waits and resumes when it comes back. (`665274c`)
+- Search in the tab overview also finds bookmarks and history, on phone and tablet. Matches show under the tabs, and the field says when nothing matches. (`HASH`)
 - Files that can run code, such as .apk, .exe, .sh or .jar, ask before they open. A card says the type can harm your device, with Cancel and Open anyway. (`4834f3f`)
 - A finished download can be checked against the SHA-256 or MD5 its website publishes. Paste it under the file, and Ora says whether it matches. (`4834f3f`)
 - A download that came over plain http is marked in its details, because anyone on the network can change what arrives. (`4834f3f`)
