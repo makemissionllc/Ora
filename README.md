@@ -65,3 +65,5 @@ Mockups are in the `Designs/` folder and in the Browser Wireframes artifacts nam
 ## Fonts
 
 Ora's own screens can use Instrument Sans, Inter, Manrope, DM Sans, Newsreader, Fraunces or JetBrains Mono (Settings > Appearance > Font). The fonts are variable TTFs in `app/src/main/res/font`, taken from the Google Fonts repository under the SIL Open Font License 1.1. The catalog is `ui/theme/AppFonts.kt`; add a font by dropping a TTF in `res/font` and adding an `AppFont` entry.
+
+The same font can be applied to websites with Settings > Appearance > Font > Use font on websites. That is the built-in extension in `app/src/main/assets/webfont` (it holds its own copy of the font files, so keep them in step with `res/font`) and `extensions/WebFontBridge.kt`.
