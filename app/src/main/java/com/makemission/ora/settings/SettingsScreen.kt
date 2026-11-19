@@ -98,6 +98,8 @@ fun SettingsScreen(
     sitePermissions: SitePermissionStore,
     popups: PopupStore,
     appLinks: com.makemission.ora.browser.AppLinkStore,
+    profileRules: com.makemission.ora.profiles.ProfileRules,
+    profiles: com.makemission.ora.profiles.ProfilesRepository,
 ) {
     val appearance by settings.appearance.collectAsState()
     val popupSites by popups.allowed.collectAsState()
@@ -660,6 +662,9 @@ fun SettingsScreen(
                             }
                             MineralSwitch(checked = saveHistory, label = "Switch", onChange = { settings.setSaveHistory(it) })
                         }
+                    }
+                    if (shown(SettingsCategory.TABS)) item {
+                        com.makemission.ora.profiles.ProfileRulesSection(profileRules, profiles)
                     }
                     if (shown(SettingsCategory.PRIVACY)) item {
                         SectionTitle("Open links in apps")
