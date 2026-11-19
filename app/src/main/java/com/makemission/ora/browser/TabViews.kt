@@ -71,7 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.history.HistoryEntry
-import androidx.compose.material3.AlertDialog
+import com.makemission.ora.ui.OraDialog
 import com.makemission.ora.security.AppLock
 import com.makemission.ora.security.shownTitle
 import com.makemission.ora.ui.theme.BrowserTokens
@@ -120,7 +120,7 @@ fun TabGrid(
     // Closing every tab asks first, since it cannot be undone with one tap. The tabs stay in "Reopen closed tab".
     var confirmCloseAll by remember { mutableStateOf(false) }
     if (confirmCloseAll) {
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { confirmCloseAll = false },
             title = { Text("Close all ${allTabs.size} tabs?") },
             text = { Text("You can bring back the last 10 from \"Reopen closed tab\" in the menu. Private tabs are not kept.") },

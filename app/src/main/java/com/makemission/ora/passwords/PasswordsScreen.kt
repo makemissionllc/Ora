@@ -18,7 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
+import com.makemission.ora.ui.OraDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -119,7 +119,7 @@ fun PasswordsScreen(onDone: () -> Unit) {
     }
 
     pendingDelete?.let { login ->
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { pendingDelete = null },
             title = { Text("Delete this password?") },
             text = { Text("The saved login for ${login.host} (${login.username.ifEmpty { "no username" }}) will be removed. This cannot be undone.") },

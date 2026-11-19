@@ -33,7 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AlertDialog
+import com.makemission.ora.ui.OraDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -1390,7 +1390,7 @@ fun SettingsScreen(
     }
 
     if (confirmClearSites) {
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { confirmClearSites = false },
             title = { Text("Clear site permissions?") },
             text = { Text("Saved Allow and Block choices for $siteLabel will be forgotten. Each site will ask again.") },
@@ -1412,7 +1412,7 @@ fun SettingsScreen(
     }
 
     if (confirmClear) {
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { confirmClear = false },
             title = { Text("Clear browsing data?") },
             text = { Text("Cookies, site data and cached files for every site will be removed. This can't be undone.") },

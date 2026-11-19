@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.AlertDialog
+import com.makemission.ora.ui.OraDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -101,7 +101,7 @@ fun GroupDialogs(tabs: BrowserTabs, state: GroupDialogState, onGroupClosed: () -
     }
     state.closing?.let { group ->
         val count = tabs.tabsIn(group.id).size
-        AlertDialog(
+        OraDialog(
             onDismissRequest = { state.closing = null },
             title = { Text("Close ${group.name}?") },
             text = { Text(if (count == 0) "The group is empty and will be removed." else "Its $count ${if (count == 1) "tab" else "tabs"} close with it. You can bring back the last 10 from \"Reopen closed tab\".") },

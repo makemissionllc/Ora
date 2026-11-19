@@ -1,6 +1,5 @@
 package com.makemission.ora.browser
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -83,7 +82,6 @@ fun OraSheet(
         BrowserLog.info(tag, "Sheet opened")
         drop.animateTo(0f, OraMotion.sheetSpring())
     }
-    BackHandler { close() }
 
     // One-time nudge: once the sheet has settled, lift it a little and let it fall back, with a caption.
     val hints = LocalHints.current
@@ -162,7 +160,7 @@ fun OraSheet(
 
     Dialog(
         onDismissRequest = { close() },
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false, dismissOnBackPress = false),
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false, dismissOnBackPress = true),
     ) {
         Box(
             Modifier

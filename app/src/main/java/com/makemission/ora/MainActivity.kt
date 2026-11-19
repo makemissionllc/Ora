@@ -8,6 +8,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import com.makemission.ora.browser.BrowserScreen
 import com.makemission.ora.browser.ExternalLinks
 import com.makemission.ora.log.BrowserLog
@@ -47,7 +50,17 @@ class MainActivity : ComponentActivity() {
             OraTheme {
               androidx.compose.runtime.CompositionLocalProvider(com.makemission.ora.browser.LocalHints provides settings) {
                 val profiles = remember { ProfilesRepository(applicationContext) }
-                BrowserScreen(settings = settings, profiles = profiles)
+                androidx.compose.foundation.layout.Box(
+                    androidx.compose.ui.Modifier.pointerInput(Unit) {
+                        // Notes where each press lands, without consuming it, so a dialog can grow out of that point.
+                        awaitPointerEventScope {
+                            while (true) {
+                                val event = awaitPointerEvent(PointerEventPass.Initial)
+                                if (event.type == PointerEventType.Press) event.changes.firstOrNull()?.let { com.makemission.ora.ui.LastPress.position = it.position }
+                            }
+                        }
+                    }
+                ) { BrowserScreen(settings = settings, profiles = profiles) }
               }
             }
         }
