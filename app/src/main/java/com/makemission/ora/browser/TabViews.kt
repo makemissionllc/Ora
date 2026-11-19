@@ -711,7 +711,7 @@ internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, p
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
+        com.makemission.ora.ui.RollingText(
             text,
             fontSize = if (pill) 14.sp else 13.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,

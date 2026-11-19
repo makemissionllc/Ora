@@ -132,7 +132,7 @@ Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google'
 5. Decide whether to route WebAuthn through `androidx.credentials` with `setOrigin`; nothing was built for it.
 
 ### Fonts
-- San Francisco and Apple's New York cannot be bundled (Apple's licence forbids it); Inter and Newsreader stand in. Address text stays in condensed Instrument Sans. The website font is a content-script override: private tabs and sites with unusual icon class names may not follow it. Custom animated components beyond the font preview cross-fade are not built yet.
+- San Francisco and Apple's New York cannot be bundled (Apple's licence forbids it); Inter and Newsreader stand in. Address text stays in condensed Instrument Sans. The website font is a content-script override: private tabs and sites with unusual icon class names may not follow it. Animated components so far: the font preview cross-fade and RollingText for counts. More (loading shimmer, a drawn checkmark) are not built yet.
 
 ### Motion
 - Bars opening from their origin (the sidebar now does; see Done). The tablet and phone bars still only fade and fold.
@@ -200,6 +200,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-19 | `a00ecac` | Rolling counts (`ui/RollingText.kt`, used by `SegmentLabel`) | Tab overview: closing a tab, a frame mid-roll showed 7 tabs leaving and 6 tabs arriving, then it settled on 6 tabs. Opening a tab (count 6 to 7) not seen rolling, since the + closes the overview. Not checked: the sidebar count line, Light and Pure dark | Not checked |
 | 2026-11-19 | `c81ef1f` | Font on websites (`assets/webfont`, `extensions/WebFontBridge.kt`) | Switch turned on with DM Sans: notebookcheck.net body text changed live, the search icon stayed. Not checked: private tabs (extension not allowed there), other fonts on pages, sites with icon fonts, pages loaded after the switch, Light and Pure dark | Not checked |
 | 2026-11-19 | `a563112` | Font setting (`ui/theme/AppFonts.kt`, `settings/FontPicker.kt`): 7 families, Inter chosen | Settings > Appearance: Font row opened, preview and list drawn in each font, Inter picked and every Settings label changed to Inter. Light and Pure dark, the other fonts and the preview box background (looked flat after switching) not checked | Not checked (the 600 MB wireless install did not finish) |
 | 2026-11-19 | `38c6bf8` | Confirmation cards (`ui/OraDialog.kt`) grow from the last press and shrink back; replaces AlertDialog at 10 call sites; Back closes with the shrink | Close all card opened from the tab overview and rendered; Back dismissed it, still in Ora with 6 tabs kept. Grow/shrink frames not captured. Buttons that clear caller state remove the card at once (no exit animation) | Not checked |
