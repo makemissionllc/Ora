@@ -415,8 +415,16 @@ private fun BrowserContent(
         val url = incomingLink ?: return@LaunchedEffect
         ExternalLinks.consume()
         BrowserLog.info("page", "Opened link from another app: $url")
-        tabs.newTab(url)
-        InAppNotices.show("Link opened from another app, in a new tab")
+        // The same page already open in a normal tab is switched to, so sharing a link twice never piles up copies.
+        val existing = tabs.tabs.firstOrNull { !it.isPrivate && it.url == url }
+        if (existing != null) {
+            tabs.select(existing.id)
+            BrowserLog.info("tabs", "Link from another app matched open tab ${existing.id}; switched to it")
+            InAppNotices.show("Already open, switched to it")
+        } else {
+            tabs.newTab(url)
+            InAppNotices.show("Link opened from another app, in a new tab")
+        }
     }
     // A removed profile's tabs are closed, so their pages stop running.
     LaunchedEffect(profileList) {

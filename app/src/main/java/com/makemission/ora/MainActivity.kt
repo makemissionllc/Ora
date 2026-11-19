@@ -75,7 +75,14 @@ class MainActivity : ComponentActivity() {
     private fun handleLink(intent: Intent?) {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
-        if (uri.scheme != "http" && uri.scheme != "https") return
+        if (uri.scheme != "http" && uri.scheme != "https") {
+            BrowserLog.warn("app", "Ignored a link from another app: ${uri.scheme ?: "no"} links are not opened")
+            return
+        }
+        if (uri.host.isNullOrBlank()) {
+            BrowserLog.warn("app", "Ignored a link from another app: it has no site address")
+            return
+        }
         BrowserLog.info("app", "Opened a link from another app (${uri.host ?: "unknown host"})")
         ExternalLinks.offer(uri.toString())
     }
