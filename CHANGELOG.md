@@ -11,7 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
-- Website pop-ups now work: date, time, month and week fields open a calendar or time picker (with Today or Now, and Clear), drop-down lists open a list you can tap, and alerts, confirmations, questions and leave-page warnings show in Ora's own dialogs. Each grows out of the spot you tapped. Before, nothing happened. (`HASH`)
+- Website pop-ups now work: date, time, month and week fields open a calendar or time picker (with Today or Now, and Clear), drop-down lists open a list you can tap, and alerts, confirmations, questions and leave-page warnings show in Ora's own dialogs. Each grows out of the spot you tapped. Before, nothing happened. (`0e3ce2d`)
 
 **Fixed**
 - Uploading works: tapping an Upload or Choose file button on a website now opens Android's file picker, for one file or several, and only shows the kinds of file the site accepts. Before, nothing happened. (`efb97ed`)
