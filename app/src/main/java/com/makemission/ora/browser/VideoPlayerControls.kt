@@ -169,14 +169,13 @@ fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onEx
         show()
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        var height by remember { mutableFloatStateOf(1f) }
-        var width by remember { mutableFloatStateOf(1f) }
-        var level by remember { mutableFloatStateOf(0f) }
-        var rightSide by remember { mutableStateOf(false) }
-        // The touch layer: it takes the whole picture, so the page's own controls underneath are not reachable.
-        Box(
-            Modifier.fillMaxSize()
+    var height by remember { mutableFloatStateOf(1f) }
+    var width by remember { mutableFloatStateOf(1f) }
+    var level by remember { mutableFloatStateOf(0f) }
+    var rightSide by remember { mutableStateOf(false) }
+    // The touch layer is the parent of every control, so a button gets its own tap first and the picture only gets the rest.
+    Box(
+        modifier.fillMaxSize()
                 .onSizeChanged { height = it.height.toFloat().coerceAtLeast(1f); width = it.width.toFloat().coerceAtLeast(1f) }
                 .pointerInput(locked) {
                     detectTapGestures(
@@ -211,7 +210,8 @@ fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onEx
                         say("${if (rightSide) "Volume" else "Brightness"} ${(level * 100).toInt()}%")
                     }
                 }
-        )
+        
+    ) {
 
         // Top: back, and the page's title.
         AnimatedVisibility(
@@ -222,7 +222,7 @@ fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onEx
                 Modifier.fillMaxWidth().background(colors.Surface.copy(alpha = 0.92f)).statusBarsPadding().padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                PlayerButton(Icons.AutoMirrored.Outlined.ArrowBack, "Exit full screen") { onExit() }
+                PlayerButton(Icons.AutoMirrored.Outlined.ArrowBack, "Exit full screen") { BrowserLog.info("video", "Exit button tapped"); onExit() }
                 Text(
                     video?.title.orEmpty().ifBlank { "Video" }, Modifier.weight(1f).padding(horizontal = 8.dp), maxLines = 1,
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
