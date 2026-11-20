@@ -2565,6 +2565,11 @@ private fun AddressBar(
     // capsule's bottom edge and folds back into it. Not focusable, so the keyboard stays open while they show.
     val listShown = remember { androidx.compose.animation.core.MutableTransitionState(false) }
     listShown.targetState = focused && suggestions.isNotEmpty()
+    // Back closes an open suggestions list first, folding it into the capsule, instead of leaving the browser.
+    androidx.activity.compose.BackHandler(enabled = listShown.targetState) {
+        BrowserLog.info("search", "Suggestions closed with Back")
+        suggestionsHidden = true
+    }
     // The rows stay on screen while the list folds away, so keep the last list through the exit.
     var lastSuggestions by remember { mutableStateOf(suggestions) }
     if (suggestions.isNotEmpty()) lastSuggestions = suggestions

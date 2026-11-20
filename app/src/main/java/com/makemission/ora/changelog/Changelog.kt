@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Back now closes the search suggestions first, folding them into the address bar, instead of leaving Ora when the keyboard is already hidden. (`HASH`)"),
             ChangeItem(ChangeKind.FIXED, "Ora no longer closes itself on start when the page it reopens is a web link. The setting that decides whether links open in apps was not ready yet at that moment. (`8e5afa4`)"),
             ChangeItem(ChangeKind.FIXED, "Slow page tips now judge the page by how far it has loaded when the 8 seconds are up, not when it started, so a page that is nearly done says \"Still loading the page\" instead of a wrong cause.  (`b6a9548`)"),
             ChangeItem(ChangeKind.ADDED, "Search suggestions now unfold out of the address bar instead of popping up: the same colour and width, growing down from the bar and folding back into it when you close them, on both phone and tablet. The list keeps its rows while it folds, and scrolls if there are too many to fit. (`222beea`)"),

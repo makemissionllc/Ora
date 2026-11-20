@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Fixed**
+- Back now closes the search suggestions first, folding them into the address bar, instead of leaving Ora when the keyboard is already hidden. Quality of life: one Back is enough to dismiss suggestions. (`HASH`)
 - Ora no longer closes itself on start when the page it reopens is a web link. The setting that decides whether links open in apps was not ready yet at that moment. (`8e5afa4`)
 - Slow page tips now judge the page by how far it has loaded when the 8 seconds are up, not when it started, so a page that is nearly done says "Still loading the page" instead of a wrong cause. (`b6a9548`)
 
