@@ -191,7 +191,7 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 
 ## Known issues
 
-- Page `alert()` shows no dialog on the tablet (seen 2026-11-20, three taps on the test page); confirm and prompt do. `PagePromptDelegate.onAlertPrompt` never logs, so the call may not reach it.
+- Page `alert()` showed no dialog on `prompts.html` on the tablet (seen 2026-11-20, three taps) but works on a clean page (`alert.html`: dialog shown, OK closed it). Cause not found; may be that page or tap timing. Watch for it again.
 - Back with the suggestions list open and the keyboard already hidden leaves Ora instead of closing the list (seen 2026-11-20).
 
 - Pop-up card: with Block pop-up windows off, every pop-up opens as a tab with no limit, as the switch is meant to work.
@@ -210,6 +210,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `7a1aa4e` | Back closes the suggestions list (`BackHandler` in the address field; no new surface, folds the existing suggestions popup back into the address capsule) | Not checked (only the tablet is connected) | Tablet (landscape): with suggestions open, hiding the keyboard sent Back; the list closed, Ora stayed open and the log shows "Suggestions closed with Back". Fold frames not captured; Alert on a clean page showed its dialog |
 | 2026-11-20 | `bbfed7e` | Device test pass on develop (page prompts, find, menu, tabs, suggestions) | Not checked (only the tablet is connected) | Tablet (landscape, 3200x2136), seen: Ora starts without a crash; suggestions list under the address bar; Back with the list showing and no keyboard left Ora to the home screen instead of closing the list; Confirm showed a dialog and OK gave confirm=true; Prompt showed a text box and OK gave prompt=Ora; Select opened a list and Cancel closed it; Time picker opened and Set filled 07:31; the ⋮ menu opened with its rows; Find in page replaced the address bar in place, showed 1 of 2 with the match highlighted, and Done restored the bar; tab overview opened with 18 tabs (thumbnails blank). **Alert did not show a dialog in three taps and logged nothing** (Confirm and Prompt log). Not checked: date, date-time, month, week, multi-select, downloads, bookmarks, history, settings, private tab, upload, video |
 | 2026-11-20 | `222beea` | Search suggestions unfold from the address capsule (`BrowserScreen.kt`). Previous component: the address capsule | Not checked | Tablet (landscape): typing "wiki" showed the list as a flat surface the capsule's width and colour directly under it, keyboard stayed open, six rows. The unfolding motion itself and fold-back on Back were not captured on a still screenshot. Dark mode only |
 | 2026-11-20 | `8e5afa4` | Fix start-up crash: app-link members declared before `init` (`BrowserTabs.kt`). No new surface | Not checked | Tablet (landscape): after the fix Ora starts into the reopened tab with no crash (before it, launch crashed with a null appLinkMode). Phone Not checked |
