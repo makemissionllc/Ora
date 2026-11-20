@@ -72,18 +72,41 @@ class FilePromptDelegate(private val context: Context) : PromptDelegate {
         val result = GeckoResult<PromptDelegate.PromptResponse>()
         val multiple = prompt.type == PromptDelegate.FilePrompt.Type.MULTIPLE
         FilePicker.pick(multiple, prompt.mimeTypes) { uris ->
-            try {
-                when {
-                    uris.isEmpty() -> result.complete(prompt.dismiss())
-                    multiple -> result.complete(prompt.confirm(context, uris.toTypedArray()))
-                    else -> result.complete(prompt.confirm(context, uris[0]))
-                }
-                if (uris.isNotEmpty()) BrowserLog.info("upload", "Gave the page ${uris.size} chosen file(s)")
-            } catch (error: Exception) {
-                BrowserLog.error("upload", "Could not hand the chosen file to the page", error)
+            if (uris.isEmpty()) {
                 result.complete(prompt.dismiss())
+                return@pick
             }
+            // Gecko cannot read a content address from the picker, so each file is copied to the app's cache
+            // first (off the main thread, big files take a moment) and the copy is handed over.
+            Thread({
+                try {
+                    val files = uris.map { Uri.fromFile(copyToCache(it)) }
+                    val response = if (multiple) prompt.confirm(context, files.toTypedArray()) else prompt.confirm(context, files[0])
+                    result.complete(response)
+                    BrowserLog.info("upload", "Gave the page ${files.size} chosen file(s)")
+                } catch (error: Exception) {
+                    BrowserLog.error("upload", "Could not hand the chosen file to the page", error)
+                    result.complete(prompt.dismiss())
+                }
+            }, "ora-upload").start()
         }
         return result
+    }
+
+    /** Copies the picked file into the cache under its own name and returns the copy. Copies older than an hour are cleared first. */
+    private fun copyToCache(uri: Uri): java.io.File {
+        val dir = java.io.File(context.cacheDir, "uploads").apply { mkdirs() }
+        // Earlier copies are no longer needed once a page has taken them; keep only the last hour's.
+        dir.listFiles()?.filter { System.currentTimeMillis() - it.lastModified() > 60 * 60 * 1000L }?.forEach { it.deleteRecursively() }
+        val name = context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+            ?.use { if (it.moveToFirst()) it.getString(0) else null }
+            ?.replace('/', '_')?.ifBlank { null } ?: "upload"
+        val folder = java.io.File(dir, System.nanoTime().toString()).apply { mkdirs() }
+        val out = java.io.File(folder, name)
+        context.contentResolver.openInputStream(uri).use { input ->
+            requireNotNull(input) { "The file could not be opened" }
+            out.outputStream().use { input.copyTo(it) }
+        }
+        return out
     }
 }
