@@ -31,6 +31,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        com.makemission.ora.browser.FilePicker.register(this)
         // Startup work runs once per process. If Android recreates the activity (a setting changed, memory
         // pressure) the second onCreate must not install the crash handler again, log "Started" again or
         // lock the app again; it is logged as a recreation so the cause shows in the log.

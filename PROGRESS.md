@@ -119,6 +119,8 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 
 ## Pending
 
+- Page prompts: GeckoView alerts, confirms, text prompts, date pickers and select lists still have no `PromptDelegate` handler (only the file prompt does), so those are dismissed silently. Next fix after uploads.
+
 - Search suggestions, next: history matches (history keeps one row per page, no visit counts), trending phrases on an empty field, and a delete-this-suggestion press. Not done: the suggestion rows are a dropdown, not yet the full-width list in the mockups.
 - Downloads on the tablet: confirm the fix with a huge file on the real device (screen off for an hour, Wi-Fi off and on, Ora swiped away). The Android 13 foreground-service timeout still pauses downloads for a tap (`DownloadService.onTimeout`).
 - Preloading, next steps: tune how many top sites to warm and the prefetch size limit once measured on a device; HTTP (non-https) pages are never prefetched. Slow page tips could also offer Reader view when the page is readable.
@@ -203,6 +205,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `efb97ed` | File picker for website uploads (`browser/FilePicker.kt`) | Not checked | Tablet (landscape): Browse opened the picker; choosing PQC.pptx (15 MB) made a test page show GOT 1 PQC.pptx 15274969, the same size as the file. Not checked: several files, type filters, cancel, an image or audio upload to a real site. |
 | 2026-11-20 | `cd48c83` | History visit counts and frecency, top-site warming, connection preconnect, page prefetch, slow page tips | Not checked | Tablet (landscape, 3200x2136, develop build): tapping the empty address bar logged lookups and connections for an1.com, liteapks.com and github.com (509 to 1306 ms); typing git showed search phrases plus github.com from history; a slow load showed the tip after 8 s with Keep waiting and Try again, and Try again reloaded the page and hid the tip. Not checked: the page-ahead switch (default off), Stop loading and Data Saver tips. The tip logged an1.com because the tab address still showed the old page while a new one loaded. |
 | 2026-11-19 | `a00ecac` | Rolling counts (`ui/RollingText.kt`, used by `SegmentLabel`) | Tab overview: closing a tab, a frame mid-roll showed 7 tabs leaving and 6 tabs arriving, then it settled on 6 tabs. Opening a tab (count 6 to 7) not seen rolling, since the + closes the overview. Not checked: the sidebar count line, Light and Pure dark | Not checked |
 | 2026-11-19 | `4f2abfb` | Tab tile placeholder pulse (`ui/Pulse.kt`, `OraMotion.pulse`) | Phone: tab overview with 6 tabs, 4 with no preview; the empty tile's pixel colour changed between four frames 0.35 s apart (41, 39, 41, 40), so it breathes, though the change is faint on the dark card. Not checked: tablet, Light and Pure dark, animations-off setting | Not checked |
