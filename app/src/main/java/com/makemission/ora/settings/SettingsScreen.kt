@@ -115,6 +115,7 @@ fun SettingsScreen(
     val motionStyle by settings.motionStyle.collectAsState()
     val swipeTarget by settings.addressSwipeTarget.collectAsState()
     val swipeEffect by settings.addressSwipeEffect.collectAsState()
+    val preloadMode by settings.preloadMode.collectAsState()
     val paletteStyle by settings.paletteStyle.collectAsState()
     val usageStats by settings.usageStats.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
@@ -490,6 +491,39 @@ fun SettingsScreen(
                                 ) {
                                     Text(effect.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                     CheckMark(effect == swipeEffect, "Selected")
+                                }
+                            }
+                        }
+                    }
+                    if (shown(SettingsCategory.TABS)) item {
+                        SectionTitle("Preloading")
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                "Get a head start on the site you are most likely to open next. While you type in the address bar, Ora looks up its address, so the page starts sooner. Only the address is looked up: no page is fetched, and private tabs never do it. Takes full effect the next time Ora starts.",
+                                fontSize = 14.sp,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+                            )
+                            PreloadMode.values().forEach { mode ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { settings.setPreloadMode(mode) }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                        Text(mode.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                        Text(mode.detail, fontSize = 14.sp, color = browserColors().SecondaryText)
+                                    }
+                                    CheckMark(mode == preloadMode, "Selected")
                                 }
                             }
                         }

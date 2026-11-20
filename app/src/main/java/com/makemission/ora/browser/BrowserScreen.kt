@@ -2367,6 +2367,15 @@ private fun AddressBar(
     val typed = fieldValue.text.substring(0, fieldValue.selection.min.coerceIn(0, fieldValue.text.length))
     val suggestions = if (focused && !suggestionsHidden) addressSuggestions(typed, candidates) else emptyList()
 
+    // Intelligent preloading: once typing pauses, look up the site that is most likely next. The domain being
+    // autocompleted wins, then the first suggestion that is a site (the search row is skipped). Never for private tabs.
+    val likelyNext = autocompleteFor(typed, candidates) ?: suggestions.firstOrNull { Preloader.hostFor(it.target) != null }?.target
+    LaunchedEffect(likelyNext, isPrivate) {
+        if (likelyNext == null || isPrivate) return@LaunchedEffect
+        kotlinx.coroutines.delay(250)
+        Preloader.warm(likelyNext, isPrivate)
+    }
+
     Box(
         modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } }
     ) {
