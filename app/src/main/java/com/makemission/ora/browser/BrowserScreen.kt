@@ -113,6 +113,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Bolt
+import com.makemission.ora.settings.ZapLogic
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Tab
 import androidx.compose.material.icons.outlined.LibraryBooks
@@ -655,6 +656,35 @@ private fun BrowserContent(
     var showShortcuts by remember { mutableStateOf(false) }
     var showSwitcher by remember { mutableStateOf(false) }
     var showSessions by remember { mutableStateOf(false) }
+    // Element zapper: hide rules per profile, pushed to the helper extension; the picker runs on the page itself.
+    var showZapper by remember { mutableStateOf(false) }
+    var zapPicking by remember { mutableStateOf(false) }
+    val elementZapper = remember(profileId) { com.makemission.ora.settings.ElementZapper(context, profileId) }
+    val zapRules by elementZapper.rules.collectAsState()
+    LaunchedEffect(zapRules) { com.makemission.ora.extensions.ZapperBridge.setRules(zapRules) }
+    DisposableEffect(elementZapper) {
+        com.makemission.ora.extensions.ZapperBridge.onZapped = { host, selector ->
+            elementZapper.add(host, selector)
+            InAppNotices.show("Hidden on $host. Show it again from Hide an element.")
+        }
+        com.makemission.ora.extensions.ZapperBridge.onEnded = { zapPicking = false }
+        onDispose {
+            com.makemission.ora.extensions.ZapperBridge.onZapped = null
+            com.makemission.ora.extensions.ZapperBridge.onEnded = null
+        }
+    }
+    fun startZapPick() {
+        showZapper = false
+        val page = selected.url
+        if (selected.url.isBlank() || page.startsWith("ora://") || page.startsWith("about:")) {
+            InAppNotices.show("Open a page first, then pick what to hide.")
+        } else if (com.makemission.ora.extensions.ZapperBridge.pick(persist = !selected.isPrivate)) {
+            zapPicking = true
+        } else {
+            BrowserLog.warn("zapper", "Picker could not start: the helper is not connected")
+            InAppNotices.show("Hide an element is not ready yet. Try again in a moment.")
+        }
+    }
     val savedSessions = remember(profileId) { com.makemission.ora.settings.SavedSessions(context, profileId) }
     val sessionList by savedSessions.sessions.collectAsState()
     fun sessionPages() = com.makemission.ora.settings.SessionLogic.pagesToSave(tabs.tabs.map { Triple(it.url, it.title, it.isPrivate) })
@@ -724,6 +754,7 @@ private fun BrowserContent(
             Shortcut.QUICK_SWITCHER -> showSwitcher = !showSwitcher
             Shortcut.SAVE_SESSION -> saveSession(com.makemission.ora.settings.SessionLogic.defaultName(sessionPages(), System.currentTimeMillis()))
             Shortcut.SESSIONS -> showSessions = !showSessions
+            Shortcut.ZAP -> if (zapPicking) { com.makemission.ora.extensions.ZapperBridge.cancel(); zapPicking = false } else startZapPick()
             Shortcut.NEW_TAB -> onNewTab()
             Shortcut.NEW_PRIVATE_TAB -> onNewPrivateTab()
             Shortcut.CLOSE_TAB -> tabs.close(selected.id)
@@ -915,6 +946,16 @@ private fun BrowserContent(
             selected.session.loadUri(url)
         }
     }
+    if (showZapper) {
+        ZapperDialog(
+            siteName = hostOf(selected.url).ifBlank { "this page" },
+            isPrivate = selected.isPrivate,
+            summary = ZapLogic.summary(zapRules),
+            onPick = { startZapPick() },
+            onShowAgain = { host -> elementZapper.clear(host); InAppNotices.show("Hidden parts of $host are back. Reload the page to see them.") },
+            onDismiss = { showZapper = false },
+        )
+    }
     if (showSessions) {
         val pages = sessionPages()
         SessionsDialog(
@@ -942,6 +983,7 @@ private fun BrowserContent(
             "Keyboard shortcuts" -> showShortcuts = true
             "Save session" -> saveSession(com.makemission.ora.settings.SessionLogic.defaultName(sessionPages(), System.currentTimeMillis()))
             "Saved sessions" -> showSessions = true
+            "Hide an element" -> showZapper = true
             else -> if (key.startsWith("session:")) sessionList.firstOrNull { it.name == key.removePrefix("session:") }?.let { openSession(it) }
         }
     }
@@ -1641,6 +1683,7 @@ private fun BrowserContent(
                         onSavePdf = savePdf,
                         onQuickSwitcher = { showSwitcher = true },
                         onSessions = { showSessions = true },
+                        onZap = { showZapper = true },
                         onNewTab = { onNewTab() },
                         onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },

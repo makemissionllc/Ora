@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.outlined.AddToHomeScreen
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.outlined.PlaylistAdd
 import androidx.compose.material.icons.outlined.PlaylistAddCheck
@@ -107,6 +108,7 @@ fun BrowserMenuSheet(
     onSavePdf: () -> Unit = {},
     onQuickSwitcher: () -> Unit = {},
     onSessions: () -> Unit = {},
+    onZap: () -> Unit = {},
     onDismiss: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
@@ -145,6 +147,7 @@ fun BrowserMenuSheet(
             onSavePdf = { act(onSavePdf) },
             onQuickSwitcher = { act(onQuickSwitcher) },
             onSessions = { act(onSessions) },
+            onZap = { act(onZap) },
             onShare = { act(onShare) },
             onBookmark = { act(onBookmark) },
             onNewTab = { act(onNewTab) },
@@ -184,6 +187,7 @@ private fun BrowserMenuItems(
     onSavePdf: () -> Unit,
     onQuickSwitcher: () -> Unit,
     onSessions: () -> Unit,
+    onZap: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
     onNewTab: () -> Unit,
@@ -238,6 +242,7 @@ private fun BrowserMenuItems(
                 subtitle = if (isReadLater) "Saved to read later" else null,
             )
             MenuRow(Icons.Outlined.Terminal, "Quick switcher", onQuickSwitcher, subtitle = "Find a tab, bookmark, page or action")
+            MenuRow(Icons.Outlined.VisibilityOff, "Hide an element", onZap, subtitle = "Pick a banner or bar to hide on this site")
             MenuRow(Icons.Outlined.Folder, "Saved sessions", onSessions, subtitle = "Save your open tabs, or open a saved set")
             MenuRow(Icons.Outlined.PictureAsPdf, "Save as PDF", onSavePdf, subtitle = "To Downloads, named after the page")
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
