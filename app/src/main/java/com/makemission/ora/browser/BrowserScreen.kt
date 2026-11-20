@@ -558,6 +558,21 @@ private fun BrowserContent(
     val toggleSelectedBookmark = { bookmarks.toggle(selected.url, selected.title) }
     // Reading list: save or unsave the open page. Private tabs and the start page are refused, and each answer is said aloud.
     val selectedSaved = readingList.any { it.url == selected.url }
+    /** Save image as: the image that was long-pressed, while its sheet is open. */
+    var saveImageAs by remember { mutableStateOf<PressTarget?>(null) }
+    /** Save image: fetch and write the original bytes at once to the chosen folder or Pictures/Ora. */
+    val quickSaveImage = { url: String ->
+        InAppNotices.show("Saving image...")
+        ImageSaver.fetch(context, url, selected.url, selected.isPrivate) { image ->
+            if (image == null) InAppNotices.show("Could not save the image") else {
+                val (base, ext) = imageNameParts(url, image.mime)
+                val mime = image.mime?.substringBefore(';')?.trim()?.takeIf { it.startsWith("image/") } ?: "image/jpeg"
+                val where = ImageSaver.save(context, image.bytes, "$base.$ext", mime, settings.imageSaveFolder.value)
+                if (!selected.isPrivate) BrowserLog.info("page", "Save image: ${if (where != null) "saved" else "failed"} (${hostOf(url)})")
+                InAppNotices.show(if (where != null) "Saved to $where" else "Could not save the image")
+            }
+        }
+    }
     val toggleReadLater = {
         when {
             selected.isPrivate -> com.makemission.ora.notice.InAppNotices.show("Private tabs are never saved")
@@ -1335,6 +1350,16 @@ private fun BrowserContent(
                             fromPrivate = selected.isPrivate,
                             onDismiss = { selected.pressTarget = null },
                             onShare = { url -> shareUrl(context, url) },
+                            onSaveImage = { url ->
+                                if (settings.imageAlwaysAsk.value) saveImageAs = target.copy(imageUri = url) else quickSaveImage(url)
+                            },
+                            onCopyImage = { url ->
+                                InAppNotices.show("Copying image...")
+                                ImageSaver.fetch(context, url, selected.url, selected.isPrivate) { image ->
+                                    InAppNotices.show(if (image != null && ImageSaver.copy(context, image, url)) "Image copied" else "Could not copy the image")
+                                }
+                            },
+                            onSaveImageAs = { url -> saveImageAs = target.copy(imageUri = url) },
                             onAddToReading = { url, title -> reading.add(url, title); com.makemission.ora.notice.InAppNotices.show("Saved to Reading list") },
                         )
                     }
@@ -1622,6 +1647,14 @@ private fun BrowserContent(
     }
     // A page's own questions (alerts, lists, dates). The dialog grows out of the spot that was touched.
     PagePromptHost()
+    saveImageAs?.let { t ->
+        key(t) {
+            SaveImageSheet(
+                imageUrl = t.imageUri.orEmpty(), pageUrl = selected.url, isPrivate = selected.isPrivate, settings = settings,
+                originX = t.x, originY = t.y, onDismiss = { saveImageAs = null },
+            )
+        }
+    }
     // A site's permission prompt, under the address bar. The tablet tab overview below covers it.
     // On the phone bottom-bar layout there is no top bar, so the card starts below the status bar's height.
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()

@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
+- Long-pressing an image now offers Save image, Copy image and Save image as. Save image puts the file in Pictures/Ora. Save image as lets you change the name, pick a folder (Ora remembers it) and choose Original, PNG or WebP. There is a new Settings switch, Always ask where to save images. (`91bd7c1`)
 - Pressing and holding a link or image now opens a fuller menu: it shows what you pressed, has quick Copy link and Share buttons, and lists Open in new tab, Open in private tab, Open in background tab and Add to reading list. An image that is also a link shows both sets. In a private tab, links open in private tabs and nothing is saved to the reading list. (`1918dc2`)
 
 **Fixed**
