@@ -12,6 +12,12 @@ data class ChangeDay(val date: String, val items: List<ChangeItem>)
 /** Newest first. Keep in step with CHANGELOG.md, per AGENTS.md rule 20. */
 val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
+        date = "20 Nov 2026",
+        items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Preloading: while you type in the address bar, Ora now looks up the address of the site you are most likely heading to, so the page starts sooner. Choose Off, Wi-Fi only or Always under Settings > Tabs. Only the address is looked up, nothing is downloaded, and private tabs never do it. Wi-Fi only skips mobile data and Data Saver.  (`5fdd3d7`)"),
+        ),
+    ),
+    ChangeDay(
         date = "19 Nov 2026",
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "The tick on the other Settings choices, appearance, motion style and the two swipe options, now grows in and shrinks out like the font list, so a choice is seen as you make it.  (`d6faf5f`)"),
