@@ -481,6 +481,21 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Lab: device font on web pages ${if (enabled) "on" else "off"}")
     }
 
+    private val _labs = MutableStateFlow(
+        com.makemission.ora.labs.LabFeature.entries.filter { prefs.getBoolean(LAB_KEY_PREFIX + it.key, false) }.toSet()
+    ).also { com.makemission.ora.labs.Labs.enabled = it.value }
+    /** Labs: the opt-in security features that are switched on. All are off until chosen. */
+    val labs: StateFlow<Set<com.makemission.ora.labs.LabFeature>> = _labs.asStateFlow()
+
+    fun setLab(feature: com.makemission.ora.labs.LabFeature, enabled: Boolean) {
+        prefs.edit().putBoolean(LAB_KEY_PREFIX + feature.key, enabled).apply()
+        val next = if (enabled) _labs.value + feature else _labs.value - feature
+        _labs.value = next
+        com.makemission.ora.labs.Labs.enabled = next
+        UsageStats.count("setting.lab")
+        BrowserLog.info("settings", "Lab: ${feature.label} ${if (enabled) "on" else "off"}${if (feature.restart) " (applies at next start)" else ""}")
+    }
+
     private val _textSizePercent = MutableStateFlow(prefs.getInt(KEY_TEXT_SIZE_PERCENT, 100).coerceIn(TEXT_SIZE_MIN, TEXT_SIZE_MAX))
     /** How large text is on web pages, as a percentage of the page's own size. 100 leaves pages as they are. */
     val textSizePercent: StateFlow<Int> = _textSizePercent.asStateFlow()
@@ -759,6 +774,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_APP_LOCK_UNTIL = "app_lock_until"
         private const val KEY_HTTPS_ONLY = "https_only"
         private const val KEY_DEVICE_FONT_WEB = "device_font_web"
+        private const val LAB_KEY_PREFIX = "lab_"
         private const val KEY_TEXT_SIZE_PERCENT = "text_size_percent"
         const val TEXT_SIZE_MIN = 50
         const val TEXT_SIZE_MAX = 200

@@ -66,8 +66,20 @@ object GeckoEngine {
         Preloader.mode = mode
         val ahead = Preloader.allowedNow(mode)
         BrowserLog.info("preload", "Preloading ${mode.label}; Gecko speculative connections ${if (ahead) "on" else "off"}")
-        val extra = if (ahead) PRELOAD_PREFS else ""
+        val extra = (if (ahead) PRELOAD_PREFS else "") + labPrefs(context)
         return "prefs:\n  dom.disable_open_during_load: false\n$extra" + "env: {}\nargs: []\n"
+    }
+
+    /**
+     * Labs that Gecko only reads at start-up. Reduced referrer trims every referrer to the site's origin (2) and sends
+     * one to another site only when the base domains match (1). The choice was saved before this runs, so a change takes
+     * effect the next time Ora starts.
+     */
+    private fun labPrefs(context: Context): String {
+        val on = com.makemission.ora.settings.SettingsRepository(context).labs.value
+        val referrer = com.makemission.ora.labs.LabFeature.REDUCED_REFERRER in on
+        BrowserLog.info("labs", "Start-up labs: reduced referrer ${if (referrer) "on" else "off"}")
+        return if (referrer) "  network.http.referer.XOriginPolicy: 1\n  network.http.referer.trimmingPolicy: 2\n  network.http.referer.XOriginTrimmingPolicy: 2\n" else ""
     }
 
     private const val PRELOAD_PREFS = "  network.predictor.enabled: true\n" +
