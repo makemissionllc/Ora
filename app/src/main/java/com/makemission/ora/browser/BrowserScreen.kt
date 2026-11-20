@@ -1,5 +1,7 @@
 package com.makemission.ora.browser
 
+import kotlin.math.roundToInt
+import androidx.compose.ui.layout.layout
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.material.icons.filled.ArrowBack
@@ -2732,6 +2734,13 @@ private fun Modifier.addressSwipes(
         }
     }
 
+/** Widens the capsule by [extra] on each side as [fraction] goes from 0 to 1, so a focused capsule reaches full width. */
+private fun Modifier.widenOnFocus(fraction: Float, extra: androidx.compose.ui.unit.Dp): Modifier = layout { measurable, constraints ->
+    val grow = (extra.toPx() * fraction).roundToInt()
+    val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = constraints.maxWidth + 2 * grow))
+    layout(constraints.maxWidth.coerceAtMost(placeable.width), placeable.height) { placeable.placeRelative(-grow, 0) }
+}
+
 /** Movement under this many px counts as a tap, not a swipe attempt, and is not logged as a gesture. */
 private const val GESTURE_TAP_SLOP_PX = 24f
 
@@ -2782,6 +2791,11 @@ private fun AddressBar(
     statsShown.targetState = statsOpen && siteStats != null
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
+    // Focus: the capsule widens to full width and the centred text moves left (Standard). Remove animations: it snaps.
+    val reducedFocus = com.makemission.ora.ui.theme.LocalReducedMotion.current
+    val focusAnim by androidx.compose.animation.core.animateFloatAsState(if (focused) 1f else 0f, if (reducedFocus) androidx.compose.animation.core.snap() else OraMotion.standard(), label = "capsule focus")
+    var fieldWidthPx by remember { mutableStateOf(0) }
+    val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
     // Set when the field gains focus so the whole address is selected; cleared once the user edits.
     var selectAllPending by remember { mutableStateOf(false) }
     // A tap outside the suggestions closes them only. It must not drop focus, or the clear button and typed text reset.
@@ -2846,7 +2860,7 @@ private fun AddressBar(
     }
 
     Box(
-        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height; anchorCenterY = it.positionInWindow().y + it.size.height / 2f }
+        modifier = modifier.then(if (centered) Modifier.widenOnFocus(focusAnim, BrowserTokens.TopCapsuleGap) else Modifier).addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height; anchorCenterY = it.positionInWindow().y + it.size.height / 2f }
     ) {
     Surface(
         modifier = Modifier
@@ -2899,6 +2913,14 @@ private fun AddressBar(
                 },
                 modifier = Modifier
                     .weight(1f)
+                    .onSizeChanged { fieldWidthPx = it.width }
+                    // Centred when idle on the phone Compact bar; the text slides to the left as the field takes focus.
+                    .graphicsLayer {
+                        if (centered) {
+                            val textW = textMeasurer.measure(fieldValue.text, TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, fontFamily = com.makemission.ora.ui.theme.InstrumentSansAddress)).size.width
+                            translationX = (1f - focusAnim) * ((fieldWidthPx - textW) / 2f).coerceAtLeast(0f)
+                        }
+                    }
                     .focusRequester(focusRequester)
                     .onFocusChanged { state ->
                         focused = state.isFocused
@@ -2914,7 +2936,7 @@ private fun AddressBar(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
                     fontFamily = com.makemission.ora.ui.theme.InstrumentSansAddress,
-                    textAlign = if (centered) TextAlign.Center else TextAlign.Start
+                    textAlign = TextAlign.Start
                 ),
                 cursorBrush = SolidColor(browserColors().Accent),
                 keyboardOptions = KeyboardOptions(
