@@ -91,3 +91,5 @@ GeckoView only shows a file chooser if the session has a `PromptDelegate`. `brow
 ## Search suggestions
 
 `browser/SearchSuggest.kt` asks the default search engine for phrases as you type, once typing pauses for 120 ms (`SearchEngine.suggestTemplate` holds each engine's endpoint; all answer in the OpenSearch shape the parser reads). `withQuerySuggestions` in `AddressSuggestions.kt` puts those phrases above up to two matching bookmarks or open tabs; with no phrases the old "Search for" row stays. Each row shows a search icon and the part after what was typed in bold, and the arrow puts the phrase in the field. The text typed is sent to the engine, so it is off in private tabs and has its own switch (`SettingsRepository.searchSuggestions`, Settings > Search). Answers are kept in memory only (the last 40), and no search text is logged.
+
+The suggestions list is drawn by the address field in `BrowserScreen.kt` as a non-focusable `Popup` holding an `AnimatedVisibility` (overlay fade plus `expandVertically` from the top, `OraMotion`), in the capsule's colour and width, so it unfolds out of the capsule and folds back into it. It keeps the last rows while folding.
