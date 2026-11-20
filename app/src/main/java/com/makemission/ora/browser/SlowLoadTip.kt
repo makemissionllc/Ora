@@ -21,6 +21,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -83,6 +85,9 @@ fun SlowLoadTipHost(
     var slow by remember(url) { mutableStateOf(false) }
     var dismissedFor by remember { mutableStateOf<String?>(null) }
     var advice by remember { mutableStateOf<SlowLoadAdvice?>(null) }
+    // The effect below waits 8 s; it must read the progress and address at the end of the wait, not at its start.
+    val latestProgress by rememberUpdatedState(progress)
+    val latestUrl by rememberUpdatedState(url)
     LaunchedEffect(url, loading, enabled) {
         slow = false
         if (!enabled || !loading || url == BrowserTabs.START_URL) return@LaunchedEffect
@@ -90,9 +95,9 @@ fun SlowLoadTipHost(
         val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
         val online = cm?.activeNetwork?.let { cm.getNetworkCapabilities(it) != null } ?: false
         val saver = cm?.restrictBackgroundStatus == ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED
-        advice = slowLoadAdvice(online, progress, saver)
+        advice = slowLoadAdvice(online, latestProgress, saver)
         slow = true
-        BrowserLog.info("tips", "Showed a slow page tip for ${LogPrivacy.domainOf(url)} (${advice?.title})")
+        BrowserLog.info("tips", "Showed a slow page tip for ${LogPrivacy.domainOf(latestUrl)} (${advice?.title})")
     }
     AnimatedVisibility(
         visible = slow && loading && dismissedFor != url,
