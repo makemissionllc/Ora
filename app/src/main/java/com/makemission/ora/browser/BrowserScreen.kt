@@ -529,6 +529,23 @@ private fun BrowserContent(
         Unit
     }
 
+    val pdfContext = androidx.compose.ui.platform.LocalContext.current
+    val savePdf = {
+        when {
+            selected.isPrivate -> com.makemission.ora.notice.InAppNotices.show("Private tabs are never saved to disk")
+            selected.url.isBlank() || selected.url == BrowserTabs.START_URL -> com.makemission.ora.notice.InAppNotices.show("Open a page first, then save it")
+            else -> {
+                com.makemission.ora.notice.InAppNotices.show("Making a PDF...")
+                PagePdf.save(pdfContext.applicationContext, selected.session, selected.title, selected.url) { name ->
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        com.makemission.ora.notice.InAppNotices.show(if (name != null) "Saved $name to Downloads/Ora" else "Could not save this page as a PDF")
+                    }
+                }
+            }
+        }
+        Unit
+    }
+
     // Only the selected tab should be active, so background pages stop rendering.
     LaunchedEffect(selectedId) {
         tabs.tabs.forEach { it.session.setActive(it.id == selectedId) }
@@ -563,6 +580,7 @@ private fun BrowserContent(
             Shortcut.BACK -> if (selected.canStepBack) selected.stepBack() else InAppNotices.show("Nothing to go back to")
             Shortcut.FORWARD -> if (selected.canGoForward) selected.session.goForward() else InAppNotices.show("Nothing to go forward to")
             Shortcut.BOOKMARK -> toggleSelectedBookmark()
+            Shortcut.SAVE_PDF -> savePdf()
             Shortcut.NEW_TAB -> onNewTab()
             Shortcut.NEW_PRIVATE_TAB -> onNewPrivateTab()
             Shortcut.CLOSE_TAB -> tabs.close(selected.id)
@@ -1278,6 +1296,7 @@ private fun BrowserContent(
                         onBookmark = toggleSelectedBookmark,
                         isReadLater = selectedSaved,
                         onReadLater = toggleReadLater,
+                        onSavePdf = savePdf,
                         onNewTab = { onNewTab() },
                         onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },

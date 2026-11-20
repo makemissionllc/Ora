@@ -13,6 +13,7 @@ enum class Shortcut(val group: String, val label: String, val keys: String) {
     HARD_RELOAD("Page", "Reload without cache", "Ctrl+Shift+R"),
     BACK("Page", "Back", "Alt+Left"),
     FORWARD("Page", "Forward", "Alt+Right"),
+    SAVE_PDF("Page", "Save the page as a PDF", "Ctrl+S or Ctrl+P"),
     BOOKMARK("Page", "Bookmark or unbookmark this page", "Ctrl+D"),
     NEW_TAB("Tabs", "New tab", "Ctrl+T"),
     NEW_PRIVATE_TAB("Tabs", "New private tab", "Ctrl+Shift+N"),
@@ -85,6 +86,7 @@ object KeyShortcuts {
             KeyEvent.KEYCODE_F -> Shortcut.FIND
             KeyEvent.KEYCODE_R -> Shortcut.RELOAD
             KeyEvent.KEYCODE_D -> Shortcut.BOOKMARK
+            KeyEvent.KEYCODE_S, KeyEvent.KEYCODE_P -> Shortcut.SAVE_PDF
             KeyEvent.KEYCODE_T -> Shortcut.NEW_TAB
             KeyEvent.KEYCODE_W -> Shortcut.CLOSE_TAB
             KeyEvent.KEYCODE_TAB, KeyEvent.KEYCODE_PAGE_DOWN -> Shortcut.NEXT_TAB
