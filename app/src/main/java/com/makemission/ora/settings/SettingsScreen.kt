@@ -568,6 +568,16 @@ fun SettingsScreen(
                             color = browserColors().SecondaryText
                         )
                     }
+                    if (!isTablet && phoneBar == BarStyle.TOP) item {
+                        SectionTitle("Bottom toolbar")
+                        ToolbarEditor(settings)
+                        Text(
+                            "Press and hold an empty part of the bar to open this.",
+                            modifier = Modifier.padding(start = 4.dp, top = 6.dp),
+                            fontSize = 14.sp,
+                            color = browserColors().SecondaryText
+                        )
+                    }
                     if (isTablet && shown(SettingsCategory.TABS)) item {
                         SectionTitle("Tablet tab bar")
                         BarStyleList(selected = tabletBar, onSelect = { settings.setTabletBarStyle(it) }, tablet = true)

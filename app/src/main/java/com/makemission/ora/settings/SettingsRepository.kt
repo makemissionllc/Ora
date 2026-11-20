@@ -395,6 +395,20 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Fast downloads for plain http ${if (enabled) "on" else "off"}")
     }
 
+    private val _toolbarItems = MutableStateFlow(ToolbarConfig.parse(prefs.getString(KEY_TOOLBAR_ITEMS, null)))
+    /** The buttons in the phone Top layout's bottom toolbar, in order. Menu is always added last by the bar. */
+    val toolbarItems: StateFlow<List<ToolbarItem>> = _toolbarItems.asStateFlow()
+
+    fun setToolbarItems(items: List<ToolbarItem>) {
+        val clean = items.distinct().take(ToolbarConfig.MAX_BUTTONS)
+        prefs.edit().putString(KEY_TOOLBAR_ITEMS, ToolbarConfig.encode(clean)).apply()
+        _toolbarItems.value = clean
+        BrowserLog.info("settings", "Toolbar set to ${ToolbarConfig.presetName(clean)}: ${clean.size} buttons")
+    }
+
+    /** Back to the Classic set. */
+    fun resetToolbar() = setToolbarItems(ToolbarConfig.CLASSIC)
+
     private val _imageAlwaysAsk = MutableStateFlow(prefs.getBoolean(KEY_IMAGE_ALWAYS_ASK, false))
     /** When on, saving an image from a long press opens the Save image as sheet instead of saving at once. */
     val imageAlwaysAsk: StateFlow<Boolean> = _imageAlwaysAsk.asStateFlow()
@@ -785,6 +799,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_HINTS = "hints_enabled"
         private const val KEY_SEEN_HINTS = "hints_seen"
         private const val KEY_FAST_HTTP_DOWNLOADS = "fast_http_downloads"
+        private const val KEY_TOOLBAR_ITEMS = "toolbar_items"
         private const val KEY_IMAGE_ALWAYS_ASK = "image_always_ask"
         private const val KEY_IMAGE_SAVE_FOLDER = "image_save_folder"
         private const val KEY_DOWNLOAD_NOTIFICATIONS = "download_notifications"

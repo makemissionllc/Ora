@@ -196,6 +196,9 @@ import com.makemission.ora.extensions.ExtensionsScreen
 import com.makemission.ora.settings.AddressSwipeEffect
 import com.makemission.ora.settings.AddressSwipeTarget
 import com.makemission.ora.settings.BarStyle
+import androidx.compose.foundation.gestures.detectTapGestures
+import com.makemission.ora.settings.icon
+import com.makemission.ora.settings.ToolbarItem
 import com.makemission.ora.security.AppLock
 import com.makemission.ora.security.LockScreen
 import com.makemission.ora.security.lockScreenVisible
@@ -557,6 +560,21 @@ private fun BrowserContent(
     val selectedBookmarked = bookmarkList.any { it.url == selected.url }
     val toggleSelectedBookmark = { bookmarks.toggle(selected.url, selected.title) }
     // Reading list: save or unsave the open page. Private tabs and the start page are refused, and each answer is said aloud.
+    /** Reader view on or off for the current page. Shared by the menu and the toolbar button. */
+    val toggleReader: () -> Unit = {
+                            if (selected.reader.open) {
+                                selected.reader.close()
+                            } else if (!selected.reader.readable) {
+                                InAppNotices.show("This page has no article to read")
+                            } else {
+                                UsageStats.count("menu.reader")
+                                selected.reader.show(
+                                    com.makemission.ora.extensions.ReaderLook(
+                                        settings.readerSizeStep.value, settings.readerSerif.value, settings.readerPage.value,
+                                    ),
+                                )
+                            }
+    }
     val selectedSaved = readingList.any { it.url == selected.url }
     /** Save image as: the image that was long-pressed, while its sheet is open. */
     var saveImageAs by remember { mutableStateOf<PressTarget?>(null) }
@@ -761,6 +779,7 @@ private fun BrowserContent(
     val phoneZoneHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
     val showSidebar by settings.tabletSidebar.collectAsState()
+    val toolbarItems by settings.toolbarItems.collectAsState()
     val edgeSwipeSidebar by settings.edgeSwipeSidebar.collectAsState()
     val density = LocalDensity.current
     /** Height of the top bar, measured so the tablet side panel starts below it. */
@@ -964,11 +983,27 @@ private fun BrowserContent(
                 BottomControlsBar(
                     tab = selected,
                     isBookmarked = selectedBookmarked,
-                    onBookmark = toggleSelectedBookmark,
-                    onShare = { shareUrl(context, selected.url) },
-                    onTabs = openTabs,
+                    items = toolbarItems,
+                    tabCount = tabs.tabs.size,
+                    onItem = { item ->
+                        BrowserLog.info("nav", "Toolbar button: ${item.id}")
+                        when (item) {
+                            ToolbarItem.BACK -> selected.stepBack()
+                            ToolbarItem.FORWARD -> selected.session.goForward()
+                            ToolbarItem.TABS -> openTabs()
+                            ToolbarItem.SHARE -> shareUrl(context, selected.url)
+                            ToolbarItem.BOOKMARK -> toggleSelectedBookmark()
+                            ToolbarItem.HOME -> selected.url = BrowserTabs.START_URL
+                            ToolbarItem.RELOAD -> selected.session.reload()
+                            ToolbarItem.NEW_TAB -> onNewTab()
+                            ToolbarItem.PRIVATE_TAB -> onNewPrivateTab()
+                            ToolbarItem.FIND -> showFind = true
+                            ToolbarItem.READER -> toggleReader()
+                            ToolbarItem.DOWNLOADS -> { downloadsOrigin = TransformOrigin(0.5f, 1f); showDownloads = true }
+                        }
+                    },
                     onMenu = { showMenu = true },
-                    tabCount = tabs.tabs.size
+                    onCustomize = { BrowserLog.info("ui", "Toolbar settings opened from the bar"); showSettings = true },
                 )
             }
         } else if (!topLayout && !tabletCompact) {
@@ -1459,20 +1494,7 @@ private fun BrowserContent(
                             selected.reader.readable -> "${selected.reader.minutes} min read, without the clutter"
                             else -> "No article found on this page"
                         },
-                        onReader = {
-                            if (selected.reader.open) {
-                                selected.reader.close()
-                            } else if (!selected.reader.readable) {
-                                InAppNotices.show("This page has no article to read")
-                            } else {
-                                UsageStats.count("menu.reader")
-                                selected.reader.show(
-                                    com.makemission.ora.extensions.ReaderLook(
-                                        settings.readerSizeStep.value, settings.readerSerif.value, settings.readerPage.value,
-                                    ),
-                                )
-                            }
-                        },
+                        onReader = toggleReader,
                         closedTabTitle = tabs.lastClosedTitle,
                         onReopenClosed = onReopenClosed,
                         onAddToHome = {
@@ -2056,23 +2078,46 @@ private fun FloatingBarHolder(
 private fun BottomControlsBar(
     tab: BrowserTab,
     isBookmarked: Boolean,
-    onBookmark: () -> Unit,
-    onShare: () -> Unit,
-    onTabs: () -> Unit,
-    onMenu: () -> Unit,
+    items: List<ToolbarItem>,
     tabCount: Int,
+    onItem: (ToolbarItem) -> Unit,
+    onMenu: () -> Unit,
+    onCustomize: () -> Unit,
 ) {
     FloatingBarHolder(insets = WindowInsets.navigationBars) {
-        BottomControls(
-            tab = tab,
-            isBookmarked = isBookmarked,
-            onBookmark = onBookmark,
-            onShare = onShare,
-            onTabs = onTabs,
-            onMenu = onMenu,
-            tabCount = tabCount,
-            modifier = Modifier.padding(BrowserTokens.ToolbarPadding)
-        )
+        // The buttons are the user's own list (Settings > Appearance); Menu is always last. Pressing an empty part opens that setting.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .pointerInput(Unit) { detectTapGestures(onLongPress = { onCustomize() }) }
+                .padding(BrowserTokens.ToolbarPadding),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            items.forEach { item ->
+                key(item) {
+                    val hasPage = tab.url.isNotBlank()
+                    val enabled = when (item) {
+                        ToolbarItem.BACK -> tab.canStepBack
+                        ToolbarItem.FORWARD -> tab.canGoForward
+                        ToolbarItem.SHARE, ToolbarItem.BOOKMARK, ToolbarItem.RELOAD -> hasPage
+                        else -> true
+                    }
+                    val description = when (item) {
+                        ToolbarItem.TABS -> if (tabCount == 1) "Tabs, 1 open" else "Tabs, $tabCount open"
+                        ToolbarItem.BOOKMARK -> if (isBookmarked) "Remove bookmark" else "Add bookmark"
+                        else -> item.label
+                    }
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                        ToolbarButton(onClick = { onItem(item) }, enabled = enabled, description = description) {
+                            if (item == ToolbarItem.TABS) TabsIcon(tabCount) else Icon(item.icon(isBookmarked), contentDescription = null)
+                        }
+                    }
+                }
+            }
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                ToolbarButton(onClick = onMenu, enabled = true, description = "Menu") { Icon(Icons.Filled.MoreVert, contentDescription = null) }
+            }
+        }
     }
 }
 
