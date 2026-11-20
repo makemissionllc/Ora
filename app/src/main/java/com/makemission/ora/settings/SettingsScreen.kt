@@ -133,6 +133,7 @@ fun SettingsScreen(
     val secureDns by settings.secureDns.collectAsState()
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
     val imageAlwaysAsk by settings.imageAlwaysAsk.collectAsState()
+    val showGroupStrip by settings.showGroupStrip.collectAsState()
     val hintsOn by settings.hints.collectAsState()
     val downloadNotifications by settings.downloadNotifications.collectAsState()
     val noticeContext = LocalContext.current
@@ -587,6 +588,25 @@ fun SettingsScreen(
                             fontSize = 14.sp,
                             color = browserColors().SecondaryText
                         )
+                    }
+                    if (shown(SettingsCategory.TABS)) item {
+                        SectionTitle("Tab groups")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable { settings.setShowGroupStrip(!showGroupStrip) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Show group strip", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                Text("A row of the open tab's group, one tap from its other tabs. Never shown for private tabs.", fontSize = 14.sp, color = browserColors().SecondaryText)
+                            }
+                            MineralSwitch(checked = showGroupStrip, label = "Switch", onChange = { settings.setShowGroupStrip(it) })
+                        }
                     }
                     if ((if (isTablet) tabletBar else phoneBar) == BarStyle.COMPACT && shown(SettingsCategory.TABS)) item {
                         SectionTitle("Compact bar button")

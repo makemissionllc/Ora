@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.font.FontWeight
@@ -76,6 +77,10 @@ fun LinkQuickMenu(
     /** Saves a link to the reading list. Null when saving is not possible. */
     onAddToReading: ((String, String) -> Unit)? = null,
     /** Save image, Copy image and Save image as. Handed the image address; the screen owns the work. */
+    /** Opens the group picker for a link. Null in private tabs and where groups are not offered. */
+    onOpenInGroup: ((String) -> Unit)? = null,
+    /** The open tab's group, shown on that row. */
+    currentGroup: TabGroup? = null,
     onSaveImage: ((String) -> Unit)? = null,
     onCopyImage: ((String) -> Unit)? = null,
     onSaveImageAs: ((String) -> Unit)? = null,
@@ -176,6 +181,9 @@ fun LinkQuickMenu(
                         // From a private tab the new tab is private too.
                         tabs.newTab(link, select = true, isPrivate = fromPrivate)
                     }
+                    if (!fromPrivate) onOpenInGroup?.let { pick ->
+                        QuickMenuRow("Open in new tab in group ›", dot = currentGroup?.color, sub = currentGroup?.name) { close(); pick(link) }
+                    }
                     if (!fromPrivate) QuickMenuRow("Open in private tab") {
                         close()
                         BrowserLog.info("page", "Opened link in private tab: ${hostOf(link)}")
@@ -221,17 +229,19 @@ private fun QuickRow(buttons: List<Pair<String, () -> Unit>>) {
 }
 
 @Composable
-private fun QuickMenuRow(label: String, onClick: () -> Unit) {
-    Box(
+private fun QuickMenuRow(label: String, dot: GroupColor? = null, sub: String? = null, onClick: () -> Unit) {
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.QuickMenuRowHeight)
             .pressFeedback()
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp),
-        contentAlignment = Alignment.CenterStart
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(label, fontSize = 15.sp, color = browserColors().AddressBarText)
+        Text(label, fontSize = 15.sp, color = browserColors().AddressBarText, modifier = Modifier.weight(1f, fill = false))
+        if (dot != null) Box(Modifier.padding(start = 8.dp).size(10.dp).clip(androidx.compose.foundation.shape.CircleShape).background(dot.color))
+        if (sub != null) Text(sub, fontSize = 12.sp, color = browserColors().SecondaryText, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 6.dp))
     }
 }
 

@@ -780,6 +780,10 @@ private fun BrowserContent(
     /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
     val showSidebar by settings.tabletSidebar.collectAsState()
     val toolbarItems by settings.toolbarItems.collectAsState()
+    val showGroupStrip by settings.showGroupStrip.collectAsState()
+    val groupDialogs = remember { GroupDialogState() }
+    /** Link waiting for a group choice in the picker. */
+    var groupPickFor by remember { mutableStateOf<String?>(null) }
     val edgeSwipeSidebar by settings.edgeSwipeSidebar.collectAsState()
     val density = LocalDensity.current
     /** Height of the top bar, measured so the tablet side panel starts below it. */
@@ -1395,6 +1399,8 @@ private fun BrowserContent(
                                 }
                             },
                             onSaveImageAs = { url -> saveImageAs = target.copy(imageUri = url) },
+                            onOpenInGroup = { url -> groupPickFor = url },
+                            currentGroup = selected.groupId?.let { id -> tabs.groups.firstOrNull { it.id == id } },
                             onAddToReading = { url, title -> reading.add(url, title); com.makemission.ora.notice.InAppNotices.show("Saved to Reading list") },
                         )
                     }
@@ -1701,10 +1707,37 @@ private fun BrowserContent(
     // Tabs in the open tab's group, one tap away. It floats above the phone's bottom row, or near the page's bottom on tablet.
     GroupTabStrip(
         tabs = tabs,
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+        enabled = showGroupStrip,
+        tablet = isTablet,
+        shown = !toolbarHidden && !selected.chromeHidden && !(isTablet && showSidebar),
+        state = groupDialogs,
+        onNewTabInGroup = { g ->
+            val t = tabs.newTab(BrowserTabs.START_URL, select = true)
+            tabs.moveToGroup(t.id, g.id)
+            BrowserLog.info("groups", "New tab in group from the strip")
+        },
+        modifier = if (isTablet) Modifier.align(Alignment.TopCenter).padding(top = (if (tabletCompact) compactRowHeight else topBarHeight) + 4.dp)
+        else Modifier.align(Alignment.BottomCenter).padding(bottom = with(density) { bottomBarPx.toDp() } + 12.dp),
     )
+    GroupDialogs(tabs, groupDialogs)
+    groupPickFor?.let { url ->
+        GroupPickerSheet(
+            tabs = tabs, currentGroupId = selected.groupId,
+            onPick = { gid ->
+                val t = tabs.newTab(url, select = false)
+                tabs.moveToGroup(t.id, gid)
+                BrowserLog.info("groups", "Opened a link in a group tab")
+                groupPickFor = null
+            },
+            onNewGroup = {
+                val t = tabs.newTab(url, select = false)
+                groupDialogs.pendingTabId = t.id
+                groupDialogs.creating = true
+                groupPickFor = null
+            },
+            onDismiss = { groupPickFor = null },
+        )
+    }
     // Tablet tab overview covers the whole window, toolbar and sidebar included. It grows out of the tabs button.
     AnimatedVisibility(
         visible = tabletTabsOpen,

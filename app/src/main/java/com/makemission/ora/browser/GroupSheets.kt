@@ -38,6 +38,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import com.makemission.ora.security.shownTitle
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -178,5 +180,70 @@ fun GroupMenu(expanded: Boolean, onDismiss: () -> Unit, group: TabGroup, tabs: B
         DropdownMenuItem(text = { Text("Colour") }, onClick = { onDismiss(); state.editing = group })
         DropdownMenuItem(text = { Text("Ungroup") }, onClick = { onDismiss(); tabs.ungroup(group.id); onUngrouped() })
         DropdownMenuItem(text = { Text("Close group", color = Mineral.Ember) }, onClick = { onDismiss(); state.closing = group })
+    }
+}
+
+/**
+ * Picker for "Open in new tab in group". The current tab's group comes first, then the other groups, then New group.
+ * It opens from the long-press menu row (the previous component), and [onPick] gets the chosen group id.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GroupPickerSheet(tabs: BrowserTabs, currentGroupId: String?, onPick: (String) -> Unit, onNewGroup: () -> Unit, onDismiss: () -> Unit) {
+    val colors = browserColors()
+    OraSheet(onDismiss = onDismiss, tag = "groups", containerColor = colors.Surface) { _ ->
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text("Open in group", fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
+            val ordered = tabs.groups.sortedByDescending { it.id == currentGroupId }
+            ordered.forEach { group ->
+                val here = group.id == currentGroupId
+                SheetRow(if (here) "${group.name}  ·  This group" else group.name, dot = group.color, checked = here) { onPick(group.id) }
+            }
+            SheetRow("New group…", icon = true) { onNewGroup() }
+        }
+    }
+}
+
+/**
+ * The group's own sheet, from the strip: name, colour, tab count and an options button, then the tabs (the open one is
+ * a Chalk fill), with New tab in group and Ungroup.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GroupSheet(tabs: BrowserTabs, group: TabGroup, state: GroupDialogState, onNewTab: () -> Unit, onDismiss: () -> Unit) {
+    val colors = browserColors()
+    var menu by remember { mutableStateOf(false) }
+    val members = tabs.tabsIn(group.id)
+    OraSheet(onDismiss = onDismiss, tag = "groups", containerColor = colors.Surface) { _ ->
+        Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(start = 20.dp, end = 20.dp, bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Box(Modifier.size(16.dp).clip(CircleShape).background(group.color.color))
+                Column(Modifier.weight(1f)) {
+                    Text(group.name, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
+                    Text(if (members.size == 1) "1 tab" else "${members.size} tabs", fontSize = 13.sp, color = colors.SecondaryText)
+                }
+                Box {
+                    Text("Options", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText,
+                        modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { menu = true }.padding(horizontal = 12.dp, vertical = 12.dp))
+                    GroupMenu(expanded = menu, onDismiss = { menu = false }, group = group, tabs = tabs, state = state, onUngrouped = onDismiss)
+                }
+            }
+            members.forEach { tab ->
+                val open = tab.id == tabs.selectedId
+                Row(
+                    Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(12.dp))
+                        .background(if (open) colors.Accent else Color.Transparent)
+                        .clickable { tabs.select(tab.id); onDismiss() }.padding(horizontal = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        tab.shownTitle(displayUrl(tab.url)), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        fontSize = 15.sp, fontWeight = FontWeight.Medium, color = if (open) colors.GridBackground else colors.AddressBarText,
+                    )
+                }
+            }
+            SheetRow("New tab in group", icon = true) { onNewTab(); onDismiss() }
+            SheetRow("Ungroup", ember = true) { tabs.ungroup(group.id); onDismiss() }
+        }
     }
 }
