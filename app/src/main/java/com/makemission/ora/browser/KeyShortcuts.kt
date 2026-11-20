@@ -147,6 +147,9 @@ object AddressKeys {
     @Volatile var openInNewTab: ((String) -> Unit)? = null
 
     /** Forgets one address from history (Delete on a highlighted suggestion, or its cross). Set by the browser screen. */
+    /** Forgets one recent search. Set by the browser screen. */
+    @Volatile var removeRecent: ((String) -> Unit)? = null
+
     @Volatile var removeFromHistory: ((String) -> Unit)? = null
 
     /** Adds ".com" to a single bare word (Ctrl+Enter), as most desktop browsers do. Anything else is returned unchanged. */
