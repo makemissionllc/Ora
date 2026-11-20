@@ -17,6 +17,21 @@ import java.io.IOException
  */
 object GeckoEngine {
     private var runtime: GeckoRuntime? = null
+    private var restInstalled = false
+
+    /**
+     * The helpers that are only used on request (Reader view, the full-screen video bar, the scam-pattern lab)
+     * are installed shortly after start-up instead of during it, so the first page does not wait for them.
+     */
+    fun installRest(context: Context) {
+        if (restInstalled) return
+        restInstalled = true
+        val rt = runtime(context)
+        VideoControlBridge.install(rt)
+        ReaderBridge.install(rt)
+        com.makemission.ora.extensions.SiteScanBridge.install(rt)
+        BrowserLog.info("app", "Reader, video and scan helpers installed after start-up")
+    }
 
     fun runtime(context: Context): GeckoRuntime =
         runtime ?: createRuntime(context.applicationContext).also {
@@ -24,18 +39,11 @@ object GeckoEngine {
             // Saved logins: GeckoView asks this delegate for logins to fill and hands back submitted ones.
             PasswordStore.init(context.applicationContext)
             it.setAutocompleteStorageDelegate(PasswordStorageDelegate)
-            // Bundled helper that lets the full-screen video seek bar read and move the page's video.
-            VideoControlBridge.install(it)
-            // Bundled helper that finds a page's article for Reader view.
-            ReaderBridge.install(it)
-            // Bundled helper that shows pages in the font chosen in Settings, when that is switched on.
+            // Helpers that change what a page looks like are installed first, so the first page already has them.
             com.makemission.ora.extensions.WebFontBridge.install(it)
-            // Bundled helper for the scam-pattern lab: reads the page's text on the device, only acted on when the lab is on.
-            com.makemission.ora.extensions.SiteScanBridge.install(it)
-            // Bundled helper that hides page elements the user picked.
             com.makemission.ora.extensions.ZapperBridge.install(it)
-            // Bundled helper that applies per-site dark, wide and font tweaks.
             com.makemission.ora.extensions.SiteTweaksBridge.install(it)
+            BrowserLog.info("app", "GeckoView ready ${android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime()} ms after the process started")
         }
 
     /**
