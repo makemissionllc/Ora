@@ -166,6 +166,9 @@ fun SettingsScreen(
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val labsOn by settings.labs.collectAsState()
     val quickResume by settings.quickResume.collectAsState()
+    val siteTextSizes = remember { SiteTextSizes.get(noticeContext) }
+    val siteTextSizeMap by siteTextSizes.sizes.collectAsState()
+    var confirmClearSiteSizes by remember { mutableStateOf(false) }
     val saveHistory by settings.saveHistory.collectAsState()
     val deviceFontWeb by settings.deviceFontWeb.collectAsState()
     val textSize by settings.textSizePercent.collectAsState()
@@ -415,6 +418,19 @@ fun SettingsScreen(
                                 }
                                 // Quality of life: one tap returns to the page's own size.
                                 TextButton(onClick = { settings.setTextSizePercent(100) }, enabled = textSize != 100) { Text("Reset") }
+                            }
+                            // Sites with their own size (set with Ctrl+Plus or Ctrl+Minus on a page), with one way to undo them all.
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    if (siteTextSizeMap.isEmpty()) "No sites have their own size. Press Ctrl+Plus on a page to give it one."
+                                    else "${siteTextSizeMap.size} ${if (siteTextSizeMap.size == 1) "site has" else "sites have"} their own size",
+                                    fontSize = 14.sp, color = browserColors().SecondaryText, modifier = Modifier.weight(1f),
+                                )
+                                if (siteTextSizeMap.isNotEmpty()) TextButton(onClick = { confirmClearSiteSizes = true }) { Text("Reset all", color = Mineral.Ember) }
                             }
                             Text(
                                 "Motion",
@@ -1604,6 +1620,16 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (confirmClearSiteSizes) {
+        OraDialog(
+            onDismissRequest = { confirmClearSiteSizes = false },
+            title = { Text("Reset site text sizes?") },
+            text = { Text("${siteTextSizeMap.size} ${if (siteTextSizeMap.size == 1) "site goes" else "sites go"} back to the size above.") },
+            dismissButton = { TextButton(onClick = { confirmClearSiteSizes = false }) { Text("Cancel", color = browserColors().SecondaryText) } },
+            confirmButton = { TextButton(onClick = { siteTextSizes.clearAll(); confirmClearSiteSizes = false }) { Text("Reset all", color = Mineral.Ember, fontWeight = FontWeight.SemiBold) } },
+        )
     }
 
     if (appLockDialog) {

@@ -522,14 +522,6 @@ private fun BrowserContent(
             BrowserLog.error("labs", "Could not apply the labs", e)
         }
     }
-    // Text size on web pages. GeckoView scales page text by this factor once automatic adjustment is off.
-    val textSize by settings.textSizePercent.collectAsState()
-    LaunchedEffect(textSize) {
-        val engine = GeckoEngine.runtime(context).settings
-        engine.setAutomaticFontSizeAdjustment(false)
-        engine.setFontSizeFactor(textSize / 100f)
-        BrowserLog.info("page", "Page text size set to $textSize%")
-    }
     var showTabGrid by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
     /** Tablet: each tap on ⋯ while the panel is open adds one, which slides it closed. */
@@ -561,6 +553,19 @@ private fun BrowserContent(
     // A removed profile takes its rules with it.
     LaunchedEffect(profileList) { profileRules.dropMissing(profileList.map { it.id }.toSet()) }
     val selected = tabs.selected ?: return
+    // Text size on web pages. GeckoView scales page text by this factor once automatic adjustment is off.
+    // A site can have its own size (Ctrl+Plus on it); other sites and private tabs use the global one.
+    val textSize by settings.textSizePercent.collectAsState()
+    val siteSizes = remember { com.makemission.ora.settings.SiteTextSizes.get(context) }
+    val siteSizeMap by siteSizes.sizes.collectAsState()
+    val siteKey = if (selected.isPrivate) "" else com.makemission.ora.settings.siteKeyFor(selected.url)
+    val effectiveTextSize = siteSizeMap[siteKey] ?: textSize
+    LaunchedEffect(effectiveTextSize) {
+        val engine = GeckoEngine.runtime(context).settings
+        engine.setAutomaticFontSizeAdjustment(false)
+        engine.setFontSizeFactor(effectiveTextSize / 100f)
+        BrowserLog.info("page", "Page text size set to $effectiveTextSize%")
+    }
     SideEffect { PrivateSpace.active = selected.isPrivate }
     val selectedId = tabs.selectedId
     // One place for the bookmark state and toggle, shared by the phone and tablet bars and the menu.
@@ -647,11 +652,18 @@ private fun BrowserContent(
     // Physical keyboard shortcuts (KeyShortcuts.kt). The handler always reads the latest state, and is off while the app lock is on.
     var showShortcuts by remember { mutableStateOf(false) }
     var showSwitcher by remember { mutableStateOf(false) }
-    /** Text size from the keyboard: steps through the same setting as Settings > Appearance and says the new size. */
+    /** Text size from the keyboard: sets this site's own size and says so; a private tab or a page with no site changes nothing. */
     fun stepTextSize(delta: Int?) {
-        val next = if (delta == null) 100 else textSize + delta
-        settings.setTextSizePercent(next)
-        InAppNotices.show("Text size ${next.coerceIn(SettingsRepository.TEXT_SIZE_MIN, SettingsRepository.TEXT_SIZE_MAX)}%")
+        if (selected.isPrivate) { InAppNotices.show("Private tabs use the default text size"); return }
+        if (siteKey.isEmpty()) { InAppNotices.show("Open a page to change its text size"); return }
+        if (delta == null) {
+            siteSizes.clear(siteKey)
+            InAppNotices.show("Text size back to the default for $siteKey")
+        } else {
+            val next = (effectiveTextSize + delta).coerceIn(SettingsRepository.TEXT_SIZE_MIN, SettingsRepository.TEXT_SIZE_MAX)
+            siteSizes.set(siteKey, next)
+            InAppNotices.show("Text size $next% on $siteKey")
+        }
     }
     val latestShortcutHandler by rememberUpdatedState<(Shortcut) -> Boolean> { shortcut ->
         val list = tabs.tabs.filter { !it.isPrivate || !AppLock.locked }
@@ -667,6 +679,7 @@ private fun BrowserContent(
             Shortcut.FORWARD -> if (selected.canGoForward) selected.session.goForward() else InAppNotices.show("Nothing to go forward to")
             Shortcut.BOOKMARK -> toggleSelectedBookmark()
             Shortcut.SAVE_PDF -> savePdf()
+            Shortcut.START_PAGE -> { selected.session.loadUri(BrowserTabs.START_URL); InAppNotices.show("Start page") }
             Shortcut.ZOOM_IN -> stepTextSize(SettingsRepository.TEXT_SIZE_STEP)
             Shortcut.ZOOM_OUT -> stepTextSize(-SettingsRepository.TEXT_SIZE_STEP)
             Shortcut.ZOOM_RESET -> stepTextSize(null)
@@ -2872,6 +2885,11 @@ private fun AddressBar(
         phrases = SearchSuggest.fetch(typed)
     }
     val suggestions = if (focused && !suggestionsHidden) withQuerySuggestions(addressSuggestions(typed, candidates), phrases) else emptyList()
+    // Hardware keyboard: Up and Down walk the suggestions in the order they are drawn, Enter opens the highlighted one.
+    // -1 means none, so Enter searches what was typed. A new list or new text clears the highlight.
+    var highlighted by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(suggestions, typed) { highlighted = -1 }
+    val visualSuggestions = if (opensUp) suggestions.asReversed() else suggestions
 
     // Intelligent preloading: once typing pauses, look up the site that is most likely next. The domain being
     // autocompleted wins, then the first suggestion that is a site (the search row is skipped). Never for private tabs.
@@ -2943,6 +2961,23 @@ private fun AddressBar(
                 },
                 modifier = Modifier
                     .weight(1f)
+                    .onPreviewKeyEvent { e ->
+                        if (e.type != androidx.compose.ui.input.key.KeyEventType.KeyDown || visualSuggestions.isEmpty()) return@onPreviewKeyEvent false
+                        when (e.key) {
+                            androidx.compose.ui.input.key.Key.DirectionDown -> { highlighted = (highlighted + 1).coerceAtMost(visualSuggestions.lastIndex); true }
+                            androidx.compose.ui.input.key.Key.DirectionUp -> { highlighted = (highlighted - 1).coerceAtLeast(-1); true }
+                            androidx.compose.ui.input.key.Key.Enter, androidx.compose.ui.input.key.Key.NumPadEnter -> {
+                                val pick = visualSuggestions.getOrNull(highlighted)
+                                if (pick == null) false else {
+                                    finishEditing()
+                                    BrowserLog.info("search", "Suggestion chosen with the keyboard (${pick.kind.name.lowercase()})")
+                                    onSubmit(pick.target)
+                                    true
+                                }
+                            }
+                            else -> false
+                        }
+                    }
                     .onSizeChanged { fieldWidthPx = it.width }
                     // Centred when idle on the phone Compact bar; the text slides to the left as the field takes focus.
                     .graphicsLayer {
@@ -3103,10 +3138,11 @@ private fun AddressBar(
             .verticalScroll(rememberScrollState())
       ) {
         // Opening upward, the best match sits next to the capsule, so the order is reversed.
-        (if (opensUp) lastSuggestions.asReversed() else lastSuggestions).forEach { suggestion ->
+        (if (opensUp) lastSuggestions.asReversed() else lastSuggestions).forEachIndexed { rowIndex, suggestion ->
             key(suggestion.kind, suggestion.target) {
                 FadeInOnAppear {
                     DropdownMenuItem(
+                        modifier = Modifier.background(if (rowIndex == highlighted) browserColors().SecondaryText.copy(alpha = 0.18f) else Color.Transparent),
                         leadingIcon = {
                             Icon(
                                 imageVector = if (suggestion.kind == SuggestionKind.LOCAL) Icons.Outlined.BookmarkBorder else Icons.Filled.Search,
