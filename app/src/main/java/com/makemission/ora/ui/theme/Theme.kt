@@ -83,6 +83,8 @@ object BrowserTokens {
     // Dimensions
     /** One calendar day, one list row in a page prompt: a comfortable touch target. */
     val PromptCell = 44.dp
+    /** Phone Top: the gap between the status bar and the address capsule. */
+    val TopCapsuleGap = 8.dp
     val ToolbarPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 10.dp)
     val ToolbarRowSpacing = 6.dp
     val HairlineHeight = 1.dp
