@@ -740,6 +740,25 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Ask engine each search ${if (enabled) "on" else "off"}")
     }
 
+    private val _tutorialDone = MutableStateFlow(prefs.getStringSet(KEY_TUTORIAL_DONE, emptySet()) ?: emptySet())
+    /** Ids of the interactive tutorial lessons the user has finished. */
+    val tutorialDone: StateFlow<Set<String>> = _tutorialDone.asStateFlow()
+
+    fun markTutorialLesson(id: String) {
+        if (id in _tutorialDone.value) return
+        val next = _tutorialDone.value + id
+        prefs.edit().putStringSet(KEY_TUTORIAL_DONE, next).apply()
+        _tutorialDone.value = next
+        UsageStats.count("tutorial.lesson")
+        BrowserLog.info("tutorial", "Tutorial lesson \"$id\" finished")
+    }
+
+    fun resetTutorial() {
+        prefs.edit().remove(KEY_TUTORIAL_DONE).apply()
+        _tutorialDone.value = emptySet()
+        BrowserLog.info("tutorial", "Tutorial progress cleared")
+    }
+
     private val _searchShortcutsOn = MutableStateFlow(prefs.getBoolean(KEY_SEARCH_SHORTCUTS, true))
     /** When on, typing a keyword and a space in the address bar (such as "yt cats") searches that site. */
     val searchShortcutsOn: StateFlow<Boolean> = _searchShortcutsOn.asStateFlow()
@@ -836,6 +855,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_SEARCH_ENGINES = "search_engines"
         private const val KEY_SEARCH_DEFAULT = "search_default"
         private const val KEY_ASK_EACH_SEARCH = "ask_each_search"
+        private const val KEY_TUTORIAL_DONE = "tutorial_done"
         private const val KEY_SEARCH_SHORTCUTS = "search_shortcuts_on"
         private const val KEY_CUSTOM_SHORTCUTS = "search_shortcuts_custom"
         private const val KEY_HOME_PAGE = "home_page"

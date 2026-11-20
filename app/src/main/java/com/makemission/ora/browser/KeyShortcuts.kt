@@ -46,6 +46,13 @@ object KeyShortcuts {
     @Volatile
     var handler: ((Shortcut) -> Boolean)? = null
 
+    /**
+     * Set by the interactive tutorial's keyboard lesson. While it is set, a recognised shortcut goes here and the
+     * browser does not act on it, so practising Ctrl+K does not open the switcher behind the tutorial.
+     */
+    @Volatile
+    var practice: ((Shortcut) -> Unit)? = null
+
     /** The tab a Ctrl+digit press asked for (0 based), set just before [handler] runs for [Shortcut.TAB_1]. */
     @Volatile
     var tabIndex: Int = 0
@@ -118,6 +125,7 @@ object KeyShortcuts {
     fun dispatch(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount != 0) return false
         val shortcut = resolve(event.keyCode, event.isCtrlPressed, event.isShiftPressed, event.isAltPressed) ?: return false
+        practice?.let { it(shortcut); return true }
         if (shortcut == Shortcut.TAB_1) tabIndex = tabIndexFor(event.keyCode) ?: 0
         return handler?.invoke(shortcut) ?: false
     }
