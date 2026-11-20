@@ -32,6 +32,7 @@ enum class Shortcut(val group: String, val label: String, val keys: String) {
     QUICK_SWITCHER("Ora", "Quick switcher: tabs, bookmarks, history, actions", "Ctrl+K"),
     SAVE_SESSION("Ora", "Save the open tabs as a session", "Ctrl+Shift+S"),
     SESSIONS("Ora", "Saved sessions", "Ctrl+Shift+O"),
+    ZAP("Page", "Hide an element on this page", "Ctrl+Shift+X"),
     LIBRARY("Ora", "Library: bookmarks, reading list and history", "Ctrl+H"),
     SETTINGS("Ora", "Settings", "Ctrl+,"),
     HELP("Ora", "Keyboard shortcuts", "Ctrl+/ or F1"),
@@ -101,6 +102,7 @@ object KeyShortcuts {
             KeyEvent.KEYCODE_K -> Shortcut.DUPLICATE_TAB
             KeyEvent.KEYCODE_S -> Shortcut.SAVE_SESSION
             KeyEvent.KEYCODE_O -> Shortcut.SESSIONS
+            KeyEvent.KEYCODE_X -> Shortcut.ZAP
             KeyEvent.KEYCODE_EQUALS, KeyEvent.KEYCODE_PLUS -> Shortcut.ZOOM_IN
             KeyEvent.KEYCODE_PAGE_UP -> null
             else -> null

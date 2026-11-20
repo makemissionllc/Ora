@@ -18,6 +18,7 @@ object CommandBar {
         Command("Library", "Bookmarks, history and reading list"),
         Command("Settings", "Open Ora's settings"),
         Command("Find in page", "Search the page you are on"),
+        Command("Hide an element", "Pick something on this page to hide"),
         Command("Save as PDF", "Save this page as a PDF"),
         Command("Save session", "Save the open tabs under a name"),
         Command("Saved sessions", "Open or delete saved sessions"),

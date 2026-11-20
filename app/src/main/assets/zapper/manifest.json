@@ -1,0 +1,12 @@
+{
+  "manifest_version": 2,
+  "name": "Element zapper",
+  "version": "1.0",
+  "description": "Hides page elements the user chose, and lets them pick new ones.",
+  "browser_specific_settings": { "gecko": { "id": "zapper@ora.makemission.com" } },
+  "permissions": ["nativeMessaging", "geckoViewAddons", "tabs", "<all_urls>"],
+  "background": { "scripts": ["background.js"] },
+  "content_scripts": [
+    { "matches": ["<all_urls>"], "js": ["content.js"], "run_at": "document_start", "all_frames": false }
+  ]
+}
