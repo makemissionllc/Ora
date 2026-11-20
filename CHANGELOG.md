@@ -11,9 +11,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
-- Ctrl+Shift+C copies the page address, and Ctrl+Shift+K duplicates the tab. (`KBHASH`)
-- Text size from the keyboard: Ctrl+Plus, Ctrl+Minus and Ctrl+0 change the text size on pages, and a message says the new size. (`KBHASH`)
-- Quick switcher: press Ctrl+K, or choose Quick switcher in the menu, and type to find an open tab, bookmark, visited page or action. Up and Down move, Enter opens, Esc closes. (`KBHASH`)
+- Ctrl+Shift+C copies the page address, and Ctrl+Shift+K duplicates the tab. (`c3f8a3a`)
+- Text size from the keyboard: Ctrl+Plus, Ctrl+Minus and Ctrl+0 change the text size on pages, and a message says the new size. (`c3f8a3a`)
+- Quick switcher: press Ctrl+K, or choose Quick switcher in the menu, and type to find an open tab, bookmark, visited page or action. Up and Down move, Enter opens, Esc closes. (`c3f8a3a`)
 - Choose your Compact bar button: the round button beside the address bar is no longer fixed to Tabs. In Settings > Tabs, pick Downloads, Library, Bookmark this page, Share, New tab, Find in page, Save as PDF or Settings (or keep Tabs). On a phone the button appears once you pick something other than Tabs. (`d08cf3b`)
 - Save as PDF: the ⋮ menu has a new Save as PDF row (or press Ctrl+S or Ctrl+P). The page is saved to Downloads/Ora, named after its title, and a message tells you where it went or that it failed. Private tabs and the start page are not saved. (`e07ef6e`)
 - Keyboard shortcuts: with a physical keyboard, Ctrl+L or F6 goes to the address bar, Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+Tab and Ctrl+1 to 9 manage tabs, Ctrl+F finds in the page, Ctrl+R or F5 reloads, Alt+Left and Alt+Right go back and forward, and Esc closes whatever is open. Press Ctrl+/ or F1, or open Settings > About > Keyboard shortcuts, to see them all in a card. (`3c327be`)
@@ -58,8 +58,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Font: pick a typeface for Ora in Settings > Appearance. Choose from Instrument Sans, Inter (close to San Francisco), Manrope, DM Sans, Newsreader and Fraunces (serifs), or JetBrains Mono. Every font is shown in its own letters with a live preview, and it works offline. Web pages keep their own fonts. (`a563112`)
 
 **Changed**
-- Pop-up cards (such as the quick switcher) now sit above the keyboard instead of behind it. (`KBHASH`)
-- On a phone, address suggestions now open upward above the keyboard, with the best match nearest the address bar, instead of covering the keyboard. (`KBHASH`)
+- Pop-up cards (such as the quick switcher) now sit above the keyboard instead of behind it. (`c3f8a3a`)
+- On a phone, address suggestions now open upward above the keyboard, with the best match nearest the address bar, instead of covering the keyboard. (`c3f8a3a`)
 - Confirmation cards now grow out of the button you pressed and shrink back into it, instead of popping up. Back closes a card the same way and changes nothing. (`38c6bf8`)
 
 **Fixed**
