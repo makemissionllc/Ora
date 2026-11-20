@@ -20,6 +20,11 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 ## Motion rules
 
 10. **Every component morphs into another.** Opening, closing, or replacing a component animates from the element that triggered it, and back. A new surface should grow out of its origin (for example the tabs button) and shrink back into it. Don't pop components in or out.
+10a. **A new component morphs out of the one that led into it.** When a component is designed, say which component opens it (the "previous component") and make it grow out of that one's shape and position, and fold back into it on close. The model is the compact address bar turning into the find bar: the same capsule changes its contents and width in place, and nothing pops in beside it. So a suggestions list grows out of the address capsule, a date picker out of the field that asked for it, a confirmation card out of the button that was tapped. Rules for doing it:
+    - Name the previous component in the commit message and in `PROGRESS.md`. If there is none (the first screen, a system-driven prompt), say so.
+    - The new surface starts at the previous component's bounds (width, height, corner radius, colour) and animates to its own; its content fades in after the shape has mostly arrived, and fades out before the shape folds back.
+    - Use `AnimatedContent`, `AnimatedVisibility` or shared-bounds style animation with `OraMotion`. Closing reverses the opening toward the same origin, including when the user dismisses by tapping outside or pressing back.
+    - Where Android itself draws the surface (the system file picker, a permission dialog) a morph is not possible: record it as an exception in `PROGRESS.md`.
 11. **Animations are consistent.** Use the shared motion values, not per-screen numbers:
     - Overlay enter: fade in over 220 ms, scale from 0.88 over 280 ms, origin at the trigger.
     - Overlay exit: fade out over 160 ms, scale to 0.88 over 200 ms, same origin.
