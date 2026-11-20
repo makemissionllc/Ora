@@ -220,6 +220,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `9991d13` | Customisable bottom toolbar | Not checked (build and `ToolbarConfigTest` pass; no device seen) | Not checked (tablet does not use this bar) |
 | 2026-11-20 | `91bd7c1` | Save image, Copy image, Save image as | Not checked (build and `ImageNameTest` pass; no device seen) | Not checked |
 | 2026-11-20 | `1918dc2` | Long-press menu, first slice | Not checked (build and `LinkOpenPrivacyTest` pass; no device seen) | Not checked |
 | 2026-11-20 | `f83eb02` | Top-layout capsule below the status bar | Built, not checked on a device | Built, not checked on a device |

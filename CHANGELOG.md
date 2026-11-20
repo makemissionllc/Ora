@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
+- You can now choose the buttons in the bottom bar on your phone when the address bar is on top. In Settings > Appearance > Bottom toolbar, drag buttons to reorder them, remove them, or add Home, Reload, New tab, Private tab, Find in page, Reader view or Downloads. Classic, Reading and Minimal sets are ready to pick, and Reset brings Classic back. Press and hold an empty part of the bar to open the setting. (`9991d13`)
 - Long-pressing an image now offers Save image, Copy image and Save image as. Save image puts the file in Pictures/Ora. Save image as lets you change the name, pick a folder (Ora remembers it) and choose Original, PNG or WebP. There is a new Settings switch, Always ask where to save images. (`91bd7c1`)
 - Pressing and holding a link or image now opens a fuller menu: it shows what you pressed, has quick Copy link and Share buttons, and lists Open in new tab, Open in private tab, Open in background tab and Add to reading list. An image that is also a link shows both sets. In a private tab, links open in private tabs and nothing is saved to the reading list. (`1918dc2`)
 
