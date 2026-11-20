@@ -1,5 +1,7 @@
 package com.makemission.ora.browser
 
+import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.offset
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -115,17 +117,24 @@ fun GroupTabStrip(
                 Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = colors.SecondaryText, modifier = Modifier.size(18.dp))
             }
             // Scrolls sideways when there are more tabs than fit.
+            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+            // One ring glides to the active icon (Standard speed) instead of a ring on each icon. Remove animations: it jumps.
+            val activeIndex = members.indexOfFirst { it.id == tabs.selectedId }.coerceAtLeast(0)
+            val reduced = com.makemission.ora.ui.theme.LocalReducedMotion.current
+            val ringPos by androidx.compose.animation.core.animateFloatAsState(activeIndex.toFloat(), if (reduced) androidx.compose.animation.core.snap() else OraMotion.standard(), label = "ring glide")
+            val stepPx = with(androidx.compose.ui.platform.LocalDensity.current) { (48.dp + 8.dp).toPx() }
+            val insetPx = with(androidx.compose.ui.platform.LocalDensity.current) { (2.dp + 4.dp).toPx() }
+            // The tablet row hugs its pills so the chip sits next to them; the phone row fills the capsule.
+            Box(modifier = if (tablet) Modifier.weight(1f, fill = false) else Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             LazyRow(
-                // The tablet row hugs its pills so the chip sits next to them; the phone row fills the capsule.
-                modifier = if (tablet) Modifier.weight(1f, fill = false) else Modifier.weight(1f),
+                state = listState,
+                modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(horizontal = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 items(members, key = { it.id }) { tab ->
                     val isOpen = tab.id == tabs.selectedId
-                    // The ring fades from the old icon to the new one, and a new tab slides in from the plus.
-                    val ring by androidx.compose.animation.animateColorAsState(if (isOpen) g.color.color else androidx.compose.ui.graphics.Color.Transparent, OraMotion.standard(), label = "active ring")
                     if (tablet) {
                         Row(
                             Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).height(36.dp).clip(RoundedCornerShape(18.dp))
@@ -146,7 +155,6 @@ fun GroupTabStrip(
                         Box(Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).size(48.dp), contentAlignment = Alignment.Center) {
                             Box(
                                 Modifier.size(40.dp).clip(CircleShape)
-                                    .border(2.dp, ring, CircleShape)
                                     .pressFeedback().clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }
                                     .semantics { contentDescription = tab.shownTitle(displayUrl(tab.url)) },
                                 contentAlignment = Alignment.Center,
@@ -160,6 +168,12 @@ fun GroupTabStrip(
                         }
                     }
                 }
+            }
+            if (!tablet && members.isNotEmpty()) Box(
+                Modifier
+                    .offset { androidx.compose.ui.unit.IntOffset((insetPx + (ringPos - listState.firstVisibleItemIndex) * stepPx - listState.firstVisibleItemScrollOffset).roundToInt(), 0) }
+                    .size(40.dp).border(2.dp, g.color.color, CircleShape)
+            )
             }
             Box(
                 Modifier.size(40.dp).clip(CircleShape).pressFeedback()
