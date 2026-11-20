@@ -8,6 +8,7 @@ Last updated: 2026-11-18, at commit `a1f02a2`.
 Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every feature so far). Each new feature gets `feature/<name>` off `develop`; see AGENTS.md Branch rules 30 to 36. Older branches (`browser-geckoview`, `fix-quick-resume-log`, `passkeys-credman`, `status-bar-frozen`) are left as they were.
 
 ## Done
+- Command bar (`79d227b`, `browser/CommandBar.kt`, `browser/AddressSuggestions.kt`, `browser/BrowserScreen.kt`): ">" in the address bar lists matching actions in the suggestions dropdown (which already grows from the capsule; previous component: the address capsule); Go runs the top match; `runAction` is shared with the Quick switcher. QoL: action hints, "No command matches" notice, one shared action list. Not done: commands that take arguments.
 - Saved sessions (`86dd201`, `settings/SavedSessions.kt`, `browser/SessionsDialog.kt`, `browser/KeyShortcuts.kt`): ⋮ menu row, Quick switcher items and Ctrl+Shift+O open the dialog (grows from the pressed control via `OraDialog`; previous component: menu row / switcher / shortcut); Ctrl+Shift+S quick-saves. QoL: default names, already-open pages skipped with a notice, delete confirmation. Private tabs excluded.
 - Interactive tutorial (`36bb20f`, `settings/TutorialScreen.kt`, `settings/SettingsRepository.kt`, `browser/KeyShortcuts.kt`): Settings > About row opens a screen of lesson cards (search, switcher, swipe, hold, keys on tablet, make it yours) that expand in place with a practice area; progress is saved as `tutorial_done`; `KeyShortcuts.practice` swallows shortcuts during the keys lesson. Not done: the lessons use sample content, not the live browser, and a finished lesson's result line collapses with it.
 - Onboarding refresh (`7e7f156`, `onboarding/SetupSteps.kt`, `onboarding/FirstRun.kt`, `browser/FirstUseTips.kt`): new numbered step Discover (four-segment progress bar) with a Search shortcuts switch and rows for Quick switcher, keyboard shortcuts and per-site text size (tablet), the customisable bottom bar (phone), tab groups and Labs; Ready lists search shortcuts; two new first-use tips. Previous component: the Profile step (existing step transition). `DownloadRestartTest` fails on develop already, unrelated.
@@ -163,7 +164,7 @@ Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google'
 
 ### Tab management (from the Chrome and Safari comparison)
 
-- Mini tab switcher: built as `GroupTabStrip.kt` on `feature/group-tab-strip` (`cf0f67c`), floating above the phone's bottom row and near the page bottom on tablet. Not merged: the strip has not been seen on screen yet.
+- Mini tab switcher: `GroupTabStrip.kt` (`cf0f67c`) is merged into develop (checked 2026-11-20); an on-screen check is still to record.
 - Recent tabs: list tabs open on other devices signed into the same account. Needs a sync design first.
 - Search bookmarks and history from one search field. Open-tab and history search are done (see Done); a single field across tabs, bookmarks and history is done on the tablet sidebar and the tab overview (phone and tablet).
 
@@ -185,7 +186,7 @@ Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google'
 - Design artifact `5927e31d` (Browser Wireframes): built so far are the pop-up card and the error cards. The other screens are not built yet, and the next ones are for the user to choose.
 - Auto-fill on the tablet (`55c62be`): not checked. The phone-only test was requested.
 - Tablet check for the Secure DNS row in Settings > Privacy (see verification log).
-- Reader mode. The approach is undecided. GeckoView `about:reader` has not been tested.
+- Reader mode: `ReaderBar.kt` and `ReaderBridge.kt` exist in develop (checked 2026-11-20); this note was stale. Confirm what is left before planning more.
 - Shrink-on-scroll on tablet: bars currently hide completely. The design calls for shrinking to smaller controls.
 - Tablet Tabs section in Settings, not re-checked since the rail change.
 - Preloading (for example, prefetching a link on long press). Needs a design, and it must not load pages the user did not ask for.
@@ -199,7 +200,6 @@ Ideas only, nothing built yet. The full list, with the rules, each idea's API ch
 Priority 1 (do first):
 - Site tweaks: per-site switches to hide elements, force dark, change font and widen text.
 - Element zapper: long-press an element, "Hide on this site".
-- Command bar: ">" in the address bar runs actions.
 - Profile rules: built for typed addresses (`32c2e34`, `feature/profile-site-rules`). Bookmarks, history entries and overview search matches follow a rule too (`3d177c8`, `feature/profile-rules-everywhere`). Links tapped on a page do not yet.
 
 Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to build yet; the order is for the user to set.
@@ -225,6 +225,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `79d227b` | Command bar | Phone (dark): typing > then sett showed one Settings row with a bolt icon and hint; Go opened Settings (log: Action run: Settings). Quick switcher list, Close tab, no-match notice, Light / Pure dark not seen | Tablet: Not checked (not connected) |
 | 2026-11-20 | `86dd201` | Saved sessions | Phone (dark): menu row opens dialog; Save added a row and notice 'Session saved with 3 pages'; Open gave 'All 3 pages are already open' (log: 0 new, 3 already open); Ctrl+Shift+O opened the dialog; Delete showed its confirmation. Quick switcher items, Ctrl+Shift+S, Light / Pure dark not seen | Tablet: Not checked (not connected) |
 | 2026-11-20 | `36bb20f` | Interactive tutorial | Phone: Not checked (not driven; personal device) | Tablet (landscape, dark): About row showed Start; lesson 1 'yt cats' + Go ticked it and opened lesson 2 (log); Ctrl+K, Ctrl+T, Ctrl+L in lesson 5 ticked it without opening the switcher behind. Swipe, hold, Make it yours, Start over, phone layout, Light / Pure dark not seen |
 | 2026-11-20 | `7e7f156` | Onboarding refresh | Phone: Not checked (not driven; personal device) | Tablet (landscape, dark): Run setup again showed Welcome 'Four quick steps', four-segment bar, the new Things worth trying step with preview card, and Ready listing Search shortcuts: On. Phone layout of the step, Light / Pure dark and the two new tips not seen |
