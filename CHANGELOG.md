@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Changed**
+- Setup has a new fourth step, Things worth trying, that shows search shortcuts (with a switch), the Quick switcher, keyboard shortcuts, text size for each site, your own bottom bar, tab groups and Labs. The last page lists search shortcuts, and small first-use tips now explain the Quick switcher and search shortcuts. (`7e7f156`)
+
 **Added**
 - Search shortcuts: type a keyword and a space in the address bar (yt cats, gh compose, w ada lovelace, maps nairobi) to search that site. Ten are built in, and Settings > Search lets you add your own or remove them, with a switch to turn them all off. (`2d47cc1`)
 - Address bar keys: Ctrl+Enter adds www and .com to a bare word, Alt+Enter opens what you typed in a new tab, and Ctrl+E or Alt+D jump to the address bar. (`2d47cc1`)
