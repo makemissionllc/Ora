@@ -474,8 +474,11 @@ class BrowserTab(
                 val link = element.linkUri?.takeIf { it.isNotBlank() }
                 val image = element.srcUri?.takeIf { element.type == GeckoSession.ContentDelegate.ContextElement.TYPE_IMAGE && it.isNotBlank() }
                 if (link == null && image == null) return
-                plog.info("page", "Long press on ${link ?: image}")
-                pressTarget = PressTarget(linkUri = link, imageUri = image, x = screenX, y = screenY)
+                plog.info("page", "Long press on ${hostOf(link ?: image ?: "")}")
+                pressTarget = PressTarget(
+                    linkUri = link, imageUri = image, x = screenX, y = screenY,
+                    label = (element.title ?: element.altText)?.trim()?.takeIf { it.isNotEmpty() },
+                )
             }
 
             override fun onFullScreen(session: GeckoSession, fullScreen: Boolean) {
@@ -573,7 +576,14 @@ const val REVEAL_PROGRESS_PERCENT = 50
 data class ClosedTab(val id: Long, val url: String, val title: String, val state: String?)
 
 /** A link and/or image under a long press, with the press position in page pixels. */
-data class PressTarget(val linkUri: String?, val imageUri: String?, val x: Int, val y: Int)
+data class PressTarget(
+    val linkUri: String?,
+    val imageUri: String?,
+    val x: Int,
+    val y: Int,
+    /** The title or alt text, shown in the menu header, shown in the menu header. */
+    val label: String? = null,
+)
 
 /** The tabs in one space (normal or private), in their order. Address-bar swipes move only within it. */
 internal fun <T> tabsInSpace(items: List<T>, isPrivate: (T) -> Boolean, currentPrivate: Boolean): List<T> =
