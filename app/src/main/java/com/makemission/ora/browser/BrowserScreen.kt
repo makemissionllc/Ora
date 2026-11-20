@@ -93,6 +93,7 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -719,6 +720,19 @@ private fun BrowserContent(
         KeyShortcuts.handler = { shortcut -> if (AppLock.locked) false else latestShortcutHandler(shortcut) }
         onDispose { KeyShortcuts.handler = null }
     }
+    DisposableEffect(Unit) {
+        AddressKeys.openInNewTab = { typed ->
+            val priv = tabs.selected?.isPrivate == true
+            val shortcut = com.makemission.ora.settings.SearchShortcuts.resolve(typed)
+            val url = when {
+                shortcut != null -> shortcut.shortcut.urlFor(shortcut.query)
+                isSearchInput(typed) -> defaultEngine.urlFor(typed.trim())
+                else -> toLoadableUrl(typed, defaultEngine.template)
+            }
+            tabs.newTab(url, isPrivate = priv)
+        }
+        onDispose { AddressKeys.openInNewTab = null }
+    }
     if (showShortcuts) ShortcutsCard(onDismiss = { showShortcuts = false })
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
@@ -919,6 +933,13 @@ private fun BrowserContent(
             }
         }
         selected.markStartPageBehind()
+        val shortcut = com.makemission.ora.settings.SearchShortcuts.resolve(input)
+        if (shortcut != null) {
+            BrowserLog.info("search", "Search shortcut \"${shortcut.shortcut.keyword}\" used")
+            SearchLog.record(shortcut.shortcut.label, selected.isPrivate)
+            selected.session.loadUri(shortcut.shortcut.urlFor(shortcut.query))
+            return
+        }
         if (isSearchInput(input) && askEachSearch && searchEngines.size > 1) {
             pendingSearch = input.trim()
         } else if (isSearchInput(input)) {
@@ -2962,7 +2983,24 @@ private fun AddressBar(
                 modifier = Modifier
                     .weight(1f)
                     .onPreviewKeyEvent { e ->
-                        if (e.type != androidx.compose.ui.input.key.KeyEventType.KeyDown || visualSuggestions.isEmpty()) return@onPreviewKeyEvent false
+                        if (e.type != androidx.compose.ui.input.key.KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                        val isEnter = e.key == androidx.compose.ui.input.key.Key.Enter || e.key == androidx.compose.ui.input.key.Key.NumPadEnter
+                        if (isEnter && e.isCtrlPressed && fieldValue.text.isNotBlank()) {
+                            val full = AddressKeys.completeCom(fieldValue.text)
+                            finishEditing()
+                            BrowserLog.info("keyboard", "Ctrl+Enter completed an address")
+                            onSubmit(full)
+                            return@onPreviewKeyEvent true
+                        }
+                        val newTab = AddressKeys.openInNewTab
+                        if (isEnter && e.isAltPressed && fieldValue.text.isNotBlank() && newTab != null) {
+                            val typed = fieldValue.text
+                            finishEditing()
+                            BrowserLog.info("keyboard", "Alt+Enter opened the address in a new tab")
+                            newTab(typed)
+                            return@onPreviewKeyEvent true
+                        }
+                        if (visualSuggestions.isEmpty()) return@onPreviewKeyEvent false
                         when (e.key) {
                             androidx.compose.ui.input.key.Key.DirectionDown -> { highlighted = (highlighted + 1).coerceAtMost(visualSuggestions.lastIndex); true }
                             androidx.compose.ui.input.key.Key.DirectionUp -> { highlighted = (highlighted - 1).coerceAtLeast(-1); true }

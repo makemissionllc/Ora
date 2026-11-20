@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Search shortcuts: type a keyword and a space in the address bar (yt cats, gh compose, w ada lovelace, maps nairobi) to search that site. Ten are built in, and Settings > Search lets you add your own or remove them, with a switch to turn them all off."),
+            ChangeItem(ChangeKind.ADDED, "Address bar keys: Ctrl+Enter adds www and .com to a bare word, Alt+Enter opens what you typed in a new tab, and Ctrl+E or Alt+D jump to the address bar."),
             ChangeItem(ChangeKind.FIXED, "Full-screen video: the back arrow, skip, play, lock and speed buttons now respond to taps. Before, only tapping the picture worked."),
             ChangeItem(ChangeKind.FIXED, "Full-screen video no longer shows the site's own title bar and controls underneath Ora's controls, so the two sets stop drawing over each other. The site's controls come back when you leave full screen."),
             ChangeItem(ChangeKind.ADDED, "A full-screen video that is playing now keeps playing in a small window when you go to the home screen (Settings > Video, on by default), and the picture fills the notch area."),

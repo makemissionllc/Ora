@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 
 /** Every action a physical keyboard can start. [group] and [keys] are what the shortcuts page shows. */
 enum class Shortcut(val group: String, val label: String, val keys: String) {
-    ADDRESS("Address bar", "Go to the address bar", "Ctrl+L or F6"),
+    ADDRESS("Address bar", "Go to the address bar", "Ctrl+L, Ctrl+E, Alt+D or F6"),
     FIND("Page", "Find in page", "Ctrl+F"),
     RELOAD("Page", "Reload", "Ctrl+R or F5"),
     HARD_RELOAD("Page", "Reload without cache", "Ctrl+Shift+R"),
@@ -77,6 +77,7 @@ object KeyShortcuts {
                 KeyEvent.KEYCODE_DPAD_LEFT -> Shortcut.BACK
                 KeyEvent.KEYCODE_DPAD_RIGHT -> Shortcut.FORWARD
                 KeyEvent.KEYCODE_MOVE_HOME -> Shortcut.START_PAGE
+                KeyEvent.KEYCODE_D -> if (!shift) Shortcut.ADDRESS else null
                 else -> null
             }
         }
@@ -93,7 +94,7 @@ object KeyShortcuts {
             KeyEvent.KEYCODE_PAGE_UP -> null
             else -> null
         } else when (keyCode) {
-            KeyEvent.KEYCODE_L -> Shortcut.ADDRESS
+            KeyEvent.KEYCODE_L, KeyEvent.KEYCODE_E -> Shortcut.ADDRESS
             KeyEvent.KEYCODE_K -> Shortcut.QUICK_SWITCHER
             KeyEvent.KEYCODE_EQUALS, KeyEvent.KEYCODE_PLUS, KeyEvent.KEYCODE_NUMPAD_ADD -> Shortcut.ZOOM_IN
             KeyEvent.KEYCODE_MINUS, KeyEvent.KEYCODE_NUMPAD_SUBTRACT -> Shortcut.ZOOM_OUT
@@ -119,5 +120,20 @@ object KeyShortcuts {
         val shortcut = resolve(event.keyCode, event.isCtrlPressed, event.isShiftPressed, event.isAltPressed) ?: return false
         if (shortcut == Shortcut.TAB_1) tabIndex = tabIndexFor(event.keyCode) ?: 0
         return handler?.invoke(shortcut) ?: false
+    }
+}
+
+/**
+ * Address bar keys that need the tab list, set by the browser screen so the address bar does not need the tabs.
+ * [openInNewTab] loads an address in a new tab (Alt+Enter).
+ */
+object AddressKeys {
+    @Volatile var openInNewTab: ((String) -> Unit)? = null
+
+    /** Adds ".com" to a single bare word (Ctrl+Enter), as most desktop browsers do. Anything else is returned unchanged. */
+    fun completeCom(text: String): String {
+        val t = text.trim()
+        if (t.isEmpty() || t.any { it == ' ' || it == '.' || it == '/' || it == ':' }) return t
+        return "www.$t.com"
     }
 }

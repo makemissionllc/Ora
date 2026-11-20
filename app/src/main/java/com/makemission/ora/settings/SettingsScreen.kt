@@ -169,6 +169,10 @@ fun SettingsScreen(
     val siteTextSizes = remember { SiteTextSizes.get(noticeContext) }
     val siteTextSizeMap by siteTextSizes.sizes.collectAsState()
     var confirmClearSiteSizes by remember { mutableStateOf(false) }
+    val shortcutsOn by settings.searchShortcutsOn.collectAsState()
+    val customShortcuts by settings.customShortcuts.collectAsState()
+    var addShortcutDialog by remember { mutableStateOf(false) }
+    var removeShortcut by remember { mutableStateOf<com.makemission.ora.settings.SearchShortcut?>(null) }
     val saveHistory by settings.saveHistory.collectAsState()
     val deviceFontWeb by settings.deviceFontWeb.collectAsState()
     val textSize by settings.textSizePercent.collectAsState()
@@ -1358,6 +1362,56 @@ fun SettingsScreen(
                             }
                             MineralSwitch(checked = askEachSearch, label = "Switch", onChange = { settings.setAskEachSearch(it) })
                         }
+                        Spacer(Modifier.height(8.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().clickable { settings.setSearchShortcutsOn(!shortcutsOn) }.padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                    Text("Search shortcuts", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Type a keyword and a space in the address bar to search one site, such as yt cats or gh compose. Built in: " +
+                                            com.makemission.ora.settings.SearchShortcuts.builtIn.joinToString(", ") { it.keyword } + ".",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = shortcutsOn, label = "Switch", onChange = { settings.setSearchShortcutsOn(it) })
+                            }
+                            if (shortcutsOn) {
+                                if (customShortcuts.isEmpty()) {
+                                    Text(
+                                        "No shortcuts of your own yet. Add one for a site you search often.",
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                customShortcuts.forEach { sc ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp).clickable { removeShortcut = sc }.padding(horizontal = 16.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text("${sc.keyword}  ·  ${sc.label}", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                            Text(sc.template, fontSize = 12.sp, color = browserColors().SecondaryText, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                        }
+                                        Text("Remove", fontSize = 13.sp, color = Mineral.Ember)
+                                    }
+                                }
+                                TextButton(onClick = { addShortcutDialog = true }, modifier = Modifier.padding(horizontal = 8.dp)) {
+                                    Text("Add a shortcut", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
+                                }
+                            }
+                        }
                     }
                     if (shown(SettingsCategory.PRIVACY)) item {
                         SectionTitle("Privacy")
@@ -1620,6 +1674,41 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (addShortcutDialog) {
+        var kw by remember { mutableStateOf("") }
+        var lbl by remember { mutableStateOf("") }
+        var tpl by remember { mutableStateOf("https://") }
+        val ok = com.makemission.ora.settings.SearchShortcuts.validKeyword(kw.trim()) && com.makemission.ora.settings.SearchShortcuts.validTemplate(tpl.trim())
+        OraDialog(
+            onDismissRequest = { addShortcutDialog = false },
+            title = { Text("Add a search shortcut") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    androidx.compose.material3.OutlinedTextField(kw, { kw = it.lowercase().filter { c -> c.isLetterOrDigit() }.take(12) }, label = { Text("Keyword, such as docs") }, singleLine = true)
+                    androidx.compose.material3.OutlinedTextField(lbl, { lbl = it }, label = { Text("Name (optional)") }, singleLine = true)
+                    androidx.compose.material3.OutlinedTextField(tpl, { tpl = it }, label = { Text("Search address, with %s for the words") }, singleLine = true)
+                    Text("Example: https://example.com/search?q=%s", fontSize = 12.sp, color = browserColors().SecondaryText)
+                }
+            },
+            dismissButton = { TextButton(onClick = { addShortcutDialog = false }) { Text("Cancel", color = browserColors().SecondaryText) } },
+            confirmButton = {
+                TextButton(enabled = ok, onClick = {
+                    if (settings.addCustomShortcut(kw, lbl, tpl)) { addShortcutDialog = false; InAppNotices.show("Shortcut \"${kw.trim()}\" added") }
+                }) { Text("Add", color = if (ok) browserColors().Accent else browserColors().SecondaryText, fontWeight = FontWeight.SemiBold) }
+            },
+        )
+    }
+
+    removeShortcut?.let { sc ->
+        OraDialog(
+            onDismissRequest = { removeShortcut = null },
+            title = { Text("Remove \"${sc.keyword}\"?") },
+            text = { Text("${sc.label} will no longer open from the address bar by typing ${sc.keyword}.") },
+            dismissButton = { TextButton(onClick = { removeShortcut = null }) { Text("Cancel", color = browserColors().SecondaryText) } },
+            confirmButton = { TextButton(onClick = { settings.removeCustomShortcut(sc.keyword); removeShortcut = null }) { Text("Remove", color = Mineral.Ember, fontWeight = FontWeight.SemiBold) } },
+        )
     }
 
     if (confirmClearSiteSizes) {

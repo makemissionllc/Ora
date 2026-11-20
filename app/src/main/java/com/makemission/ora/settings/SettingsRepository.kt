@@ -740,6 +740,59 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Ask engine each search ${if (enabled) "on" else "off"}")
     }
 
+    private val _searchShortcutsOn = MutableStateFlow(prefs.getBoolean(KEY_SEARCH_SHORTCUTS, true))
+    /** When on, typing a keyword and a space in the address bar (such as "yt cats") searches that site. */
+    val searchShortcutsOn: StateFlow<Boolean> = _searchShortcutsOn.asStateFlow()
+
+    fun setSearchShortcutsOn(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SEARCH_SHORTCUTS, enabled).apply()
+        _searchShortcutsOn.value = enabled
+        SearchShortcuts.enabled = enabled
+        UsageStats.count("setting.search_shortcuts")
+        BrowserLog.info("settings", "Search shortcuts ${if (enabled) "on" else "off"}")
+    }
+
+    private val _customShortcuts = MutableStateFlow(loadCustomShortcuts())
+    /** Shortcuts the user added. They win over a built-in one with the same keyword. */
+    val customShortcuts: StateFlow<List<SearchShortcut>> = _customShortcuts.asStateFlow()
+
+    private fun loadCustomShortcuts(): List<SearchShortcut> {
+        val raw = prefs.getString(KEY_CUSTOM_SHORTCUTS, null) ?: return emptyList()
+        return runCatching {
+            val arr = org.json.JSONArray(raw)
+            (0 until arr.length()).map { arr.getJSONObject(it) }.map { SearchShortcut(it.getString("k"), it.getString("l"), it.getString("t")) }
+        }.getOrElse { BrowserLog.warn("settings", "Could not read search shortcuts", it); emptyList() }
+    }
+
+    private fun saveCustomShortcuts(list: List<SearchShortcut>) {
+        val arr = org.json.JSONArray()
+        list.forEach { arr.put(org.json.JSONObject().put("k", it.keyword).put("l", it.label).put("t", it.template)) }
+        prefs.edit().putString(KEY_CUSTOM_SHORTCUTS, arr.toString()).apply()
+        _customShortcuts.value = list
+        SearchShortcuts.custom = list
+    }
+
+    /** Adds or replaces the shortcut with this keyword. Returns false when the keyword or address is not valid. */
+    fun addCustomShortcut(keyword: String, label: String, template: String): Boolean {
+        val k = keyword.trim().lowercase()
+        val t = template.trim()
+        if (!SearchShortcuts.validKeyword(k) || !SearchShortcuts.validTemplate(t)) return false
+        saveCustomShortcuts(_customShortcuts.value.filter { it.keyword != k } + SearchShortcut(k, label.trim().ifEmpty { k }, t))
+        UsageStats.count("setting.search_shortcut_add")
+        BrowserLog.info("settings", "Search shortcut \"$k\" saved")
+        return true
+    }
+
+    fun removeCustomShortcut(keyword: String) {
+        saveCustomShortcuts(_customShortcuts.value.filter { it.keyword != keyword })
+        BrowserLog.info("settings", "Search shortcut \"$keyword\" removed")
+    }
+
+    init {
+        SearchShortcuts.enabled = _searchShortcutsOn.value
+        SearchShortcuts.custom = _customShortcuts.value
+    }
+
     private val _searchEngines = MutableStateFlow(loadSearchEngines())
     /** Engines the user has turned on. When more than one is on, a search asks which to use. */
     val searchEngines: StateFlow<Set<SearchEngine>> = _searchEngines.asStateFlow()
@@ -783,6 +836,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_SEARCH_ENGINES = "search_engines"
         private const val KEY_SEARCH_DEFAULT = "search_default"
         private const val KEY_ASK_EACH_SEARCH = "ask_each_search"
+        private const val KEY_SEARCH_SHORTCUTS = "search_shortcuts_on"
+        private const val KEY_CUSTOM_SHORTCUTS = "search_shortcuts_custom"
         private const val KEY_HOME_PAGE = "home_page"
         private const val KEY_USAGE_STATS = "usage_stats"
         private const val KEY_APPEARANCE = "appearance"
