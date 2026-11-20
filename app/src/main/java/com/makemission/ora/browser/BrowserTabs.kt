@@ -175,6 +175,27 @@ class BrowserTab(
         }
     }
 
+    /** Lab: an address on this tab that may imitate another site, waiting for the card's answer. Null when none. */
+    var lookalike by mutableStateOf<com.makemission.ora.labs.Lookalike?>(null)
+        private set
+    private val lookalikeAnswered = HashSet<String>()
+    private var redirectHops = 0
+
+    /** Dismisses the lookalike card, remembering the host so it is not raised again on this tab. */
+    fun answerLookalike(keep: Boolean) {
+        val item = lookalike ?: return
+        lookalikeAnswered += item.host
+        lookalike = null
+        plog.info("labs", "Lookalike warning for ${item.host}: ${if (keep) "kept browsing" else "went back"}")
+        if (!keep) { if (canGoBack) session.goBack() else session.loadUri("about:blank") }
+    }
+
+    /** Lab: applies or removes the generic browser identity. A desktop-site tab keeps the desktop identity. */
+    fun applyGenericIdentity() {
+        val generic = com.makemission.ora.labs.Labs.on(com.makemission.ora.labs.LabFeature.GENERIC_USER_AGENT) && !desktopSite
+        session.settings.userAgentOverride = if (generic) com.makemission.ora.labs.Labs.GENERIC_USER_AGENT else null
+    }
+
     /** Switches this tab between the mobile and desktop user agent, then reloads so the change applies. */
     fun applyDesktopSite(enabled: Boolean) {
         desktopSite = enabled
@@ -183,7 +204,27 @@ class BrowserTab(
         } else {
             GeckoSessionSettings.USER_AGENT_MODE_MOBILE
         }
+        applyGenericIdentity()
         session.reload()
+    }
+
+    /** Labs that watch a navigation: the lookalike warning and the redirect-chain note. Never blocks the load. */
+    private fun labsOnRequest(request: GeckoSession.NavigationDelegate.LoadRequest) {
+        val labs = com.makemission.ora.labs.Labs
+        if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_CURRENT) return
+        if (labs.on(com.makemission.ora.labs.LabFeature.SCENARIO_LOG)) {
+            redirectHops = if (request.isRedirect) redirectHops + 1 else 0
+            if (redirectHops == com.makemission.ora.labs.Labs.LONG_REDIRECT_CHAIN) {
+                plog.warn("labs", "Scenario: ${redirectHops} redirects in a row on tab $id, now heading to ${popupSiteOf(request.uri)}")
+            }
+        }
+        if (labs.on(com.makemission.ora.labs.LabFeature.LOOKALIKE_WARNING)) {
+            val found = com.makemission.ora.labs.LookalikeCheck.inspect(request.uri)
+            if (found != null && found.host !in lookalikeAnswered && lookalike == null) {
+                lookalike = found
+                plog.warn("labs", "Lookalike address flagged: ${found.host} (${found.reason})")
+            }
+        }
     }
 
     init {
@@ -199,10 +240,14 @@ class BrowserTab(
                 // A tab still waiting to be loaded keeps its saved address too, or the sidebar lists it as about:blank.
                 if (!loaded && url == "about:blank") return
                 url?.let { this@BrowserTab.url = it }
+                // The lookalike card belongs to one address; leaving it for another site takes the card away.
+                lookalike?.let { l -> if (url != null && !url.contains(l.host)) lookalike = null }
             }
 
-            override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): GeckoResult<AllowOrDeny>? =
-                GeckoResult.fromValue(onLinkRequest(this@BrowserTab, request).also { if (it == AllowOrDeny.DENY) deniedForApp = true })
+            override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): GeckoResult<AllowOrDeny>? {
+                labsOnRequest(request)
+                return GeckoResult.fromValue(onLinkRequest(this@BrowserTab, request).also { if (it == AllowOrDeny.DENY) deniedForApp = true })
+            }
 
             override fun onNewSession(session: GeckoSession, uri: String): GeckoResult<GeckoSession>? {
                 val siteDomain = popupSiteOf(this@BrowserTab.url)
@@ -242,6 +287,10 @@ class BrowserTab(
                 val message = ErrorPage.messageFor(error.code, error.category, host, online)
                 // The plain title and cause the error page shows, so the log and the page say the same thing.
                 val connection = if (online) "online" else "offline"
+                if (com.makemission.ora.labs.Labs.on(com.makemission.ora.labs.LabFeature.SCENARIO_LOG) &&
+                    error.category == WebRequestError.ERROR_CATEGORY_SECURITY) {
+                    plog.warn("labs", "Security check failed for $host: ${message.title}. The page was not opened.")
+                }
                 plog.error("page", "Could not load $failed: ${message.title} (${message.support}, code ${error.code}, $connection)")
                 // One card per cause, in place of GeckoView's blank error page.
                 if (failed.isBlank() || failed.startsWith("data:")) return null
@@ -353,6 +402,9 @@ class BrowserTab(
 
             override fun onCrash(session: GeckoSession) {
                 plog.error("page", "Renderer crashed for ${this@BrowserTab.url}")
+                if (com.makemission.ora.labs.Labs.on(com.makemission.ora.labs.LabFeature.SCENARIO_LOG)) {
+                    plog.warn("labs", "Scenario: the page process crashed on tab $id; the tab can be reloaded")
+                }
             }
         }
         // Location, camera, microphone and notification requests go to the prompt, or to the saved answer for the site.
@@ -366,6 +418,7 @@ class BrowserTab(
         } else {
             GeckoSessionSettings.USER_AGENT_MODE_MOBILE
         }
+        applyGenericIdentity()
         // A pop-up session is opened by GeckoView itself, and its page is loaded by GeckoView, not here.
         if (adopt == null) session.open(GeckoEngine.runtime(context))
         // The start page is drawn natively, so it never goes to GeckoView.
