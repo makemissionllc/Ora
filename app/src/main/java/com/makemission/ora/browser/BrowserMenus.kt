@@ -1,5 +1,7 @@
 package com.makemission.ora.browser
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.layout.offset
 import com.makemission.ora.ui.DisclosureChevron
 import androidx.activity.compose.BackHandler
@@ -371,6 +373,7 @@ private fun BrowserMenuSidePanel(
             // 12 dp from the right and bottom edges, below the floating row. Only the panel's own shape clips;
             // content taller than the panel scrolls instead of being cut off.
             val shape = RoundedCornerShape(BrowserTokens.SidePanelRadius)
+            val menuScroll = rememberScrollState()
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -381,7 +384,24 @@ private fun BrowserMenuSidePanel(
                     .shadow(BrowserTokens.FloatingBarElevation, shape)
                     .clip(shape)
                     .background(browserColors().Surface)
-                    .verticalScroll(rememberScrollState())
+                    // A 24 dp fade at the bottom edge while more rows wait below, so a half-cut row reads as "more".
+                    .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+                    .drawWithContent {
+                        drawContent()
+                        if (menuScroll.canScrollForward) {
+                            val fade = 24.dp.toPx()
+                            drawRect(
+                                androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    listOf(androidx.compose.ui.graphics.Color.Black, androidx.compose.ui.graphics.Color.Transparent),
+                                    startY = size.height - fade, endY = size.height,
+                                ),
+                                topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - fade),
+                                size = androidx.compose.ui.geometry.Size(size.width, fade),
+                                blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+                            )
+                        }
+                    }
+                    .verticalScroll(menuScroll)
                     .padding(top = 16.dp)
             ) {
                 content(act)
