@@ -49,6 +49,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             val font by settings.font.collectAsState()
             val webFont by settings.webFont.collectAsState()
+            val searchSuggestions by settings.searchSuggestions.collectAsState()
+            val defaultSearchEngine by settings.defaultSearchEngine.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(searchSuggestions, defaultSearchEngine) {
+                com.makemission.ora.browser.SearchSuggest.engine = if (searchSuggestions) defaultSearchEngine else null
+            }
             val preloadMode by settings.preloadMode.collectAsState()
             androidx.compose.runtime.LaunchedEffect(preloadMode) { com.makemission.ora.browser.Preloader.mode = preloadMode }
             androidx.compose.runtime.LaunchedEffect(font, webFont) {

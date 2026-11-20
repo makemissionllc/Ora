@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Search suggestions: as you type in the address bar, Ora now shows phrases from your default search engine, like Google does, with the part you have not typed yet in bold. Tap one to search, or tap its arrow to put it in the field and keep typing. Your bookmarks and open tabs still appear below. What you type is sent to your search engine, so there is a Search suggestions switch under Settings > Search, and private tabs never use it.  (`9176236`)"),
             ChangeItem(ChangeKind.FIXED, "Big downloads no longer stop by themselves and wait for you to tap Resume. They carry on after Ora is closed by the system or the tablet sleeps, and after a lost connection they are tried again every 2 minutes (up to 30 tries without new data, never for a missing or forbidden file). While it waits, the row says Connection lost. Trying again soon. A download you pause yourself still stays paused.  (`1428738`)"),
             ChangeItem(ChangeKind.ADDED, "Preloading: while you type in the address bar, Ora now looks up the address of the site you are most likely heading to, so the page starts sooner. Choose Off, Wi-Fi only or Always under Settings > Tabs. Only the address is looked up, nothing is downloaded, and private tabs never do it. Wi-Fi only skips mobile data and Data Saver.  (`5fdd3d7`)"),
         ),
