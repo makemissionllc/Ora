@@ -357,6 +357,8 @@ class BrowserTab(
         }
         // Location, camera, microphone and notification requests go to the prompt, or to the saved answer for the site.
         session.permissionDelegate = SitePermissionDelegate(id, isPrivate, sitePermissions)
+        // Upload buttons and file inputs open the Android file picker.
+        session.promptDelegate = FilePromptDelegate(appContext)
         // Set the user agent before the session opens so the first page already uses it.
         desktopSite = desktopByDefault
         session.settings.userAgentMode = if (desktopByDefault) {
