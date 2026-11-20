@@ -207,6 +207,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `222beea` | Search suggestions unfold from the address capsule (`BrowserScreen.kt`). Previous component: the address capsule | Not checked | Tablet (landscape): typing "wiki" showed the list as a flat surface the capsule's width and colour directly under it, keyboard stayed open, six rows. The unfolding motion itself and fold-back on Back were not captured on a still screenshot. Dark mode only |
 | 2026-11-20 | `8e5afa4` | Fix start-up crash: app-link members declared before `init` (`BrowserTabs.kt`). No new surface | Not checked | Tablet (landscape): after the fix Ora starts into the reopened tab with no crash (before it, launch crashed with a null appLinkMode). Phone Not checked |
 | 2026-11-20 | `0e3ce2d` | Page prompts (`browser/PagePrompts.kt`, `PagePromptHost.kt`). Previous component: the page control that was tapped | Not checked | Tablet (landscape, 3200x2136): a date field opened the calendar, picking 25 and Set filled the field (d=2026-11-25); a select opened the list, Two was chosen and the page got it; Confirm showed an Ora dialog and OK returned true. Time, date-time, month, week, multi-select, alert and text prompts Not checked |
 | 2026-11-20 | `b6a9548` | Slow page tip reads the load progress and address after the wait (`browser/SlowLoadTip.kt`). No new surface | Not checked | Build passes only. Not seen on a device |
