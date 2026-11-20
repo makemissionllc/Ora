@@ -1410,6 +1410,8 @@ private fun BrowserContent(
         }
         }
     }
+    // A page's own questions (alerts, lists, dates). The dialog grows out of the spot that was touched.
+    PagePromptHost()
     // A site's permission prompt, under the address bar. The tablet tab overview below covers it.
     // On the phone bottom-bar layout there is no top bar, so the card starts below the status bar's height.
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()

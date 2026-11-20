@@ -67,7 +67,7 @@ object FilePicker {
 }
 
 /** Answers a page's file request by showing [FilePicker]. */
-class FilePromptDelegate(private val context: Context) : PromptDelegate {
+open class FilePromptDelegate(private val context: Context) : PromptDelegate {
     override fun onFilePrompt(session: GeckoSession, prompt: PromptDelegate.FilePrompt): GeckoResult<PromptDelegate.PromptResponse>? {
         val result = GeckoResult<PromptDelegate.PromptResponse>()
         val multiple = prompt.type == PromptDelegate.FilePrompt.Type.MULTIPLE
