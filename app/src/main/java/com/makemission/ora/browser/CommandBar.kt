@@ -19,6 +19,8 @@ object CommandBar {
         Command("Settings", "Open Ora's settings"),
         Command("Find in page", "Search the page you are on"),
         Command("Hide an element", "Pick something on this page to hide"),
+        Command("Site tweaks", "Dark, wide text or a font for this site"),
+        Command("Toggle dark colours", "Turn dark colours on or off for this site"),
         Command("Save as PDF", "Save this page as a PDF"),
         Command("Save session", "Save the open tabs under a name"),
         Command("Saved sessions", "Open or delete saved sessions"),

@@ -8,6 +8,7 @@ Last updated: 2026-11-18, at commit `a1f02a2`.
 Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every feature so far). Each new feature gets `feature/<name>` off `develop`; see AGENTS.md Branch rules 30 to 36. Older branches (`browser-geckoview`, `fix-quick-resume-log`, `passkeys-credman`, `status-bar-frozen`) are left as they were.
 
 ## Done
+- Site tweaks (`HASH`, `assets/sitetweaks/`, `extensions/SiteTweaksBridge.kt`, `settings/SiteTweaks.kt`, `browser/SiteTweaksDialog.kt`): per site (host without www) dark colours (inverted page, pictures re-inverted), wider text and a serif / sans / mono font, applied by a bundled extension; stored in `ora_site_tweaks`; private tabs never save. The font rule carries an id so it beats the global Website font. Dialog grows from the menu row / command bar / Ctrl+Shift+D (previous component: menu row). QoL: `>dark` toggle with a notice, Reset this site, one dialog for all three. Not done: per-site force-dark through GeckoView's own colour scheme (no per-site API found, so the page is inverted instead, which can make dark headers light); wider text only widens common content containers.
 - Element zapper (`6ec9418`, `assets/zapper/`, `extensions/ZapperBridge.kt`, `settings/ElementZapper.kt`, `browser/ZapperDialog.kt`): bundled WebExtension injects `display:none` rules per site and runs an in-page picker (Hide / Bigger / Cancel); rules are per profile in `ora_zapper_<profileId>`; private tabs hide for the page only and save nothing. Dialog grows from the menu row / command bar / Ctrl+Shift+X (previous component: menu row). QoL: Bigger, Esc and Ctrl+Shift+X cancel, Show again asks first. Not done: long-press on an element (GeckoView's context menu only reports links and images), undoing a single element, hiding inside iframes. The picker bar is in the page, so it uses fixed dark colours, not the palette (exception).
 - Command bar (`79d227b`, `browser/CommandBar.kt`, `browser/AddressSuggestions.kt`, `browser/BrowserScreen.kt`): ">" in the address bar lists matching actions in the suggestions dropdown (which already grows from the capsule; previous component: the address capsule); Go runs the top match; `runAction` is shared with the Quick switcher. QoL: action hints, "No command matches" notice, one shared action list. Not done: commands that take arguments.
 - Saved sessions (`86dd201`, `settings/SavedSessions.kt`, `browser/SessionsDialog.kt`, `browser/KeyShortcuts.kt`): ⋮ menu row, Quick switcher items and Ctrl+Shift+O open the dialog (grows from the pressed control via `OraDialog`; previous component: menu row / switcher / shortcut); Ctrl+Shift+S quick-saves. QoL: default names, already-open pages skipped with a notice, delete confirmation. Private tabs excluded.
@@ -199,13 +200,13 @@ Passkeys work in Ora through Bitwarden (checked on the phone, see Done). Google'
 Ideas only, nothing built yet. The full list, with the rules, each idea's API check and its size, is in [Designs/ORA-IDEAS.md](Designs/ORA-IDEAS.md).
 
 Priority 1 (do first):
-- Site tweaks: per-site switches to hide elements, force dark, change font and widen text.
 - Profile rules: built for typed addresses (`32c2e34`, `feature/profile-site-rules`). Bookmarks, history entries and overview search matches follow a rule too (`3d177c8`, `feature/profile-rules-everywhere`). Links tapped on a page do not yet.
 
 Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to build yet; the order is for the user to set.
 
 ## Known issues
 
+- Phone, USB keyboard events sent by adb: Ctrl+Shift+D and Ctrl+Shift+O sometimes did nothing once the page or address bar had been used, yet worked straight after launch (seen 2026-11-20). Cause not found; not checked with a real keyboard.
 - Page `alert()` showed no dialog on `prompts.html` on the tablet (seen 2026-11-20, three taps) but works on a clean page (`alert.html`: dialog shown, OK closed it). Cause not found; may be that page or tap timing. Watch for it again.
 - Back with the suggestions list open and the keyboard already hidden leaves Ora instead of closing the list (seen 2026-11-20).
 
@@ -225,6 +226,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `HASH` | Site tweaks | Phone (dark): menu row and Ctrl+Shift+D opened the card; Dark colours turned phonearena.com dark and stayed after a restart; Mono font applied after the id fix (it lost to the global Website font before). Wider text, Serif / Sans, >dark command, Reset, private tab, Light / Pure dark not seen. The shortcut did not open the card after typing in the address bar or after other use, but worked straight after launch | Tablet: Not checked (not connected) |
 | 2026-11-20 | `6ec9418` | Element zapper | Phone (dark, phonearena.com): menu row and Ctrl+Shift+X start the picker; tapping a chip selected it, Bigger grew the outline to the whole chip, Hide removed it (log: An element was hidden) and it stayed hidden after a reload. Dialog list, Show again, private tab, Light / Pure dark not seen | Tablet: Not checked (not connected) |
 | 2026-11-20 | `79d227b` | Command bar | Phone (dark): typing > then sett showed one Settings row with a bolt icon and hint; Go opened Settings (log: Action run: Settings). Quick switcher list, Close tab, no-match notice, Light / Pure dark not seen | Tablet: Not checked (not connected) |
 | 2026-11-20 | `86dd201` | Saved sessions | Phone (dark): menu row opens dialog; Save added a row and notice 'Session saved with 3 pages'; Open gave 'All 3 pages are already open' (log: 0 new, 3 already open); Ctrl+Shift+O opened the dialog; Delete showed its confirmation. Quick switcher items, Ctrl+Shift+S, Light / Pure dark not seen | Tablet: Not checked (not connected) |
