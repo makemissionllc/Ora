@@ -28,6 +28,11 @@ class KeyShortcutsTest {
         assertNull(r(KeyEvent.KEYCODE_C, ctrl = true))
     }
 
+    @Test fun altHomeIsTheStartPage() {
+        assertEquals(Shortcut.START_PAGE, r(KeyEvent.KEYCODE_MOVE_HOME, alt = true))
+        assertNull(r(KeyEvent.KEYCODE_MOVE_HOME))
+    }
+
     @Test fun plainTypingIsNeverTaken() {
         assertNull(r(KeyEvent.KEYCODE_L))
         assertNull(r(KeyEvent.KEYCODE_T, shift = true))
