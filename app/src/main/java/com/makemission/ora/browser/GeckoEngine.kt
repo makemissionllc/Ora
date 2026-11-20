@@ -42,6 +42,7 @@ object GeckoEngine {
      * default settings, the no-tap card will not appear, and the failure is logged.
      */
     private fun createRuntime(context: Context): GeckoRuntime {
+        Preloader.init(context)
         val config = writePopupConfig(context) ?: return GeckoRuntime.getDefault(context)
         val settings = GeckoRuntimeSettings.Builder().configFilePath(config.absolutePath).build()
         return GeckoRuntime.create(context, settings)
@@ -49,15 +50,28 @@ object GeckoEngine {
 
     private fun writePopupConfig(context: Context): File? =
         try {
-            File(context.filesDir, "gecko-config.yaml").also { it.writeText(POPUP_CONFIG) }
+            File(context.filesDir, "gecko-config.yaml").also { it.writeText(configText(context)) }
         } catch (error: IOException) {
             BrowserLog.warn("popup", "Could not write the GeckoView config, so no-tap pop-ups may be dropped", error)
             null
         }
 
-    private const val POPUP_CONFIG = """prefs:
-  dom.disable_open_during_load: false
-env: {}
-args: []
-"""
+    /**
+     * The start-up preferences. When preloading is allowed at start-up, Gecko's own speculative connections and
+     * DNS prefetch are switched on too, so it opens connections to sites it has learned you visit. Changing the
+     * Preloading setting takes full effect the next time Ora starts.
+     */
+    private fun configText(context: Context): String {
+        val mode = com.makemission.ora.settings.SettingsRepository(context).preloadMode.value
+        Preloader.mode = mode
+        val ahead = Preloader.allowedNow(mode)
+        BrowserLog.info("preload", "Preloading ${mode.label}; Gecko speculative connections ${if (ahead) "on" else "off"}")
+        val extra = if (ahead) PRELOAD_PREFS else ""
+        return "prefs:\n  dom.disable_open_during_load: false\n$extra" + "env: {}\nargs: []\n"
+    }
+
+    private const val PRELOAD_PREFS = "  network.predictor.enabled: true\n" +
+        "  network.http.speculative-parallel-limit: 6\n" +
+        "  network.dns.disablePrefetch: false\n" +
+        "  network.dns.disablePrefetchFromHTTPS: false\n"
 }

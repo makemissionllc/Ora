@@ -64,6 +64,17 @@ enum class AddressSwipeEffect(val key: String, val label: String, val detail: St
     }
 }
 
+/** When Ora may get a head start on the site you are most likely to open next. */
+enum class PreloadMode(val key: String, val label: String, val detail: String) {
+    OFF("off", "Off", "Nothing is looked up ahead of time."),
+    WIFI("wifi", "Wi-Fi only", "Looks up the likely next site on Wi-Fi, never on mobile data or with Data Saver on."),
+    ALWAYS("always", "Always", "Looks up the likely next site on any connection. Uses a very small amount of data.");
+
+    companion object {
+        fun fromKey(key: String?): PreloadMode = entries.firstOrNull { it.key == key } ?: WIFI
+    }
+}
+
 /**
  * Single source of truth for all app settings.
  *
@@ -545,6 +556,17 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Address bar swipe effect ${effect.label}")
     }
 
+    private val _preloadMode = MutableStateFlow(PreloadMode.fromKey(prefs.getString(KEY_PRELOAD_MODE, null)))
+    /** Whether Ora looks up the likely next site ahead of time, and on which connections. */
+    val preloadMode: StateFlow<PreloadMode> = _preloadMode.asStateFlow()
+
+    fun setPreloadMode(mode: PreloadMode) {
+        prefs.edit().putString(KEY_PRELOAD_MODE, mode.key).apply()
+        _preloadMode.value = mode
+        UsageStats.count("setting.preload_mode")
+        BrowserLog.info("settings", "Preloading ${mode.label}")
+    }
+
     private val _paletteStyle = MutableStateFlow(PaletteStyle.fromKey(prefs.getString(KEY_PALETTE_STYLE, null)))
     /** Original blue controls, or controls in Material colours from the theme. Backgrounds never change. */
     val paletteStyle: StateFlow<PaletteStyle> = _paletteStyle.asStateFlow()
@@ -657,6 +679,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_MOTION_STYLE = "motion_style"
         private const val KEY_ADDRESS_SWIPE_TARGET = "address_swipe_target"
         private const val KEY_ADDRESS_SWIPE_EFFECT = "address_swipe_effect"
+        private const val KEY_PRELOAD_MODE = "preload_mode"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_WEB_FONT = "web_font"

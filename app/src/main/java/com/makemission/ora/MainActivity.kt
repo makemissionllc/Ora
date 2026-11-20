@@ -49,6 +49,8 @@ class MainActivity : ComponentActivity() {
         setContent {
             val font by settings.font.collectAsState()
             val webFont by settings.webFont.collectAsState()
+            val preloadMode by settings.preloadMode.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(preloadMode) { com.makemission.ora.browser.Preloader.mode = preloadMode }
             androidx.compose.runtime.LaunchedEffect(font, webFont) {
                 com.makemission.ora.extensions.WebFontBridge.apply(if (webFont) font.key else null)
             }

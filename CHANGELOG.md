@@ -8,6 +8,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ## Unreleased
 
+### 2026-11-20
+
+**Added**
+- Preloading: while you type in the address bar, Ora now looks up the address of the site you are most likely heading to, so the page starts sooner. Choose Off, Wi-Fi only or Always under Settings > Tabs. Only the address is looked up, nothing is downloaded, and private tabs never do it. Wi-Fi only skips mobile data and Data Saver. (`5fdd3d7`)
+
 ### 2026-11-19
 
 **Added**
