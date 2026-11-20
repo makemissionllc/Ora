@@ -395,6 +395,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Fast downloads for plain http ${if (enabled) "on" else "off"}")
     }
 
+    private val _showGroupStrip = MutableStateFlow(prefs.getBoolean(KEY_SHOW_GROUP_STRIP, true))
+    /** Whether the group strip shows while the open tab is in a group. On by default. */
+    val showGroupStrip: StateFlow<Boolean> = _showGroupStrip.asStateFlow()
+
+    fun setShowGroupStrip(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SHOW_GROUP_STRIP, enabled).apply()
+        _showGroupStrip.value = enabled
+        BrowserLog.info("settings", "Group strip ${if (enabled) "on" else "off"}")
+    }
+
     private val _toolbarItems = MutableStateFlow(ToolbarConfig.parse(prefs.getString(KEY_TOOLBAR_ITEMS, null)))
     /** The buttons in the phone Top layout's bottom toolbar, in order. Menu is always added last by the bar. */
     val toolbarItems: StateFlow<List<ToolbarItem>> = _toolbarItems.asStateFlow()
@@ -799,6 +809,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_HINTS = "hints_enabled"
         private const val KEY_SEEN_HINTS = "hints_seen"
         private const val KEY_FAST_HTTP_DOWNLOADS = "fast_http_downloads"
+        private const val KEY_SHOW_GROUP_STRIP = "show_group_strip"
         private const val KEY_TOOLBAR_ITEMS = "toolbar_items"
         private const val KEY_IMAGE_ALWAYS_ASK = "image_always_ask"
         private const val KEY_IMAGE_SAVE_FOLDER = "image_save_folder"
