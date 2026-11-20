@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
+- Motion polish: the Tabs, Bookmarks and History switch in the tablet sidebar slides one pill under the labels, the list moves in the same direction, and swiping the list changes section. The address capsule widens when you tap it and the address slides left. The group strip's active ring glides between icons, and the tablet menu grows out of the ⋯ button. With Remove animations on, these use plain fades. (`b82c345`)
 - Closing a tab card now fades it out and its neighbours slide together, and tabs added to or removed from the group strip slide in and out, with the active ring fading between icons. (`cef0b34`)
 - Small motion polish: switches slide their thumb and fade their colour, the tab count rolls up or down, Reload and Stop turn as they swap, and messages at the bottom rise into place. Motion follows the Remove animations setting. (`4e2e39f`)
 - Swiping the address bar or bottom bar sideways now lifts the page into a small card with your neighbouring tabs beside it. The cards follow your finger, the domain shows underneath, and releasing settles on the nearest tab. Tapping a tab in the group strip slides straight to it. The page is swapped in behind the cards, so there is no blank flash. With Remove animations on, it is a short fade instead. (`5ce52a2`)
