@@ -1,5 +1,7 @@
 package com.makemission.ora.browser
 
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
 import androidx.compose.ui.layout.layout
 import androidx.compose.animation.EnterExitState
@@ -929,9 +931,23 @@ private fun BrowserContent(
     val toolbarHidden = phoneOverlay != PhoneOverlay.NONE || showDownloads || tabletTabsOpen || selected.videoFullScreen
     // The tablet group row. Tablet Top keeps it in the top bar column; Tablet Compact adds its height to the row's inset,
     // so the page, the menu and the prompts all start below it and it never covers the top of a site.
-    val tabletStripVisible = isTablet && groupStripVisible(tabs, showGroupStrip, !toolbarHidden && !selected.chromeHidden && !showSidebar)
+    val tabletStripVisible = isTablet && groupStripVisible(tabs, showGroupStrip, !toolbarHidden && (barStyle == BarStyle.TOP || !selected.chromeHidden) && !showSidebar)
     val stripPad by animateDpAsState(if (tabletStripVisible && tabletCompact) BrowserTokens.GroupRowHeight else 0.dp, OraMotion.enter(), label = "group row inset")
     val compactInset = compactRowHeight + stripPad
+    // Tablet Top: the bar follows the scroll 1:1, then settles shown or hidden (Standard) when the finger stops.
+    val barFraction = remember { Animatable(0f) }
+    val reducedBar = com.makemission.ora.ui.theme.LocalReducedMotion.current
+    LaunchedEffect(selected.id) {
+        snapshotFlow { selected.chromeProgress }.collectLatest { p ->
+            barFraction.snapTo(p)
+            if (p > 0f && p < 1f) {
+                delay(140)
+                val target = if (p > 0.5f) 1f else 0f
+                if (reducedBar) barFraction.snapTo(target) else barFraction.animateTo(target, OraMotion.standard())
+                selected.chromeProgress = target
+            }
+        }
+    }
     val onNewTabInGroup: (TabGroup) -> Unit = { g ->
         val t = tabs.newTab(BrowserTabs.START_URL, select = true)
         tabs.moveToGroup(t.id, g.id)
@@ -1144,10 +1160,13 @@ private fun BrowserContent(
             }
         },
         topBar = {
-            Column(modifier = Modifier.fillMaxWidth().onSizeChanged { topBarHeight = with(density) { it.height.toDp() } }) {
+            Column(modifier = Modifier.fillMaxWidth()
+                .then(if (isTablet && barStyle == BarStyle.TOP) Modifier.scrollFold { barFraction.value } else Modifier)
+                .onSizeChanged { topBarHeight = with(density) { it.height.toDp() } }) {
             // Adaptive shrink: the top bar folds up while the page is scrolled down, and returns on scroll up.
             AnimatedVisibility(
-                visible = topLayout && !selected.chromeHidden && !toolbarHidden,
+                // The tablet Top bar folds with the scroll itself (scrollFold), so only the overlays hide it here.
+                visible = topLayout && (!selected.chromeHidden || (isTablet && barStyle == BarStyle.TOP)) && !toolbarHidden,
                 enter = fadeIn(OraMotion.enter()) + expandVertically(expandFrom = Alignment.Top, animationSpec = OraMotion.enter()),
                 exit = fadeOut(OraMotion.exit()) + shrinkVertically(shrinkTowards = Alignment.Top, animationSpec = OraMotion.exit())
             ) {
@@ -1185,7 +1204,7 @@ private fun BrowserContent(
             }
             if (isTablet && barStyle == BarStyle.TOP) GroupTabStrip(
                 tabs = tabs, enabled = showGroupStrip, tablet = true,
-                shown = !toolbarHidden && !selected.chromeHidden && !showSidebar,
+                shown = !toolbarHidden && !showSidebar,
                 state = groupDialogs, onNewTabInGroup = onNewTabInGroup, inFlow = true,
             )
             }
@@ -2739,6 +2758,15 @@ private fun Modifier.widenOnFocus(fraction: Float, extra: androidx.compose.ui.un
     val grow = (extra.toPx() * fraction).roundToInt()
     val placeable = measurable.measure(constraints.copy(minWidth = 0, maxWidth = constraints.maxWidth + 2 * grow))
     layout(constraints.maxWidth.coerceAtMost(placeable.width), placeable.height) { placeable.placeRelative(-grow, 0) }
+}
+
+/** Folds a bar up by [fraction] (0 shown, 1 gone): it shrinks from the top, slides up and fades, so the page below rises with it. */
+private fun Modifier.scrollFold(fraction: () -> Float): Modifier = this.clipToBounds().layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val f = fraction().coerceIn(0f, 1f)
+    layout(placeable.width, (placeable.height * (1f - f)).roundToInt()) {
+        placeable.placeWithLayer(0, -(placeable.height * f).roundToInt()) { alpha = 1f - f }
+    }
 }
 
 /** Movement under this many px counts as a tap, not a swipe attempt, and is not logged as a gesture. */

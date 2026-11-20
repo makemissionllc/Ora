@@ -118,6 +118,8 @@ class BrowserTab(
     /** True while the bars are folded away so the page gets the room. Scrolling down folds them; scrolling up or reaching the top shows them. */
     var chromeHidden by mutableStateOf(false)
         private set
+    /** How far the tablet top bar has followed the scroll, 0 (shown) to 1 (folded). The screen settles it to either end. */
+    var chromeProgress by mutableStateOf(0f)
     /** True while this tab's page has a video in full screen. The bars hide and the gesture layer shows. */
     var videoFullScreen by mutableStateOf(false)
         private set
@@ -137,6 +139,7 @@ class BrowserTab(
     /** Brings the bars back at once, as a tap on the shrunk address bar does. A later scroll folds them again. */
     fun showChrome() {
         chromeHidden = false
+        chromeProgress = 0f
         foldDistance = 0
     }
 
@@ -380,6 +383,8 @@ class BrowserTab(
                 // GeckoView reports small steps (1 to 2 px per event), so add them up in one direction
                 // and fold once the total passes the threshold. A change of direction starts over.
                 foldDistance = if (delta == 0 || (foldDistance >= 0) == (delta >= 0)) foldDistance + delta else delta
+                // The tablet top bar follows the scroll itself: down folds it, up unfolds it, the top shows it in full.
+                chromeProgress = if (scrollY <= 0) 0f else (chromeProgress + delta / CHROME_FOLD_RANGE_PX).coerceIn(0f, 1f)
                 when {
                     scrollY <= 0 -> {
                         chromeHidden = false
@@ -422,6 +427,7 @@ class BrowserTab(
                 siteStats = null
                 pageRevealed = false
                 chromeHidden = false
+                chromeProgress = 0f
                 lastScrollY = 0
                 scrolled = false
                 // The new page's colour is sampled once it stops loading; the old one must not linger.
@@ -567,6 +573,9 @@ class BrowserTab(
 
 /** Scroll distance in pixels before the bars fold or reappear, so small jitters do not flicker them. */
 private const val SCROLL_FOLD_THRESHOLD_PX = 24
+
+/** Scroll distance, in px, that folds the tablet top bar completely. */
+private const val CHROME_FOLD_RANGE_PX = 160f
 
 /** How long a reopened tab may take to load before quick resume stops waiting for it and saves anyway. */
 const val RESTORE_GRACE_MS = 20_000L
