@@ -1,5 +1,7 @@
 package com.makemission.ora.browser
 
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.layout.offset
 import com.makemission.ora.ui.DisclosureChevron
 import androidx.activity.compose.BackHandler
@@ -17,6 +19,9 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.outlined.AddToHomeScreen
 import androidx.compose.material.icons.outlined.Article
+import androidx.compose.material.icons.outlined.PlaylistAdd
+import androidx.compose.material.icons.outlined.PlaylistAddCheck
+import androidx.compose.material.icons.outlined.Terminal
 import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.OpenInBrowser
 import androidx.compose.material.icons.outlined.ChevronRight
@@ -225,10 +230,10 @@ private fun BrowserMenuItems(
             )
             // Quality of life: one tap copies the page's address, without opening Share first.
             MenuRow(
-                Icons.Outlined.Article, if (isReadLater) "Remove from reading list" else "Add to reading list", onReadLater,
+                if (isReadLater) Icons.Outlined.PlaylistAddCheck else Icons.Outlined.PlaylistAdd, if (isReadLater) "Remove from reading list" else "Add to reading list", onReadLater,
                 subtitle = if (isReadLater) "Saved to read later" else null,
             )
-            MenuRow(Icons.Outlined.Search, "Quick switcher", onQuickSwitcher, subtitle = "Find a tab, bookmark, page or action")
+            MenuRow(Icons.Outlined.Terminal, "Quick switcher", onQuickSwitcher, subtitle = "Find a tab, bookmark, page or action")
             MenuRow(Icons.Outlined.PictureAsPdf, "Save as PDF", onSavePdf, subtitle = "To Downloads, named after the page")
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)
@@ -371,6 +376,7 @@ private fun BrowserMenuSidePanel(
             // 12 dp from the right and bottom edges, below the floating row. Only the panel's own shape clips;
             // content taller than the panel scrolls instead of being cut off.
             val shape = RoundedCornerShape(BrowserTokens.SidePanelRadius)
+            val menuScroll = rememberScrollState()
             Box(
                 modifier = Modifier
                     .fillMaxHeight()
@@ -381,7 +387,24 @@ private fun BrowserMenuSidePanel(
                     .shadow(BrowserTokens.FloatingBarElevation, shape)
                     .clip(shape)
                     .background(browserColors().Surface)
-                    .verticalScroll(rememberScrollState())
+                    // A 24 dp fade at the bottom edge while more rows wait below, so a half-cut row reads as "more".
+                    .graphicsLayer { compositingStrategy = androidx.compose.ui.graphics.CompositingStrategy.Offscreen }
+                    .drawWithContent {
+                        drawContent()
+                        if (menuScroll.canScrollForward) {
+                            val fade = 24.dp.toPx()
+                            drawRect(
+                                androidx.compose.ui.graphics.Brush.verticalGradient(
+                                    listOf(androidx.compose.ui.graphics.Color.Black, androidx.compose.ui.graphics.Color.Transparent),
+                                    startY = size.height - fade, endY = size.height,
+                                ),
+                                topLeft = androidx.compose.ui.geometry.Offset(0f, size.height - fade),
+                                size = androidx.compose.ui.geometry.Size(size.width, fade),
+                                blendMode = androidx.compose.ui.graphics.BlendMode.DstIn,
+                            )
+                        }
+                    }
+                    .verticalScroll(menuScroll)
                     .padding(top = 16.dp)
             ) {
                 content(act)

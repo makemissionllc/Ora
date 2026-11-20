@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -49,6 +50,12 @@ import com.makemission.ora.ui.theme.BrowserTokens
 import com.makemission.ora.ui.theme.OraMotion
 import com.makemission.ora.ui.theme.browserColors
 
+/** Whether the strip shows now: on, [shown] by the caller, and the open tab is a normal tab in a group. */
+fun groupStripVisible(tabs: BrowserTabs, enabled: Boolean, shown: Boolean): Boolean {
+    val tab = tabs.selected ?: return false
+    return enabled && shown && !tab.isPrivate && tab.groupId?.let { id -> tabs.groups.any { it.id == id } } == true
+}
+
 /**
  * The group strip: shown only while the open tab is in a group (never for a private tab), and hidden with the
  * toolbar when the page scrolls. Phone: a 60 dp row of site icons with the group's dot and chevron on the left (it
@@ -65,6 +72,8 @@ fun GroupTabStrip(
     shown: Boolean,
     state: GroupDialogState,
     onNewTabInGroup: (TabGroup) -> Unit,
+    /** Tablet: the row sits in the layout (below the toolbar) and pushes the page down, instead of floating over it. */
+    inFlow: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val selected = tabs.selected
@@ -75,38 +84,40 @@ fun GroupTabStrip(
     AnimatedVisibility(
         visible = enabled && shown && group != null,
         modifier = modifier,
-        enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE, transformOrigin = origin),
-        exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE, transformOrigin = origin),
+        enter = fadeIn(OraMotion.overlayFadeIn()) + if (inFlow) androidx.compose.animation.expandVertically(OraMotion.enter(), Alignment.Top) else scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE, transformOrigin = origin),
+        exit = fadeOut(OraMotion.overlayFadeOut()) + if (inFlow) androidx.compose.animation.shrinkVertically(OraMotion.exit(), Alignment.Top) else scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE, transformOrigin = origin),
     ) {
         // The last group stays drawn while the exit plays.
         val g = group ?: return@AnimatedVisibility
         val colors = browserColors()
         Row(
             modifier = Modifier
-                .padding(horizontal = 12.dp)
+                .padding(horizontal = 12.dp, vertical = if (tablet) 2.dp else 0.dp)
                 .fillMaxWidth()
                 .height(if (tablet) 48.dp else 60.dp)
-                .clip(RoundedCornerShape(if (tablet) 24.dp else 30.dp))
-                .background(colors.AddressBarBackground)
+                // The phone row is a capsule; the tablet row has no bar behind it (V9-T-GroupStrip).
+                .then(if (tablet) Modifier else Modifier.clip(RoundedCornerShape(30.dp)).background(colors.AddressBarBackground))
                 .padding(horizontal = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             // The group chip: dot and chevron (phone), dot, name and chevron (tablet). It opens the group sheet.
             Row(
-                Modifier.height(40.dp).clip(RoundedCornerShape(20.dp)).pressFeedback()
+                Modifier.height(if (tablet) 36.dp else 40.dp).clip(RoundedCornerShape(20.dp))
+                    .then(if (tablet) Modifier.background(colors.AddressBarBackground) else Modifier).pressFeedback()
                     .clickable { sheetFor = g.id }
                     .semantics { contentDescription = "Group ${g.name}, ${members.size} tabs" }
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.size(14.dp).clip(CircleShape).background(g.color.color))
-                if (tablet) Text(g.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp).width(90.dp))
+                if (tablet) Text(g.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(start = 8.dp, end = 2.dp).widthIn(max = 140.dp))
                 Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = colors.SecondaryText, modifier = Modifier.size(18.dp))
             }
             // Scrolls sideways when there are more tabs than fit.
             LazyRow(
-                modifier = Modifier.weight(1f),
+                // The tablet row hugs its pills so the chip sits next to them; the phone row fills the capsule.
+                modifier = if (tablet) Modifier.weight(1f, fill = false) else Modifier.weight(1f),
                 contentPadding = PaddingValues(horizontal = 2.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,

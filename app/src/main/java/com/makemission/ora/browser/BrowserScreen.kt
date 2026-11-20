@@ -925,6 +925,16 @@ private fun BrowserContent(
     // so the browser bars never sit over a panel's own header.
     // A full-screen video hides the bars too, so only the video is on screen.
     val toolbarHidden = phoneOverlay != PhoneOverlay.NONE || showDownloads || tabletTabsOpen || selected.videoFullScreen
+    // The tablet group row. Tablet Top keeps it in the top bar column; Tablet Compact adds its height to the row's inset,
+    // so the page, the menu and the prompts all start below it and it never covers the top of a site.
+    val tabletStripVisible = isTablet && groupStripVisible(tabs, showGroupStrip, !toolbarHidden && !selected.chromeHidden && !showSidebar)
+    val stripPad by animateDpAsState(if (tabletStripVisible && tabletCompact) BrowserTokens.GroupRowHeight else 0.dp, OraMotion.enter(), label = "group row inset")
+    val compactInset = compactRowHeight + stripPad
+    val onNewTabInGroup: (TabGroup) -> Unit = { g ->
+        val t = tabs.newTab(BrowserTabs.START_URL, select = true)
+        tabs.moveToGroup(t.id, g.id)
+        BrowserLog.info("groups", "New tab in group from the strip")
+    }
     VideoFullScreenEffect(active = selected.videoFullScreen)
     // Back leaves a full-screen video when the setting is on. The other Back handlers below stand down then,
     // so this one is the one that runs.
@@ -1170,6 +1180,11 @@ private fun BrowserContent(
                     )
                 }
             }
+            if (isTablet && barStyle == BarStyle.TOP) GroupTabStrip(
+                tabs = tabs, enabled = showGroupStrip, tablet = true,
+                shown = !toolbarHidden && !selected.chromeHidden && !showSidebar,
+                state = groupDialogs, onNewTabInGroup = onNewTabInGroup, inFlow = true,
+            )
             }
         },
         bottomBar = { if (isTablet) bottomBarContent() }
@@ -1284,12 +1299,12 @@ private fun BrowserContent(
                     // Phone Compact and Bottom let the page run up under the status bar; push it below, as the fade ends there.
                     belowStatusBar = !isTablet && !topLayout,
                     // Tablet Compact floats over the page; the start page keeps its content clear of the row.
-                    topInset = if (tabletCompact && !selected.videoFullScreen) compactRowHeight else 0.dp,
+                    topInset = if (tabletCompact && !selected.videoFullScreen) compactInset else 0.dp,
                     // Tablet Compact: the space under the floating row takes the page's top colour and the page moves down to meet it.
                     zoneHeight = when {
                         // A full-screen video takes the whole screen, so the space kept for the bar is given up.
                         selected.videoFullScreen -> 0.dp
-                        tabletCompact -> compactRowHeight
+                        tabletCompact -> compactInset
                         phoneCompact -> phoneZoneHeight
                         else -> 0.dp
                     },
@@ -1408,7 +1423,7 @@ private fun BrowserContent(
                             target = target,
                             tabs = tabs,
                             // The page sits lower by the tablet's top zone, so the press point is moved down by the same amount.
-                            pageTop = (if (tabletCompact) compactRowHeight else phoneZoneHeight) * zoneFraction,
+                            pageTop = (if (tabletCompact) compactInset else phoneZoneHeight) * zoneFraction,
                             fromPrivate = selected.isPrivate,
                             onDismiss = { selected.pressTarget = null },
                             onShare = { url -> shareUrl(context, url) },
@@ -1502,7 +1517,7 @@ private fun BrowserContent(
                     BrowserMenuSheet(
                         isTablet = isTablet,
                         // The tablet panel starts below whichever bar is on top: the toolbar (Top) or the floating row (Compact).
-                        topInset = if (tabletCompact) compactRowHeight else topBarHeight,
+                        topInset = if (tabletCompact) compactInset else topBarHeight,
                         closeRequests = menuCloseRequests,
                         isBookmarked = selectedBookmarked,
                         onDismiss = { showMenu = false },
@@ -1675,7 +1690,7 @@ private fun BrowserContent(
                 onOpen = { settings.setTabletSidebar(true) },
                 modifier = Modifier
                     .padding(innerPadding)
-                    .padding(top = if (tabletCompact) compactRowHeight else topBarHeight),
+                    .padding(top = if (tabletCompact) compactInset else topBarHeight),
             )
         }
         if (!isTablet) {
@@ -1711,7 +1726,7 @@ private fun BrowserContent(
     val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     SitePromptOverlay(
         topOffset = when {
-            tabletCompact -> compactRowHeight
+            tabletCompact -> compactInset
             !isTablet && !topLayout -> statusBarTop
             else -> topBarHeight
         },
@@ -1728,18 +1743,15 @@ private fun BrowserContent(
             .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
     )
     // Tabs in the open tab's group, one tap away. It floats above the phone's bottom row, or near the page's bottom on tablet.
-    GroupTabStrip(
+    // Tablet Top draws the row inside the top bar (see topBar); Tablet Compact floats it under the row; the phone docks it above the bar.
+    if (!(isTablet && !tabletCompact)) GroupTabStrip(
         tabs = tabs,
         enabled = showGroupStrip,
         tablet = isTablet,
         shown = !toolbarHidden && !selected.chromeHidden && !(isTablet && showSidebar),
         state = groupDialogs,
-        onNewTabInGroup = { g ->
-            val t = tabs.newTab(BrowserTabs.START_URL, select = true)
-            tabs.moveToGroup(t.id, g.id)
-            BrowserLog.info("groups", "New tab in group from the strip")
-        },
-        modifier = if (isTablet) Modifier.align(Alignment.TopCenter).padding(top = (if (tabletCompact) compactRowHeight else topBarHeight) + 4.dp)
+        onNewTabInGroup = onNewTabInGroup,
+        modifier = if (isTablet) Modifier.align(Alignment.TopCenter).padding(top = compactRowHeight)
         else Modifier.align(Alignment.BottomCenter).padding(bottom = with(density) { bottomBarPx.toDp() } + 12.dp),
     )
     GroupDialogs(tabs, groupDialogs)

@@ -214,6 +214,8 @@ object BrowserTokens {
     val TabSwitchCorner = 28.dp
     /** Gap between the capsules in a tab switch. */
     val TabSwitchGap = 16.dp
+    /** Space the tablet group row takes: a 48 dp row and 2 dp above and below. */
+    val GroupRowHeight = 52.dp
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */
