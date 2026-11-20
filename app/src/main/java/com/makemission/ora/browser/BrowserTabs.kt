@@ -212,8 +212,30 @@ class BrowserTab(
         if (goBack) { if (canGoBack) session.goBack() else session.loadUri("about:blank") }
     }
 
+    /** Lab: connection and blocking facts for the page on this tab, shown by the padlock. Null while the lab is off or nothing has loaded. */
+    var siteStats by mutableStateOf<com.makemission.ora.labs.SiteStats?>(null)
+        private set
+    private val blockedKinds = LinkedHashMap<String, Int>()
+    private var lastSecurity: GeckoSession.ProgressDelegate.SecurityInformation? = null
+
+    private fun rebuildSiteStats() {
+        val info = lastSecurity
+        siteStats = if (!com.makemission.ora.labs.Labs.on(com.makemission.ora.labs.LabFeature.SITE_STATS) || info == null) null
+        else com.makemission.ora.labs.SiteStats.from(popupSiteOf(url), info.isSecure, info.isException, info.certificate, blockedKinds.toMap())
+    }
+
+    /** Counts what Gecko's content blocking stopped on this page, by kind. */
+    private fun countBlocked(event: org.mozilla.geckoview.ContentBlocking.BlockEvent) {
+        if (!com.makemission.ora.labs.Labs.on(com.makemission.ora.labs.LabFeature.SITE_STATS)) return
+        com.makemission.ora.labs.SiteStats.kindsOf(event.antiTrackingCategory, event.cookieBehaviorCategory, event.safeBrowsingCategory)
+            .forEach { blockedKinds[it] = (blockedKinds[it] ?: 0) + 1 }
+        rebuildSiteStats()
+    }
+
     /** Looks at the connection of a loaded page and lists what a person would want to know. Runs only for labs that are on. */
     private fun inspectSecurity(info: GeckoSession.ProgressDelegate.SecurityInformation) {
+        lastSecurity = info
+        rebuildSiteStats()
         val labs = com.makemission.ora.labs.Labs
                 val found = mutableListOf<com.makemission.ora.labs.SiteFinding>()
         val page = url
@@ -381,6 +403,11 @@ class BrowserTab(
                 this@BrowserTab.selection = null
             }
         }
+        session.contentBlockingDelegate = object : org.mozilla.geckoview.ContentBlocking.Delegate {
+            override fun onContentBlocked(session: GeckoSession, event: org.mozilla.geckoview.ContentBlocking.BlockEvent) {
+                countBlocked(event)
+            }
+        }
         session.progressDelegate = object : GeckoSession.ProgressDelegate {
             override fun onSessionStateChange(session: GeckoSession, state: GeckoSession.SessionState) {
                 // A tab still waiting to load has an empty session; its saved history must not be replaced by that.
@@ -390,6 +417,9 @@ class BrowserTab(
             override fun onPageStart(session: GeckoSession, url: String) {
                 loading = true
                 progress = 0
+                blockedKinds.clear()
+                lastSecurity = null
+                siteStats = null
                 pageRevealed = false
                 chromeHidden = false
                 lastScrollY = 0
