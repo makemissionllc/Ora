@@ -11,7 +11,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
-- Reading list: save a page to read later from the ⋮ menu (Add to reading list). It lists in the Library on the phone and in the sidebar on the tablet, unread first, and each profile has its own. Private tabs are never saved. Saving tells you so, the Reading label counts what is unread and opening a page marks it read, and Clear read asks first and says how many pages go. (`e488e5e`)
+- Keyboard shortcuts: with a physical keyboard, Ctrl+L or F6 goes to the address bar, Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+Tab and Ctrl+1 to 9 manage tabs, Ctrl+F finds in the page, Ctrl+R or F5 reloads, Alt+Left and Alt+Right go back and forward, and Esc closes whatever is open. Press Ctrl+/ or F1, or open Settings > About > Keyboard shortcuts, to see them all in a card. (`KSHASH`)
+- Reading list: save a page to read later from the ⋮ menu (Add to reading list). It lists in the Library on the phone and in the sidebar on the tablet (a Reading list row above Private tabs), unread first, and each profile has its own. Private tabs are never saved. Saving tells you so, the Reading list shows how many are unread and opening a page marks it read, and Clear read asks first and says how many pages go. (`e488e5e`)
 
 **Fixed**
 - Back now closes the search suggestions first, folding them into the address bar, instead of leaving Ora when the keyboard is already hidden. Quality of life: one Back is enough to dismiss suggestions. (`7a1aa4e`)

@@ -44,6 +44,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Article
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -521,6 +522,8 @@ fun TabSidebar(
     var inPrivate by remember { mutableStateOf(tabs.selected?.isPrivate == true) }
     val groupState = remember { GroupDialogState() }
     var panel by remember { mutableStateOf(SidebarPanel.TABS) }
+    // The reading list opens inside the sidebar from a pinned row, so it never crowds the Tabs / Bookmarks / History switch.
+    var inReading by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     var inactiveOpen by remember { mutableStateOf(false) }
     val readingItems by reading.items.collectAsState()
@@ -559,6 +562,28 @@ fun TabSidebar(
             ) { Text("Close private", color = Mineral.Ember, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
             return@Column
         }
+        if (inReading) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().height(40.dp).clip(androidx.compose.foundation.shape.CircleShape).clickable { inReading = false; query = "" }.padding(horizontal = 8.dp)) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Back to tabs", color = browserColors().SecondaryText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+            }
+            SidebarSearch(query = query, pill = true, fill = browserColors().GridBackground, placeholder = "Search reading list", onQueryChange = { query = it })
+            Text(
+                if (unreadCount > 0) "Reading list, $unreadCount unread" else "Reading list",
+                fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText,
+            )
+            ReadingList(
+                items = readingItems,
+                query = query,
+                onOpen = onOpenReading,
+                onToggleRead = { reading.setRead(it.url, !it.read) },
+                onRemove = { reading.remove(it.url) },
+                onClearRead = { reading.clearRead() },
+                modifier = Modifier.weight(1f),
+            )
+            return@Column
+        }
         // Tabs, Bookmarks and History switch, like the segmented control in the design (D-Sidebar).
         Row(
             modifier = Modifier
@@ -572,7 +597,6 @@ fun TabSidebar(
             // Quality of life: switching lists clears the search, so a filter for tabs does not hide bookmarks.
             SegmentLabel("Tabs", selected = panel == SidebarPanel.TABS, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.TABS; query = "" }
             SegmentLabel("Bookmarks", selected = panel == SidebarPanel.BOOKMARKS, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.BOOKMARKS; query = "" }
-            SegmentLabel("Reading", selected = panel == SidebarPanel.READING, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.READING; query = "" }
             SegmentLabel("History", selected = panel == SidebarPanel.HISTORY, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.HISTORY; query = "" }
         }
         // Filters the list below by title or address.
@@ -583,7 +607,6 @@ fun TabSidebar(
             placeholder = when (panel) {
                 SidebarPanel.TABS -> "Search tabs, bookmarks and history"
                 SidebarPanel.BOOKMARKS -> "Search bookmarks"
-                SidebarPanel.READING -> "Search reading list"
                 SidebarPanel.HISTORY -> "Search history"
             },
             onQueryChange = { query = it }
@@ -597,7 +620,6 @@ fun TabSidebar(
                 when (panel) {
                     SidebarPanel.TABS -> "${shownTabs.size} of ${tabs.tabs.size} tabs"
                     SidebarPanel.BOOKMARKS -> "Bookmarks"
-                    SidebarPanel.READING -> if (unreadCount > 0) "Reading list, $unreadCount unread" else "Reading list"
                     SidebarPanel.HISTORY -> "History"
                 },
                 fontSize = 13.sp,
@@ -610,17 +632,7 @@ fun TabSidebar(
                 }
             }
         }
-        if (panel == SidebarPanel.READING) {
-            ReadingList(
-                items = readingItems,
-                query = query,
-                onOpen = onOpenReading,
-                onToggleRead = { reading.setRead(it.url, !it.read) },
-                onRemove = { reading.remove(it.url) },
-                onClearRead = { reading.clearRead() },
-                modifier = Modifier.weight(1f),
-            )
-        } else if (panel == SidebarPanel.HISTORY) {
+        if (panel == SidebarPanel.HISTORY) {
             HistoryList(
                 entries = history,
                 query = query,
@@ -707,7 +719,15 @@ fun TabSidebar(
                 }
             }
         }
-        // Pinned at the bottom: opens the private space.
+        // Pinned at the bottom: the reading list, then the private space.
+        Row(
+            modifier = Modifier.fillMaxWidth().height(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().GridBackground).clickable { inReading = true; query = "" }.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Outlined.Article, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(10.dp))
+            Text(if (unreadCount > 0) "Reading list ($unreadCount unread)" else "Reading list", color = browserColors().AddressBarText, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        }
         Row(
             modifier = Modifier.fillMaxWidth().height(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().GridBackground).clickable { inPrivate = true }.padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -721,7 +741,7 @@ fun TabSidebar(
 }
 
 /** Which list the tablet sidebar shows. */
-private enum class SidebarPanel { TABS, BOOKMARKS, READING, HISTORY }
+private enum class SidebarPanel { TABS, BOOKMARKS, HISTORY }
 
 @Composable
 internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, pill: Boolean = false, onClick: () -> Unit) {
