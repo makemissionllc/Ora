@@ -192,11 +192,17 @@ fun SettingsScreen(
     var showChangelog by remember { mutableStateOf(false) }
     var showNotice by remember { mutableStateOf(false) }
     var showShortcuts by remember { mutableStateOf(false) }
+    var showTutorial by remember { mutableStateOf(false) }
+    val tutorialDone by settings.tutorialDone.collectAsState()
     var category by rememberSaveable { mutableStateOf(SettingsCategory.APPEARANCE) }
     val savedLogins by PasswordStore.logins.collectAsState()
 
     if (showDiagnostics) {
         DiagnosticsScreen(onDone = { showDiagnostics = false })
+        return
+    }
+    if (showTutorial) {
+        TutorialScreen(settings, androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600, onDone = { showTutorial = false })
         return
     }
     if (showPasswords) {
@@ -1652,6 +1658,24 @@ fun SettingsScreen(
                             Text("Notice and privacy", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                             val accepted = settings.noticeAcceptedDate()
                             Text(if (accepted.isEmpty()) "›" else "Accepted $accepted ›", fontSize = 14.sp, color = browserColors().SecondaryText)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable {
+                                    BrowserLog.info("settings", "Opened Interactive tutorial")
+                                    showTutorial = true
+                                }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Interactive tutorial", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                            val total = tutorialLessons(androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600)
+                            val count = total.count { it.id in tutorialDone }
+                            Text(if (count == 0) "Start ›" else if (count == total.size) "Done ›" else "$count of ${total.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
                         Row(
                             modifier = Modifier
