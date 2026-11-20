@@ -941,15 +941,25 @@ private fun BrowserContent(
             )
         }
     }
+    val recentRepo = remember { com.makemission.ora.settings.RecentSearches(context) }
+    val recentList by recentRepo.items.collectAsState()
     /** Bookmarks and open tabs, offered as address bar suggestions. */
     // Frequently visited pages (never from a private tab) come after them, best first, so a typed word can match them too.
     val frequentSites = remember(historyList) { historyList.topSites(40) }
     val addressCandidates = (
+        (if (selected.isPrivate) emptyList() else recentList.map { AddressSuggestion(it, "", it, SuggestionKind.RECENT) }) +
         bookmarkList.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) } +
             tabs.tabs.map { AddressSuggestion(it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url), it.url) } +
             (if (selected.isPrivate) emptyList() else historyList.sortedByDescending { it.frecency() }.take(150)
                 .map { AddressSuggestion(it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url), it.url, SuggestionKind.HISTORY, it.visits) })
         ).distinctBy { it.target }
+    DisposableEffect(recentRepo) {
+        AddressKeys.removeRecent = { text ->
+            recentRepo.remove(text)
+            InAppNotices.show("Removed from recent searches")
+        }
+        onDispose { AddressKeys.removeRecent = null }
+    }
     DisposableEffect(history) {
         AddressKeys.removeFromHistory = { url ->
             history.remove(url)
@@ -1073,6 +1083,7 @@ private fun BrowserContent(
             selected.session.loadUri(shortcut.shortcut.urlFor(shortcut.query))
             return
         }
+        if (isSearchInput(input) && !selected.isPrivate) recentRepo.record(input)
         if (isSearchInput(input) && askEachSearch && searchEngines.size > 1) {
             pendingSearch = input.trim()
         } else if (isSearchInput(input)) {
@@ -3013,6 +3024,7 @@ private fun AddressBar(
     }
     var anchorWidth by remember { mutableStateOf(0.dp) }
     var anchorHeightPx by remember { mutableStateOf(0) }
+    var anchorLeftPx by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
     // Phone only: a capsule in the lower half of the screen sits over the keyboard, so its suggestions open upward.
     var anchorCenterY by remember { mutableStateOf(0f) }
@@ -3043,7 +3055,9 @@ private fun AddressBar(
         kotlinx.coroutines.delay(120)
         phrases = SearchSuggest.fetch(typed)
     }
-    val suggestions = if (focused && !suggestionsHidden) withQuerySuggestions(addressSuggestions(typed, candidates), phrases) else emptyList()
+    val suggestions = if (focused && !suggestionsHidden) {
+        if (typed.isBlank() && !isPrivate) recentOnEmpty(candidates) else withQuerySuggestions(addressSuggestions(typed, candidates), phrases)
+    } else emptyList()
     // Hardware keyboard: Up and Down walk the suggestions in the order they are drawn, Enter opens the highlighted one.
     // -1 means none, so Enter searches what was typed. A new list or new text clears the highlight.
     var highlighted by remember { mutableIntStateOf(-1) }
@@ -3074,7 +3088,7 @@ private fun AddressBar(
     }
 
     Box(
-        modifier = modifier.then(if (centered) Modifier.widenOnFocus(focusAnim, BrowserTokens.TopCapsuleGap) else Modifier).addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height; anchorCenterY = it.positionInWindow().y + it.size.height / 2f }
+        modifier = modifier.then(if (centered) Modifier.widenOnFocus(focusAnim, BrowserTokens.TopCapsuleGap) else Modifier).addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height; anchorCenterY = it.positionInWindow().y + it.size.height / 2f; anchorLeftPx = it.positionInWindow().x }
     ) {
     Surface(
         modifier = Modifier
@@ -3155,7 +3169,10 @@ private fun AddressBar(
                             }
                             androidx.compose.ui.input.key.Key.Delete -> {
                                 val pick = visualSuggestions.getOrNull(highlighted)
-                                if (pick?.kind == SuggestionKind.HISTORY) {
+                                if (pick?.kind == SuggestionKind.RECENT) {
+                                    AddressKeys.removeRecent?.invoke(pick.target)
+                                    true
+                                } else if (pick?.kind == SuggestionKind.HISTORY) {
                                     AddressKeys.removeFromHistory?.invoke(pick.target)
                                     BrowserLog.info("keyboard", "Delete removed a history suggestion")
                                     true
@@ -3316,9 +3333,14 @@ private fun AddressBar(
     // The rows stay on screen while the list folds away, so keep the last list through the exit.
     var lastSuggestions by remember { mutableStateOf(suggestions) }
     if (suggestions.isNotEmpty()) lastSuggestions = suggestions
+    // On a phone the list spans the screen (with a margin) instead of matching the narrow capsule.
+    val screenWidthDp = LocalConfiguration.current.screenWidthDp
+    val wide = screenWidthDp < TABLET_MIN_WIDTH_DP && anchorWidth < (screenWidthDp - 24).dp
+    val listWidth = if (wide) (screenWidthDp - 24).dp else anchorWidth
+    val listShiftPx = if (wide) with(density) { 12.dp.roundToPx() } - anchorLeftPx.toInt() else 0
     if (listShown.currentState || listShown.targetState) Popup(
         alignment = if (opensUp) Alignment.BottomStart else Alignment.TopStart,
-        offset = IntOffset(0, if (opensUp) -anchorHeightPx else anchorHeightPx),
+        offset = IntOffset(listShiftPx, if (opensUp) -anchorHeightPx else anchorHeightPx),
         onDismissRequest = { suggestionsHidden = true },
         properties = PopupProperties(focusable = false)
     ) {
@@ -3328,7 +3350,7 @@ private fun AddressBar(
             exit = fadeOut(OraMotion.overlayFadeOut()) + shrinkVertically(OraMotion.overlayScaleOut(), if (opensUp) Alignment.Bottom else Alignment.Top),
         ) {
       Column(
-        Modifier.width(anchorWidth).padding(top = if (opensUp) 0.dp else 4.dp, bottom = if (opensUp) 4.dp else 0.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius))
+        Modifier.width(listWidth).padding(top = if (opensUp) 0.dp else 4.dp, bottom = if (opensUp) 4.dp else 0.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius))
             .background(browserColors().AddressBarBackground)
             .verticalScroll(rememberScrollState())
       ) {
@@ -3340,7 +3362,7 @@ private fun AddressBar(
                         modifier = Modifier.background(if (rowIndex == highlighted) browserColors().SecondaryText.copy(alpha = 0.18f) else Color.Transparent),
                         leadingIcon = {
                             Icon(
-                                imageVector = when (suggestion.kind) { SuggestionKind.LOCAL -> Icons.Outlined.BookmarkBorder; SuggestionKind.HISTORY -> Icons.Outlined.History; SuggestionKind.COMMAND -> Icons.Outlined.Bolt; else -> Icons.Filled.Search },
+                                imageVector = when (suggestion.kind) { SuggestionKind.LOCAL -> Icons.Outlined.BookmarkBorder; SuggestionKind.HISTORY, SuggestionKind.RECENT -> Icons.Outlined.History; SuggestionKind.COMMAND -> Icons.Outlined.Bolt; else -> Icons.Filled.Search },
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = browserColors().SecondaryText,
@@ -3377,18 +3399,19 @@ private fun AddressBar(
                                     Icon(Icons.Filled.NorthWest, contentDescription = "Use this phrase", modifier = Modifier.size(18.dp), tint = browserColors().SecondaryText)
                                 }
                             }
-                        } else if (suggestion.kind == SuggestionKind.HISTORY) {
+                        } else if (suggestion.kind == SuggestionKind.HISTORY || suggestion.kind == SuggestionKind.RECENT) {
                             {
                                 // Forgets this one page without opening the history list.
                                 IconButton(
                                     onClick = {
                                         if (AddressKeys.removeFromHistory == null) BrowserLog.warn("history", "No remove handler is set", null)
-                                        AddressKeys.removeFromHistory?.invoke(suggestion.target)
-                                        BrowserLog.info("search", "A history suggestion was removed with its cross")
+                                        if (suggestion.kind == SuggestionKind.RECENT) AddressKeys.removeRecent?.invoke(suggestion.target)
+                                        else AddressKeys.removeFromHistory?.invoke(suggestion.target)
+                                        BrowserLog.info("search", "A suggestion was removed with its cross")
                                     },
                                     modifier = Modifier.size(36.dp),
                                 ) {
-                                    Icon(Icons.Filled.Close, contentDescription = "Remove from history", modifier = Modifier.size(18.dp), tint = browserColors().SecondaryText)
+                                    Icon(Icons.Filled.Close, contentDescription = if (suggestion.kind == SuggestionKind.RECENT) "Remove from recent searches" else "Remove from history", modifier = Modifier.size(18.dp), tint = browserColors().SecondaryText)
                                 }
                             }
                         } else null,
