@@ -21,6 +21,8 @@ object SearchSuggest {
     @Volatile var engine: SearchEngine? = null
 
     private const val MAX_SUGGESTIONS = 6
+    private const val PREWARM_REPEAT_MS = 60_000L
+    @Volatile private var lastPrewarm = 0L
     private const val CACHE_SIZE = 40
     private val cache = object : LinkedHashMap<String, List<String>>(CACHE_SIZE, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<String>>?) = size > CACHE_SIZE
@@ -57,6 +59,9 @@ object SearchSuggest {
     suspend fun prewarm() {
         val current = engine ?: return
         if (!Preloader.allowedNow()) return
+        val now = System.currentTimeMillis()
+        if (now - lastPrewarm < PREWARM_REPEAT_MS) return
+        lastPrewarm = now
         withContext(Dispatchers.IO) {
             try {
                 val host = URL(current.suggestTemplate.replace("%s", "")).host

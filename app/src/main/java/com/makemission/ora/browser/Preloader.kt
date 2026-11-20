@@ -75,8 +75,8 @@ object Preloader {
                 BrowserLog.info("preload", "Looked up ${LogPrivacy.domainOf(host)} ahead of time in ${System.currentTimeMillis() - started} ms")
                 connect(host)
             } catch (error: Exception) {
-                // Forget it so a later try can run; a failed lookup costs nothing.
-                synchronized(warmed) { warmed.remove(host) }
+                // A host that fails is left alone for a while, so tapping the bar does not retry a dead site every time.
+                synchronized(warmed) { warmed[host] = System.currentTimeMillis() + FAILED_BACKOFF_MS }
                 BrowserLog.warn("preload", "Could not look up ${LogPrivacy.domainOf(host)} ahead of time", error)
             }
         }
@@ -193,6 +193,7 @@ object Preloader {
     private const val CONNECT_TIMEOUT_MS = 8_000L
     private const val PREFETCH_TIMEOUT_MS = 12_000L
     private const val MAX_PREFETCH_BYTES = 512 * 1024
+    private const val FAILED_BACKOFF_MS = 10 * 60 * 1000L
     private const val REPEAT_MS = 5 * 60 * 1000L
     private const val MAX_REMEMBERED = 64
 }

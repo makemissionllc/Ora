@@ -543,6 +543,11 @@ private fun BrowserContent(
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
     LaunchedEffect(defaultEngine) { Preloader.searchEngine = defaultEngine }
+    // Helpers used only on request wait until the first page has had a moment to start.
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(1500)
+        GeckoEngine.installRest(context)
+    }
     val askEachSearch by settings.askEachSearch.collectAsState()
     /** Search text waiting for the user to pick an engine. Null when the chooser is closed. */
     var pendingSearch by remember { mutableStateOf<String?>(null) }
