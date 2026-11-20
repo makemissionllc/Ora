@@ -134,6 +134,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.layout.positionInWindow
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -2504,6 +2505,10 @@ private fun AddressBar(
     var anchorWidth by remember { mutableStateOf(0.dp) }
     var anchorHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
+    // Phone only: a capsule in the lower half of the screen sits over the keyboard, so its suggestions open upward.
+    var anchorCenterY by remember { mutableStateOf(0f) }
+    val screenHeightPx = with(density) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
+    val opensUp = LocalConfiguration.current.screenWidthDp < TABLET_MIN_WIDTH_DP && anchorCenterY > screenHeightPx / 2f
 
     // Ctrl+L or F6 from a hardware keyboard puts the caret in the address field and selects the address.
     LaunchedEffect(Unit) {
@@ -2546,7 +2551,7 @@ private fun AddressBar(
     }
 
     Box(
-        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height }
+        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height; anchorCenterY = it.positionInWindow().y + it.size.height / 2f }
     ) {
     Surface(
         modifier = Modifier
@@ -2698,22 +2703,23 @@ private fun AddressBar(
     var lastSuggestions by remember { mutableStateOf(suggestions) }
     if (suggestions.isNotEmpty()) lastSuggestions = suggestions
     if (listShown.currentState || listShown.targetState) Popup(
-        alignment = Alignment.TopStart,
-        offset = IntOffset(0, anchorHeightPx),
+        alignment = if (opensUp) Alignment.BottomStart else Alignment.TopStart,
+        offset = IntOffset(0, if (opensUp) -anchorHeightPx else anchorHeightPx),
         onDismissRequest = { suggestionsHidden = true },
         properties = PopupProperties(focusable = false)
     ) {
         AnimatedVisibility(
             visibleState = listShown,
-            enter = fadeIn(OraMotion.overlayFadeIn()) + expandVertically(OraMotion.overlayScaleIn(), Alignment.Top),
-            exit = fadeOut(OraMotion.overlayFadeOut()) + shrinkVertically(OraMotion.overlayScaleOut(), Alignment.Top),
+            enter = fadeIn(OraMotion.overlayFadeIn()) + expandVertically(OraMotion.overlayScaleIn(), if (opensUp) Alignment.Bottom else Alignment.Top),
+            exit = fadeOut(OraMotion.overlayFadeOut()) + shrinkVertically(OraMotion.overlayScaleOut(), if (opensUp) Alignment.Bottom else Alignment.Top),
         ) {
       Column(
-        Modifier.width(anchorWidth).padding(top = 4.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius))
+        Modifier.width(anchorWidth).padding(top = if (opensUp) 0.dp else 4.dp, bottom = if (opensUp) 4.dp else 0.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius))
             .background(browserColors().AddressBarBackground)
             .verticalScroll(rememberScrollState())
       ) {
-        lastSuggestions.forEach { suggestion ->
+        // Opening upward, the best match sits next to the capsule, so the order is reversed.
+        (if (opensUp) lastSuggestions.asReversed() else lastSuggestions).forEach { suggestion ->
             key(suggestion.kind, suggestion.target) {
                 FadeInOnAppear {
                     DropdownMenuItem(
