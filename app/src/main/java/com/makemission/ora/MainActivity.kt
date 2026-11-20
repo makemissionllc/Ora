@@ -29,6 +29,16 @@ class MainActivity : ComponentActivity() {
 
     private val settings by lazy { SettingsRepository(applicationContext) }
 
+    override fun onResume() {
+        super.onResume()
+        // Follow the system's "Remove animations": with the animation scale at 0, Ora's transitions stop moving.
+        val off = android.provider.Settings.Global.getFloat(contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
+        if (off != com.makemission.ora.ui.theme.OraMotion.reduced) {
+            com.makemission.ora.ui.theme.OraMotion.reduced = off
+            BrowserLog.info("settings", if (off) "System animations are off: Ora's transitions are reduced" else "System animations are on")
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         com.makemission.ora.browser.FilePicker.register(this)

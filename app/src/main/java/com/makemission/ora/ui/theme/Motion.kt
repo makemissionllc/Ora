@@ -36,8 +36,16 @@ object OraMotion {
     private val premiumEnter: Easing = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)
     private val premiumExit: Easing = CubicBezierEasing(0.7f, 0f, 0.84f, 0f)
 
+    /**
+     * True when the system's animations are turned off (Settings > Accessibility > Remove animations, or the
+     * animation scale at 0). Every transition then lasts one millisecond, so surfaces still open and close but
+     * nothing moves. Written by the activity when it comes to the front.
+     */
+    @Volatile
+    var reduced: Boolean = false
+
     val ENTER_MS: Int
-        get() = when (style) {
+        get() = if (reduced) 1 else when (style) {
             MotionStyle.SMOOTH -> 260
             MotionStyle.ELEGANT -> 380
             MotionStyle.FAST -> 160
@@ -45,7 +53,7 @@ object OraMotion {
         }
 
     val EXIT_MS: Int
-        get() = when (style) {
+        get() = if (reduced) 1 else when (style) {
             MotionStyle.SMOOTH -> 200
             MotionStyle.ELEGANT -> 280
             MotionStyle.FAST -> 110
