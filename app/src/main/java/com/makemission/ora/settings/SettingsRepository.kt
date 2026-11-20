@@ -303,6 +303,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Back leaves full-screen video ${if (enabled) "on" else "off"}")
     }
 
+    private val _videoAutoPip = MutableStateFlow(prefs.getBoolean(KEY_VIDEO_AUTO_PIP, true))
+    /** When on, leaving Ora while a video plays full screen keeps it playing in a small window. */
+    val videoAutoPip: StateFlow<Boolean> = _videoAutoPip.asStateFlow()
+
+    fun setVideoAutoPip(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_VIDEO_AUTO_PIP, enabled).apply()
+        _videoAutoPip.value = enabled
+        BrowserLog.info("settings", "Small window when leaving a video ${if (enabled) "on" else "off"}")
+    }
+
     private val _autofillPasswords = MutableStateFlow(prefs.getBoolean(KEY_AUTOFILL_PASSWORDS, true))
     /** When on, login fields fill from saved passwords: GeckoView's saved logins, and the Android autofill service (Bitwarden, Google Password Manager and others). */
     val autofillPasswords: StateFlow<Boolean> = _autofillPasswords.asStateFlow()
@@ -788,6 +798,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_VIDEO_GESTURES = "video_gestures"
         private const val KEY_VIDEO_BACK_EXITS = "video_back_exits"
+        private const val KEY_VIDEO_AUTO_PIP = "video_auto_pip"
         private const val KEY_READER_SIZE = "reader_size"
         private const val KEY_READER_SERIF = "reader_serif"
         private const val KEY_READER_PAGE = "reader_page"

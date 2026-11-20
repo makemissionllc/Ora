@@ -356,6 +356,7 @@ private fun BrowserContent(
     val blockAds by settings.blockAds.collectAsState()
     val videoGestures by settings.videoGestures.collectAsState()
     val videoBackExits by settings.videoBackExits.collectAsState()
+    val videoAutoPip by settings.videoAutoPip.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
@@ -1341,6 +1342,7 @@ private fun BrowserContent(
                 // The full-screen video's own player controls sit over the page (tap for controls, swipes, skip, speed).
                 if (selected.videoFullScreen) {
                     VideoPlayerControls(
+                        autoPip = videoAutoPip,
                         tablet = isTablet,
                         swipes = videoGestures,
                         onExit = { VideoControlBridge.exitFullScreen(); selected.session.exitFullScreen() },
