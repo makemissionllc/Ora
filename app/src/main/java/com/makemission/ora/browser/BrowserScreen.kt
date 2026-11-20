@@ -1,5 +1,7 @@
 package com.makemission.ora.browser
 
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.animation.core.Animatable
 import androidx.compose.material3.Snackbar
@@ -2923,19 +2925,29 @@ private fun AddressBar(
                     Icon(Icons.Filled.Clear, contentDescription = "Clear address", tint = browserColors().SecondaryText)
                 }
             }
-            if (loading) {
-                IconButton(onClick = onStop) {
-                    Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)
-                }
-            } else {
-                // Quality of life: a long press reloads past the cache, for pages that look stale.
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .combinedClickable(onClick = onReload, onLongClick = onHardReload, onClickLabel = "Reload", onLongClickLabel = "Reload without cache"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = browserColors().AddressBarText)
+            // Reload and Stop share one slot: the icon turns 90 degrees while the two crossfade.
+            androidx.compose.animation.AnimatedContent(
+                targetState = loading,
+                transitionSpec = { androidx.compose.animation.fadeIn(OraMotion.quick()) togetherWith androidx.compose.animation.fadeOut(OraMotion.quick()) },
+                label = "reload stop",
+            ) { isLoading ->
+                val turn by transition.animateFloat(transitionSpec = { OraMotion.quick() }, label = "reload turn") { if (it == EnterExitState.Visible) 0f else if (isLoading) -90f else 90f }
+                Box(Modifier.graphicsLayer { rotationZ = turn }) {
+                    if (isLoading) {
+                        IconButton(onClick = onStop) {
+                            Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)
+                        }
+                    } else {
+                        // Quality of life: a long press reloads past the cache, for pages that look stale.
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .combinedClickable(onClick = onReload, onLongClick = onHardReload, onClickLabel = "Reload", onLongClickLabel = "Reload without cache"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = browserColors().AddressBarText)
+                        }
+                    }
                 }
             }
         }
