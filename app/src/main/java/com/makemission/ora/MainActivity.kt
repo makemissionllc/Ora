@@ -55,6 +55,8 @@ class MainActivity : ComponentActivity() {
                 com.makemission.ora.browser.SearchSuggest.engine = if (searchSuggestions) defaultSearchEngine else null
             }
             val preloadMode by settings.preloadMode.collectAsState()
+            val loadAhead by settings.loadAhead.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(loadAhead) { com.makemission.ora.browser.Preloader.loadAhead = loadAhead }
             androidx.compose.runtime.LaunchedEffect(preloadMode) { com.makemission.ora.browser.Preloader.mode = preloadMode }
             androidx.compose.runtime.LaunchedEffect(font, webFont) {
                 com.makemission.ora.extensions.WebFontBridge.apply(if (webFont) font.key else null)

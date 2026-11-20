@@ -8,8 +8,35 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** One visited address. Each address appears once; a revisit moves it to the top with the new time. */
-data class HistoryEntry(val url: String, val title: String, val visitedAt: Long)
+/**
+ * One visited address. Each address appears once; a revisit moves it to the top with the new time and adds one
+ * to [visits]. Older saves have no count, so they read as one visit.
+ */
+data class HistoryEntry(val url: String, val title: String, val visitedAt: Long, val visits: Int = 1)
+
+/**
+ * How much a page is worth putting first: visits count for more the more recent they are. Every visit is
+ * weighted by how fresh the last one was, so a page opened daily this week beats one opened often last year.
+ */
+fun HistoryEntry.frecency(now: Long = System.currentTimeMillis()): Double {
+    val days = ((now - visitedAt).coerceAtLeast(0L)) / DAY_MS.toDouble()
+    val recency = when {
+        days < 1 -> 4.0
+        days < 7 -> 2.0
+        days < 30 -> 1.0
+        days < 90 -> 0.5
+        else -> 0.25
+    }
+    return kotlin.math.ln(1.0 + visits) * recency
+}
+
+private const val DAY_MS = 24L * 60 * 60 * 1000
+
+/** The addresses most worth warming, best first: one per site, ranked by [frecency]. */
+fun List<HistoryEntry>.topSites(limit: Int, now: Long = System.currentTimeMillis()): List<HistoryEntry> =
+    sortedByDescending { it.frecency(now) }
+        .distinctBy { it.url.substringAfter("://").substringBefore('/').lowercase() }
+        .take(limit)
 
 /**
  * Keeps the pages a profile has loaded, newest first, as a JSON array in private preferences.
@@ -29,7 +56,8 @@ class HistoryRepository(context: Context, profileId: String = "default") {
     /** Puts a finished page at the top of the list. Pages that are not web addresses are skipped. */
     fun record(url: String, title: String) {
         if (!url.startsWith("http://") && !url.startsWith("https://")) return
-        val entry = HistoryEntry(url, title.ifBlank { url }, System.currentTimeMillis())
+        val before = _entries.value.firstOrNull { it.url == url }
+        val entry = HistoryEntry(url, title.ifBlank { url }, System.currentTimeMillis(), (before?.visits ?: 0) + 1)
         save((listOf(entry) + _entries.value.filterNot { it.url == url }).take(MAX_ENTRIES))
     }
 
@@ -47,7 +75,7 @@ class HistoryRepository(context: Context, profileId: String = "default") {
     private fun save(list: List<HistoryEntry>) {
         val array = JSONArray()
         list.forEach {
-            array.put(JSONObject().put("url", it.url).put("title", it.title).put("at", it.visitedAt))
+            array.put(JSONObject().put("url", it.url).put("title", it.title).put("at", it.visitedAt).put("n", it.visits))
         }
         prefs.edit().putString(key, array.toString()).apply()
         _entries.value = list
@@ -59,7 +87,7 @@ class HistoryRepository(context: Context, profileId: String = "default") {
             val array = JSONArray(raw)
             List(array.length()) { i ->
                 val obj = array.getJSONObject(i)
-                HistoryEntry(obj.getString("url"), obj.getString("title"), obj.getLong("at"))
+                HistoryEntry(obj.getString("url"), obj.getString("title"), obj.getLong("at"), obj.optInt("n", 1).coerceAtLeast(1))
             }
         } catch (e: Exception) {
             // Quality of life: a damaged list starts empty instead of stopping the app, and the log says why.

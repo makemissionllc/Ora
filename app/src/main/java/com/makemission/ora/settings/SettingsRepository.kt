@@ -556,6 +556,28 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Address bar swipe effect ${effect.label}")
     }
 
+    private val _loadAhead = MutableStateFlow(prefs.getBoolean(KEY_LOAD_AHEAD, false))
+    /** When on, the page behind the top address suggestion is fetched ahead of time. Off by default; never in private tabs. */
+    val loadAhead: StateFlow<Boolean> = _loadAhead.asStateFlow()
+
+    fun setLoadAhead(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_LOAD_AHEAD, enabled).apply()
+        _loadAhead.value = enabled
+        UsageStats.count("setting.load_ahead")
+        BrowserLog.info("settings", "Load the page ahead ${if (enabled) "on" else "off"}")
+    }
+
+    private val _slowLoadTips = MutableStateFlow(prefs.getBoolean(KEY_SLOW_LOAD_TIPS, true))
+    /** When on, a page that takes a long time to load shows a tip with things to try. */
+    val slowLoadTips: StateFlow<Boolean> = _slowLoadTips.asStateFlow()
+
+    fun setSlowLoadTips(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SLOW_LOAD_TIPS, enabled).apply()
+        _slowLoadTips.value = enabled
+        UsageStats.count("setting.slow_load_tips")
+        BrowserLog.info("settings", "Slow page tips ${if (enabled) "on" else "off"}")
+    }
+
     private val _searchSuggestions = MutableStateFlow(prefs.getBoolean(KEY_SEARCH_SUGGESTIONS, true))
     /** When on, the text typed in the address bar is sent to the default search engine to get suggestions. */
     val searchSuggestions: StateFlow<Boolean> = _searchSuggestions.asStateFlow()
@@ -692,6 +714,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_ADDRESS_SWIPE_EFFECT = "address_swipe_effect"
         private const val KEY_PRELOAD_MODE = "preload_mode"
         private const val KEY_SEARCH_SUGGESTIONS = "search_suggestions"
+        private const val KEY_LOAD_AHEAD = "load_ahead"
+        private const val KEY_SLOW_LOAD_TIPS = "slow_load_tips"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_WEB_FONT = "web_font"
