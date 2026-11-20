@@ -113,9 +113,11 @@ fun GroupTabStrip(
             ) {
                 items(members, key = { it.id }) { tab ->
                     val isOpen = tab.id == tabs.selectedId
+                    // The ring fades from the old icon to the new one, and a new tab slides in from the plus.
+                    val ring by androidx.compose.animation.animateColorAsState(if (isOpen) g.color.color else androidx.compose.ui.graphics.Color.Transparent, OraMotion.standard(), label = "active ring")
                     if (tablet) {
                         Row(
-                            Modifier.height(36.dp).clip(RoundedCornerShape(18.dp))
+                            Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).height(36.dp).clip(RoundedCornerShape(18.dp))
                                 .background(if (isOpen) colors.Accent else colors.GridBackground)
                                 .pressFeedback().clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }.padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
@@ -130,10 +132,10 @@ fun GroupTabStrip(
                         }
                     } else {
                         // The open tab has a ring in the group colour and a small close badge.
-                        Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                        Box(Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).size(48.dp), contentAlignment = Alignment.Center) {
                             Box(
                                 Modifier.size(40.dp).clip(CircleShape)
-                                    .then(if (isOpen) Modifier.border(2.dp, g.color.color, CircleShape) else Modifier)
+                                    .border(2.dp, ring, CircleShape)
                                     .pressFeedback().clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }
                                     .semantics { contentDescription = tab.shownTitle(displayUrl(tab.url)) },
                                 contentAlignment = Alignment.Center,
