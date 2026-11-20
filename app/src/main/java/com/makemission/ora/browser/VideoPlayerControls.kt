@@ -11,6 +11,9 @@ import androidx.activity.ComponentActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -40,6 +43,7 @@ import androidx.compose.material.icons.outlined.PictureInPictureAlt
 import androidx.compose.material.icons.outlined.PlayArrow
 import androidx.compose.material.icons.outlined.Replay
 import androidx.compose.material.icons.outlined.Replay10
+import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.ScreenRotation
 import androidx.compose.material.icons.outlined.VolumeOff
 import androidx.compose.material.icons.outlined.VolumeUp
@@ -93,7 +97,7 @@ private const val HOLD_SPEED = 2.0
  * or when a screen reader is on.
  */
 @Composable
-fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onExit: () -> Unit, modifier: Modifier = Modifier) {
+fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onExit: () -> Unit, onUseSite: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
     val audio = remember(context) { context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager }
@@ -228,6 +232,7 @@ fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onEx
                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText,
                 )
+                PlayerButton(Icons.Outlined.Public, "Use the site's controls") { BrowserLog.info("video", "Back to the site's controls"); onUseSite() }
                 PlayerButton(Icons.Outlined.ScreenRotation, "Rotate the screen") {
                     val landscape = (activity?.resources?.configuration?.orientation ?: 0) == android.content.res.Configuration.ORIENTATION_LANDSCAPE
                     activity?.requestedOrientation = if (landscape) ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT else ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
@@ -360,3 +365,40 @@ private fun PlayerButton(icon: ImageVector, label: String, big: Boolean = false,
         contentAlignment = Alignment.Center,
     ) { Icon(icon, null, tint = colors.AddressBarText, modifier = Modifier.size(if (big) 32.dp else 24.dp)) }
 }
+
+/**
+ * While a full-screen video shows the site's own controls, this small round button sits at the edge of the video.
+ * Tapping it opens Ora's controls, which grow out of it. It shows for a few seconds when the video starts and
+ * after each touch on the page, then fades, so it never stays over the picture. With a screen reader on it stays.
+ */
+@Composable
+fun VideoControlsHandle(onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = browserColors()
+    val context = LocalContext.current
+    val screenReader = remember(context) { (context.getSystemService(Context.ACCESSIBILITY_SERVICE) as AccessibilityManager).isTouchExplorationEnabled }
+    val pokes by VideoControlBridge.pokes.collectAsState()
+    var visible by remember { mutableStateOf(true) }
+    LaunchedEffect(pokes) {
+        visible = true
+        if (!screenReader) {
+            delay(HANDLE_VISIBLE_MS)
+            visible = false
+        }
+    }
+    Box(modifier.fillMaxSize().padding(end = 12.dp), contentAlignment = Alignment.CenterEnd) {
+        AnimatedVisibility(
+            visible = visible,
+            enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE),
+            exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE),
+        ) {
+            Box(
+                Modifier.size(48.dp).clip(CircleShape).background(colors.Surface.copy(alpha = 0.82f))
+                    .clickable { BrowserLog.info("video", "Ora controls opened from the handle"); onOpen() }
+                    .semantics { contentDescription = "Open Ora's video controls" },
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.Outlined.Tune, null, tint = colors.AddressBarText, modifier = Modifier.size(24.dp)) }
+        }
+    }
+}
+
+private const val HANDLE_VISIBLE_MS = 3000L

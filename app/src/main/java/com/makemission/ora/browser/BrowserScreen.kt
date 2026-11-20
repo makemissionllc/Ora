@@ -362,6 +362,7 @@ private fun BrowserContent(
     val blockAds by settings.blockAds.collectAsState()
     val videoGestures by settings.videoGestures.collectAsState()
     val videoBackExits by settings.videoBackExits.collectAsState()
+    val videoOraDefault by settings.videoOraControls.collectAsState()
     val videoAutoPip by settings.videoAutoPip.collectAsState()
     val cookieBehavior by settings.cookieBehavior.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
@@ -1508,12 +1509,26 @@ private fun BrowserContent(
                 TabSwitchOverlay(tabSwitch)
                 // The full-screen video's own player controls sit over the page (tap for controls, swipes, skip, speed).
                 if (selected.videoFullScreen) {
-                    VideoPlayerControls(
-                        autoPip = videoAutoPip,
-                        tablet = isTablet,
-                        swipes = videoGestures,
-                        onExit = { VideoControlBridge.exitFullScreen(); selected.session.exitFullScreen() },
-                    )
+                    // Site controls first (like Samsung Internet): Ora's player opens from a small handle, or by default if chosen.
+                    var oraVideoUi by remember(selected.id) { mutableStateOf(videoOraDefault) }
+                    LaunchedEffect(oraVideoUi) { VideoControlBridge.setOraControls(oraVideoUi) }
+                    androidx.compose.animation.AnimatedContent(
+                        targetState = oraVideoUi,
+                        transitionSpec = { androidx.compose.animation.fadeIn(OraMotion.overlayFadeIn()) togetherWith androidx.compose.animation.fadeOut(OraMotion.overlayFadeOut()) },
+                        label = "videoControls",
+                    ) { ora ->
+                        if (ora) {
+                            VideoPlayerControls(
+                                autoPip = videoAutoPip,
+                                tablet = isTablet,
+                                swipes = videoGestures,
+                                onExit = { VideoControlBridge.exitFullScreen(); selected.session.exitFullScreen() },
+                                onUseSite = { oraVideoUi = false },
+                            )
+                        } else {
+                            VideoControlsHandle(onOpen = { oraVideoUi = true })
+                        }
+                    }
                 }
                 if (showDownloads) {
                     DownloadsScreen(

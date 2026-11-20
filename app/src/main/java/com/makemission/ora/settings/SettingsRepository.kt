@@ -293,6 +293,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Reader page colour set to ${page.label}")
     }
 
+    private val _videoOraControls = MutableStateFlow(prefs.getBoolean(KEY_VIDEO_ORA_CONTROLS, false))
+    /** When on, a full-screen video opens with Ora's controls. Off, the site's own controls show and Ora's open from a small icon. */
+    val videoOraControls: StateFlow<Boolean> = _videoOraControls.asStateFlow()
+
+    fun setVideoOraControls(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_VIDEO_ORA_CONTROLS, enabled).apply()
+        _videoOraControls.value = enabled
+        BrowserLog.info("settings", "Ora video controls by default ${if (enabled) "on" else "off"}")
+    }
+
     private val _videoBackExits = MutableStateFlow(prefs.getBoolean(KEY_VIDEO_BACK_EXITS, true))
     /** When on, Back leaves a full-screen video instead of going back a page. */
     val videoBackExits: StateFlow<Boolean> = _videoBackExits.asStateFlow()
@@ -873,6 +883,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_BLOCK_ADS = "block_ads"
         private const val KEY_VIDEO_GESTURES = "video_gestures"
         private const val KEY_VIDEO_BACK_EXITS = "video_back_exits"
+        private const val KEY_VIDEO_ORA_CONTROLS = "video_ora_controls"
         private const val KEY_VIDEO_AUTO_PIP = "video_auto_pip"
         private const val KEY_READER_SIZE = "reader_size"
         private const val KEY_READER_SERIF = "reader_serif"
