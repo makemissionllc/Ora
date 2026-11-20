@@ -62,6 +62,7 @@ import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.Tab
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -105,6 +106,7 @@ fun BrowserMenuSheet(
     onReadLater: () -> Unit = {},
     onSavePdf: () -> Unit = {},
     onQuickSwitcher: () -> Unit = {},
+    onSessions: () -> Unit = {},
     onDismiss: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
@@ -142,6 +144,7 @@ fun BrowserMenuSheet(
             onReadLater = { act(onReadLater) },
             onSavePdf = { act(onSavePdf) },
             onQuickSwitcher = { act(onQuickSwitcher) },
+            onSessions = { act(onSessions) },
             onShare = { act(onShare) },
             onBookmark = { act(onBookmark) },
             onNewTab = { act(onNewTab) },
@@ -180,6 +183,7 @@ private fun BrowserMenuItems(
     onReadLater: () -> Unit,
     onSavePdf: () -> Unit,
     onQuickSwitcher: () -> Unit,
+    onSessions: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
     onNewTab: () -> Unit,
@@ -234,6 +238,7 @@ private fun BrowserMenuItems(
                 subtitle = if (isReadLater) "Saved to read later" else null,
             )
             MenuRow(Icons.Outlined.Terminal, "Quick switcher", onQuickSwitcher, subtitle = "Find a tab, bookmark, page or action")
+            MenuRow(Icons.Outlined.Folder, "Saved sessions", onSessions, subtitle = "Save your open tabs, or open a saved set")
             MenuRow(Icons.Outlined.PictureAsPdf, "Save as PDF", onSavePdf, subtitle = "To Downloads, named after the page")
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)
