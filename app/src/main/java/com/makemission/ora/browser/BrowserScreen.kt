@@ -1258,7 +1258,7 @@ private fun BrowserContent(
                     onGoBack = { tabs.selected?.answerFindings(goBack = true) },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = if (phoneCompact) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+                        .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
                 )
                 PopupCardHost(
                     pending = tabs.pendingPopup,

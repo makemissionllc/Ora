@@ -855,6 +855,7 @@ private fun DownloadDetail(
                 DetailStat("Started", started, Modifier.weight(1f))
             }
         }
+        if (item.status == DownloadStatus.DONE && com.makemission.ora.labs.Labs.on(com.makemission.ora.labs.LabFeature.DOWNLOAD_FINGERPRINT)) FingerprintRow(item)
         if (item.status == DownloadStatus.DONE) ChecksumCheck(item)
         if (compact) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -1064,6 +1065,44 @@ private fun copyLink(context: Context, item: DownloadItem) {
     clipboard.setPrimaryClip(ClipData.newPlainText("Download link", item.url))
     BrowserLog.info("download", downloadLogLine("Copied the link for", item.url))
     Toast.makeText(context, "Link copied", Toast.LENGTH_SHORT).show()
+}
+
+/** Lab "Show download fingerprints": the file's SHA-256, read once off the main thread, with Copy. */
+@Composable
+private fun FingerprintRow(item: DownloadItem) {
+    val colors = browserColors()
+    val context = LocalContext.current
+    var outcome by remember(item.contentUri) { mutableStateOf<Result<FileHashes>?>(null) }
+    LaunchedEffect(item.contentUri) {
+        val uri = item.contentUri ?: return@LaunchedEffect
+        outcome = withContext(Dispatchers.IO) {
+            runCatching {
+                context.contentResolver.openInputStream(uri)?.use { DownloadSafety.hashes(it) } ?: error("The file could not be opened")
+            }
+        }
+        outcome?.exceptionOrNull()?.let { BrowserLog.error("labs", downloadLogLine("Could not fingerprint", item.url), it) }
+        outcome?.getOrNull()?.let { BrowserLog.info("labs", downloadLogLine("Fingerprinted", item.url)) }
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("SHA-256", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
+        val hashes = outcome?.getOrNull()
+        Text(
+            when {
+                item.contentUri == null -> "The file is missing from Downloads/Ora."
+                outcome?.isFailure == true -> "The file could not be read."
+                hashes == null -> "Reading the file…"
+                else -> hashes.sha256.chunked(8).joinToString(" ")
+            },
+            fontSize = 12.sp, fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace, color = colors.AddressBarText,
+        )
+        if (hashes != null) {
+            androidx.compose.material3.TextButton(onClick = {
+                val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                cm.setPrimaryClip(android.content.ClipData.newPlainText("SHA-256", hashes.sha256))
+                Toast.makeText(context, "SHA-256 copied", Toast.LENGTH_SHORT).show()
+            }) { Text("Copy", color = colors.Accent, fontWeight = FontWeight.SemiBold) }
+        }
+    }
 }
 
 /**

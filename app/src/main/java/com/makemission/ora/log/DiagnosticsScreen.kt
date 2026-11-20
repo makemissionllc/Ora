@@ -88,6 +88,7 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
                 Text("Done", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
             }
         }
+        if (com.makemission.ora.labs.Labs.on(com.makemission.ora.labs.LabFeature.APP_FINGERPRINT)) AppFingerprintCard()
         Row(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -228,5 +229,43 @@ fun DiagnosticsScreen(onDone: () -> Unit) {
                 }
             }
         )
+    }
+}
+
+
+/** Lab "App fingerprint in Diagnostics": SHA-256 of the installed package and its signing certificate, with Copy. */
+@androidx.compose.runtime.Composable
+private fun AppFingerprintCard() {
+    val colors = browserColors()
+    val context = LocalContext.current
+    val clipboard = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as ClipboardManager
+    var result by remember { mutableStateOf<com.makemission.ora.labs.AppFingerprint?>(null) }
+    var failed by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        val r = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.makemission.ora.labs.AppFingerprints.read(context) }
+        result = r
+        failed = r == null
+    }
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = 8.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius))
+            .background(colors.AddressBarBackground).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text("App fingerprint", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
+        val r = result
+        when {
+            failed -> Text("The fingerprint could not be read. The reason is in the log below.", fontSize = 13.sp, color = colors.SecondaryText)
+            r == null -> Text("Reading the installed package…", fontSize = 13.sp, color = colors.SecondaryText)
+            else -> {
+                Text("Package SHA-256", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
+                Text(com.makemission.ora.labs.AppFingerprints.grouped(r.packageSha256), fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = colors.AddressBarText)
+                Text("Signing certificate SHA-256", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
+                Text(com.makemission.ora.labs.AppFingerprints.grouped(r.signerSha256), fontSize = 12.sp, fontFamily = FontFamily.Monospace, color = colors.AddressBarText)
+                TextButton(onClick = {
+                    clipboard.setPrimaryClip(ClipData.newPlainText("Ora fingerprint", "package ${r.packageSha256}\nsigner ${r.signerSha256}"))
+                    BrowserLog.info("labs", "App fingerprint copied")
+                }) { Text("Copy", color = colors.Accent, fontWeight = FontWeight.SemiBold) }
+            }
+        }
     }
 }

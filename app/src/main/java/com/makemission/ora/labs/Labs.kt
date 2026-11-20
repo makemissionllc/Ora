@@ -61,6 +61,18 @@ enum class LabFeature(val key: String, val label: String, val detail: String, va
         "scam_patterns", "Scam and AI-built site patterns",
         "Reads the page on your device and points out common scam signs (fake urgency, prizes, look-alike sign-ins, wallet phrases) and signs of a site-builder or generated page. These are hints, not proof: real shops can trigger them."
     ),
+    DOWNLOAD_FINGERPRINT(
+        "download_fingerprint", "Show download fingerprints",
+        "Shows the SHA-256 of each finished download in its details, with a Copy button, so you can compare it with the one the website publishes. The file is read once, on your device."
+    ),
+    APP_FINGERPRINT(
+        "app_fingerprint", "App fingerprint in Diagnostics",
+        "Shows the SHA-256 of Ora's installed package and of its signing certificate at the top of Diagnostics, so you can check that the app is the one you meant to install."
+    ),
+    HASH_LOG_SITES(
+        "hash_log_sites", "Hash sites in the log",
+        "Replaces site names in new log entries with short codes (the same site gets the same code until Ora restarts), so a copied log does not reveal where you browsed."
+    ),
     SCENARIO_LOG(
         "scenario_log", "Log risky situations",
         "Writes to Diagnostics when a page fails its security check, crashes, or sends you through a long chain of redirects."

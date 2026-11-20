@@ -39,7 +39,7 @@ import androidx.annotation.RequiresApi
  * was downloaded. [suffix] carries the size or the reason, with its own leading space or colon.
  */
 internal fun downloadLogLine(event: String, url: String?, suffix: String = ""): String =
-    "$event a download from ${LogPrivacy.domainOf(url.orEmpty())}$suffix"
+    "$event a download from ${LogPrivacy.siteLabel(LogPrivacy.domainOf(url.orEmpty()))}$suffix"
 
 enum class DownloadStatus { RUNNING, PAUSED, DONE, FAILED, CANCELLED }
 

@@ -12,8 +12,18 @@ object LogPrivacy {
         message.replace(dataUri, "data:").replace(address) {
             // Punctuation that ends a sentence is not part of the address.
             val trimmed = it.value.trimEnd(':', '.', ',', ';')
-            domainOf(trimmed) + it.value.substring(trimmed.length)
+            siteLabel(domainOf(trimmed)) + it.value.substring(trimmed.length)
         }
+
+    /** Random per run, so a code cannot be reversed by hashing a list of well-known sites. */
+    private val salt = java.security.SecureRandom().let { r -> ByteArray(16).also { r.nextBytes(it) } }
+
+    /** Lab "Hash sites in the log": a short code for a site. Local schemes such as "ora:" stay readable. */
+    fun siteLabel(domain: String): String {
+        if (domain.endsWith(":") || !com.makemission.ora.labs.Labs.on(com.makemission.ora.labs.LabFeature.HASH_LOG_SITES)) return domain
+        val digest = java.security.MessageDigest.getInstance("SHA-256").apply { update(salt) }.digest(domain.toByteArray())
+        return "site-" + digest.take(4).joinToString("") { "%02x".format(it) }
+    }
 
     /** The domain of [url] without "www.", port, user info, path, query or fragment. Local schemes keep only their name. */
     fun domainOf(url: String): String {
