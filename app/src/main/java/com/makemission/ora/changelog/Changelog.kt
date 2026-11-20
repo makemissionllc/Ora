@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "A full-screen video that is playing now keeps playing in a small window when you go to the home screen (Settings > Video, on by default), and the picture fills the notch area."),
             ChangeItem(ChangeKind.ADDED, "On the tablet with the address bar on top, the toolbar and group row now follow your scroll: they shrink and fade as you scroll down, come back as you scroll up, and settle fully shown or hidden when you stop."),
             ChangeItem(ChangeKind.ADDED, "Motion polish: the Tabs, Bookmarks and History switch in the tablet sidebar slides one pill under the labels, the list moves in the same direction, and swiping the list changes section. The address capsule widens when you tap it and the address slides left. The group strip's active ring glides between icons, and the tablet menu grows out of the ⋯ button. With Remove animations on, these use plain fades."),
             ChangeItem(ChangeKind.FIXED, "On the tablet, the group row now sits in the layout under the address row, so it no longer covers the top of a site or hides the top row of the ⋯ menu. The row has no bar behind it and its group chip is sized to its name. The ⋯ menu fades at its bottom edge while more rows wait below, and Quick switcher and Add to reading list have their own icons."),

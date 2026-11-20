@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
+- A full-screen video that is playing now keeps playing in a small window when you go to the home screen (Settings > Video, on by default), and the picture fills the notch area. (`31361bd`)
 - On the tablet with the address bar on top, the toolbar and group row now follow your scroll: they shrink and fade as you scroll down, come back as you scroll up, and settle fully shown or hidden when you stop. (`489a957`)
 - Motion polish: the Tabs, Bookmarks and History switch in the tablet sidebar slides one pill under the labels, the list moves in the same direction, and swiping the list changes section. The address capsule widens when you tap it and the address slides left. The group strip's active ring glides between icons, and the tablet menu grows out of the ⋯ button. With Remove animations on, these use plain fades. (`b82c345`)
 - Closing a tab card now fades it out and its neighbours slide together, and tabs added to or removed from the group strip slide in and out, with the active ring fading between icons. (`cef0b34`)
