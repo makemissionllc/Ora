@@ -120,7 +120,11 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.MaterialTheme
@@ -2379,6 +2383,7 @@ private fun AddressBar(
         focused = false
     }
     var anchorWidth by remember { mutableStateOf(0.dp) }
+    var anchorHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
 
     // Show the current page's host while the user is not typing in the field.
@@ -2417,7 +2422,7 @@ private fun AddressBar(
     }
 
     Box(
-        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() } }
+        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height }
     ) {
     Surface(
         modifier = Modifier
@@ -2556,14 +2561,30 @@ private fun AddressBar(
             )
         }
     }
-    // Suggestions drop down under the field. Not focusable, so the keyboard stays open while they show.
-    DropdownMenu(
-        expanded = focused && suggestions.isNotEmpty(),
+    // Suggestions grow out of the address capsule: same colour, same width, the surface unfolds downward from the
+    // capsule's bottom edge and folds back into it. Not focusable, so the keyboard stays open while they show.
+    val listShown = remember { androidx.compose.animation.core.MutableTransitionState(false) }
+    listShown.targetState = focused && suggestions.isNotEmpty()
+    // The rows stay on screen while the list folds away, so keep the last list through the exit.
+    var lastSuggestions by remember { mutableStateOf(suggestions) }
+    if (suggestions.isNotEmpty()) lastSuggestions = suggestions
+    if (listShown.currentState || listShown.targetState) Popup(
+        alignment = Alignment.TopStart,
+        offset = IntOffset(0, anchorHeightPx),
         onDismissRequest = { suggestionsHidden = true },
-        modifier = Modifier.width(anchorWidth),
         properties = PopupProperties(focusable = false)
     ) {
-        suggestions.forEach { suggestion ->
+        AnimatedVisibility(
+            visibleState = listShown,
+            enter = fadeIn(OraMotion.overlayFadeIn()) + expandVertically(OraMotion.overlayScaleIn(), Alignment.Top),
+            exit = fadeOut(OraMotion.overlayFadeOut()) + shrinkVertically(OraMotion.overlayScaleOut(), Alignment.Top),
+        ) {
+      Column(
+        Modifier.width(anchorWidth).padding(top = 4.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius))
+            .background(browserColors().AddressBarBackground)
+            .verticalScroll(rememberScrollState())
+      ) {
+        lastSuggestions.forEach { suggestion ->
             key(suggestion.kind, suggestion.target) {
                 FadeInOnAppear {
                     DropdownMenuItem(
@@ -2615,6 +2636,8 @@ private fun AddressBar(
                     )
                 }
             }
+        }
+      }
         }
     }
     }
