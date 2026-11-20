@@ -171,6 +171,7 @@ import com.makemission.ora.bookmarks.Bookmark
 import com.makemission.ora.history.HistoryEntry
 import com.makemission.ora.bookmarks.BookmarksRepository
 import com.makemission.ora.history.HistoryRepository
+import com.makemission.ora.history.topSites
 import com.makemission.ora.profiles.Profile
 import com.makemission.ora.profiles.ProfileSwitcher
 import com.makemission.ora.profiles.ProfilesRepository
@@ -627,10 +628,14 @@ private fun BrowserContent(
         }
     }
     /** Bookmarks and open tabs, offered as address bar suggestions. */
+    // Frequently visited pages (never from a private tab) come after them, best first, so a typed word can match them too.
+    val frequentSites = remember(historyList) { historyList.topSites(40) }
     val addressCandidates = (
         bookmarkList.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) } +
-            tabs.tabs.map { AddressSuggestion(it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url), it.url) }
+            tabs.tabs.map { AddressSuggestion(it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url), it.url) } +
+            (if (selected.isPrivate) emptyList() else frequentSites.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) })
         ).distinctBy { it.target }
+    LaunchedEffect(frequentSites) { Preloader.topSites = frequentSites.take(5).map { it.url } }
 
     /** Opens a saved address, a bookmark or a history entry, in a profile of its own when a rule says so. */
     fun openSaved(url: String, inNewTab: Boolean = false) {
@@ -1103,6 +1108,19 @@ private fun BrowserContent(
                         tabs.pendingAppLink == null && tabs.pendingPopup == null &&
                         phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen,
                     onGotIt = { settings.markTipSeen(it) },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+                )
+                // Slow page tip: after a long wait, say why and offer a way out. Shares the first-use tip's spot and motion.
+                val slowTips by settings.slowLoadTips.collectAsState()
+                SlowLoadTipHost(
+                    enabled = slowTips && tabs.pendingAppLink == null && phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen,
+                    url = selected.url,
+                    loading = selected.loading,
+                    progress = selected.progress,
+                    onTryAgain = { selected.session.reload() },
+                    onStop = { selected.session.stop() },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
@@ -2383,6 +2401,13 @@ private fun AddressBar(
         if (likelyNext == null || isPrivate) return@LaunchedEffect
         kotlinx.coroutines.delay(250)
         Preloader.warm(likelyNext, isPrivate)
+        // A little longer on the same answer means it is the real choice: fetch the page itself, when allowed.
+        kotlinx.coroutines.delay(500)
+        Preloader.prefetch(likelyNext, isPrivate)
+    }
+    // Tapping the bar before typing: warm the sites visited most, so one tap on a suggestion opens at once.
+    LaunchedEffect(focused, typed.isEmpty(), isPrivate) {
+        if (focused && typed.isEmpty() && !isPrivate) Preloader.warmTop(Preloader.topSites, isPrivate)
     }
 
     Box(

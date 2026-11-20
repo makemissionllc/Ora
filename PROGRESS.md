@@ -121,7 +121,7 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 
 - Search suggestions, next: history matches (history keeps one row per page, no visit counts), trending phrases on an empty field, and a delete-this-suggestion press. Not done: the suggestion rows are a dropdown, not yet the full-width list in the mockups.
 - Downloads on the tablet: confirm the fix with a huge file on the real device (screen off for an hour, Wi-Fi off and on, Ora swiped away). The Android 13 foreground-service timeout still pauses downloads for a tap (`DownloadService.onTimeout`).
-- Preloading, next steps: warm the sites you open most when the address bar gains focus with nothing typed (history keeps one row per page, so it has no visit counts yet), open a connection and not only the lookup, and prefetch the page behind the top suggestion. Only the DNS lookup is done today; see `browser/Preloader.kt`.
+- Preloading, next steps: tune how many top sites to warm and the prefetch size limit once measured on a device; HTTP (non-https) pages are never prefetched. Slow page tips could also offer Reader view when the page is readable.
 - More hints (other controls). Then move the stock AlertDialogs to ConfirmCard, and animate bar-style changes.
 - Optional: read the page's theme-color for the status-bar tint (see archive/browser-geckoview be8efc6). Needs my yes (rule 22).
 - Release signing: waiting on the keystore (owner task).
@@ -203,6 +203,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `cd48c83` | History visit counts and frecency, top-site warming, connection preconnect, page prefetch, slow page tips | Not checked | Not checked |
 | 2026-11-19 | `a00ecac` | Rolling counts (`ui/RollingText.kt`, used by `SegmentLabel`) | Tab overview: closing a tab, a frame mid-roll showed 7 tabs leaving and 6 tabs arriving, then it settled on 6 tabs. Opening a tab (count 6 to 7) not seen rolling, since the + closes the overview. Not checked: the sidebar count line, Light and Pure dark | Not checked |
 | 2026-11-19 | `4f2abfb` | Tab tile placeholder pulse (`ui/Pulse.kt`, `OraMotion.pulse`) | Phone: tab overview with 6 tabs, 4 with no preview; the empty tile's pixel colour changed between four frames 0.35 s apart (41, 39, 41, 40), so it breathes, though the change is faint on the dark card. Not checked: tablet, Light and Pure dark, animations-off setting | Not checked |
 | 2026-11-19 | `ebe50dc` | Animated tick (`ui/CheckMark.kt`) on the font, search engine and group rows | Phone: Settings > Font, picked Inter; the tick was on the Inter row and gone from Newsreader afterwards. A mid-grow frame was not captured (screenshots too slow). Search engine and group lists not opened. The theme rows were done afterwards in `d6faf5f`. Not checked: tablet | Not checked |

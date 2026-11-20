@@ -117,6 +117,8 @@ fun SettingsScreen(
     val swipeEffect by settings.addressSwipeEffect.collectAsState()
     val preloadMode by settings.preloadMode.collectAsState()
     val searchSuggestions by settings.searchSuggestions.collectAsState()
+    val loadAhead by settings.loadAhead.collectAsState()
+    val slowLoadTips by settings.slowLoadTips.collectAsState()
     val paletteStyle by settings.paletteStyle.collectAsState()
     val usageStats by settings.usageStats.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
@@ -1153,6 +1155,50 @@ fun SettingsScreen(
                                 )
                             }
                             MineralSwitch(checked = searchSuggestions, label = "Switch", onChange = { settings.setSearchSuggestions(it) })
+                        }
+                    }
+                    if (shown(SettingsCategory.SEARCH)) item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable { settings.setLoadAhead(!loadAhead) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text("Load the top page ahead", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                Text(
+                                    "Downloads the page behind the first address suggestion before you open it, so it appears faster. Uses extra data, follows the Preloading choice, and is never used in private tabs.",
+                                    fontSize = 14.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            MineralSwitch(checked = loadAhead, label = "Switch", onChange = { settings.setLoadAhead(it) })
+                        }
+                    }
+                    if (shown(SettingsCategory.SEARCH)) item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable { settings.setSlowLoadTips(!slowLoadTips) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text("Slow page tips", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                Text(
+                                    "Shows a tip with things to try when a page takes a long time to load.",
+                                    fontSize = 14.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            MineralSwitch(checked = slowLoadTips, label = "Switch", onChange = { settings.setSlowLoadTips(it) })
                         }
                     }
                     if (shown(SettingsCategory.SEARCH)) item {
