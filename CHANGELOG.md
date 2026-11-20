@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Pressing and holding a link or image now opens a fuller menu: it shows what you pressed, has quick Copy link and Share buttons, and lists Open in new tab, Open in private tab, Open in background tab and Add to reading list. An image that is also a link shows both sets. In a private tab, links open in private tabs and nothing is saved to the reading list. (`1918dc2`)
 
 **Fixed**
+- Full-screen video no longer shows the site's own title bar and controls underneath Ora's controls, so the two sets stop drawing over each other. The site's controls come back when you leave full screen. (`12b5d75`)
 - On the tablet, the group row now sits in the layout under the address row, so it no longer covers the top of a site or hides the top row of the ⋯ menu. The row has no bar behind it and its group chip is sized to its name. The ⋯ menu fades at its bottom edge while more rows wait below, and Quick switcher and Add to reading list have their own icons. (`dfb5169`)
 - On the phone with the Top bar layout, the address bar now starts below the clock and status icons instead of drawing under them. The page moves down to match. (`f83eb02`)
 

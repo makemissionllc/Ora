@@ -28,9 +28,42 @@
     };
   }
 
+  // Ora draws its own player controls over a full-screen video, so the site's own controls (title bar, seek bar,
+  // buttons) are hidden to stop the two sets drawing on top of each other. Only the video's ancestors and the
+  // siblings that hold subtitles stay visible. Everything hidden is marked, so leaving full screen puts it back.
+  const CAPTIONS = /caption-window|captions?-(?:text|container|layer)|subtitle(?:s)?-(?:container|layer|text)|text-?track|cue-?(?:container|layer)/i;
+  // Only a sibling that is itself the captions layer stays; a controls bar that merely holds a captions button does not.
+  function keepsCaptions(node) {
+    const cls = typeof node.className === "string" ? node.className : "";
+    return CAPTIONS.test(cls) || CAPTIONS.test(node.id || "");
+  }
+  function hideSiteControls() {
+    const v = fullScreenVideo();
+    const root = document.fullscreenElement;
+    if (!v || !root || v === root) return;
+    for (let node = v; node && node !== root; node = node.parentElement) {
+      const parent = node.parentElement;
+      if (!parent) break;
+      for (const sibling of parent.children) {
+        if (sibling === node || sibling.hasAttribute("data-ora-hid") || sibling.tagName === "STYLE" || sibling.tagName === "SCRIPT") continue;
+        if (keepsCaptions(sibling)) continue;
+        sibling.setAttribute("data-ora-hid", sibling.style.getPropertyValue("visibility"));
+        sibling.style.setProperty("visibility", "hidden", "important");
+      }
+    }
+  }
+  function showSiteControls() {
+    for (const node of document.querySelectorAll("[data-ora-hid]")) {
+      const before = node.getAttribute("data-ora-hid");
+      if (before) node.style.setProperty("visibility", before); else node.style.removeProperty("visibility");
+      node.removeAttribute("data-ora-hid");
+    }
+  }
+
   // Send while a full-screen video exists, and once more when it leaves full screen.
   setInterval(() => {
     const s = snapshot();
+    if (s.has) hideSiteControls(); else if (wasActive) showSiteControls();
     if (s.has || wasActive) {
       wasActive = s.has;
       browser.runtime.sendMessage(s).catch(() => {});
