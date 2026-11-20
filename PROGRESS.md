@@ -220,6 +220,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `d32a5d4`..`b82c345` | Shared LocalReducedMotion check (code only, not tested on a device); audit 7 ring glide, 1 sidebar pill/list/swipe, 6 capsule focus, 2 tablet menu grows from the button. Audit 3 and 8 already match. Not done: audit 2 phone menu (a bottom sheet by design M-Menu, needs your call) and dropdowns (Material default), audit 5 scroll-linked bars (larger, touches the page inset). Built, not checked on a device | Not checked (build passes) | Not checked |
 | 2026-11-20 | `b5eb329`..`dfb5169` | Tablet group row fixes: in-layout row (page and menu inset), menu bottom fade, new menu icons, V9-T-GroupStrip style. Built, not checked on a device (no screenshot taken) | Not applicable | Not checked |
 | 2026-11-20 | `f0debd4`..`cef0b34` | Audit 13 (closing a tab card) and 7 (group strip slide and ring fade; the ring fades, it does not glide). Audit 10 already morphs from its button (clearOrigin in HistoryViews). Built, not checked on a device. Not done: audit 1 (sidebar pill and swipe), 2, 3, 5, 6, 8 not audited against the spec | Not checked (build passes) | Not checked |
 | 2026-11-20 | `5996a54`..`4e2e39f` | Motion tokens (Quick, Standard, Leave, Spatial, Reduced in Motion.kt) and audit items 12, 4, 11, 9. Built, not checked on a device. Not done: audit 1, 2, 3, 5, 6, 7, 8, 10, 13 | Not checked (build passes) | Not checked |

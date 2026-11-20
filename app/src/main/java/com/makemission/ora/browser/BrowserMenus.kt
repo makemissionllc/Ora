@@ -357,6 +357,7 @@ private fun BrowserMenuSidePanel(
         dismiss()
     }
     BackHandler(enabled = !dismissing) { dismiss() }
+    val reducedPanel = com.makemission.ora.ui.theme.LocalReducedMotion.current
 
     AnimatedVisibility(visibleState = visibleState, enter = fadeIn(OraMotion.enter()), exit = fadeOut(OraMotion.exit())) {
         Box(
@@ -369,8 +370,9 @@ private fun BrowserMenuSidePanel(
     AnimatedVisibility(
         visibleState = visibleState,
         modifier = Modifier.fillMaxSize(),
-        enter = slideInHorizontally(OraMotion.enter()) { it } + fadeIn(OraMotion.enter()),
-        exit = slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit()),
+        // The panel grows from the ⋯ button (top right) from 92% to 100%, and folds back into it. Remove animations: fades only.
+        enter = fadeIn(OraMotion.standard()) + if (reducedPanel) androidx.compose.animation.EnterTransition.None else androidx.compose.animation.scaleIn(OraMotion.standard(), initialScale = 0.92f, transformOrigin = androidx.compose.ui.graphics.TransformOrigin(1f, 0f)),
+        exit = fadeOut(OraMotion.leave()) + if (reducedPanel) androidx.compose.animation.ExitTransition.None else androidx.compose.animation.scaleOut(OraMotion.leave(), targetScale = 0.92f, transformOrigin = androidx.compose.ui.graphics.TransformOrigin(1f, 0f)),
     ) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterEnd) {
             // 12 dp from the right and bottom edges, below the floating row. Only the panel's own shape clips;

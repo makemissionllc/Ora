@@ -1,5 +1,14 @@
 package com.makemission.ora.browser
 
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInHorizontally
 import com.makemission.ora.ui.pulse
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -525,9 +534,17 @@ fun TabSidebar(
     var inPrivate by remember { mutableStateOf(tabs.selected?.isPrivate == true) }
     val groupState = remember { GroupDialogState() }
     var panel by remember { mutableStateOf(SidebarPanel.TABS) }
+    val pillPos = remember { androidx.compose.animation.core.Animatable(0f) }
+    val sidebarScope = androidx.compose.runtime.rememberCoroutineScope()
+    val reducedMotion = com.makemission.ora.ui.theme.LocalReducedMotion.current
+    var query by remember { mutableStateOf("") }
+    val selectPanel: (SidebarPanel) -> Unit = { target ->
+        panel = target
+        query = ""
+        sidebarScope.launch { if (reducedMotion) pillPos.snapTo(target.ordinal.toFloat()) else pillPos.animateTo(target.ordinal.toFloat(), OraMotion.standard()) }
+    }
     // The reading list opens inside the sidebar from a pinned row, so it never crowds the Tabs / Bookmarks / History switch.
     var inReading by remember { mutableStateOf(false) }
-    var query by remember { mutableStateOf("") }
     var inactiveOpen by remember { mutableStateOf(false) }
     val readingItems by reading.items.collectAsState()
     val unreadCount = readingItems.count { !it.read }
@@ -588,20 +605,13 @@ fun TabSidebar(
             return@Column
         }
         // Tabs, Bookmarks and History switch, like the segmented control in the design (D-Sidebar).
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp)
-                .clip(androidx.compose.foundation.shape.CircleShape)
-                .background(browserColors().GridBackground)
-                .padding(3.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Quality of life: switching lists clears the search, so a filter for tabs does not hide bookmarks.
-            SegmentLabel("Tabs", selected = panel == SidebarPanel.TABS, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.TABS; query = "" }
-            SegmentLabel("Bookmarks", selected = panel == SidebarPanel.BOOKMARKS, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.BOOKMARKS; query = "" }
-            SegmentLabel("History", selected = panel == SidebarPanel.HISTORY, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.HISTORY; query = "" }
-        }
+        // Tabs, Bookmarks and History: one Chalk pill slides under the labels, and follows the finger when the list is swiped.
+        // Quality of life: switching lists clears the search, so a filter for tabs does not hide bookmarks.
+        SlidingSegments(
+            labels = listOf("Tabs", "Bookmarks", "History"),
+            position = pillPos.value,
+            onSelect = { i -> selectPanel(SidebarPanel.values()[i]) },
+        )
         // Filters the list below by title or address.
         SidebarSearch(
             query = query,
@@ -635,6 +645,37 @@ fun TabSidebar(
                 }
             }
         }
+        // The list moves 24 dp in the direction of the change and fades through. A sideways swipe on it changes section,
+        // and the pill above follows the finger.
+        var listWidthPx by remember { mutableStateOf(1f) }
+        var swipeStart by remember { mutableStateOf(0f) }
+        var swipeDx by remember { mutableStateOf(0f) }
+        val slidePx = with(androidx.compose.ui.platform.LocalDensity.current) { 24.dp.roundToPx() }
+        AnimatedContent(
+            targetState = panel,
+            modifier = Modifier
+                .weight(1f)
+                .onSizeChanged { listWidthPx = it.width.toFloat().coerceAtLeast(1f) }
+                .pointerInput(Unit) {
+                    detectHorizontalDragGestures(
+                        onDragStart = { swipeStart = pillPos.value; swipeDx = 0f },
+                        onHorizontalDrag = { _, dx ->
+                            swipeDx += dx
+                            sidebarScope.launch { pillPos.snapTo((swipeStart - swipeDx / listWidthPx * 1.5f).coerceIn(0f, 2f)) }
+                        },
+                        onDragEnd = { selectPanel(SidebarPanel.values()[pillPos.value.roundToInt().coerceIn(0, 2)]) },
+                        onDragCancel = { selectPanel(panel) },
+                    )
+                },
+            transitionSpec = {
+                val dir = if (targetState.ordinal >= initialState.ordinal) 1 else -1
+                if (reducedMotion) fadeIn(OraMotion.reduced()) togetherWith fadeOut(OraMotion.reduced())
+                else (slideInHorizontally(OraMotion.standard()) { dir * slidePx } + fadeIn(OraMotion.standard())) togetherWith
+                    (slideOutHorizontally(OraMotion.leave()) { -dir * slidePx } + fadeOut(OraMotion.leave()))
+            },
+            label = "sidebar list",
+        ) { shownPanel ->
+        val panel = shownPanel
         if (panel == SidebarPanel.HISTORY) {
             HistoryList(
                 entries = history,
@@ -643,11 +684,11 @@ fun TabSidebar(
                 onOpen = onOpenHistory,
                 onRemove = onRemoveHistory,
                 onClear = onClearHistory,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
             )
         } else {
             LazyColumn(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 if (panel == SidebarPanel.BOOKMARKS) {
@@ -722,6 +763,7 @@ fun TabSidebar(
                 }
             }
         }
+        }
         // Pinned at the bottom: the reading list, then the private space.
         Row(
             modifier = Modifier.fillMaxWidth().height(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().GridBackground).clickable { inReading = true; query = "" }.padding(horizontal = 16.dp),
@@ -740,6 +782,36 @@ fun TabSidebar(
             Text("Private tabs ($privateCount)", color = browserColors().AddressBarText, fontSize = 15.sp, fontWeight = FontWeight.Medium)
         }
     }
+    }
+}
+
+/**
+ * A segmented control with one Chalk pill under the labels. [position] is the pill's place in segments (0 is the
+ * first), so it can slide on a tap and follow a finger.
+ */
+@Composable
+internal fun SlidingSegments(labels: List<String>, position: Float, onSelect: (Int) -> Unit) {
+    val colors = browserColors()
+    androidx.compose.foundation.layout.BoxWithConstraints(
+        Modifier.fillMaxWidth().height(40.dp).clip(androidx.compose.foundation.shape.CircleShape).background(colors.GridBackground).padding(3.dp)
+    ) {
+        val segment = maxWidth / labels.size
+        Box(
+            Modifier.offset(x = segment * position).width(segment).fillMaxHeight()
+                .clip(androidx.compose.foundation.shape.CircleShape).background(colors.Accent)
+        )
+        Row(Modifier.fillMaxSize()) {
+            labels.forEachIndexed { i, label ->
+                val selected = position.roundToInt() == i
+                Box(Modifier.weight(1f).fillMaxHeight().clip(androidx.compose.foundation.shape.CircleShape).clickable { onSelect(i) }, contentAlignment = Alignment.Center) {
+                    com.makemission.ora.ui.RollingText(
+                        label, fontSize = 14.sp,
+                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                        color = if (selected) colors.GridBackground else colors.SecondaryText,
+                    )
+                }
+            }
+        }
     }
 }
 

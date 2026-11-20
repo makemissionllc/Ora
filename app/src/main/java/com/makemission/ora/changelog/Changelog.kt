@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Motion polish: the Tabs, Bookmarks and History switch in the tablet sidebar slides one pill under the labels, the list moves in the same direction, and swiping the list changes section. The address capsule widens when you tap it and the address slides left. The group strip's active ring glides between icons, and the tablet menu grows out of the ⋯ button. With Remove animations on, these use plain fades."),
             ChangeItem(ChangeKind.FIXED, "On the tablet, the group row now sits in the layout under the address row, so it no longer covers the top of a site or hides the top row of the ⋯ menu. The row has no bar behind it and its group chip is sized to its name. The ⋯ menu fades at its bottom edge while more rows wait below, and Quick switcher and Add to reading list have their own icons."),
             ChangeItem(ChangeKind.ADDED, "Closing a tab card now fades it out and its neighbours slide together, and tabs added to or removed from the group strip slide in and out, with the active ring fading between icons."),
             ChangeItem(ChangeKind.ADDED, "Small motion polish: switches slide their thumb and fade their colour, the tab count rolls up or down, Reload and Stop turn as they swap, and messages at the bottom rise into place. Motion follows the Remove animations setting."),
