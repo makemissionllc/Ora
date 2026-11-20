@@ -254,6 +254,8 @@ fun TabGrid(
                 }
             }
             gridItems(gridTabs, key = { it.id }) { tab ->
+                // Closing a card fades it out and its neighbours slide together to close the gap.
+                Box(Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave())) {
                 TabTile(
                     title = tab.shownTitle(displayUrl(tab.url)),
                     thumbnail = tab.thumbnail,
@@ -264,6 +266,7 @@ fun TabGrid(
                     groupColor = tabs.groups.firstOrNull { it.id == tab.groupId }?.color?.color,
                     dragTabId = tab.id.takeIf { !tab.isPrivate },
                 )
+                }
             }
             // One search field: bookmarks and history that match are listed under the tabs (up to five each).
             if (shownGroup == null && needle.isNotEmpty() && !inPrivate) {
