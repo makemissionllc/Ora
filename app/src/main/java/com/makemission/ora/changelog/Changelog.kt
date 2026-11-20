@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "19 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "The tick on the other Settings choices, appearance, motion style and the two swipe options, now grows in and shrinks out like the font list, so a choice is seen as you make it.  (`d6faf5f`)"),
             ChangeItem(ChangeKind.ADDED, "The tick on the chosen row now grows in and shrinks out when you pick something else, in the font list, the search engine list and the group list, so you can see which row you just chose.  (`ebe50dc`)"),
             ChangeItem(ChangeKind.ADDED, "Empty tab tiles now breathe softly until their preview is captured, so a blank tile looks like it is still loading instead of broken. It stops if animations are turned off.  (`4f2abfb`)"),
             ChangeItem(ChangeKind.ADDED, "Counts now roll: when you open or close a tab, the number in the tab overview slides up for more and down for fewer instead of just changing.  (`a00ecac`)"),
