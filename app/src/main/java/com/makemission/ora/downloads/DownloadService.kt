@@ -20,7 +20,7 @@ class DownloadService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val running = DownloadsRepository.current?.activeCount() ?: 0
+        val running = DownloadsRepository.ensure(this).activeCount()
         // Android requires startForeground after a startForegroundService call, even when nothing is left to run.
         startForeground(
             DownloadNotifications.NOTIFICATION_ID,

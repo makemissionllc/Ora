@@ -17,7 +17,7 @@ class DownloadJobService : JobService() {
 
     override fun onStartJob(params: JobParameters): Boolean {
         DownloadNotifications.createChannel(this)
-        val repository = DownloadsRepository.current
+        val repository = DownloadsRepository.ensure(this)
         // Downloads that Android paused when it stopped the job continue now.
         repository?.resumeAfterSystemStop()
         val running = repository?.activeCount() ?: 0
@@ -63,12 +63,12 @@ class DownloadJobService : JobService() {
 
         /**
          * Stops that the user or a restriction asked for. Those downloads wait for the user to resume them. Every
-         * other stop is temporary, so the downloads continue when Android restarts the job.
+         * other stop is temporary, so the downloads continue when Android restarts the job. App standby is one of
+         * those: a tablet left on a charger for hours moves Ora to a quieter bucket, and that must not stop a big file.
          */
         internal fun isUserOrRestrictionStop(reason: Int): Boolean = when (reason) {
             JobParameters.STOP_REASON_USER,
-            JobParameters.STOP_REASON_BACKGROUND_RESTRICTION,
-            JobParameters.STOP_REASON_APP_STANDBY -> true
+            JobParameters.STOP_REASON_BACKGROUND_RESTRICTION -> true
             else -> false
         }
 

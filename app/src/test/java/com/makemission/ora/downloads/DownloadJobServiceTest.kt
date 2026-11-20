@@ -12,11 +12,11 @@ class DownloadJobServiceTest {
     fun aStopTheUserOrARestrictionAskedForWaitsForTheUser() {
         assertTrue(DownloadJobService.isUserOrRestrictionStop(JobParameters.STOP_REASON_USER))
         assertTrue(DownloadJobService.isUserOrRestrictionStop(JobParameters.STOP_REASON_BACKGROUND_RESTRICTION))
-        assertTrue(DownloadJobService.isUserOrRestrictionStop(JobParameters.STOP_REASON_APP_STANDBY))
     }
 
     @Test
     fun aTemporaryStopContinuesWhenAndroidRestartsTheJob() {
+        assertFalse(DownloadJobService.isUserOrRestrictionStop(JobParameters.STOP_REASON_APP_STANDBY))
         assertFalse(DownloadJobService.isUserOrRestrictionStop(JobParameters.STOP_REASON_TIMEOUT))
         assertFalse(DownloadJobService.isUserOrRestrictionStop(JobParameters.STOP_REASON_PREEMPT))
         assertFalse(DownloadJobService.isUserOrRestrictionStop(JobParameters.STOP_REASON_CONSTRAINT_CONNECTIVITY))

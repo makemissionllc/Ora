@@ -96,6 +96,13 @@ class DownloadsRepository(
     /** Ids the user paused; their job stops and is marked paused instead of cancelled. */
     private val pausing: MutableSet<Long> = ConcurrentHashMap.newKeySet()
     private val lock = Any()
+    /** Downloads the user paused on purpose. Everything else that was unfinished continues by itself after a restart. */
+    private val stateStore = context.getSharedPreferences("ora_downloads_state", Context.MODE_PRIVATE)
+    private val userPaused: MutableSet<Long> = ConcurrentHashMap.newKeySet<Long>().also { set ->
+        stateStore.getStringSet(KEY_USER_PAUSED, emptySet())?.mapNotNullTo(set) { it.toLongOrNull() }
+    }
+    /** Automatic retries used by each download since it last received a byte. */
+    private val autoRetries = ConcurrentHashMap<Long, Int>()
     private var nextId = 1L
     /** Whether the background service was last asked to run, so it is started and stopped only on change. */
     @Volatile private var serviceRunning = false
@@ -139,6 +146,8 @@ class DownloadsRepository(
                 status = DownloadStatus.PAUSED,
                 startedAt = s.startedAt,
                 pausable = s.ranged,
+                // Only a download the user paused on purpose waits for a tap; the rest carry on after a restart.
+                pausedBySystem = s.ranged && s.id !in userPaused,
             )
         }
         _items.value = restored
@@ -147,7 +156,8 @@ class DownloadsRepository(
         dir.listFiles { f -> f.name.endsWith(".part") && f.name.removeSuffix(".part") !in keep }?.forEach { it.delete() }
         current = this
         DownloadNotifier(context, this, scope)
-        if (restored.isNotEmpty()) BrowserLog.info("download", "Restored ${restored.size} unfinished downloads as paused")
+        if (restored.isNotEmpty()) BrowserLog.info("download", "Restored ${restored.size} unfinished downloads, ${restored.count { it.pausedBySystem }} will continue by themselves")
+        resumeAfterSystemStop()
     }
 
     /** True for a download started in a private tab. */
@@ -191,7 +201,13 @@ class DownloadsRepository(
 
     /** Pauses a running download. Its saved parts stay on disk, so Resume continues from the same bytes. */
     fun pause(id: Long) {
-        stopTransfer(id)
+        // A pause the user asked for is remembered, so it survives a restart and nothing resumes it behind their back.
+        if (stopTransfer(id)) rememberUserPause(id, true)
+    }
+
+    private fun rememberUserPause(id: Long, paused: Boolean) {
+        if (paused) userPaused.add(id) else userPaused.remove(id)
+        stateStore.edit().putStringSet(KEY_USER_PAUSED, userPaused.map { it.toString() }.toSet()).apply()
     }
 
     /**
@@ -210,7 +226,7 @@ class DownloadsRepository(
     fun resumeAfterSystemStop() {
         val ids = _items.value.filter { it.pausedBySystem && it.status == DownloadStatus.PAUSED }.map { it.id }
         if (ids.isEmpty()) return
-        BrowserLog.info("download", "Android restarted the background job, so ${ids.size} paused download(s) continue")
+        BrowserLog.info("download", "${ids.size} download(s) that stopped on their own continue")
         ids.forEach { resume(it) }
     }
 
@@ -242,6 +258,8 @@ class DownloadsRepository(
         jobs[id]?.cancel()
         partFile(id).delete()
         tasks.remove(id)
+        autoRetries.remove(id)
+        rememberUserPause(id, false)
         update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.CANCELLED, speed = 0, pausedBySystem = false) else it } }
         saveNow()
         BrowserLog.warn("download", downloadLogLine("Cancelled", item.url))
@@ -271,7 +289,8 @@ class DownloadsRepository(
 
     private fun launch(id: Long) {
         if (jobs[id]?.isActive == true) return
-        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.RUNNING, error = null, pausedBySystem = false) else it } }
+        rememberUserPause(id, false)
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.RUNNING, error = null, notice = it.notice.takeUnless { n -> n == AUTO_RETRY_NOTICE }, pausedBySystem = false) else it } }
         jobs[id] = scope.launch {
             try {
                 run(id, restarted = false)
@@ -291,6 +310,7 @@ class DownloadsRepository(
             } catch (e: Exception) {
                 if (e is IOException) waitingForNetwork.add(id)
                 fail(id, e.message ?: e.javaClass.simpleName)
+                if (e is IOException) scheduleAutoRetry(id, e.message)
             } finally {
                 // Removes only this run's job, so a resume that started a newer run is not dropped from the map.
                 currentCoroutineContext()[Job]?.let { jobs.remove(id, it) }
@@ -378,6 +398,7 @@ class DownloadsRepository(
         val bytes = task.parts.sumOf { doneOf(it.seg) }
         val seconds = (now - task.lastTime) / 1000.0
         val speed = if (task.lastTime > 0 && seconds > 0) ((bytes - task.lastBytes) / seconds).toLong() else 0L
+        if (bytes > task.lastBytes) autoRetries.remove(id)
         task.lastBytes = bytes
         task.lastTime = now
         update { list -> list.map { if (it.id == id) it.copy(bytes = bytes, speed = speed) else it } }
@@ -389,6 +410,31 @@ class DownloadsRepository(
         update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.FAILED, error = FAILED_TAP_TO_RETRY, speed = 0) else it } }
         saveNow()
         BrowserLog.error("download", downloadLogLine("Failed", url, ": $message"))
+    }
+
+    /**
+     * A download that ran out of quick retries is tried again every few minutes instead of waiting for a tap,
+     * so a long one survives a Wi-Fi sleep or a server that was busy. It gives up after [MAX_AUTO_RETRIES]
+     * tries in a row with no new bytes, or at once for an error that will not go away (an expired link).
+     */
+    private fun scheduleAutoRetry(id: Long, message: String?) {
+        if (!isTemporaryFailure(message)) return
+        val tries = (autoRetries[id] ?: 0) + 1
+        if (tries > MAX_AUTO_RETRIES) {
+            BrowserLog.warn("download", downloadLogLine("Gave up retrying by itself", find(id)?.url, " after $MAX_AUTO_RETRIES tries"))
+            return
+        }
+        autoRetries[id] = tries
+        update { list -> list.map { if (it.id == id) it.copy(notice = AUTO_RETRY_NOTICE) else it } }
+        scope.launch {
+            kotlinx.coroutines.delay(AUTO_RETRY_MS)
+            val item = find(id) ?: return@launch
+            if (item.status == DownloadStatus.FAILED && id !in userPaused) {
+                BrowserLog.info("download", downloadLogLine("Retrying by itself", item.url, ": try $tries of $MAX_AUTO_RETRIES"))
+                waitingForNetwork.remove(id)
+                resume(id)
+            }
+        }
     }
 
     private fun partFile(id: Long) = File(dir, "$id.part")
@@ -480,6 +526,29 @@ class DownloadsRepository(
     companion object {
         const val FILE_CHANGED_NOTICE = "The file changed, so it restarted"
         const val FAILED_TAP_TO_RETRY = "Failed: tap to retry"
+        const val AUTO_RETRY_NOTICE = "Connection lost. Trying again soon"
+        private const val KEY_USER_PAUSED = "user_paused"
+        private const val AUTO_RETRY_MS = 2 * 60 * 1000L
+        const val MAX_AUTO_RETRIES = 30
+
+        /** False for an error that will not fix itself: a missing or forbidden file, an expired link. */
+        internal fun isTemporaryFailure(message: String?): Boolean {
+            val code = message?.substringAfter("HTTP ", "")?.takeWhile { it.isDigit() }?.toIntOrNull() ?: return true
+            return code == 408 || code == 429 || code >= 500
+        }
+
+        /** The repository, made now when this process does not have one yet (the system restarted a download job). */
+        @Synchronized
+        fun ensure(context: Context): DownloadsRepository {
+            current?.let { return it }
+            val app = context.applicationContext
+            val settings = com.makemission.ora.settings.SettingsRepository(app)
+            return DownloadsRepository(
+                app,
+                fastHttp = { settings.fastHttpDownloads.value },
+                transportFor = { priv, referrer -> GeckoTransport(com.makemission.ora.browser.GeckoEngine.runtime(app), priv, referrer) },
+            )
+        }
         /** The shortest wait the system allows before it starts a stopped download job again. */
         private const val RESTART_BACKOFF_MILLIS = 10_000L
 
