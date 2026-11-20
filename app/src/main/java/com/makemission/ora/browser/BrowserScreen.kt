@@ -1862,13 +1862,13 @@ private fun BottomControls(
         ToolbarButton(onClick = onShare, enabled = tab.url.isNotBlank(), description = "Share") {
             Icon(Icons.Filled.Share, contentDescription = null)
         }
-        ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = "Bookmark") {
+        ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = if (isBookmarked) "Remove bookmark" else "Add bookmark") {
             Icon(
                 if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                 contentDescription = null
             )
         }
-        ToolbarButton(onClick = onTabs, enabled = true, description = "Tabs") {
+        ToolbarButton(onClick = onTabs, enabled = true, description = if (tabCount == 1) "Tabs, 1 open" else "Tabs, $tabCount open") {
             TabsIcon(tabCount)
         }
         if (onMenu != null) {
@@ -1992,13 +1992,13 @@ private fun TabletToolbar(
                     Icon(Icons.Filled.Download, contentDescription = null)
                 }
             }
-            ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = "Bookmark") {
+            ToolbarButton(onClick = onBookmark, enabled = tab.url.isNotBlank(), description = if (isBookmarked) "Remove bookmark" else "Add bookmark") {
                 Icon(
                     if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                     contentDescription = null
                 )
             }
-            ToolbarButton(onClick = onTabs, enabled = true, description = "Tabs") {
+            ToolbarButton(onClick = onTabs, enabled = true, description = if (tabCount == 1) "Tabs, 1 open" else "Tabs, $tabCount open") {
                 TabsIcon(tabCount)
             }
             ToolbarButton(onClick = onNewTab, enabled = true, description = "New tab") {
