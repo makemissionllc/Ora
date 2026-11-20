@@ -310,7 +310,7 @@ fun BrowserScreen(
             else -> GeckoRuntimeSettings.COLOR_SCHEME_LIGHT
         }
     }
-    CompositionLocalProvider(LocalBrowserColors provides palette) {
+    CompositionLocalProvider(LocalBrowserColors provides palette, com.makemission.ora.ui.theme.LocalReducedMotion provides OraMotion.reduced) {
         // The notice comes first on a first launch; nothing of the browser is composed until it is accepted.
         com.makemission.ora.onboarding.FirstRunHost(settings, profiles) { BrowserContent(settings, profiles, modifier) }
         // Drawn inside the palette so the lock follows Light, Dark and Pure dark like everything else.
@@ -731,7 +731,7 @@ private fun BrowserContent(
     val swipeMotion = rememberAddressSwipeMotion()
     // The tab switch: a drag on the bar lifts the page into capsules (see TabSwitch.kt).
     val tabSwitchScope = rememberCoroutineScope()
-    val tabSwitch = remember { TabSwitchState(tabSwitchScope) { !android.animation.ValueAnimator.areAnimatorsEnabled() } }
+    val tabSwitch = remember { TabSwitchState(tabSwitchScope) { OraMotion.reduced } }
     DisposableEffect(tabSwitch) { TabSwitchGesture.state = tabSwitch; onDispose { if (TabSwitchGesture.state === tabSwitch) TabSwitchGesture.state = null } }
     val swipeScope = rememberCoroutineScope()
     val swipeTarget by settings.addressSwipeTarget.collectAsState()
@@ -1130,10 +1130,11 @@ private fun BrowserContent(
             ) { data ->
                 // The message rises 12 dp as it fades in (Standard); the host fades it out when it leaves.
                 val rise = remember(data) { Animatable(0f) }
+                val reducedSnack = com.makemission.ora.ui.theme.LocalReducedMotion.current
                 LaunchedEffect(data) { rise.animateTo(1f, OraMotion.standard()) }
                 Snackbar(
                     snackbarData = data,
-                    modifier = Modifier.graphicsLayer { alpha = rise.value; translationY = (1f - rise.value) * 12.dp.toPx() },
+                    modifier = Modifier.graphicsLayer { alpha = rise.value; translationY = if (reducedSnack) 0f else (1f - rise.value) * 12.dp.toPx() },
                     shape = RoundedCornerShape(BrowserTokens.RadiusMedium),
                     containerColor = browserColors().Surface,
                     contentColor = browserColors().AddressBarText,
@@ -2254,12 +2255,15 @@ private fun TabsIcon(tabCount: Int) {
         modifier = Modifier.graphicsLayer { scaleX = bump.value; scaleY = bump.value }
     ) {
         Icon(Icons.Outlined.Tab, contentDescription = null)
-        // The number rolls up when a tab is added and down when one closes.
+        val reducedMotion = com.makemission.ora.ui.theme.LocalReducedMotion.current
+    // The number rolls up when a tab is added and down when one closes.
         androidx.compose.animation.AnimatedContent(
             targetState = tabCount,
             transitionSpec = {
                 val up = targetState > initialState
-                (androidx.compose.animation.slideInVertically(OraMotion.standard()) { if (up) it else -it } + androidx.compose.animation.fadeIn(OraMotion.standard())) togetherWith
+                // Remove animations: a plain fade, no roll.
+                if (reducedMotion) androidx.compose.animation.fadeIn(OraMotion.reduced()) togetherWith androidx.compose.animation.fadeOut(OraMotion.reduced())
+                else (androidx.compose.animation.slideInVertically(OraMotion.standard()) { if (up) it else -it } + androidx.compose.animation.fadeIn(OraMotion.standard())) togetherWith
                     (androidx.compose.animation.slideOutVertically(OraMotion.leave()) { if (up) -it else it } + androidx.compose.animation.fadeOut(OraMotion.leave()))
             },
             label = "tab count",
@@ -2948,7 +2952,8 @@ private fun AddressBar(
                 label = "reload stop",
             ) { isLoading ->
                 val turn by transition.animateFloat(transitionSpec = { OraMotion.quick() }, label = "reload turn") { if (it == EnterExitState.Visible) 0f else if (isLoading) -90f else 90f }
-                Box(Modifier.graphicsLayer { rotationZ = turn }) {
+                val reducedTurn = com.makemission.ora.ui.theme.LocalReducedMotion.current
+                Box(Modifier.graphicsLayer { rotationZ = if (reducedTurn) 0f else turn }) {
                     if (isLoading) {
                         IconButton(onClick = onStop) {
                             Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)

@@ -10,6 +10,15 @@ import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
+/**
+ * True when Android's "Remove animations" is on (the animation scale is 0). One check for every audit item: with it
+ * on, travel, zoom and rotation are dropped and only fades remain. Provided by the browser screen from
+ * [OraMotion.reduced], which MainActivity keeps in step with the system setting.
+ */
+val LocalReducedMotion = androidx.compose.runtime.staticCompositionLocalOf { false }
 
 /** The motion character the user picks in Settings > Appearance. Each one sets the timing and easing of every transition. */
 enum class MotionStyle(val key: String, val label: String, val description: String) {
@@ -41,8 +50,7 @@ object OraMotion {
      * animation scale at 0). Every transition then lasts one millisecond, so surfaces still open and close but
      * nothing moves. Written by the activity when it comes to the front.
      */
-    @Volatile
-    var reduced: Boolean = false
+    var reduced: Boolean by androidx.compose.runtime.mutableStateOf(false)
 
     val ENTER_MS: Int
         get() = if (reduced) 1 else when (style) {
