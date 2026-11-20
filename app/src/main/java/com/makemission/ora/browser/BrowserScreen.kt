@@ -112,6 +112,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Tab
 import androidx.compose.material.icons.outlined.LibraryBooks
@@ -926,13 +927,31 @@ private fun BrowserContent(
             onDismiss = { showSessions = false },
         )
     }
+    /** Runs a named Ora action, from the Quick switcher or the address bar's ">" command mode. */
+    fun runAction(key: String) {
+        BrowserLog.info("commands", "Action run: $key")
+        when (key) {
+            "New tab" -> onNewTab()
+            "New private tab" -> onNewPrivateTab()
+            "Close tab" -> tabs.close(selected.id)
+            "Reopen closed tab" -> onReopenClosed()
+            "Library" -> showLibrary = true
+            "Settings" -> showSettings = true
+            "Find in page" -> showFind = true
+            "Save as PDF" -> savePdf()
+            "Keyboard shortcuts" -> showShortcuts = true
+            "Save session" -> saveSession(com.makemission.ora.settings.SessionLogic.defaultName(sessionPages(), System.currentTimeMillis()))
+            "Saved sessions" -> showSessions = true
+            else -> if (key.startsWith("session:")) sessionList.firstOrNull { it.name == key.removePrefix("session:") }?.let { openSession(it) }
+        }
+    }
     if (showSwitcher) {
         val switcherItems = remember(tabs.tabs.toList(), bookmarkList, historyList, selected.isPrivate, sessionList) {
             // Private tabs are listed only from a private tab, and history never from one.
             tabs.tabs.filter { !it.isPrivate || selected.isPrivate }.map { QuickItem(QuickKind.TAB, it.id.toString(), it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) } +
                 bookmarkList.map { QuickItem(QuickKind.BOOKMARK, it.url, it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) } +
                 (if (selected.isPrivate) emptyList() else historyList.take(200).map { QuickItem(QuickKind.HISTORY, it.url, it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) }) +
-                listOf("New tab", "New private tab", "Reopen closed tab", "Library", "Settings", "Find in page", "Save as PDF", "Keyboard shortcuts", "Save session", "Saved sessions").map { QuickItem(QuickKind.ACTION, it, it) } +
+                CommandBar.commands.map { QuickItem(QuickKind.ACTION, it.name, it.name, it.hint) } +
                 sessionList.map { QuickItem(QuickKind.ACTION, "session:${it.name}", "Open session: ${it.name}", "${it.pages.size} pages") }
         }
         QuickSwitcher(
@@ -943,19 +962,7 @@ private fun BrowserContent(
                 when (item.kind) {
                     QuickKind.TAB -> tabs.select(item.key.toLong())
                     QuickKind.BOOKMARK, QuickKind.HISTORY -> openSaved(item.key)
-                    QuickKind.ACTION -> when (item.key) {
-                        "New tab" -> onNewTab()
-                        "New private tab" -> onNewPrivateTab()
-                        "Reopen closed tab" -> onReopenClosed()
-                        "Library" -> showLibrary = true
-                        "Settings" -> showSettings = true
-                        "Find in page" -> showFind = true
-                        "Save as PDF" -> savePdf()
-                        "Keyboard shortcuts" -> showShortcuts = true
-                        "Save session" -> saveSession(com.makemission.ora.settings.SessionLogic.defaultName(sessionPages(), System.currentTimeMillis()))
-                        "Saved sessions" -> showSessions = true
-                        else -> if (item.key.startsWith("session:")) sessionList.firstOrNull { it.name == item.key.removePrefix("session:") }?.let { openSession(it) }
-                    }
+                    QuickKind.ACTION -> runAction(item.key)
                 }
             },
         )
@@ -963,6 +970,12 @@ private fun BrowserContent(
 
     /** Loads typed text: searches through the chooser or default engine, or opens a URL. */
     fun submitAddress(input: String) {
+        // ">" runs an action instead of loading a page: the best match for what was typed.
+        if (CommandBar.isCommand(input)) {
+            val hit = CommandBar.matches(input).firstOrNull()
+            if (hit != null) runAction(hit.name) else InAppNotices.show("No command matches \"${input.trim().removePrefix(CommandBar.PREFIX).trim()}\"")
+            return
+        }
         // A profile rule sends the site to its own profile, unless this is a private tab.
         if (!isSearchInput(input) && !selected.isPrivate) {
             val loadable = toLoadableUrl(input, defaultEngine.template)
@@ -2940,7 +2953,7 @@ private fun AddressBar(
     // Google-style phrases from the default search engine, fetched once typing pauses. Never for a private tab.
     var phrases by remember { mutableStateOf(emptyList<String>()) }
     LaunchedEffect(typed, focused, isPrivate) {
-        if (!focused || isPrivate || !SearchSuggest.worthAsking(typed)) {
+        if (!focused || isPrivate || CommandBar.isCommand(typed) || !SearchSuggest.worthAsking(typed)) {
             phrases = emptyList()
             return@LaunchedEffect
         }
@@ -3225,7 +3238,7 @@ private fun AddressBar(
                         modifier = Modifier.background(if (rowIndex == highlighted) browserColors().SecondaryText.copy(alpha = 0.18f) else Color.Transparent),
                         leadingIcon = {
                             Icon(
-                                imageVector = if (suggestion.kind == SuggestionKind.LOCAL) Icons.Outlined.BookmarkBorder else Icons.Filled.Search,
+                                imageVector = when (suggestion.kind) { SuggestionKind.LOCAL -> Icons.Outlined.BookmarkBorder; SuggestionKind.COMMAND -> Icons.Outlined.Bolt; else -> Icons.Filled.Search },
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = browserColors().SecondaryText,

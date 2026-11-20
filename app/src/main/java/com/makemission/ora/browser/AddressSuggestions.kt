@@ -9,7 +9,7 @@ import com.makemission.ora.settings.isSearchInput
 data class AddressSuggestion(val title: String, val subtitle: String, val target: String, val kind: SuggestionKind = SuggestionKind.LOCAL)
 
 /** Where a suggestion came from: a bookmark or open tab, a phrase the search engine offered, or the typed text itself. */
-enum class SuggestionKind { LOCAL, QUERY, SEARCH }
+enum class SuggestionKind { LOCAL, QUERY, SEARCH, COMMAND }
 
 /**
  * Puts the engine's phrases into the list the way Google does: the phrases first, as plain searches, then the
@@ -30,6 +30,9 @@ fun addressSuggestions(
 ): List<AddressSuggestion> {
     val query = typed.trim()
     if (query.isEmpty()) return emptyList()
+    if (CommandBar.isCommand(query)) {
+        return CommandBar.matches(query).map { AddressSuggestion(it.name, it.hint, CommandBar.PREFIX + it.name, SuggestionKind.COMMAND) }
+    }
     val search = if (isSearchInput(query)) {
         listOf(AddressSuggestion("Search for \"$query\"", "Default search engine", query, SuggestionKind.SEARCH))
     } else {
