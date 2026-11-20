@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Closing a tab card now fades it out and its neighbours slide together, and tabs added to or removed from the group strip slide in and out, with the active ring fading between icons."),
             ChangeItem(ChangeKind.ADDED, "Small motion polish: switches slide their thumb and fade their colour, the tab count rolls up or down, Reload and Stop turn as they swap, and messages at the bottom rise into place. Motion follows the Remove animations setting."),
             ChangeItem(ChangeKind.ADDED, "Swiping the address bar or bottom bar sideways now lifts the page into a small card with your neighbouring tabs beside it. The cards follow your finger, the domain shows underneath, and releasing settles on the nearest tab. Tapping a tab in the group strip slides straight to it. The page is swapped in behind the cards, so there is no blank flash. With Remove animations on, it is a short fade instead."),
             ChangeItem(ChangeKind.ADDED, "When the page you are on belongs to a tab group, a strip of that group's tabs now shows above the bottom bar (phone) or under the address row (tablet), with a button to add a tab to the group and a sheet for the group's tabs. Long-press a link and choose Open in new tab in group to open it in the background in any group. Turn the strip off in Settings > Tabs."),
