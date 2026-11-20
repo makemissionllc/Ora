@@ -727,10 +727,24 @@ private fun BrowserContent(
     // A sideways swipe on the address bar moves through open tabs, the tab's pages or profiles, as the Settings choice
     // says, and the page moves with the chosen effect instead of cutting over. A swipe with nowhere to go bounces.
     val swipeMotion = rememberAddressSwipeMotion()
+    // The tab switch: a drag on the bar lifts the page into capsules (see TabSwitch.kt).
+    val tabSwitchScope = rememberCoroutineScope()
+    val tabSwitch = remember { TabSwitchState(tabSwitchScope) { !android.animation.ValueAnimator.areAnimatorsEnabled() } }
+    DisposableEffect(tabSwitch) { TabSwitchGesture.state = tabSwitch; onDispose { if (TabSwitchGesture.state === tabSwitch) TabSwitchGesture.state = null } }
     val swipeScope = rememberCoroutineScope()
     val swipeTarget by settings.addressSwipeTarget.collectAsState()
     val swipeEffect by settings.addressSwipeEffect.collectAsState()
     /** Moves by +1 (a swipe to the left, next) or -1 (a swipe to the right, previous), wrapping at the ends. */
+    tabSwitch.enabled = swipeTarget == AddressSwipeTarget.TABS &&
+        tabsInSpace(tabs.tabs, { it.isPrivate }, selected.isPrivate).size > 1
+    tabSwitch.tabs = tabs
+    tabSwitch.gapPx = with(LocalDensity.current) { BrowserTokens.TabSwitchGap.toPx() }
+    tabSwitch.capture = { done ->
+        val view = pageView.view
+        if (view == null) done(null) else view.capturePixels().accept({ b -> done(b) }, { done(null) })
+    }
+    // Pictures of tabs that are gone are freed.
+    LaunchedEffect(tabs.tabs.size) { ThumbnailCache.retainOnly(tabs.tabs.map { it.id }.toSet()) }
     val switchTab: (Int) -> Unit = { delta ->
         swipeScope.launch {
             when (swipeTarget) {
@@ -1252,6 +1266,7 @@ private fun BrowserContent(
                     .padding(start = cardInset, end = cardInset, bottom = cardInset)
                     .clip(cardShape)
                     .addressSwipeEffect(swipeMotion, swipeEffect)
+                    .onSizeChanged { tabSwitch.pageWidthPx = it.width.toFloat() }
             ) {
                 BrowserPage(
                     tab = selected,
@@ -1278,6 +1293,8 @@ private fun BrowserContent(
                     bottomClipPx = if (phoneCompact) bottomBarPx else 0,
                     onSubmit = { input -> submitAddress(input) }
                 )
+                // The tab switch capsules cover the page while a switch runs, so the new session swaps in unseen.
+                TabSwitchOverlay(tabSwitch)
                 // The full-screen video's own player controls sit over the page (tap for controls, swipes, skip, speed).
                 if (selected.videoFullScreen) {
                     VideoPlayerControls(
@@ -2024,7 +2041,7 @@ private fun captureThumbnail(pageView: PageView, tab: BrowserTab) {
     // Private tabs keep no picture of their pages, so the tab grid shows a placeholder for them.
     if (tab.isPrivate) return
     pageView.view?.capturePixels()?.accept(
-        { bitmap -> if (bitmap != null) tab.thumbnail = bitmap.asImageBitmap() },
+        { bitmap -> if (bitmap != null) { tab.thumbnail = bitmap.asImageBitmap(); ThumbnailCache.putHalf(tab.id, bitmap) } },
         { }
     )
 }
@@ -2629,16 +2646,30 @@ private fun Modifier.addressSwipes(
     pointerInput(onSwipeUp, onSwitchTab, onSwipeDown) {
         awaitEachGesture {
             val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            // Only touches on the bar or capsule start the capture, never touches on the page.
+            val switch = TabSwitchGesture.state
+            switch?.touch()
+            val tracker = androidx.compose.ui.input.pointer.util.VelocityTracker()
+            val liftPx = TabSwitchState.LIFT_THRESHOLD_DP * density
             var dx = 0f
             var dy = 0f
             var released = false
+            var tookOver = false
             while (!released) {
                 val event = awaitPointerEvent(PointerEventPass.Initial)
                 val change = event.changes.firstOrNull { it.id == down.id } ?: break
                 val move = change.positionChange()
                 dx += move.x
                 dy += move.y
+                tracker.addPosition(change.uptimeMillis, change.position)
+                if (!tookOver && switch != null && abs(dx) > liftPx && abs(dx) > abs(dy)) tookOver = switch.beginLift()
+                if (tookOver) switch!!.dragBy(dx)
                 if (!change.pressed) released = true
+            }
+            if (tookOver) {
+                UsageStats.gesture("address_swipe", "registered", if (dx < 0) "left" else "right", "tab_switch")
+                switch!!.release(dx, tracker.calculateVelocity().x)
+                return@awaitEachGesture
             }
             val threshold = 96f
             val durationMs = change0Time(down.uptimeMillis)
