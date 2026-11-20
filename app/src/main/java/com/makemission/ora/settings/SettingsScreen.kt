@@ -116,6 +116,7 @@ fun SettingsScreen(
     val swipeTarget by settings.addressSwipeTarget.collectAsState()
     val swipeEffect by settings.addressSwipeEffect.collectAsState()
     val preloadMode by settings.preloadMode.collectAsState()
+    val searchSuggestions by settings.searchSuggestions.collectAsState()
     val paletteStyle by settings.paletteStyle.collectAsState()
     val usageStats by settings.usageStats.collectAsState()
     val tabletSidebar by settings.tabletSidebar.collectAsState()
@@ -1129,6 +1130,29 @@ fun SettingsScreen(
                                 )
                             }
                             MineralSwitch(checked = quickResume, label = "Switch", onChange = { settings.setQuickResume(it) })
+                        }
+                    }
+                    if (shown(SettingsCategory.SEARCH)) item {
+                        SectionTitle("Suggestions")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable { settings.setSearchSuggestions(!searchSuggestions) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text("Search suggestions", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                Text(
+                                    "Shows phrases from your default search engine as you type in the address bar. What you type is sent to that engine. Never in private tabs.",
+                                    fontSize = 14.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            MineralSwitch(checked = searchSuggestions, label = "Switch", onChange = { settings.setSearchSuggestions(it) })
                         }
                     }
                     if (shown(SettingsCategory.SEARCH)) item {

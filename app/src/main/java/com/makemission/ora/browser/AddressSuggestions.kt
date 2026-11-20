@@ -6,7 +6,21 @@ import com.makemission.ora.settings.isSearchInput
  * One row in the address bar dropdown. [target] is what gets loaded when the row is tapped,
  * for example a full URL, or the typed text when the row offers a search.
  */
-data class AddressSuggestion(val title: String, val subtitle: String, val target: String)
+data class AddressSuggestion(val title: String, val subtitle: String, val target: String, val kind: SuggestionKind = SuggestionKind.LOCAL)
+
+/** Where a suggestion came from: a bookmark or open tab, a phrase the search engine offered, or the typed text itself. */
+enum class SuggestionKind { LOCAL, QUERY, SEARCH }
+
+/**
+ * Puts the engine's phrases into the list the way Google does: the phrases first, as plain searches, then the
+ * bookmarks and open tabs that match. With no phrases (off, offline, private tab) the usual "Search for" row stays.
+ */
+fun withQuerySuggestions(base: List<AddressSuggestion>, phrases: List<String>): List<AddressSuggestion> {
+    if (phrases.isEmpty()) return base
+    val local = base.filter { it.kind == SuggestionKind.LOCAL }
+    val queries = phrases.map { AddressSuggestion(it, "", it, SuggestionKind.QUERY) }
+    return queries + local.take(2)
+}
 
 /** Suggestions for what is typed: a search row first, then matching bookmarks and open tabs. */
 fun addressSuggestions(
@@ -17,7 +31,7 @@ fun addressSuggestions(
     val query = typed.trim()
     if (query.isEmpty()) return emptyList()
     val search = if (isSearchInput(query)) {
-        listOf(AddressSuggestion("Search for \"$query\"", "Default search engine", query))
+        listOf(AddressSuggestion("Search for \"$query\"", "Default search engine", query, SuggestionKind.SEARCH))
     } else {
         emptyList()
     }

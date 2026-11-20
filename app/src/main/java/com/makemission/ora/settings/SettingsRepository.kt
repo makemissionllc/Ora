@@ -556,6 +556,17 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Address bar swipe effect ${effect.label}")
     }
 
+    private val _searchSuggestions = MutableStateFlow(prefs.getBoolean(KEY_SEARCH_SUGGESTIONS, true))
+    /** When on, the text typed in the address bar is sent to the default search engine to get suggestions. */
+    val searchSuggestions: StateFlow<Boolean> = _searchSuggestions.asStateFlow()
+
+    fun setSearchSuggestions(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SEARCH_SUGGESTIONS, enabled).apply()
+        _searchSuggestions.value = enabled
+        UsageStats.count("setting.search_suggestions")
+        BrowserLog.info("settings", "Search suggestions ${if (enabled) "on" else "off"}")
+    }
+
     private val _preloadMode = MutableStateFlow(PreloadMode.fromKey(prefs.getString(KEY_PRELOAD_MODE, null)))
     /** Whether Ora looks up the likely next site ahead of time, and on which connections. */
     val preloadMode: StateFlow<PreloadMode> = _preloadMode.asStateFlow()
@@ -680,6 +691,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_ADDRESS_SWIPE_TARGET = "address_swipe_target"
         private const val KEY_ADDRESS_SWIPE_EFFECT = "address_swipe_effect"
         private const val KEY_PRELOAD_MODE = "preload_mode"
+        private const val KEY_SEARCH_SUGGESTIONS = "search_suggestions"
         private const val KEY_PALETTE_STYLE = "palette_style"
         private const val KEY_SECURE_DNS = "secure_dns"
         private const val KEY_WEB_FONT = "web_font"

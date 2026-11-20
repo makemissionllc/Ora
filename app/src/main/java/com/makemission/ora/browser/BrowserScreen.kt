@@ -94,6 +94,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import kotlin.math.abs
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.NorthWest
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Menu
@@ -2361,7 +2364,17 @@ private fun AddressBar(
 
     // What the user has typed, without any autocompleted tail that is still selected.
     val typed = fieldValue.text.substring(0, fieldValue.selection.min.coerceIn(0, fieldValue.text.length))
-    val suggestions = if (focused && !suggestionsHidden) addressSuggestions(typed, candidates) else emptyList()
+    // Google-style phrases from the default search engine, fetched once typing pauses. Never for a private tab.
+    var phrases by remember { mutableStateOf(emptyList<String>()) }
+    LaunchedEffect(typed, focused, isPrivate) {
+        if (!focused || isPrivate || !SearchSuggest.worthAsking(typed)) {
+            phrases = emptyList()
+            return@LaunchedEffect
+        }
+        kotlinx.coroutines.delay(120)
+        phrases = SearchSuggest.fetch(typed)
+    }
+    val suggestions = if (focused && !suggestionsHidden) withQuerySuggestions(addressSuggestions(typed, candidates), phrases) else emptyList()
 
     // Intelligent preloading: once typing pauses, look up the site that is most likely next. The domain being
     // autocompleted wins, then the first suggestion that is a site (the search row is skipped). Never for private tabs.
@@ -2520,34 +2533,78 @@ private fun AddressBar(
         properties = PopupProperties(focusable = false)
     ) {
         suggestions.forEach { suggestion ->
-            DropdownMenuItem(
-                text = {
-                    Column {
-                        Text(
-                            suggestion.title,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontSize = 15.sp,
-                            color = browserColors().AddressBarText
-                        )
-                        Text(
-                            suggestion.subtitle,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontSize = 12.sp,
-                            color = browserColors().SecondaryText
-                        )
-                    }
-                },
-                onClick = {
-                    finishEditing()
-                    BrowserLog.info("search", "Suggestion chosen: ${suggestion.target}")
-                    onSubmit(suggestion.target)
+            key(suggestion.kind, suggestion.target) {
+                FadeInOnAppear {
+                    DropdownMenuItem(
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (suggestion.kind == SuggestionKind.LOCAL) Icons.Outlined.BookmarkBorder else Icons.Filled.Search,
+                                contentDescription = null,
+                                modifier = Modifier.size(20.dp),
+                                tint = browserColors().SecondaryText,
+                            )
+                        },
+                        text = {
+                            Column {
+                                Text(
+                                    if (suggestion.kind == SuggestionKind.QUERY) boldCompletion(suggestion.title, typed) else androidx.compose.ui.text.AnnotatedString(suggestion.title),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontSize = 15.sp,
+                                    color = browserColors().AddressBarText
+                                )
+                                if (suggestion.subtitle.isNotEmpty()) Text(
+                                    suggestion.subtitle,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontSize = 12.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                        },
+                        trailingIcon = if (suggestion.kind == SuggestionKind.QUERY) {
+                            {
+                                // Puts the phrase in the field to keep typing from it, without searching yet.
+                                IconButton(
+                                    onClick = {
+                                        suggestionsHidden = false
+                                        fieldValue = TextFieldValue(suggestion.target + " ", TextRange(suggestion.target.length + 1))
+                                    },
+                                    modifier = Modifier.size(36.dp),
+                                ) {
+                                    Icon(Icons.Filled.NorthWest, contentDescription = "Use this phrase", modifier = Modifier.size(18.dp), tint = browserColors().SecondaryText)
+                                }
+                            }
+                        } else null,
+                        onClick = {
+                            finishEditing()
+                            BrowserLog.info("search", "Suggestion chosen (${suggestion.kind.name.lowercase()})")
+                            onSubmit(suggestion.target)
+                        }
+                    )
                 }
-            )
+            }
         }
     }
     }
+}
+
+/** The part of [phrase] after what was typed is bold, like Google's suggestions; a phrase that does not continue the text stays plain. */
+private fun boldCompletion(phrase: String, typed: String): androidx.compose.ui.text.AnnotatedString {
+    val head = typed.trim()
+    if (head.isEmpty() || !phrase.startsWith(head, ignoreCase = true)) return androidx.compose.ui.text.AnnotatedString(phrase)
+    return androidx.compose.ui.text.buildAnnotatedString {
+        append(phrase.substring(0, head.length))
+        withStyle(androidx.compose.ui.text.SpanStyle(fontWeight = FontWeight.Bold)) { append(phrase.substring(head.length)) }
+    }
+}
+
+/** A suggestion row fades in when it first appears, on the shared enter motion, instead of popping in. */
+@Composable
+private fun FadeInOnAppear(content: @Composable () -> Unit) {
+    val alpha = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(Unit) { alpha.animateTo(1f, OraMotion.enter()) }
+    Box(Modifier.graphicsLayer { this.alpha = alpha.value }) { content() }
 }
 
 @Composable
