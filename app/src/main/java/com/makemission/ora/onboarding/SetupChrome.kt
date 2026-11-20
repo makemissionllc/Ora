@@ -93,7 +93,7 @@ internal fun TextAction(text: String, onClick: () -> Unit) {
     )
 }
 
-/** Three segments for Look, Blocking and Profile; the ones reached so far are filled. */
+/** One segment for each numbered step (Look, Blocking, Profile, Discover); the ones reached so far are filled. */
 @Composable
 private fun ProgressBar(current: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {

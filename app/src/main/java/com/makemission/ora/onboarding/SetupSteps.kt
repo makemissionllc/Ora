@@ -63,7 +63,7 @@ internal fun WelcomeStep(tablet: Boolean, onSetUp: () -> Unit, onDefaults: () ->
             }
             Text("Welcome to Ora", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText, textAlign = TextAlign.Center)
             Text(
-                "A calm browser that keeps everything on your device. Three quick choices, and you can change all of them later.",
+                "A calm browser that keeps everything on your device. Four quick steps, and you can change all of them later.",
                 fontSize = 14.sp, lineHeight = 20.sp, color = browserColors().SecondaryText, textAlign = TextAlign.Center,
             )
             PillButton("Set up Ora", onClick = onSetUp, primary = true)
@@ -252,6 +252,57 @@ internal fun ProfileStep(profiles: ProfilesRepository, tablet: Boolean, onBack: 
     }
 }
 
+// ---- 4 Discover ----
+
+/** One thing worth knowing about, with where it lives. [tabletOnly] rows need a hardware keyboard, which is mostly a tablet thing. */
+private data class Feature(val title: String, val detail: String, val tabletOnly: Boolean = false, val phoneOnly: Boolean = false)
+
+private val Features = listOf(
+    Feature("Quick switcher", "Find any open tab, bookmark, history page or action from one box. Press Ctrl+K, or choose Quick switcher in the ⋯ menu."),
+    Feature("Keyboard shortcuts", "Ctrl+T, Ctrl+W, Ctrl+L, Ctrl+Plus and many more work with a keyboard. Press F1 to see and search the list.", tabletOnly = true),
+    Feature("Text size for each site", "Make one site bigger or smaller without touching the rest. Ctrl+Plus, Ctrl+Minus and Ctrl+0 on a page.", tabletOnly = true),
+    Feature("Your own bottom bar", "Choose, reorder and remove the buttons. Press and hold an empty part of the bar, or open Settings > Appearance.", phoneOnly = true),
+    Feature("Tab groups", "Keep related tabs together. A strip of the group's tabs shows by the bar, and you can open links straight into a group."),
+    Feature("Labs", "Switch on extras such as a site card behind the padlock with the certificate and the trackers blocked. Settings > Labs."),
+)
+
+@Composable
+internal fun DiscoverStep(settings: SettingsRepository, tablet: Boolean, onBack: (() -> Unit)?, onSkip: () -> Unit, onNext: () -> Unit) {
+    val shortcuts by settings.searchShortcutsOn.collectAsState()
+    val shown = Features.filter { (!it.tabletOnly || tablet) && (!it.phoneOnly || !tablet) }
+    SetupScaffold(
+        tablet, "Things worth trying", "A few of Ora's newer tools. Nothing here needs setting up, and each one has a place in Settings.",
+        onBack, onSkip, "Continue", onNext, stepNumber = 4,
+        preview = { DiscoverPreview(shortcuts) },
+    ) {
+        SettingRow("Search shortcuts", "Type a keyword and a space in the address bar to search one site: yt cats, gh compose, w kenya. Add your own in Settings > Search.") {
+            MineralSwitch(checked = shortcuts, label = "Search shortcuts", onChange = { settings.setSearchShortcutsOn(it) })
+        }
+        shown.forEach { f -> SettingRow(f.title, f.detail) {} }
+    }
+}
+
+/** On a tablet: the address bar with a shortcut typed in, and what it opens. Drawn with palette colours only. */
+@Composable
+private fun DiscoverPreview(on: Boolean) {
+    val c = browserColors()
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(c.Surface).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box(Modifier.fillMaxWidth().height(44.dp).clip(CircleShape).background(c.ToolbarBackground), contentAlignment = Alignment.CenterStart) {
+            Text("   yt funny cats", fontSize = 15.sp, color = c.AddressBarText)
+        }
+        Text(
+            if (on) "Opens a YouTube search for \"funny cats\"." else "Search shortcuts are off, so this searches the web for the whole line.",
+            fontSize = 13.sp, lineHeight = 18.sp, color = c.SecondaryText,
+        )
+        Text("Ctrl+K  Quick switcher", fontSize = 13.sp, color = c.AddressBarText)
+        Text("Ctrl+Enter  Add .com", fontSize = 13.sp, color = c.AddressBarText)
+        Text("Alt+Enter  Open in a new tab", fontSize = 13.sp, color = c.AddressBarText)
+    }
+}
+
 // ---- Ready ----
 
 @Composable
@@ -263,6 +314,7 @@ internal fun ReadyStep(settings: SettingsRepository, profiles: ProfilesRepositor
     val strict by settings.fingerprintingProtection.collectAsState()
     val httpsOnly by settings.httpsOnly.collectAsState()
     val lock by settings.appLockRecord.collectAsState()
+    val shortcutsOn by settings.searchShortcutsOn.collectAsState()
     val list by profiles.profiles.collectAsState()
     var isDefault by remember { mutableStateOf(DefaultBrowser.isDefault(context)) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -280,6 +332,7 @@ internal fun ReadyStep(settings: SettingsRepository, profiles: ProfilesRepositor
         SummaryRow("Look", (if (tablet) (if (bar == BarStyle.TOP) "Bar with a sidebar" else "Floating bar") else "${bar.label} bar") + ", ${appearance.label} theme", "Settings > Appearance")
         SummaryRow("Blocking", (if (strict) "Strict" else "Standard") + ", HTTPS-only " + (if (httpsOnly) "on" else "off") + ", app lock " + (if (lock != null) "on" else "off"), "Settings > Privacy")
         SummaryRow("Profiles", list.joinToString(", ") { it.name }, "Profiles menu")
+        SummaryRow("Search shortcuts", if (shortcutsOn) "On (yt, gh, w and more)" else "Off", "Settings > Search")
         if (!isDefault) {
             Box(Modifier.fillMaxWidth().padding(top = 4.dp), contentAlignment = Alignment.Center) {
                 PillButton("Make Ora the default", onClick = {

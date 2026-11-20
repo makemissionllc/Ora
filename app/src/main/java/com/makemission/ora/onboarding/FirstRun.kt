@@ -28,23 +28,24 @@ import com.makemission.ora.ui.theme.OraMotion
 /** Bump this when the setup steps change enough to ask again. Existing installs are not asked, see SettingsRepository. */
 const val ONBOARDING_VERSION = 1
 
-/** The setup steps after the notice. Look, Blocking and Profile are the three numbered ones. */
+/** The setup steps after the notice. Look, Blocking, Profile and Discover are the four numbered ones. */
 enum class SetupStep(val key: String, val number: Int?) {
     WELCOME("welcome", null),
     LOOK("look", 1),
     BLOCKING("blocking", 2),
     PROFILE("profile", 3),
+    DISCOVER("discover", 4),
     READY("ready", null);
 
     companion object {
         fun fromKey(key: String?): SetupStep = entries.firstOrNull { it.key == key } ?: WELCOME
-        const val NUMBERED = 3
+        const val NUMBERED = 4
     }
 }
 
 /**
  * The first-launch sequence: the "Before you start" notice (step 0), then setup (Welcome, Look, Blocking, Profile,
- * Ready), then the browser. A fresh install runs all of it. The notice shows again whenever its version changes, and
+ * Discover, Ready), then the browser. A fresh install runs all of it. The notice shows again whenever its version changes, and
  * Settings > About > Run setup again shows the setup over the running browser.
  *
  * The browser is composed only once the notice and setup are done, so nothing loads behind them on a fresh install.
@@ -80,7 +81,7 @@ fun FirstRunHost(settings: SettingsRepository, profiles: ProfilesRepository, bro
 }
 
 /**
- * Welcome, Look, Blocking, Profile and Ready. Every step has Skip (keeps what is set now and moves on) and Back.
+ * Welcome, Look, Blocking, Profile, Discover and Ready. Every step has Skip (keeps what is set now and moves on) and Back.
  * The current step is saved, so closing Ora midway resumes there. Every choice saves as it is made, and each step
  * starts from the current settings, never from factory defaults.
  */
@@ -116,7 +117,8 @@ private fun SetupFlow(settings: SettingsRepository, profiles: ProfilesRepository
             SetupStep.WELCOME -> WelcomeStep(tablet, onSetUp = { done(SetupStep.LOOK) }, onDefaults = { done(SetupStep.READY) }, onSkip = ::skip)
             SetupStep.LOOK -> LookStep(settings, tablet, onBack = back, onSkip = ::skip, onNext = { done(SetupStep.BLOCKING) })
             SetupStep.BLOCKING -> BlockingStep(settings, tablet, onBack = back, onSkip = ::skip, onNext = { done(SetupStep.PROFILE) })
-            SetupStep.PROFILE -> ProfileStep(profiles, tablet, onBack = back, onSkip = ::skip, onNext = { done(SetupStep.READY) })
+            SetupStep.PROFILE -> ProfileStep(profiles, tablet, onBack = back, onSkip = ::skip, onNext = { done(SetupStep.DISCOVER) })
+            SetupStep.DISCOVER -> DiscoverStep(settings, tablet, onBack = back, onSkip = ::skip, onNext = { done(SetupStep.READY) })
             SetupStep.READY -> ReadyStep(settings, profiles, tablet, onBack = back, onFinish = {
                 BrowserLog.info("onboarding", "Onboarding step ready done")
                 settings.finishOnboarding(ONBOARDING_VERSION)
