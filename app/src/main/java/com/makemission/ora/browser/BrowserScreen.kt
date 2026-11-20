@@ -65,6 +65,8 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -170,6 +172,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.compose.ui.unit.sp
@@ -2235,6 +2238,8 @@ private fun CompactToolbar(
         modifier = Modifier
             .fillMaxWidth()
             .background(browserColors().ToolbarBackground)
+            // The capsule starts below the clock and icons: status bar height, then a small gap (the page's top inset follows the bar's height).
+            .statusBarsPadding()
             .windowInsetsPadding(WindowInsets.navigationBars.union(WindowInsets.ime))
     ) {
         Box(
@@ -2244,7 +2249,12 @@ private fun CompactToolbar(
                 .background(browserColors().ToolbarBorder)
         )
         Row(
-            modifier = Modifier.fillMaxWidth().padding(BrowserTokens.ToolbarPadding),
+            modifier = Modifier.fillMaxWidth().padding(
+                start = BrowserTokens.ToolbarPadding.calculateStartPadding(LayoutDirection.Ltr),
+                end = BrowserTokens.ToolbarPadding.calculateEndPadding(LayoutDirection.Ltr),
+                top = BrowserTokens.TopCapsuleGap,
+                bottom = BrowserTokens.ToolbarPadding.calculateBottomPadding(),
+            ),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(BrowserTokens.ToolbarRowSpacing)
         ) {
