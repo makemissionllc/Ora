@@ -487,6 +487,15 @@ class BrowserTabs(
         this.onVisited = onVisited
     }
 
+    // Declared before init: the first tab can load, and ask about an app link, while init runs.
+    /** Settings > Open links in apps, read on each link. Replaced when a new window takes over. */
+    var appLinkMode: () -> AppLinkMode = { AppLinkMode.ASK }
+
+    /** A link the card is asking about. Null when no card is showing. */
+    var pendingAppLink by mutableStateOf<PendingAppLink?>(null)
+
+    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
+
     init {
         val saved = restore
         if (saved != null && saved.tabs.isNotEmpty()) {
@@ -546,16 +555,10 @@ class BrowserTabs(
         return true
     }
 
-    /** Settings > Open links in apps, read on each link. Replaced when a new window takes over. */
-    var appLinkMode: () -> AppLinkMode = { AppLinkMode.ASK }
 
     /** The profile's "always open in the app" list. Null while the screen has not attached it. */
     var appLinkStore: AppLinkStore? = null
 
-    /** A link the card is asking about. Null when no card is showing. */
-    var pendingAppLink by mutableStateOf<PendingAppLink?>(null)
-
-    private val mainHandler = android.os.Handler(android.os.Looper.getMainLooper())
 
     /**
      * Called for every top-level navigation. Only a link the user caused, to a different site, can go to an app;

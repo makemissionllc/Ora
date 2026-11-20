@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Ora no longer closes itself on start when the page it reopens is a web link. The setting that decides whether links open in apps was not ready yet at that moment. (`HASH`)"),
             ChangeItem(ChangeKind.FIXED, "Slow page tips now judge the page by how far it has loaded when the 8 seconds are up, not when it started, so a page that is nearly done says \"Still loading the page\" instead of a wrong cause.  (`b6a9548`)"),
             ChangeItem(ChangeKind.ADDED, "Accessibility: Ora now follows Android's \"Remove animations\" setting, so with animations off its panels and dialogs open and close without moving. Screen readers also hear what a button will do, such as \"Add bookmark\" or \"Remove bookmark\", and how many tabs are open (\"Tabs, 3 open\").  (`18bde55`)"),
             ChangeItem(ChangeKind.ADDED, "Upload buttons now understand file types written as extensions (like .pdf or .jpg) as well as groups like images, so the picker only offers what the site accepts. After you choose, a short message says \"Preparing N files…\" for several files and then \"Attached N files\", or \"Could not attach the file\" if something went wrong.  (`0939bb1`)"),
