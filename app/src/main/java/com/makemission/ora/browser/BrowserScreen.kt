@@ -480,21 +480,26 @@ private fun BrowserContent(
     // Labs: opt-in protections. Each one is a GeckoView runtime setting, applied again whenever the set changes.
     val labs by settings.labs.collectAsState()
     LaunchedEffect(labs) {
-        val on = { f: com.makemission.ora.labs.LabFeature -> f in labs }
-        val runtime = GeckoEngine.runtime(context)
-        val blocking = runtime.settings.contentBlocking
-        blocking.setQueryParameterStrippingEnabled(on(com.makemission.ora.labs.LabFeature.TRACKING_PARAMS))
-        blocking.setQueryParameterStrippingPrivateBrowsingEnabled(on(com.makemission.ora.labs.LabFeature.TRACKING_PARAMS))
-        blocking.setBounceTrackingProtectionMode(
-            if (on(com.makemission.ora.labs.LabFeature.BOUNCE_TRACKERS)) ContentBlocking.BounceTrackingProtectionMode.BOUNCE_TRACKING_PROTECTION_MODE_ENABLED
-            else ContentBlocking.BounceTrackingProtectionMode.BOUNCE_TRACKING_PROTECTION_MODE_DISABLED
-        )
-        blocking.setCookiePurging(on(com.makemission.ora.labs.LabFeature.COOKIE_PURGING))
-        runtime.settings.setLnaEnabled(on(com.makemission.ora.labs.LabFeature.LOCAL_NETWORK))
-        runtime.settings.setLnaBlocking(on(com.makemission.ora.labs.LabFeature.LOCAL_NETWORK))
-        // The generic identity is a per-session setting, so every open tab of every profile is updated.
-        tabsByProfile.values.forEach { profileTabs -> profileTabs.tabs.forEach { it.applyGenericIdentity() } }
-        BrowserLog.info("labs", "Labs applied: ${labs.joinToString { it.key }.ifEmpty { "none" }}")
+        try {
+            val on = { f: com.makemission.ora.labs.LabFeature -> f in labs }
+            val runtime = GeckoEngine.runtime(context)
+            val blocking = runtime.settings.contentBlocking
+            blocking.setQueryParameterStrippingEnabled(on(com.makemission.ora.labs.LabFeature.TRACKING_PARAMS))
+            blocking.setQueryParameterStrippingPrivateBrowsingEnabled(on(com.makemission.ora.labs.LabFeature.TRACKING_PARAMS))
+            blocking.setBounceTrackingProtectionMode(
+                if (on(com.makemission.ora.labs.LabFeature.BOUNCE_TRACKERS)) ContentBlocking.BounceTrackingProtectionMode.BOUNCE_TRACKING_PROTECTION_MODE_ENABLED
+                else ContentBlocking.BounceTrackingProtectionMode.BOUNCE_TRACKING_PROTECTION_MODE_DISABLED
+            )
+            blocking.setCookiePurging(on(com.makemission.ora.labs.LabFeature.COOKIE_PURGING))
+            blocking.setStrictSocialTrackingProtection(on(com.makemission.ora.labs.LabFeature.SOCIAL_TRACKERS))
+            runtime.settings.setLnaEnabled(on(com.makemission.ora.labs.LabFeature.LOCAL_NETWORK))
+            runtime.settings.setLnaBlocking(on(com.makemission.ora.labs.LabFeature.LOCAL_NETWORK))
+            // The generic identity is a per-session setting, so every open tab of every profile is updated.
+            tabsByProfile.values.forEach { profileTabs -> profileTabs.tabs.forEach { it.applyGenericIdentity() } }
+            BrowserLog.info("labs", "Labs applied: ${labs.joinToString { it.key }.ifEmpty { "none" }}")
+        } catch (e: Exception) {
+            BrowserLog.error("labs", "Could not apply the labs", e)
+        }
     }
     // Text size on web pages. GeckoView scales page text by this factor once automatic adjustment is off.
     val textSize by settings.textSizePercent.collectAsState()
@@ -1183,11 +1188,12 @@ private fun BrowserContent(
                 // A pop-up the page opened without a tap waits here until the user picks Open, Always allow or Block.
                 // The card eases in and out from the bottom edge (see PopupCardHost). A tap while it leaves does nothing,
                 // because the choice was already made.
-                // Lab: a lookalike address warning, raised by the selected tab when that lab is on.
-                com.makemission.ora.labs.LookalikeCardHost(
-                    pending = tabs.selected?.lookalike,
-                    onGoBack = { tabs.selected?.answerLookalike(keep = false) },
-                    onKeep = { tabs.selected?.answerLookalike(keep = true) },
+                // Lab: what Ora noticed about this site, in the same card style and motion as the pop-up card.
+                com.makemission.ora.labs.SiteFindingsHost(
+                    findings = tabs.selected?.findings.orEmpty(),
+                    site = tabs.selected?.url?.let { popupSiteOf(it) }.orEmpty(),
+                    onDismiss = { tabs.selected?.answerFindings(goBack = false) },
+                    onGoBack = { tabs.selected?.answerFindings(goBack = true) },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .padding(bottom = if (phoneCompact) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),

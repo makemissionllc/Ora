@@ -175,19 +175,68 @@ class BrowserTab(
         }
     }
 
-    /** Lab: an address on this tab that may imitate another site, waiting for the card's answer. Null when none. */
-    var lookalike by mutableStateOf<com.makemission.ora.labs.Lookalike?>(null)
+    /** Lab: things Ora noticed about the site on this tab, shown in the site card. Empty when there is nothing to say. */
+    var findings by mutableStateOf<List<com.makemission.ora.labs.SiteFinding>>(emptyList())
         private set
-    private val lookalikeAnswered = HashSet<String>()
+    private val dismissedFindings = HashSet<String>()
     private var redirectHops = 0
+    private var findingsSite = ""
 
-    /** Dismisses the lookalike card, remembering the host so it is not raised again on this tab. */
-    fun answerLookalike(keep: Boolean) {
-        val item = lookalike ?: return
-        lookalikeAnswered += item.host
-        lookalike = null
-        plog.info("labs", "Lookalike warning for ${item.host}: ${if (keep) "kept browsing" else "went back"}")
-        if (!keep) { if (canGoBack) session.goBack() else session.loadUri("about:blank") }
+    /** Adds a finding unless the same one is already listed or was dismissed for this site on this tab. */
+    private fun addFinding(f: com.makemission.ora.labs.SiteFinding) {
+        val key = popupSiteOf(url) + "|" + f.id
+        if (key in dismissedFindings || findings.any { it.id == f.id }) return
+        findings = findings + f
+        plog.warn("labs", "Site finding for ${popupSiteOf(url)}: ${f.title}")
+    }
+
+    /** Replaces the connection findings (ids starting "sec.") with the current set, so a fixed page loses its warning. */
+    private fun setSecurityFindings(now: List<com.makemission.ora.labs.SiteFinding>) {
+        val kept = findings.filterNot { it.id.startsWith("sec.") }
+        findings = kept
+        now.forEach { addFinding(it) }
+    }
+
+    /** Dismisses the site card, remembering it for this site on this tab. [goBack] also leaves the page. */
+    fun answerFindings(goBack: Boolean) {
+        val site = popupSiteOf(url)
+        findings.forEach { dismissedFindings += site + "|" + it.id }
+        plog.info("labs", "Site card for $site: ${if (goBack) "went back" else "dismissed"}")
+        findings = emptyList()
+        if (goBack) { if (canGoBack) session.goBack() else session.loadUri("about:blank") }
+    }
+
+    /** Looks at the connection of a loaded page and lists what a person would want to know. Runs only for labs that are on. */
+    private fun inspectSecurity(info: GeckoSession.ProgressDelegate.SecurityInformation) {
+        val labs = com.makemission.ora.labs.Labs
+                val found = mutableListOf<com.makemission.ora.labs.SiteFinding>()
+        val page = url
+        if (labs.on(com.makemission.ora.labs.LabFeature.INSECURE_PAGE) && page.startsWith("http://") && !info.isSecure) {
+            found += com.makemission.ora.labs.SiteFinding("sec.http", "This page is not encrypted", "Others on the network can read or change what you send and see here. Avoid typing passwords.")
+        }
+        if (labs.on(com.makemission.ora.labs.LabFeature.MIXED_CONTENT) && info.isSecure) {
+            if (info.mixedModeActive == GeckoSession.ProgressDelegate.SecurityInformation.CONTENT_LOADED) {
+                found += com.makemission.ora.labs.SiteFinding("sec.mixed.active", "Insecure scripts on a secure page", "Part of this page's code came over an unencrypted connection, so the padlock cannot be fully trusted.", leave = true)
+            } else if (info.mixedModePassive == GeckoSession.ProgressDelegate.SecurityInformation.CONTENT_LOADED) {
+                found += com.makemission.ora.labs.SiteFinding("sec.mixed.passive", "Insecure images or media", "Some pictures or video on this page came over an unencrypted connection.")
+            }
+        }
+        if (labs.on(com.makemission.ora.labs.LabFeature.CERT_CHECKS) && info.isSecure) {
+            val cert = info.certificate
+            if (info.isException) {
+                found += com.makemission.ora.labs.SiteFinding("sec.exception", "Certificate exception in place", "A security exception was allowed for this site earlier, so its certificate is not being fully checked.")
+            }
+            if (cert != null) {
+                if (cert.issuerX500Principal == cert.subjectX500Principal) {
+                    found += com.makemission.ora.labs.SiteFinding("sec.selfsigned", "Certificate is self-issued", "No outside authority vouches for this site's identity.", leave = true)
+                }
+                val days = (cert.notAfter.time - System.currentTimeMillis()) / 86_400_000L
+                if (days in 0..14) {
+                    found += com.makemission.ora.labs.SiteFinding("sec.expiring", "Certificate expires soon", "The site's security certificate runs out in ${days + 1} day${if (days == 0L) "" else "s"}.")
+                }
+            }
+        }
+        setSecurityFindings(found)
     }
 
     /** Lab: applies or removes the generic browser identity. A desktop-site tab keeps the desktop identity. */
@@ -208,21 +257,18 @@ class BrowserTab(
         session.reload()
     }
 
-    /** Labs that watch a navigation: the lookalike warning and the redirect-chain note. Never blocks the load. */
+    /** Labs that watch a navigation: the lookalike check and the redirect-chain note. Never blocks the load. */
     private fun labsOnRequest(request: GeckoSession.NavigationDelegate.LoadRequest) {
         val labs = com.makemission.ora.labs.Labs
-        if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_CURRENT) return
-        if (labs.on(com.makemission.ora.labs.LabFeature.SCENARIO_LOG)) {
-            redirectHops = if (request.isRedirect) redirectHops + 1 else 0
-            if (redirectHops == com.makemission.ora.labs.Labs.LONG_REDIRECT_CHAIN) {
-                plog.warn("labs", "Scenario: ${redirectHops} redirects in a row on tab $id, now heading to ${popupSiteOf(request.uri)}")
-            }
+                if (request.target != GeckoSession.NavigationDelegate.TARGET_WINDOW_CURRENT) return
+        redirectHops = if (request.isRedirect) redirectHops + 1 else 0
+        if (redirectHops == com.makemission.ora.labs.Labs.LONG_REDIRECT_CHAIN) {
+            if (labs.on(com.makemission.ora.labs.LabFeature.SCENARIO_LOG)) plog.warn("labs", "Scenario: $redirectHops redirects in a row on tab $id, now heading to ${popupSiteOf(request.uri)}")
+            if (labs.on(com.makemission.ora.labs.LabFeature.REDIRECT_WARNING)) addFinding(com.makemission.ora.labs.SiteFinding("redirects", "Sent through several addresses", "This page was reached after $redirectHops redirects in a row, which some tracking and scam links use."))
         }
         if (labs.on(com.makemission.ora.labs.LabFeature.LOOKALIKE_WARNING)) {
-            val found = com.makemission.ora.labs.LookalikeCheck.inspect(request.uri)
-            if (found != null && found.host !in lookalikeAnswered && lookalike == null) {
-                lookalike = found
-                plog.warn("labs", "Lookalike address flagged: ${found.host} (${found.reason})")
+            com.makemission.ora.labs.LookalikeCheck.inspect(request.uri)?.let {
+                addFinding(com.makemission.ora.labs.SiteFinding("lookalike", "This address may be a lookalike", "${it.host}: ${it.reason}", leave = true))
             }
         }
     }
@@ -241,7 +287,8 @@ class BrowserTab(
                 if (!loaded && url == "about:blank") return
                 url?.let { this@BrowserTab.url = it }
                 // The lookalike card belongs to one address; leaving it for another site takes the card away.
-                lookalike?.let { l -> if (url != null && !url.contains(l.host)) lookalike = null }
+                if (url != null && findings.isNotEmpty() && popupSiteOf(url) != popupSiteOf(findingsSite)) findings = emptyList()
+                findingsSite = url ?: findingsSite
             }
 
             override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): GeckoResult<AllowOrDeny>? {
@@ -347,6 +394,10 @@ class BrowserTab(
                 pressTarget = null
                 selection = null
                 plog.info("page", "Loading $url")
+            }
+
+            override fun onSecurityChange(session: GeckoSession, securityInfo: GeckoSession.ProgressDelegate.SecurityInformation) {
+                inspectSecurity(securityInfo)
             }
 
             override fun onProgressChange(session: GeckoSession, progressPercent: Int) {

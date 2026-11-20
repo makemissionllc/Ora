@@ -35,7 +35,27 @@ enum class LabFeature(val key: String, val label: String, val detail: String, va
     ),
     LOOKALIKE_WARNING(
         "lookalike_warning", "Lookalike address warning",
-        "Shows a warning when a page address is made of mixed alphabets or encoded (xn--) letters, which scammers use to imitate real sites. You can go back or keep browsing."
+        "Tells you when a page address is made of mixed alphabets or encoded (xn--) letters, which scammers use to imitate real sites. "
+    ),
+    MIXED_CONTENT(
+        "mixed_content", "Mixed content warning",
+        "Tells you when a secure page also loaded scripts, pictures or media over an unencrypted connection."
+    ),
+    INSECURE_PAGE(
+        "insecure_page", "Unencrypted page notice",
+        "Tells you when you are on a page that is not encrypted (http), where others on the network can read what you send."
+    ),
+    CERT_CHECKS(
+        "cert_checks", "Certificate checks",
+        "Tells you when a site's certificate is self-issued, runs out within two weeks, or has a security exception in place."
+    ),
+    REDIRECT_WARNING(
+        "redirect_warning", "Redirect chain warning",
+        "Tells you when a page was reached through four or more redirects in a row."
+    ),
+    SOCIAL_TRACKERS(
+        "social_trackers", "Strict social tracker blocking",
+        "Also blocks social network buttons and widgets that follow you across sites. Some embedded posts may not show."
     ),
     SCENARIO_LOG(
         "scenario_log", "Log risky situations",
@@ -63,6 +83,9 @@ object Labs {
     /** What Firefox on Android sends when it hides device details. */
     const val GENERIC_USER_AGENT = "Mozilla/5.0 (Android 10; Mobile; rv:160.0) Gecko/160.0 Firefox/160.0"
 }
+
+/** One thing Ora noticed about a site. [leave] marks the serious ones, which add a Go back button to the card. */
+data class SiteFinding(val id: String, val title: String, val detail: String, val leave: Boolean = false)
 
 /** An address that looks like an imitation: what the browser sees, what it decodes to, and why it is flagged. */
 data class Lookalike(val host: String, val shown: String, val reason: String)
