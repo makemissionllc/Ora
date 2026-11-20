@@ -33,6 +33,47 @@ object SearchSuggest {
         return text.contains(' ') || !text.contains('.')
     }
 
+    /**
+     * Phrases already fetched for a shorter start of [typed], kept only if they still begin with what is typed.
+     * Shown at once while the new answer is on its way, so the list does not blink empty between keystrokes.
+     */
+    fun cachedFor(typed: String): List<String> {
+        val current = engine ?: return emptyList()
+        val query = typed.trim().lowercase()
+        if (!worthAsking(query)) return emptyList()
+        synchronized(cache) {
+            for (len in query.length downTo 2) {
+                val hit = cache[current.key + "\u0000" + query.take(len)] ?: continue
+                return hit.filter { it.lowercase().startsWith(query) && !it.equals(query, ignoreCase = true) }
+            }
+        }
+        return emptyList()
+    }
+
+    /**
+     * Opens the connection to the engine's suggestion server before the first keystroke, so the first phrases
+     * do not wait for DNS and TLS. Sends no typed text; it asks only for the server's front door.
+     */
+    suspend fun prewarm() {
+        val current = engine ?: return
+        if (!Preloader.allowedNow()) return
+        withContext(Dispatchers.IO) {
+            try {
+                val host = URL(current.suggestTemplate.replace("%s", "")).host
+                val started = System.currentTimeMillis()
+                val conn = URL("https://$host/").openConnection() as HttpURLConnection
+                conn.requestMethod = "HEAD"
+                conn.connectTimeout = 2_000
+                conn.readTimeout = 2_000
+                conn.responseCode
+                conn.inputStream?.close()
+                BrowserLog.info("preload", "Opened the ${current.label} suggestion connection ahead of time in ${System.currentTimeMillis() - started} ms")
+            } catch (_: java.io.IOException) {
+                // A failed warm-up costs nothing.
+            }
+        }
+    }
+
     /** What the engine thinks you are typing, or nothing when it is off, offline or slow. Call on any thread. */
     suspend fun fetch(typed: String): List<String> {
         val current = engine ?: return emptyList()
@@ -48,11 +89,13 @@ object SearchSuggest {
                 conn.readTimeout = 2_000
                 conn.setRequestProperty("Accept", "application/json")
                 try {
+                    val started = System.currentTimeMillis()
                     if (conn.responseCode != 200) return@withContext emptyList<String>()
                     val body = conn.inputStream.bufferedReader().use { it.readText() }
+                    BrowserLog.info("search", "Suggestions from ${current.label} in ${System.currentTimeMillis() - started} ms")
                     parse(body, query)
                 } finally {
-                    conn.disconnect()
+                    // Not disconnected: the body is read to the end, so Android keeps the connection for the next keystroke.
                 }
             } catch (error: java.io.IOException) {
                 BrowserLog.warn("search", "Suggestions from ${current.label} did not arrive: ${error.javaClass.simpleName}")

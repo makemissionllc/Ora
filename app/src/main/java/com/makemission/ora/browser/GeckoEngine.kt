@@ -91,5 +91,8 @@ object GeckoEngine {
     private const val PRELOAD_PREFS = "  network.predictor.enabled: true\n" +
         "  network.http.speculative-parallel-limit: 6\n" +
         "  network.dns.disablePrefetch: false\n" +
-        "  network.dns.disablePrefetchFromHTTPS: false\n"
+        "  network.dns.disablePrefetchFromHTTPS: false\n" +
+        "  network.early-hints.enabled: true\n" +
+        "  network.early-hints.preconnect.enabled: true\n" +
+        "  network.dnsCacheEntries: 800\n"
 }

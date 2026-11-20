@@ -30,6 +30,8 @@ object Preloader {
     @Volatile var loadAhead: Boolean = false
     /** The addresses visited most, best first, kept up to date from the history of the open profile (never a private tab). */
     @Volatile var topSites: List<String> = emptyList()
+    /** The default search engine, so its page can be warmed when the address bar is tapped. Set from Settings. */
+    @Volatile var searchEngine: com.makemission.ora.settings.SearchEngine? = null
     private var appContext: Context? = null
     private val warmed = LinkedHashMap<String, Long>()
     private val fetched = LinkedHashMap<String, Long>()
@@ -78,6 +80,13 @@ object Preloader {
                 BrowserLog.warn("preload", "Could not look up ${LogPrivacy.domainOf(host)} ahead of time", error)
             }
         }
+    }
+
+    /** Warms the default search engine's own site, so pressing Go on a search starts from an open connection. */
+    fun warmSearch(isPrivate: Boolean = false) {
+        val engine = searchEngine ?: return
+        if (isPrivate) return
+        warm(engine.template.replace("%s", ""), isPrivate)
     }
 
     /**

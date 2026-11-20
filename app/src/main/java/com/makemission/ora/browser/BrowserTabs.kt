@@ -100,6 +100,7 @@ class BrowserTab(
     /** Last captured picture of the page, shown as the tab's preview in the tab grid. */
     var thumbnail by mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null)
     var loading by mutableStateOf(false)
+    private var loadStartedAt = 0L
     /** Load progress from 0 to 100 while a page loads; the address bar shows it as a thin bar. */
     var progress by mutableStateOf(100)
         private set
@@ -420,6 +421,7 @@ class BrowserTab(
             }
 
             override fun onPageStart(session: GeckoSession, url: String) {
+                loadStartedAt = System.currentTimeMillis()
                 loading = true
                 progress = 0
                 blockedKinds.clear()
@@ -457,7 +459,8 @@ class BrowserTab(
                 if (deniedForApp) { deniedForApp = false; return }
                 // Progress stays where it is: the bar fades out in place instead of sweeping to full first.
                 if (success) {
-                    plog.info("page", "Loaded ${this@BrowserTab.url}")
+                    val took = if (loadStartedAt > 0) " in ${System.currentTimeMillis() - loadStartedAt} ms" else ""
+                    plog.info("page", "Loaded ${this@BrowserTab.url}$took")
                     if (!isPrivate) onVisited(this@BrowserTab.url, this@BrowserTab.title)
                 } else {
                     plog.warn("page", "Stopped before finishing ${this@BrowserTab.url}")

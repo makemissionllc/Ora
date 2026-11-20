@@ -542,6 +542,7 @@ private fun BrowserContent(
     var showFind by remember { mutableStateOf(false) }
     val searchEngines by settings.searchEngines.collectAsState()
     val defaultEngine by settings.defaultSearchEngine.collectAsState()
+    LaunchedEffect(defaultEngine) { Preloader.searchEngine = defaultEngine }
     val askEachSearch by settings.askEachSearch.collectAsState()
     /** Search text waiting for the user to pick an engine. Null when the chooser is closed. */
     var pendingSearch by remember { mutableStateOf<String?>(null) }
@@ -3037,6 +3038,8 @@ private fun AddressBar(
             phrases = emptyList()
             return@LaunchedEffect
         }
+        // Phrases for a shorter start show at once, then the exact answer replaces them.
+        SearchSuggest.cachedFor(typed).takeIf { it.isNotEmpty() }?.let { phrases = it }
         kotlinx.coroutines.delay(120)
         phrases = SearchSuggest.fetch(typed)
     }
@@ -3057,6 +3060,13 @@ private fun AddressBar(
         // A little longer on the same answer means it is the real choice: fetch the page itself, when allowed.
         kotlinx.coroutines.delay(500)
         Preloader.prefetch(likelyNext, isPrivate)
+    }
+    // Tapping the bar: open the search engine's page and suggestion connections, so the first search is quick.
+    LaunchedEffect(focused, isPrivate) {
+        if (focused && !isPrivate) {
+            Preloader.warmSearch(isPrivate)
+            SearchSuggest.prewarm()
+        }
     }
     // Tapping the bar before typing: warm the sites visited most, so one tap on a suggestion opens at once.
     LaunchedEffect(focused, typed.isEmpty(), isPrivate) {
