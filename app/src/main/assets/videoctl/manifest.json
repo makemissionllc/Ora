@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Video control",
-  "version": "1.2",
+  "version": "1.4",
   "description": "Connects a full-screen video to Ora's seek bar.",
   "browser_specific_settings": {
     "gecko": {
