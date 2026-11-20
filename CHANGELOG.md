@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Fixed**
+- Full-screen video: the back arrow, skip, play, lock and speed buttons now respond to taps. Before, only tapping the picture worked. (`f154242`)
+
 **Added**
 - A full-screen video that is playing now keeps playing in a small window when you go to the home screen (Settings > Video, on by default), and the picture fills the notch area. (`31361bd`)
 - On the tablet with the address bar on top, the toolbar and group row now follow your scroll: they shrink and fade as you scroll down, come back as you scroll up, and settle fully shown or hidden when you stop. (`489a957`)
