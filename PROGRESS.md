@@ -220,6 +220,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `91bd7c1` | Save image, Copy image, Save image as | Not checked (build and `ImageNameTest` pass; no device seen) | Not checked |
 | 2026-11-20 | `1918dc2` | Long-press menu, first slice | Not checked (build and `LinkOpenPrivacyTest` pass; no device seen) | Not checked |
 | 2026-11-20 | `f83eb02` | Top-layout capsule below the status bar | Built, not checked on a device | Built, not checked on a device |
 | 2026-11-20 | `13a5208` | Labs part 1b (site findings card, five more labs, Font moved to Labs) | Phone (CPH2745, dark): with Unencrypted page notice, Certificate checks and Redirect warning on, http://info.cern.ch showed the card 'Something to know about info.cern.ch' with 'Certificate expires soon' (5 days) and Dismiss; Dismiss closed it (log: Site card ... dismissed). Not seen: Go back, mixed content, the Labs list after the move | Not checked (tablet `7ba8e294` not reachable) |
