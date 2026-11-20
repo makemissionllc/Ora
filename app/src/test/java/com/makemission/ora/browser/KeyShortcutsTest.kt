@@ -60,4 +60,16 @@ class KeyShortcutsTest {
         assertEquals(-1, KeyShortcuts.tabIndexFor(KeyEvent.KEYCODE_9))
         assertNull(KeyShortcuts.tabIndexFor(KeyEvent.KEYCODE_A))
     }
+
+    @Test fun otherWaysToReachTheAddressBar() {
+        assertEquals(Shortcut.ADDRESS, r(KeyEvent.KEYCODE_E, ctrl = true))
+        assertEquals(Shortcut.ADDRESS, r(KeyEvent.KEYCODE_D, alt = true))
+        assertEquals(Shortcut.BOOKMARK, r(KeyEvent.KEYCODE_D, ctrl = true))
+    }
+
+    @Test fun ctrlEnterCompletesABareWord() {
+        assertEquals("www.ora.com", AddressKeys.completeCom("ora"))
+        assertEquals("ora.org", AddressKeys.completeCom("ora.org"))
+        assertEquals("two words", AddressKeys.completeCom("two words"))
+    }
 }
