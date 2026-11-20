@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Fixed**
+- Slow page tips now judge the page by how far it has loaded when the 8 seconds are up, not when it started, so a page that is nearly done says "Still loading the page" instead of a wrong cause. (`HASH`)
+
 **Added**
 - Accessibility: Ora now follows Android's "Remove animations" setting, so with animations off its panels and dialogs open and close without moving. Screen readers also hear what a button will do, such as "Add bookmark" or "Remove bookmark", and how many tabs are open ("Tabs, 3 open"). (`18bde55`)
 - Upload buttons now understand file types written as extensions (like .pdf or .jpg) as well as groups like images, so the picker only offers what the site accepts. After you choose, a short message says "Preparing N files…" for several files and then "Attached N files", or "Could not attach the file" if something went wrong. (`0939bb1`)
