@@ -179,6 +179,7 @@ fun SettingsScreen(
     var showPasswords by remember { mutableStateOf(false) }
     var showChangelog by remember { mutableStateOf(false) }
     var showNotice by remember { mutableStateOf(false) }
+    var showShortcuts by remember { mutableStateOf(false) }
     var category by rememberSaveable { mutableStateOf(SettingsCategory.APPEARANCE) }
     val savedLogins by PasswordStore.logins.collectAsState()
 
@@ -190,6 +191,7 @@ fun SettingsScreen(
         PasswordsScreen(onDone = { showPasswords = false })
         return
     }
+    if (showShortcuts) com.makemission.ora.browser.ShortcutsCard(onDismiss = { showShortcuts = false })
     if (showNotice) {
         com.makemission.ora.onboarding.NoticeScreen(tablet = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600, onDone = { showNotice = false })
         return
@@ -1438,6 +1440,22 @@ fun SettingsScreen(
                         ) {
                             Text("What's new", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                             Text("${Changelog.first().date} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable {
+                                    BrowserLog.info("settings", "Opened Keyboard shortcuts")
+                                    showShortcuts = true
+                                }
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Keyboard shortcuts", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                            Text("Ctrl+/ ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
                         Row(
                             modifier = Modifier

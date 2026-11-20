@@ -141,6 +141,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -547,6 +548,44 @@ private fun BrowserContent(
         UsageStats.count("tab.reopen")
         if (!tabs.reopenLastClosed()) InAppNotices.show("No closed tabs to reopen")
     }
+    // Physical keyboard shortcuts (KeyShortcuts.kt). The handler always reads the latest state, and is off while the app lock is on.
+    var showShortcuts by remember { mutableStateOf(false) }
+    val latestShortcutHandler by rememberUpdatedState<(Shortcut) -> Boolean> { shortcut ->
+        val list = tabs.tabs.filter { !it.isPrivate || !AppLock.locked }
+        val at = list.indexOfFirst { it.id == tabs.selectedId }
+        fun go(i: Int) { list.getOrNull(i)?.let { tabs.select(it.id) } }
+        BrowserLog.info("keyboard", "Shortcut: ${shortcut.label}")
+        when (shortcut) {
+            Shortcut.ADDRESS -> { showFind = false; KeyShortcuts.requestAddressFocus() }
+            Shortcut.FIND -> showFind = true
+            Shortcut.RELOAD -> selected.session.reload()
+            Shortcut.HARD_RELOAD -> hardReload(selected)
+            Shortcut.BACK -> if (selected.canStepBack) selected.stepBack() else InAppNotices.show("Nothing to go back to")
+            Shortcut.FORWARD -> if (selected.canGoForward) selected.session.goForward() else InAppNotices.show("Nothing to go forward to")
+            Shortcut.BOOKMARK -> toggleSelectedBookmark()
+            Shortcut.NEW_TAB -> onNewTab()
+            Shortcut.NEW_PRIVATE_TAB -> onNewPrivateTab()
+            Shortcut.CLOSE_TAB -> tabs.close(selected.id)
+            Shortcut.REOPEN_TAB -> onReopenClosed()
+            Shortcut.NEXT_TAB -> if (list.size > 1) go((at + 1) % list.size)
+            Shortcut.PREVIOUS_TAB -> if (list.size > 1) go((at - 1 + list.size) % list.size)
+            Shortcut.TAB_1 -> go(KeyShortcuts.tabIndex)
+            Shortcut.LAST_TAB -> go(list.lastIndex)
+            Shortcut.LIBRARY -> showLibrary = true
+            Shortcut.SETTINGS -> showSettings = true
+            Shortcut.HELP -> showShortcuts = !showShortcuts
+            Shortcut.ESCAPE -> {
+                val dispatcher = (context as? androidx.activity.ComponentActivity)?.onBackPressedDispatcher
+                if (dispatcher != null && dispatcher.hasEnabledCallbacks()) dispatcher.onBackPressed() else return@rememberUpdatedState false
+            }
+        }
+        true
+    }
+    DisposableEffect(Unit) {
+        KeyShortcuts.handler = { shortcut -> if (AppLock.locked) false else latestShortcutHandler(shortcut) }
+        onDispose { KeyShortcuts.handler = null }
+    }
+    if (showShortcuts) ShortcutsCard(onDismiss = { showShortcuts = false })
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val barStyle = if (isTablet) tabletBar else phoneBar
@@ -928,15 +967,9 @@ private fun BrowserContent(
         },
         bottomBar = { if (isTablet) bottomBarContent() }
     ) { innerPadding ->
-        // Quality of life: with a hardware keyboard, Ctrl+Tab moves to the next open tab, and Escape closes the sidebar.
+        // Quality of life: with a hardware keyboard, Escape closes the sidebar. The other shortcuts are in KeyShortcuts.
         Box(modifier = Modifier.fillMaxSize().onPreviewKeyEvent { e ->
-            if (e.isCtrlPressed && e.key == Key.Tab && e.type == KeyEventType.KeyDown && tabs.tabs.size > 1) {
-                val i = tabs.tabs.indexOfFirst { it.id == tabs.selectedId }
-                val next = tabs.tabs[(i + 1) % tabs.tabs.size]
-                BrowserLog.info("tabs", "Ctrl+Tab to tab ${next.id}")
-                tabs.select(next.id)
-                true
-            } else if (isTablet && showSidebar && e.key == Key.Escape && e.type == KeyEventType.KeyUp) {
+            if (isTablet && showSidebar && e.key == Key.Escape && e.type == KeyEventType.KeyUp) {
                 BrowserLog.info("ui", "Sidebar closed with Escape")
                 settings.setTabletSidebar(false)
                 true
@@ -2408,6 +2441,11 @@ private fun AddressBar(
     var anchorWidth by remember { mutableStateOf(0.dp) }
     var anchorHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
+
+    // Ctrl+L or F6 from a hardware keyboard puts the caret in the address field and selects the address.
+    LaunchedEffect(Unit) {
+        KeyShortcuts.focusAddress.collect { runCatching { focusRequester.requestFocus() } }
+    }
 
     // Show the current page's host while the user is not typing in the field.
     LaunchedEffect(currentUrl, focused) {
