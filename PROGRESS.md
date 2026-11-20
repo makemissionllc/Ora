@@ -220,6 +220,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `5996a54`..`4e2e39f` | Motion tokens (Quick, Standard, Leave, Spatial, Reduced in Motion.kt) and audit items 12, 4, 11, 9. Built, not checked on a device. Not done: audit 1, 2, 3, 5, 6, 7, 8, 10, 13 | Not checked (build passes) | Not checked |
 | 2026-11-20 | `5ce52a2` | Tab switch animation (spec item 5). Previous component: address bar / bottom toolbar, group strip. Built, not checked on a device. Not done: bars fading out during the lift, label change animation, Translate | Not checked (build passes; no device seen) | Not checked |
 | 2026-11-20 | `6b02830` | Group strip, group sheet, Open in new tab in group, Show group strip setting (previous component: link menu, bottom toolbar). Not done: drag to reorder; icons are initials (no favicon API) | Not checked (build passes; no device seen) | Not checked |
 | 2026-11-20 | `9991d13` | Customisable bottom toolbar | Not checked (build and `ToolbarConfigTest` pass; no device seen) | Not checked (tablet does not use this bar) |
