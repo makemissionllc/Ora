@@ -322,6 +322,8 @@ private fun BrowserContent(
     val profileList by profiles.profiles.collectAsState()
     val bookmarks = remember(profileId) { BookmarksRepository(context, profileId) }
     val bookmarkList by bookmarks.bookmarks.collectAsState()
+    val reading = remember(profileId) { com.makemission.ora.readinglist.ReadingListRepository(context, profileId) }
+    val readingList by reading.items.collectAsState()
     // History is per profile as well. One list per profile is shared by its tabs and its views, so they never disagree.
     val historyByProfile = remember { HashMap<String, HistoryRepository>() }
     fun historyFor(id: String): HistoryRepository = historyByProfile.getOrPut(id) { HistoryRepository(context, id) }
@@ -514,6 +516,17 @@ private fun BrowserContent(
     // One place for the bookmark state and toggle, shared by the phone and tablet bars and the menu.
     val selectedBookmarked = bookmarkList.any { it.url == selected.url }
     val toggleSelectedBookmark = { bookmarks.toggle(selected.url, selected.title) }
+    // Reading list: save or unsave the open page. Private tabs and the start page are refused, and each answer is said aloud.
+    val selectedSaved = readingList.any { it.url == selected.url }
+    val toggleReadLater = {
+        when {
+            selected.isPrivate -> com.makemission.ora.notice.InAppNotices.show("Private tabs are never saved")
+            selected.url.isBlank() || selected.url == BrowserTabs.START_URL -> com.makemission.ora.notice.InAppNotices.show("Open a page first, then save it")
+            selectedSaved -> { reading.remove(selected.url); com.makemission.ora.notice.InAppNotices.show("Removed from Reading list") }
+            else -> { reading.add(selected.url, selected.title); com.makemission.ora.notice.InAppNotices.show("Saved to Reading list") }
+        }
+        Unit
+    }
 
     // Only the selected tab should be active, so background pages stop rendering.
     LaunchedEffect(selectedId) {
@@ -996,6 +1009,8 @@ private fun BrowserContent(
                             bookmarks = bookmarkList,
                             history = historyList,
                             historyOff = !saveHistory,
+                            reading = reading,
+                            onOpenReading = { item -> reading.setRead(item.url, true); openSaved(item.url) },
                             onNewTab = onNewTab,
                             onOpenBookmark = { url -> openSaved(url) },
                             onOpenHistory = { url -> openSaved(url) },
@@ -1228,6 +1243,8 @@ private fun BrowserContent(
                         // The menu closes itself before each action runs, so actions only do their work.
                         onShare = { shareUrl(context, selected.url) },
                         onBookmark = toggleSelectedBookmark,
+                        isReadLater = selectedSaved,
+                        onReadLater = toggleReadLater,
                         onNewTab = { onNewTab() },
                         onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },
@@ -1332,6 +1349,12 @@ private fun BrowserContent(
                             bookmarks = bookmarkList,
                             history = historyList,
                             historyOff = !saveHistory,
+                            reading = reading,
+                            onOpenReading = { item ->
+                                reading.setRead(item.url, true)
+                                openSaved(item.url)
+                                showLibrary = false
+                            },
                             onOpen = { url ->
                                 openSaved(url)
                                 showLibrary = false

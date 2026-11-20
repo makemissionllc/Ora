@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Added**
+- Reading list: save a page to read later from the ⋮ menu (Add to reading list). It lists in the Library on the phone and in the sidebar on the tablet, unread first, and each profile has its own. Private tabs are never saved. Saving tells you so, the Reading label counts what is unread and opening a page marks it read, and Clear read asks first and says how many pages go. (`e488e5e`)
+
 **Fixed**
 - Back now closes the search suggestions first, folding them into the address bar, instead of leaving Ora when the keyboard is already hidden. Quality of life: one Back is enough to dismiss suggestions. (`7a1aa4e`)
 - Ora no longer closes itself on start when the page it reopens is a web link. The setting that decides whether links open in apps was not ready yet at that moment. (`8e5afa4`)

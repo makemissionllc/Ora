@@ -64,6 +64,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -92,6 +93,9 @@ import com.makemission.ora.ui.theme.browserColors
 fun BrowserMenuSheet(
     isTablet: Boolean,
     isBookmarked: Boolean,
+    /** Reading list: true when the open page is saved there. */
+    isReadLater: Boolean = false,
+    onReadLater: () -> Unit = {},
     onDismiss: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
@@ -125,6 +129,8 @@ fun BrowserMenuSheet(
     val items: @Composable ((() -> Unit) -> Unit) -> Unit = { act ->
         BrowserMenuItems(
             isBookmarked = isBookmarked,
+            isReadLater = isReadLater,
+            onReadLater = { act(onReadLater) },
             onShare = { act(onShare) },
             onBookmark = { act(onBookmark) },
             onNewTab = { act(onNewTab) },
@@ -159,6 +165,8 @@ fun BrowserMenuSheet(
 @Composable
 private fun BrowserMenuItems(
     isBookmarked: Boolean,
+    isReadLater: Boolean,
+    onReadLater: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
     onNewTab: () -> Unit,
@@ -208,6 +216,10 @@ private fun BrowserMenuItems(
                 chevron = !readerOpen,
             )
             // Quality of life: one tap copies the page's address, without opening Share first.
+            MenuRow(
+                Icons.Outlined.Article, if (isReadLater) "Remove from reading list" else "Add to reading list", onReadLater,
+                subtitle = if (isReadLater) "Saved to read later" else null,
+            )
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)
             // Quality of life: when a site's passkey sign-in fails in Ora, one tap carries the page to another browser.
@@ -394,13 +406,19 @@ fun LibraryScreen(
     bookmarks: List<Bookmark>,
     history: List<HistoryEntry>,
     historyOff: Boolean,
+    reading: com.makemission.ora.readinglist.ReadingListRepository,
+    onOpenReading: (com.makemission.ora.readinglist.ReadingItem) -> Unit,
     onOpen: (String) -> Unit,
     onRemoveBookmark: (String) -> Unit,
     onRemoveHistory: (String) -> Unit,
     onClearHistory: () -> Unit,
     onDone: () -> Unit,
 ) {
-    var showHistory by rememberSaveable { mutableStateOf(false) }
+    // 0 Bookmarks, 1 Reading, 2 History.
+    var segment by rememberSaveable { mutableStateOf(0) }
+    val showHistory = segment == 2
+    val readingItems by reading.items.collectAsState()
+    val unreadCount = readingItems.count { !it.read }
     var query by rememberSaveable { mutableStateOf("") }
     val needle = query.trim()
     val shownBookmarks = bookmarks.filter {
@@ -443,18 +461,30 @@ fun LibraryScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // Switching lists clears the search, as the tablet sidebar does.
-            SegmentLabel("Bookmarks", selected = !showHistory, modifier = Modifier.weight(1f), pill = true) { showHistory = false; query = "" }
-            SegmentLabel("History", selected = showHistory, modifier = Modifier.weight(1f), pill = true) { showHistory = true; query = "" }
+            SegmentLabel("Bookmarks", selected = segment == 0, modifier = Modifier.weight(1f), pill = true) { segment = 0; query = "" }
+            // Quality of life: the label carries the number still to read, so the list is worth opening.
+            SegmentLabel(if (unreadCount > 0) "Reading · $unreadCount" else "Reading", selected = segment == 1, modifier = Modifier.weight(1f), pill = true) { segment = 1; query = "" }
+            SegmentLabel("History", selected = segment == 2, modifier = Modifier.weight(1f), pill = true) { segment = 2; query = "" }
         }
         Spacer(Modifier.height(14.dp))
         SidebarSearch(
             query = query,
-            placeholder = if (showHistory) "Search history" else "Search bookmarks",
+            placeholder = when (segment) { 2 -> "Search history"; 1 -> "Search reading list"; else -> "Search bookmarks" },
             pill = true,
             onQueryChange = { query = it }
         )
         Spacer(Modifier.height(14.dp))
-        if (showHistory) {
+        if (segment == 1) {
+            ReadingList(
+                items = readingItems,
+                query = query,
+                onOpen = onOpenReading,
+                onToggleRead = { reading.setRead(it.url, !it.read) },
+                onRemove = { reading.remove(it.url) },
+                onClearRead = { reading.clearRead() },
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            )
+        } else if (showHistory) {
             HistoryList(
                 entries = history,
                 query = query,

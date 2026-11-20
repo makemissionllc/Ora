@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Reading list: save a page to read later from the ⋮ menu (Add to reading list). It lists in the Library on the phone and in the sidebar on the tablet, unread first, and each profile has its own. Private tabs are never saved. Saving tells you so, the Reading label counts what is unread and opening a page marks it read, and Clear read asks first and says how many pages go. (`e488e5e`)"),
             ChangeItem(ChangeKind.FIXED, "Back now closes the search suggestions first, folding them into the address bar, instead of leaving Ora when the keyboard is already hidden. (`7a1aa4e`)"),
             ChangeItem(ChangeKind.FIXED, "Ora no longer closes itself on start when the page it reopens is a web link. The setting that decides whether links open in apps was not ready yet at that moment. (`8e5afa4`)"),
             ChangeItem(ChangeKind.FIXED, "Slow page tips now judge the page by how far it has loaded when the 8 seconds are up, not when it started, so a page that is nearly done says \"Still loading the page\" instead of a wrong cause.  (`b6a9548`)"),

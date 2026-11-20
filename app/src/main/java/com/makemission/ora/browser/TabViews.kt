@@ -54,6 +54,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -506,6 +507,8 @@ fun TabSidebar(
     bookmarks: List<Bookmark>,
     history: List<HistoryEntry>,
     historyOff: Boolean,
+    reading: com.makemission.ora.readinglist.ReadingListRepository,
+    onOpenReading: (com.makemission.ora.readinglist.ReadingItem) -> Unit,
     onNewTab: () -> Unit,
     onOpenBookmark: (String) -> Unit,
     onOpenHistory: (String) -> Unit,
@@ -520,6 +523,8 @@ fun TabSidebar(
     var panel by remember { mutableStateOf(SidebarPanel.TABS) }
     var query by remember { mutableStateOf("") }
     var inactiveOpen by remember { mutableStateOf(false) }
+    val readingItems by reading.items.collectAsState()
+    val unreadCount = readingItems.count { !it.read }
     val needle = query.trim()
     val shownTabs = tabs.tabs.filter { !it.isPrivate }.filter {
         needle.isEmpty() || it.shownTitle(displayUrl(it.url)).contains(needle, true) || (!(it.isPrivate && AppLock.locked) && it.url.contains(needle, true))
@@ -567,6 +572,7 @@ fun TabSidebar(
             // Quality of life: switching lists clears the search, so a filter for tabs does not hide bookmarks.
             SegmentLabel("Tabs", selected = panel == SidebarPanel.TABS, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.TABS; query = "" }
             SegmentLabel("Bookmarks", selected = panel == SidebarPanel.BOOKMARKS, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.BOOKMARKS; query = "" }
+            SegmentLabel("Reading", selected = panel == SidebarPanel.READING, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.READING; query = "" }
             SegmentLabel("History", selected = panel == SidebarPanel.HISTORY, modifier = Modifier.weight(1f), pill = true) { panel = SidebarPanel.HISTORY; query = "" }
         }
         // Filters the list below by title or address.
@@ -577,6 +583,7 @@ fun TabSidebar(
             placeholder = when (panel) {
                 SidebarPanel.TABS -> "Search tabs, bookmarks and history"
                 SidebarPanel.BOOKMARKS -> "Search bookmarks"
+                SidebarPanel.READING -> "Search reading list"
                 SidebarPanel.HISTORY -> "Search history"
             },
             onQueryChange = { query = it }
@@ -590,6 +597,7 @@ fun TabSidebar(
                 when (panel) {
                     SidebarPanel.TABS -> "${shownTabs.size} of ${tabs.tabs.size} tabs"
                     SidebarPanel.BOOKMARKS -> "Bookmarks"
+                    SidebarPanel.READING -> if (unreadCount > 0) "Reading list, $unreadCount unread" else "Reading list"
                     SidebarPanel.HISTORY -> "History"
                 },
                 fontSize = 13.sp,
@@ -602,7 +610,17 @@ fun TabSidebar(
                 }
             }
         }
-        if (panel == SidebarPanel.HISTORY) {
+        if (panel == SidebarPanel.READING) {
+            ReadingList(
+                items = readingItems,
+                query = query,
+                onOpen = onOpenReading,
+                onToggleRead = { reading.setRead(it.url, !it.read) },
+                onRemove = { reading.remove(it.url) },
+                onClearRead = { reading.clearRead() },
+                modifier = Modifier.weight(1f),
+            )
+        } else if (panel == SidebarPanel.HISTORY) {
             HistoryList(
                 entries = history,
                 query = query,
@@ -703,7 +721,7 @@ fun TabSidebar(
 }
 
 /** Which list the tablet sidebar shows. */
-private enum class SidebarPanel { TABS, BOOKMARKS, HISTORY }
+private enum class SidebarPanel { TABS, BOOKMARKS, READING, HISTORY }
 
 @Composable
 internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, pill: Boolean = false, onClick: () -> Unit) {
