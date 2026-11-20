@@ -98,6 +98,7 @@ fun BrowserMenuSheet(
     isReadLater: Boolean = false,
     onReadLater: () -> Unit = {},
     onSavePdf: () -> Unit = {},
+    onQuickSwitcher: () -> Unit = {},
     onDismiss: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
@@ -134,6 +135,7 @@ fun BrowserMenuSheet(
             isReadLater = isReadLater,
             onReadLater = { act(onReadLater) },
             onSavePdf = { act(onSavePdf) },
+            onQuickSwitcher = { act(onQuickSwitcher) },
             onShare = { act(onShare) },
             onBookmark = { act(onBookmark) },
             onNewTab = { act(onNewTab) },
@@ -171,6 +173,7 @@ private fun BrowserMenuItems(
     isReadLater: Boolean,
     onReadLater: () -> Unit,
     onSavePdf: () -> Unit,
+    onQuickSwitcher: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
     onNewTab: () -> Unit,
@@ -224,6 +227,7 @@ private fun BrowserMenuItems(
                 Icons.Outlined.Article, if (isReadLater) "Remove from reading list" else "Add to reading list", onReadLater,
                 subtitle = if (isReadLater) "Saved to read later" else null,
             )
+            MenuRow(Icons.Outlined.Search, "Quick switcher", onQuickSwitcher, subtitle = "Find a tab, bookmark, page or action")
             MenuRow(Icons.Outlined.PictureAsPdf, "Save as PDF", onSavePdf, subtitle = "To Downloads, named after the page")
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)

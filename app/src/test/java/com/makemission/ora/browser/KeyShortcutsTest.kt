@@ -17,6 +17,17 @@ class KeyShortcutsTest {
         assertEquals(Shortcut.HELP, r(KeyEvent.KEYCODE_SLASH, ctrl = true))
     }
 
+    @Test fun newKeyboardShortcuts() {
+        assertEquals(Shortcut.QUICK_SWITCHER, r(KeyEvent.KEYCODE_K, ctrl = true))
+        assertEquals(Shortcut.DUPLICATE_TAB, r(KeyEvent.KEYCODE_K, ctrl = true, shift = true))
+        assertEquals(Shortcut.COPY_ADDRESS, r(KeyEvent.KEYCODE_C, ctrl = true, shift = true))
+        assertEquals(Shortcut.ZOOM_IN, r(KeyEvent.KEYCODE_EQUALS, ctrl = true))
+        assertEquals(Shortcut.ZOOM_IN, r(KeyEvent.KEYCODE_PLUS, ctrl = true, shift = true))
+        assertEquals(Shortcut.ZOOM_OUT, r(KeyEvent.KEYCODE_MINUS, ctrl = true))
+        assertEquals(Shortcut.ZOOM_RESET, r(KeyEvent.KEYCODE_0, ctrl = true))
+        assertNull(r(KeyEvent.KEYCODE_C, ctrl = true))
+    }
+
     @Test fun plainTypingIsNeverTaken() {
         assertNull(r(KeyEvent.KEYCODE_L))
         assertNull(r(KeyEvent.KEYCODE_T, shift = true))

@@ -134,6 +134,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.layout.positionInWindow
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -590,6 +591,13 @@ private fun BrowserContent(
     }
     // Physical keyboard shortcuts (KeyShortcuts.kt). The handler always reads the latest state, and is off while the app lock is on.
     var showShortcuts by remember { mutableStateOf(false) }
+    var showSwitcher by remember { mutableStateOf(false) }
+    /** Text size from the keyboard: steps through the same setting as Settings > Appearance and says the new size. */
+    fun stepTextSize(delta: Int?) {
+        val next = if (delta == null) 100 else textSize + delta
+        settings.setTextSizePercent(next)
+        InAppNotices.show("Text size ${next.coerceIn(SettingsRepository.TEXT_SIZE_MIN, SettingsRepository.TEXT_SIZE_MAX)}%")
+    }
     val latestShortcutHandler by rememberUpdatedState<(Shortcut) -> Boolean> { shortcut ->
         val list = tabs.tabs.filter { !it.isPrivate || !AppLock.locked }
         val at = list.indexOfFirst { it.id == tabs.selectedId }
@@ -604,6 +612,23 @@ private fun BrowserContent(
             Shortcut.FORWARD -> if (selected.canGoForward) selected.session.goForward() else InAppNotices.show("Nothing to go forward to")
             Shortcut.BOOKMARK -> toggleSelectedBookmark()
             Shortcut.SAVE_PDF -> savePdf()
+            Shortcut.ZOOM_IN -> stepTextSize(SettingsRepository.TEXT_SIZE_STEP)
+            Shortcut.ZOOM_OUT -> stepTextSize(-SettingsRepository.TEXT_SIZE_STEP)
+            Shortcut.ZOOM_RESET -> stepTextSize(null)
+            Shortcut.COPY_ADDRESS -> {
+                val url = selected.url
+                if (url == BrowserTabs.START_URL || url.isBlank()) InAppNotices.show("Nothing to copy on the start page") else {
+                    context.getSystemService(android.content.ClipboardManager::class.java)
+                        .setPrimaryClip(android.content.ClipData.newPlainText("Page address", url))
+                    InAppNotices.show("Page address copied")
+                }
+            }
+            Shortcut.DUPLICATE_TAB -> {
+                val url = selected.url
+                if (url == BrowserTabs.START_URL || url.isBlank()) InAppNotices.show("Nothing to duplicate on the start page")
+                else { tabs.newTab(url, isPrivate = selected.isPrivate); InAppNotices.show("Tab duplicated") }
+            }
+            Shortcut.QUICK_SWITCHER -> showSwitcher = !showSwitcher
             Shortcut.NEW_TAB -> onNewTab()
             Shortcut.NEW_PRIVATE_TAB -> onNewPrivateTab()
             Shortcut.CLOSE_TAB -> tabs.close(selected.id)
@@ -762,6 +787,36 @@ private fun BrowserContent(
         } else {
             selected.session.loadUri(url)
         }
+    }
+    if (showSwitcher) {
+        val switcherItems = remember(tabs.tabs.toList(), bookmarkList, historyList, selected.isPrivate) {
+            // Private tabs are listed only from a private tab, and history never from one.
+            tabs.tabs.filter { !it.isPrivate || selected.isPrivate }.map { QuickItem(QuickKind.TAB, it.id.toString(), it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) } +
+                bookmarkList.map { QuickItem(QuickKind.BOOKMARK, it.url, it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) } +
+                (if (selected.isPrivate) emptyList() else historyList.take(200).map { QuickItem(QuickKind.HISTORY, it.url, it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) }) +
+                listOf("New tab", "New private tab", "Reopen closed tab", "Library", "Settings", "Find in page", "Save as PDF", "Keyboard shortcuts").map { QuickItem(QuickKind.ACTION, it, it) }
+        }
+        QuickSwitcher(
+            items = switcherItems,
+            onDismiss = { showSwitcher = false },
+            onPick = { item ->
+                showSwitcher = false
+                when (item.kind) {
+                    QuickKind.TAB -> tabs.select(item.key.toLong())
+                    QuickKind.BOOKMARK, QuickKind.HISTORY -> openSaved(item.key)
+                    QuickKind.ACTION -> when (item.key) {
+                        "New tab" -> onNewTab()
+                        "New private tab" -> onNewPrivateTab()
+                        "Reopen closed tab" -> onReopenClosed()
+                        "Library" -> showLibrary = true
+                        "Settings" -> showSettings = true
+                        "Find in page" -> showFind = true
+                        "Save as PDF" -> savePdf()
+                        "Keyboard shortcuts" -> showShortcuts = true
+                    }
+                }
+            },
+        )
     }
 
     /** Loads typed text: searches through the chooser or default engine, or opens a URL. */
@@ -1351,6 +1406,7 @@ private fun BrowserContent(
                         isReadLater = selectedSaved,
                         onReadLater = toggleReadLater,
                         onSavePdf = savePdf,
+                        onQuickSwitcher = { showSwitcher = true },
                         onNewTab = { onNewTab() },
                         onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },
@@ -2532,6 +2588,10 @@ private fun AddressBar(
     var anchorWidth by remember { mutableStateOf(0.dp) }
     var anchorHeightPx by remember { mutableStateOf(0) }
     val density = LocalDensity.current
+    // Phone only: a capsule in the lower half of the screen sits over the keyboard, so its suggestions open upward.
+    var anchorCenterY by remember { mutableStateOf(0f) }
+    val screenHeightPx = with(density) { LocalConfiguration.current.screenHeightDp.dp.toPx() }
+    val opensUp = LocalConfiguration.current.screenWidthDp < TABLET_MIN_WIDTH_DP && anchorCenterY > screenHeightPx / 2f
 
     // Ctrl+L or F6 from a hardware keyboard puts the caret in the address field and selects the address.
     LaunchedEffect(Unit) {
@@ -2574,7 +2634,7 @@ private fun AddressBar(
     }
 
     Box(
-        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height }
+        modifier = modifier.addressSwipes(onSwipeUp, onSwitchTab, onSwipeDown).onGloballyPositioned { anchorWidth = with(density) { it.size.width.toDp() }; anchorHeightPx = it.size.height; anchorCenterY = it.positionInWindow().y + it.size.height / 2f }
     ) {
     Surface(
         modifier = Modifier
@@ -2726,22 +2786,23 @@ private fun AddressBar(
     var lastSuggestions by remember { mutableStateOf(suggestions) }
     if (suggestions.isNotEmpty()) lastSuggestions = suggestions
     if (listShown.currentState || listShown.targetState) Popup(
-        alignment = Alignment.TopStart,
-        offset = IntOffset(0, anchorHeightPx),
+        alignment = if (opensUp) Alignment.BottomStart else Alignment.TopStart,
+        offset = IntOffset(0, if (opensUp) -anchorHeightPx else anchorHeightPx),
         onDismissRequest = { suggestionsHidden = true },
         properties = PopupProperties(focusable = false)
     ) {
         AnimatedVisibility(
             visibleState = listShown,
-            enter = fadeIn(OraMotion.overlayFadeIn()) + expandVertically(OraMotion.overlayScaleIn(), Alignment.Top),
-            exit = fadeOut(OraMotion.overlayFadeOut()) + shrinkVertically(OraMotion.overlayScaleOut(), Alignment.Top),
+            enter = fadeIn(OraMotion.overlayFadeIn()) + expandVertically(OraMotion.overlayScaleIn(), if (opensUp) Alignment.Bottom else Alignment.Top),
+            exit = fadeOut(OraMotion.overlayFadeOut()) + shrinkVertically(OraMotion.overlayScaleOut(), if (opensUp) Alignment.Bottom else Alignment.Top),
         ) {
       Column(
-        Modifier.width(anchorWidth).padding(top = 4.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius))
+        Modifier.width(anchorWidth).padding(top = if (opensUp) 0.dp else 4.dp, bottom = if (opensUp) 4.dp else 0.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius))
             .background(browserColors().AddressBarBackground)
             .verticalScroll(rememberScrollState())
       ) {
-        lastSuggestions.forEach { suggestion ->
+        // Opening upward, the best match sits next to the capsule, so the order is reversed.
+        (if (opensUp) lastSuggestions.asReversed() else lastSuggestions).forEach { suggestion ->
             key(suggestion.kind, suggestion.target) {
                 FadeInOnAppear {
                     DropdownMenuItem(
