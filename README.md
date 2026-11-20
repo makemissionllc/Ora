@@ -49,6 +49,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `browser/KeyShortcuts.kt`, `browser/ShortcutsCard.kt`: physical keyboard shortcuts (`MainActivity.dispatchKeyEvent` feeds `KeyShortcuts`; BrowserScreen acts on them) and the card that lists them.
 - `settings/SettingsRepository.kt` `BarButton`: the action behind the round button in the Compact bar (picked in Settings > Tabs).
 - `browser/QuickSwitcher.kt`: the Ctrl+K quick switcher and its pure `quickMatches` ranking.
+- `settings/TutorialScreen.kt`: the interactive tutorial (lessons, practice areas, saved progress).
 - `settings/SearchShortcuts.kt`: address bar search keywords (`resolve`, built-in list, your own saved in `SettingsRepository`).
 - `settings/SiteTextSizes.kt`: per-site text sizes (`siteKeyFor`, saved by host).
 - `browser/PagePdf.kt`: Save as PDF (GeckoView `saveAsPdf`, written to Downloads/Ora through MediaStore, named from the page title).

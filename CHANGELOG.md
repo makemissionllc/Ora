@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Added**
+- Interactive tutorial in Settings > About. Six short lessons you try for real: search shortcuts, the Quick switcher, swiping between tabs, press and hold, keyboard shortcuts (tablet) and where to make Ora yours. Finishing a lesson ticks it and opens the next, the row shows how many are done, and Start over asks first. (`36bb20f`)
+
 **Changed**
 - Setup has a new fourth step, Things worth trying, that shows search shortcuts (with a switch), the Quick switcher, keyboard shortcuts, text size for each site, your own bottom bar, tab groups and Labs. The last page lists search shortcuts, and small first-use tips now explain the Quick switcher and search shortcuts. (`7e7f156`)
 
