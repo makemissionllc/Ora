@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Saved sessions: save your open tabs under a name and open them again later, from the ⋮ menu (Saved sessions), the Quick switcher, or Ctrl+Shift+O. Private tabs are never saved. Opening a session skips pages that are already open and tells you so, a session is named for you (site and date) if you don't type one, Ctrl+Shift+S saves in one press, and deleting a session asks first."),
             ChangeItem(ChangeKind.ADDED, "Interactive tutorial in Settings > About. Six short lessons you try for real: search shortcuts, the Quick switcher, swiping between tabs, press and hold, keyboard shortcuts (tablet) and where to make Ora yours. Finishing a lesson ticks it and opens the next, the row shows how many are done, and Start over asks first."),
             ChangeItem(ChangeKind.CHANGED, "Setup has a new fourth step, Things worth trying, that shows search shortcuts (with a switch), the Quick switcher, keyboard shortcuts, text size for each site, your own bottom bar, tab groups and Labs. The last page lists search shortcuts, and small first-use tips now explain the Quick switcher and search shortcuts."),
             ChangeItem(ChangeKind.ADDED, "Search shortcuts: type a keyword and a space in the address bar (yt cats, gh compose, w ada lovelace, maps nairobi) to search that site. Ten are built in, and Settings > Search lets you add your own or remove them, with a switch to turn them all off."),

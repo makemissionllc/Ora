@@ -72,4 +72,10 @@ class KeyShortcutsTest {
         assertEquals("ora.org", AddressKeys.completeCom("ora.org"))
         assertEquals("two words", AddressKeys.completeCom("two words"))
     }
+
+    @Test fun sessionShortcuts() {
+        assertEquals(Shortcut.SAVE_SESSION, r(KeyEvent.KEYCODE_S, ctrl = true, shift = true))
+        assertEquals(Shortcut.SESSIONS, r(KeyEvent.KEYCODE_O, ctrl = true, shift = true))
+        assertEquals(Shortcut.SAVE_PDF, r(KeyEvent.KEYCODE_S, ctrl = true))
+    }
 }

@@ -653,6 +653,29 @@ private fun BrowserContent(
     // Physical keyboard shortcuts (KeyShortcuts.kt). The handler always reads the latest state, and is off while the app lock is on.
     var showShortcuts by remember { mutableStateOf(false) }
     var showSwitcher by remember { mutableStateOf(false) }
+    var showSessions by remember { mutableStateOf(false) }
+    val savedSessions = remember(profileId) { com.makemission.ora.settings.SavedSessions(context, profileId) }
+    val sessionList by savedSessions.sessions.collectAsState()
+    fun sessionPages() = com.makemission.ora.settings.SessionLogic.pagesToSave(tabs.tabs.map { Triple(it.url, it.title, it.isPrivate) })
+    fun saveSession(name: String) {
+        val pages = sessionPages()
+        if (savedSessions.add(name, pages)) {
+            InAppNotices.show("Session saved with ${pages.size} ${if (pages.size == 1) "page" else "pages"}")
+        } else {
+            InAppNotices.show("Nothing to save yet. Open a page first.")
+        }
+    }
+    fun openSession(session: com.makemission.ora.settings.SavedSession) {
+        val open = tabs.tabs.filter { !it.isPrivate }.map { it.url }.toSet()
+        val plan = com.makemission.ora.settings.SessionLogic.planOpen(session, open)
+        plan.toOpen.forEachIndexed { i, page -> tabs.newTab(page.url, select = i == 0) }
+        BrowserLog.info("sessions", "Session opened: ${plan.toOpen.size} new, ${plan.alreadyOpen} already open")
+        InAppNotices.show(
+            if (plan.toOpen.isEmpty()) "All ${plan.alreadyOpen} pages are already open"
+            else if (plan.alreadyOpen > 0) "Opened ${plan.toOpen.size}, ${plan.alreadyOpen} already open"
+            else "Opened ${plan.toOpen.size}"
+        )
+    }
     /** Text size from the keyboard: sets this site's own size and says so; a private tab or a page with no site changes nothing. */
     fun stepTextSize(delta: Int?) {
         if (selected.isPrivate) { InAppNotices.show("Private tabs use the default text size"); return }
@@ -698,6 +721,8 @@ private fun BrowserContent(
                 else { tabs.newTab(url, isPrivate = selected.isPrivate); InAppNotices.show("Tab duplicated") }
             }
             Shortcut.QUICK_SWITCHER -> showSwitcher = !showSwitcher
+            Shortcut.SAVE_SESSION -> saveSession(com.makemission.ora.settings.SessionLogic.defaultName(sessionPages(), System.currentTimeMillis()))
+            Shortcut.SESSIONS -> showSessions = !showSessions
             Shortcut.NEW_TAB -> onNewTab()
             Shortcut.NEW_PRIVATE_TAB -> onNewPrivateTab()
             Shortcut.CLOSE_TAB -> tabs.close(selected.id)
@@ -889,13 +914,26 @@ private fun BrowserContent(
             selected.session.loadUri(url)
         }
     }
+    if (showSessions) {
+        val pages = sessionPages()
+        SessionsDialog(
+            sessions = sessionList,
+            defaultName = com.makemission.ora.settings.SessionLogic.defaultName(pages, System.currentTimeMillis()),
+            pageCount = pages.size,
+            onSave = { name -> saveSession(name) },
+            onOpen = { s -> showSessions = false; openSession(s) },
+            onDelete = { s -> savedSessions.remove(s.name) },
+            onDismiss = { showSessions = false },
+        )
+    }
     if (showSwitcher) {
-        val switcherItems = remember(tabs.tabs.toList(), bookmarkList, historyList, selected.isPrivate) {
+        val switcherItems = remember(tabs.tabs.toList(), bookmarkList, historyList, selected.isPrivate, sessionList) {
             // Private tabs are listed only from a private tab, and history never from one.
             tabs.tabs.filter { !it.isPrivate || selected.isPrivate }.map { QuickItem(QuickKind.TAB, it.id.toString(), it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) } +
                 bookmarkList.map { QuickItem(QuickKind.BOOKMARK, it.url, it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) } +
                 (if (selected.isPrivate) emptyList() else historyList.take(200).map { QuickItem(QuickKind.HISTORY, it.url, it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url)) }) +
-                listOf("New tab", "New private tab", "Reopen closed tab", "Library", "Settings", "Find in page", "Save as PDF", "Keyboard shortcuts").map { QuickItem(QuickKind.ACTION, it, it) }
+                listOf("New tab", "New private tab", "Reopen closed tab", "Library", "Settings", "Find in page", "Save as PDF", "Keyboard shortcuts", "Save session", "Saved sessions").map { QuickItem(QuickKind.ACTION, it, it) } +
+                sessionList.map { QuickItem(QuickKind.ACTION, "session:${it.name}", "Open session: ${it.name}", "${it.pages.size} pages") }
         }
         QuickSwitcher(
             items = switcherItems,
@@ -914,6 +952,9 @@ private fun BrowserContent(
                         "Find in page" -> showFind = true
                         "Save as PDF" -> savePdf()
                         "Keyboard shortcuts" -> showShortcuts = true
+                        "Save session" -> saveSession(com.makemission.ora.settings.SessionLogic.defaultName(sessionPages(), System.currentTimeMillis()))
+                        "Saved sessions" -> showSessions = true
+                        else -> if (item.key.startsWith("session:")) sessionList.firstOrNull { it.name == item.key.removePrefix("session:") }?.let { openSession(it) }
                     }
                 }
             },
@@ -1586,6 +1627,7 @@ private fun BrowserContent(
                         onReadLater = toggleReadLater,
                         onSavePdf = savePdf,
                         onQuickSwitcher = { showSwitcher = true },
+                        onSessions = { showSessions = true },
                         onNewTab = { onNewTab() },
                         onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },
