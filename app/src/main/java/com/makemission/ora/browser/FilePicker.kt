@@ -40,7 +40,7 @@ object FilePicker {
             onDone(emptyList())
             return
         }
-        val types = mimeTypes?.filter { it.isNotBlank() && it != "*/*" }.orEmpty()
+        val types = acceptedTypes(mimeTypes)
         val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = if (types.size == 1) types[0] else "*/*"
@@ -56,6 +56,25 @@ object FilePicker {
             BrowserLog.error("upload", "No app can pick files", error)
             onDone(emptyList())
         }
+    }
+
+    /**
+     * Turns a page's accept list into MIME types for Android's picker. Pages write ".jpg", a group such as
+     * image-slash-star, or a full type like image/png. Android only understands MIME types, so extensions are
+     * looked up, unknown ones are dropped, and "any file" (or an empty list) means no filter at all.
+     */
+    fun acceptedTypes(accept: Array<String>?): List<String> {
+        val out = linkedSetOf<String>()
+        for (raw in accept.orEmpty()) {
+            val token = raw.trim().lowercase()
+            if (token.isEmpty()) continue
+            if (token == "*/*") return emptyList()
+            if (token.startsWith(".")) {
+                val mime = android.webkit.MimeTypeMap.getSingleton().getMimeTypeFromExtension(token.removePrefix("."))
+                if (mime != null) out += mime
+            } else if (token.contains('/')) out += token
+        }
+        return out.toList()
     }
 
     private fun urisOf(data: Intent?): List<Uri> {
@@ -78,14 +97,19 @@ open class FilePromptDelegate(private val context: Context) : PromptDelegate {
             }
             // Gecko cannot read a content address from the picker, so each file is copied to the app's cache
             // first (off the main thread, big files take a moment) and the copy is handed over.
+            val appContext = context.applicationContext
+            val main = android.os.Handler(android.os.Looper.getMainLooper())
+            if (uris.size > 1) main.post { android.widget.Toast.makeText(appContext, "Preparing ${uris.size} files…", android.widget.Toast.LENGTH_SHORT).show() }
             Thread({
                 try {
                     val files = uris.map { Uri.fromFile(copyToCache(it)) }
                     val response = if (multiple) prompt.confirm(context, files.toTypedArray()) else prompt.confirm(context, files[0])
                     result.complete(response)
                     BrowserLog.info("upload", "Gave the page ${files.size} chosen file(s)")
+                    main.post { android.widget.Toast.makeText(appContext, if (files.size == 1) "Attached ${files[0].lastPathSegment}" else "Attached ${files.size} files", android.widget.Toast.LENGTH_SHORT).show() }
                 } catch (error: Exception) {
                     BrowserLog.error("upload", "Could not hand the chosen file to the page", error)
+                    main.post { android.widget.Toast.makeText(appContext, "Could not attach the file", android.widget.Toast.LENGTH_SHORT).show() }
                     result.complete(prompt.dismiss())
                 }
             }, "ora-upload").start()

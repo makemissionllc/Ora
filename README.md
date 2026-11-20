@@ -74,7 +74,7 @@ The same font can be applied to websites with Settings > Appearance > Font > Use
 
 ## File uploads
 
-GeckoView only shows a file chooser if the session has a `PromptDelegate`. `browser/FilePicker.kt` holds `FilePromptDelegate` (set on every tab in `BrowserTab`) and `FilePicker`, which launches Android's `ACTION_GET_CONTENT` through a launcher registered in `MainActivity.onCreate`, with the page's accepted types and multiple choice when asked. Gecko cannot read the picker's content addresses (it answers "Unrecognized path"), so each chosen file is first copied to `cache/uploads/<n>/<name>` on a background thread and the copy is handed over; copies older than an hour are deleted at the next pick. No choice answers the page with a dismiss. Logged under tag `upload`. 
+GeckoView only shows a file chooser if the session has a `PromptDelegate`. `browser/FilePicker.kt` holds `FilePromptDelegate` (set on every tab in `BrowserTab`) and `FilePicker`, which launches Android's `ACTION_GET_CONTENT` through a launcher registered in `MainActivity.onCreate`, with the page's accepted types and multiple choice when asked. Gecko cannot read the picker's content addresses (it answers "Unrecognized path"), so each chosen file is first copied to `cache/uploads/<n>/<name>` on a background thread and the copy is handed over; copies older than an hour are deleted at the next pick. The page's accept list is turned into MIME types by `FilePicker.acceptedTypes` (extensions like `.jpg` are looked up with `MimeTypeMap`, `*/*` means no filter), and short messages report Preparing and Attached. No choice answers the page with a dismiss. Logged under tag `upload`. 
 
 ## Page prompts
 
