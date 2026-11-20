@@ -14,7 +14,7 @@ class LinkOpenPrivacyTest {
     @Test
     fun linksFromNormalTabsAreLogged() {
         assertEquals(
-            "Opened link in background tab: https://example.com/a",
+            "Opened link in background tab: example.com",
             linkOpenLogLine("Opened link in background tab", "https://example.com/a", fromPrivate = false)
         )
     }

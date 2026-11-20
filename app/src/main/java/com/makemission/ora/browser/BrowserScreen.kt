@@ -1334,7 +1334,8 @@ private fun BrowserContent(
                             pageTop = (if (tabletCompact) compactRowHeight else phoneZoneHeight) * zoneFraction,
                             fromPrivate = selected.isPrivate,
                             onDismiss = { selected.pressTarget = null },
-                            onShare = { url -> shareUrl(context, url) }
+                            onShare = { url -> shareUrl(context, url) },
+                            onAddToReading = { url, title -> reading.add(url, title); com.makemission.ora.notice.InAppNotices.show("Saved to Reading list") },
                         )
                     }
                 }

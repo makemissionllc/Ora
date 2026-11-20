@@ -22,6 +22,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -47,7 +54,10 @@ import com.makemission.ora.ui.theme.browserColors
  * A link opened from a private tab is not logged, so private browsing leaves no trace.
  */
 internal fun linkOpenLogLine(action: String, url: String, fromPrivate: Boolean): String? =
-    if (fromPrivate) null else "$action: $url"
+    if (fromPrivate) null else "$action: ${hostOf(url)}"
+
+/** The domain of an address, for logs and the menu header. Empty when there is none. */
+internal fun hostOf(url: String): String = runCatching { java.net.URI(url).host }.getOrNull().orEmpty()
 
 /**
  * Quick menu opened by a long press on a link or image (phone and tablet).
@@ -63,6 +73,8 @@ fun LinkQuickMenu(
     fromPrivate: Boolean = false,
     onDismiss: () -> Unit,
     onShare: (String) -> Unit,
+    /** Saves a link to the reading list. Null when saving is not possible. */
+    onAddToReading: ((String, String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -84,7 +96,7 @@ fun LinkQuickMenu(
         val rawX = with(density) { target.x.toDp() }
         val rawY = with(density) { target.y.toDp() } + pageTop
         val left = rawX.coerceIn(gap, maxWidth - cardWidth - gap)
-        val top = rawY.coerceIn(gap, maxHeight - gap - 240.dp)
+        val top = rawY.coerceIn(gap, maxHeight - gap - 160.dp)
         val origin = TransformOrigin(
             pivotFractionX = ((rawX - left) / cardWidth).coerceIn(0f, 1f),
             pivotFractionY = 0f
@@ -104,20 +116,61 @@ fun LinkQuickMenu(
                 transformOrigin = origin
             )
         ) {
+            val colors = browserColors()
             Column(
                 modifier = Modifier
                     .width(cardWidth)
+                    .heightIn(max = maxHeight - top - gap)
                     .clip(RoundedCornerShape(BrowserTokens.QuickMenuRadius))
-                    .background(browserColors().AddressBarBackground)
+                    .background(colors.AddressBarBackground)
                     .clickable(onClick = {})
+                    .verticalScroll(rememberScrollState())
                     .padding(vertical = 6.dp)
             ) {
-                target.linkUri?.let { link ->
+                // Header: what was pressed. The link comes first; an image alone shows its own address.
+                val headAddress = target.linkUri ?: target.imageUri.orEmpty()
+                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                    Text(
+                        target.label ?: hostOf(headAddress).ifEmpty { headAddress },
+                        fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(headAddress, fontSize = 12.sp, color = colors.SecondaryText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                val link = target.linkUri
+                val image = target.imageUri
+                // Link menu. An image that is also a link gets the link section below its own.
+                if (image != null) {
+                    QuickRow(listOf("Share" to { close(); onShare(image) }))
+                    QuickMenuRow("Open image in new tab") {
+                        close()
+                        linkOpenLogLine("Opened image in new tab", image, fromPrivate)?.let { BrowserLog.info("page", it) }
+                        tabs.newTab(image, select = true, isPrivate = fromPrivate)
+                    }
+                    QuickMenuRow("Copy image address") {
+                        close()
+                        copyToClipboard(context, "Image", image, "Image address copied")
+                    }
+                    if (link != null) {
+                        HorizontalDivider(color = colors.ToolbarBorder)
+                        Text("This image is also a link", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
+                    }
+                }
+                if (link != null) {
+                    if (image == null) QuickRow(listOf(
+                        "Copy link" to { close(); copyToClipboard(context, "Link", link, "Link copied") },
+                        "Share" to { close(); onShare(link) },
+                    ))
                     QuickMenuRow("Open in new tab") {
                         close()
                         linkOpenLogLine("Opened link in new tab", link, fromPrivate)?.let { BrowserLog.info("page", it) }
+                        // From a private tab the new tab is private too.
                         tabs.newTab(link, select = true, isPrivate = fromPrivate)
-                        InAppNotices.show("Opened in a new tab")
+                    }
+                    if (!fromPrivate) QuickMenuRow("Open in private tab") {
+                        close()
+                        BrowserLog.info("page", "Opened link in private tab: ${hostOf(link)}")
+                        tabs.newTab(link, select = true, isPrivate = true)
                     }
                     QuickMenuRow("Open in background tab") {
                         close()
@@ -125,33 +178,35 @@ fun LinkQuickMenu(
                         tabs.newTab(link, select = false, isPrivate = fromPrivate)
                         InAppNotices.show("Opened in a background tab. Your current page stays put.")
                     }
-                    QuickMenuRow("Copy link address") {
+                    if (image != null) QuickMenuRow("Copy link address") {
                         close()
                         copyToClipboard(context, "Link", link, "Link copied")
                     }
-                    QuickMenuRow("Share link") {
+                    if (!fromPrivate && onAddToReading != null) QuickMenuRow("Add to reading list") {
                         close()
-                        onShare(link)
-                    }
-                }
-                target.imageUri?.let { image ->
-                    if (target.linkUri != null) HorizontalDivider(color = browserColors().ToolbarBorder)
-                    QuickMenuRow("Open image in new tab") {
-                        close()
-                        linkOpenLogLine("Opened image in new tab", image, fromPrivate)?.let { BrowserLog.info("page", it) }
-                        tabs.newTab(image, select = false, isPrivate = fromPrivate)
-                        InAppNotices.show("Image opened in a background tab")
-                    }
-                    QuickMenuRow("Copy image address") {
-                        close()
-                        copyToClipboard(context, "Image", image, "Image address copied")
-                    }
-                    QuickMenuRow("Share image") {
-                        close()
-                        onShare(image)
+                        onAddToReading(link, target.label ?: hostOf(link))
                     }
                 }
             }
+        }
+    }
+}
+
+/** The row of up to three quick buttons under the header. */
+@Composable
+private fun QuickRow(buttons: List<Pair<String, () -> Unit>>) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        buttons.forEach { (label, onClick) ->
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .height(BrowserTokens.QuickMenuRowHeight)
+                    .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+                    .background(browserColors().ToolbarBackground)
+                    .pressFeedback()
+                    .clickable(onClick = onClick),
+                contentAlignment = Alignment.Center,
+            ) { Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText) }
         }
     }
 }
