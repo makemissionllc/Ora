@@ -36,6 +36,8 @@ data class FirstUseTip(val id: String, val title: String, val text: String, val 
 
 val FirstUseTips: List<FirstUseTip> = listOf(
     FirstUseTip("tabs-swipe", "Swipe the bar up for tabs", "Drag the address bar upwards to see all your tabs."),
+    FirstUseTip("quick-switcher", "Find anything fast", "Open the ⋯ menu and choose Quick switcher, or press Ctrl+K, to jump to a tab, bookmark or page."),
+    FirstUseTip("search-shortcuts", "Search one site", "Type yt cats or gh compose in the address bar to search YouTube or GitHub directly."),
     FirstUseTip("sidebar-swipe", "Swipe from the left edge", "Drag in from the left edge of the screen to open the tab sidebar.", tabletOnly = true),
 )
 
