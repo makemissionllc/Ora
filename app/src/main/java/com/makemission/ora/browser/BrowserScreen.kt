@@ -2236,12 +2236,23 @@ private fun TabsIcon(tabCount: Int) {
         modifier = Modifier.graphicsLayer { scaleX = bump.value; scaleY = bump.value }
     ) {
         Icon(Icons.Outlined.Tab, contentDescription = null)
-        Text(
-            text = tabCount.toString(),
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            color = browserColors().Accent
-        )
+        // The number rolls up when a tab is added and down when one closes.
+        androidx.compose.animation.AnimatedContent(
+            targetState = tabCount,
+            transitionSpec = {
+                val up = targetState > initialState
+                (androidx.compose.animation.slideInVertically(OraMotion.standard()) { if (up) it else -it } + androidx.compose.animation.fadeIn(OraMotion.standard())) togetherWith
+                    (androidx.compose.animation.slideOutVertically(OraMotion.leave()) { if (up) -it else it } + androidx.compose.animation.fadeOut(OraMotion.leave()))
+            },
+            label = "tab count",
+        ) { count ->
+            Text(
+                text = count.toString(),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = browserColors().Accent
+            )
+        }
     }
 }
 
