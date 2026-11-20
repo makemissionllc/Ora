@@ -75,6 +75,10 @@ fun LinkQuickMenu(
     onShare: (String) -> Unit,
     /** Saves a link to the reading list. Null when saving is not possible. */
     onAddToReading: ((String, String) -> Unit)? = null,
+    /** Save image, Copy image and Save image as. Handed the image address; the screen owns the work. */
+    onSaveImage: ((String) -> Unit)? = null,
+    onCopyImage: ((String) -> Unit)? = null,
+    onSaveImageAs: ((String) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -141,7 +145,12 @@ fun LinkQuickMenu(
                 val image = target.imageUri
                 // Link menu. An image that is also a link gets the link section below its own.
                 if (image != null) {
-                    QuickRow(listOf("Share" to { close(); onShare(image) }))
+                    QuickRow(buildList {
+                        onSaveImage?.let { add("Save image" to { close(); it(image) }) }
+                        onCopyImage?.let { add("Copy image" to { close(); it(image) }) }
+                        add("Share" to { close(); onShare(image) })
+                    })
+                    onSaveImageAs?.let { saveAs -> QuickMenuRow("Save image as…") { close(); saveAs(image) } }
                     QuickMenuRow("Open image in new tab") {
                         close()
                         linkOpenLogLine("Opened image in new tab", image, fromPrivate)?.let { BrowserLog.info("page", it) }

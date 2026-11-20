@@ -395,6 +395,26 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Fast downloads for plain http ${if (enabled) "on" else "off"}")
     }
 
+    private val _imageAlwaysAsk = MutableStateFlow(prefs.getBoolean(KEY_IMAGE_ALWAYS_ASK, false))
+    /** When on, saving an image from a long press opens the Save image as sheet instead of saving at once. */
+    val imageAlwaysAsk: StateFlow<Boolean> = _imageAlwaysAsk.asStateFlow()
+
+    fun setImageAlwaysAsk(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_IMAGE_ALWAYS_ASK, enabled).apply()
+        _imageAlwaysAsk.value = enabled
+        BrowserLog.info("settings", "Always ask where to save images ${if (enabled) "on" else "off"}")
+    }
+
+    private val _imageSaveFolder = MutableStateFlow(prefs.getString(KEY_IMAGE_SAVE_FOLDER, null))
+    /** The folder (a document tree address) chosen in Save image as, or null for Pictures/Ora. */
+    val imageSaveFolder: StateFlow<String?> = _imageSaveFolder.asStateFlow()
+
+    fun setImageSaveFolder(tree: String?) {
+        prefs.edit().apply { if (tree == null) remove(KEY_IMAGE_SAVE_FOLDER) else putString(KEY_IMAGE_SAVE_FOLDER, tree) }.apply()
+        _imageSaveFolder.value = tree
+        BrowserLog.info("settings", if (tree == null) "Image save folder reset to Pictures/Ora" else "Image save folder changed")
+    }
+
     private val _downloadNotifications = MutableStateFlow(prefs.getBoolean(KEY_DOWNLOAD_NOTIFICATIONS, true))
     /**
      * When on, each download has its own notification in the shade, with Pause, Resume, Cancel, Retry and Open,
@@ -765,6 +785,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_HINTS = "hints_enabled"
         private const val KEY_SEEN_HINTS = "hints_seen"
         private const val KEY_FAST_HTTP_DOWNLOADS = "fast_http_downloads"
+        private const val KEY_IMAGE_ALWAYS_ASK = "image_always_ask"
+        private const val KEY_IMAGE_SAVE_FOLDER = "image_save_folder"
         private const val KEY_DOWNLOAD_NOTIFICATIONS = "download_notifications"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"

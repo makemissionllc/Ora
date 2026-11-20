@@ -132,6 +132,7 @@ fun SettingsScreen(
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
+    val imageAlwaysAsk by settings.imageAlwaysAsk.collectAsState()
     val hintsOn by settings.hints.collectAsState()
     val downloadNotifications by settings.downloadNotifications.collectAsState()
     val noticeContext = LocalContext.current
@@ -968,6 +969,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = fastHttpDownloads, label = "Switch", onChange = { settings.setFastHttpDownloads(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setImageAlwaysAsk(!imageAlwaysAsk) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Always ask where to save images", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Save image from a long press opens a sheet for the name, folder and format. Off: it saves at once to Pictures/Ora.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = imageAlwaysAsk, label = "Switch", onChange = { settings.setImageAlwaysAsk(it) })
                             }
                             Row(
                                 modifier = Modifier
