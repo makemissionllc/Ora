@@ -1,5 +1,7 @@
 package com.makemission.ora.browser
 
+import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.animation.core.Animatable
 import androidx.compose.material3.Snackbar
@@ -1116,8 +1118,12 @@ private fun BrowserContent(
                 hostState = notices,
                 modifier = Modifier.padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 0.dp),
             ) { data ->
+                // The message rises 12 dp as it fades in (Standard); the host fades it out when it leaves.
+                val rise = remember(data) { Animatable(0f) }
+                LaunchedEffect(data) { rise.animateTo(1f, OraMotion.standard()) }
                 Snackbar(
                     snackbarData = data,
+                    modifier = Modifier.graphicsLayer { alpha = rise.value; translationY = (1f - rise.value) * 12.dp.toPx() },
                     shape = RoundedCornerShape(BrowserTokens.RadiusMedium),
                     containerColor = browserColors().Surface,
                     contentColor = browserColors().AddressBarText,
@@ -2236,12 +2242,23 @@ private fun TabsIcon(tabCount: Int) {
         modifier = Modifier.graphicsLayer { scaleX = bump.value; scaleY = bump.value }
     ) {
         Icon(Icons.Outlined.Tab, contentDescription = null)
-        Text(
-            text = tabCount.toString(),
-            fontSize = 9.sp,
-            fontWeight = FontWeight.Bold,
-            color = browserColors().Accent
-        )
+        // The number rolls up when a tab is added and down when one closes.
+        androidx.compose.animation.AnimatedContent(
+            targetState = tabCount,
+            transitionSpec = {
+                val up = targetState > initialState
+                (androidx.compose.animation.slideInVertically(OraMotion.standard()) { if (up) it else -it } + androidx.compose.animation.fadeIn(OraMotion.standard())) togetherWith
+                    (androidx.compose.animation.slideOutVertically(OraMotion.leave()) { if (up) -it else it } + androidx.compose.animation.fadeOut(OraMotion.leave()))
+            },
+            label = "tab count",
+        ) { count ->
+            Text(
+                text = count.toString(),
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold,
+                color = browserColors().Accent
+            )
+        }
     }
 }
 
@@ -2912,19 +2929,29 @@ private fun AddressBar(
                     Icon(Icons.Filled.Clear, contentDescription = "Clear address", tint = browserColors().SecondaryText)
                 }
             }
-            if (loading) {
-                IconButton(onClick = onStop) {
-                    Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)
-                }
-            } else {
-                // Quality of life: a long press reloads past the cache, for pages that look stale.
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .combinedClickable(onClick = onReload, onLongClick = onHardReload, onClickLabel = "Reload", onLongClickLabel = "Reload without cache"),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = browserColors().AddressBarText)
+            // Reload and Stop share one slot: the icon turns 90 degrees while the two crossfade.
+            androidx.compose.animation.AnimatedContent(
+                targetState = loading,
+                transitionSpec = { androidx.compose.animation.fadeIn(OraMotion.quick()) togetherWith androidx.compose.animation.fadeOut(OraMotion.quick()) },
+                label = "reload stop",
+            ) { isLoading ->
+                val turn by transition.animateFloat(transitionSpec = { OraMotion.quick() }, label = "reload turn") { if (it == EnterExitState.Visible) 0f else if (isLoading) -90f else 90f }
+                Box(Modifier.graphicsLayer { rotationZ = turn }) {
+                    if (isLoading) {
+                        IconButton(onClick = onStop) {
+                            Icon(Icons.Filled.Close, contentDescription = "Stop", tint = browserColors().Accent)
+                        }
+                    } else {
+                        // Quality of life: a long press reloads past the cache, for pages that look stale.
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .combinedClickable(onClick = onReload, onLongClick = onHardReload, onClickLabel = "Reload", onLongClickLabel = "Reload without cache"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = browserColors().AddressBarText)
+                        }
+                    }
                 }
             }
         }

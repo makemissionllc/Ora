@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import androidx.compose.foundation.layout.offset
 import com.makemission.ora.ui.DisclosureChevron
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -290,20 +291,24 @@ fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) 
     val colors = browserColors()
     // Quality of life: every flip gives a short haptic tick, so a switch feels like it moved.
     val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    // The thumb slides and the track colour crossfades, both with the Quick token.
+    val thumbX by androidx.compose.animation.core.animateDpAsState(if (checked) 20.dp else 0.dp, OraMotion.quick(), label = "switch thumb")
+    val track by androidx.compose.animation.animateColorAsState(if (checked) colors.Accent else colors.AddressBarBackground, OraMotion.quick(), label = "switch track")
+    val thumb by androidx.compose.animation.animateColorAsState(if (checked) colors.GridBackground else colors.SecondaryText, OraMotion.quick(), label = "switch thumb colour")
     Box(
         modifier = Modifier
             .size(width = 48.dp, height = 28.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(if (checked) colors.Accent else colors.AddressBarBackground)
+            .background(track)
             .toggleable(value = checked, role = Role.Switch, onValueChange = {
                 haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                 onChange(it)
             })
             .semantics { contentDescription = label }
             .padding(4.dp),
-        contentAlignment = if (checked) Alignment.CenterEnd else Alignment.CenterStart,
+        contentAlignment = Alignment.CenterStart,
     ) {
-        Box(Modifier.size(20.dp).clip(CircleShape).background(if (checked) colors.GridBackground else colors.SecondaryText))
+        Box(Modifier.offset(x = thumbX).size(20.dp).clip(CircleShape).background(thumb))
     }
 }
 
