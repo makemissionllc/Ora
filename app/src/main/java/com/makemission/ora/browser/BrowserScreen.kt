@@ -179,6 +179,7 @@ import com.makemission.ora.extensions.ExtensionInstallHost
 import org.mozilla.geckoview.WebResponse
 import com.makemission.ora.extensions.ExtensionsRepository
 import com.makemission.ora.extensions.isExtensionDownload
+import com.makemission.ora.extensions.VideoControlBridge
 import com.makemission.ora.extensions.ExtensionsScreen
 import com.makemission.ora.settings.AddressSwipeEffect
 import com.makemission.ora.settings.AddressSwipeTarget
@@ -693,6 +694,7 @@ private fun BrowserContent(
     val backExitsVideo = selected.videoFullScreen && videoBackExits
     BackHandler(enabled = backExitsVideo) {
         BrowserLog.info("page", "Back leaves full screen")
+        VideoControlBridge.exitFullScreen()
         selected.session.exitFullScreen()
     }
     // Tablet Compact: the space under the floating row takes the page's top colour and the page starts below it.
@@ -1022,9 +1024,11 @@ private fun BrowserContent(
                     // Phone Compact and Bottom let the page run up under the status bar; push it below, as the fade ends there.
                     belowStatusBar = !isTablet && !topLayout,
                     // Tablet Compact floats over the page; the start page keeps its content clear of the row.
-                    topInset = if (tabletCompact) compactRowHeight else 0.dp,
+                    topInset = if (tabletCompact && !selected.videoFullScreen) compactRowHeight else 0.dp,
                     // Tablet Compact: the space under the floating row takes the page's top colour and the page moves down to meet it.
                     zoneHeight = when {
+                        // A full-screen video takes the whole screen, so the space kept for the bar is given up.
+                        selected.videoFullScreen -> 0.dp
                         tabletCompact -> compactRowHeight
                         phoneCompact -> phoneZoneHeight
                         else -> 0.dp
@@ -1035,13 +1039,13 @@ private fun BrowserContent(
                     bottomClipPx = if (phoneCompact) bottomBarPx else 0,
                     onSubmit = { input -> submitAddress(input) }
                 )
-                // Brightness and volume swipes sit over the page while its video is full screen.
-                if (selected.videoFullScreen && videoGestures) {
-                    VideoGestureLayer(modifier = Modifier.fillMaxSize())
-                }
-                // Seek bar along the bottom of a full-screen video, drawn above the gesture halves.
+                // The full-screen video's own player controls sit over the page (tap for controls, swipes, skip, speed).
                 if (selected.videoFullScreen) {
-                    VideoSeekBar(modifier = Modifier.align(Alignment.BottomCenter))
+                    VideoPlayerControls(
+                        tablet = isTablet,
+                        swipes = videoGestures,
+                        onExit = { VideoControlBridge.exitFullScreen(); selected.session.exitFullScreen() },
+                    )
                 }
                 if (showDownloads) {
                     DownloadsScreen(
