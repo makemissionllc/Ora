@@ -301,7 +301,6 @@ fun SettingsScreen(
                                     }
                                 }
                             }
-                            FontPicker(settings)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -1333,6 +1332,7 @@ fun SettingsScreen(
                                 .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                         ) {
+                            FontPicker(settings)
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
