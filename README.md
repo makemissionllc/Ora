@@ -80,6 +80,10 @@ GeckoView only shows a file chooser if the session has a `PromptDelegate`. `brow
 
 `PagePromptDelegate` (browser/PagePrompts.kt) extends `FilePromptDelegate` and queues alerts, confirms, text boxes, select lists, date and time pickers, leave-page and resend warnings in `PagePrompts`. `PagePromptHost` (browser/PagePromptHost.kt) shows the first one in an `OraDialog`, so it grows out of the last press. Texts are never logged, only the kind (tag `prompt`).
 
+## Full-screen video player
+
+`browser/VideoPlayerControls.kt` draws Ora's own controls over a page's full-screen video (top bar, centre play with 10 s skips, progress, lock, speed, fit/fill, mute, rotate, picture-in-picture, double-tap skip, hold for 2×, brightness and volume swipes). The video itself is driven by the bundled `video-control` WebExtension (`assets/videoctl`, content script in every frame) through `extensions/VideoControlBridge.kt`: the page reports time, length, pause, speed, mute and size; Ora sends seek, play, pause, rate, mute, fit and exit. While a video is full screen the page's top inset is zero so it fills the display. Events are logged under tag `video`.
+
 ## Slow page tips
 
 `browser/SlowLoadTip.kt`: `SlowLoadTipHost` waits 8 s of one page loading, then `slowLoadAdvice` picks the tip from the network state, the load progress and Data Saver (offline, no answer yet, Data Saver on, or mostly loaded). It grows from the bottom edge with the shared overlay motion, offers Keep waiting and Try again or Stop loading, and is logged by domain (tag `tips`). The switch is `SettingsRepository.slowLoadTips` (Settings > Search).

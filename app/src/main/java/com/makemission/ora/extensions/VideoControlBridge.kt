@@ -19,7 +19,18 @@ object VideoControlBridge {
     private const val NATIVE_APP = "ora"
 
     /** The full-screen video as the page reported it. [hasVideo] is false when no video is full screen. */
-    data class State(val hasVideo: Boolean, val seconds: Double, val duration: Double, val paused: Boolean)
+    data class State(
+        val hasVideo: Boolean,
+        val seconds: Double,
+        val duration: Double,
+        val paused: Boolean,
+        val ended: Boolean = false,
+        val rate: Double = 1.0,
+        val muted: Boolean = false,
+        val width: Int = 0,
+        val height: Int = 0,
+        val title: String = "",
+    )
 
     private val _state = MutableStateFlow<State?>(null)
     val state: StateFlow<State?> = _state.asStateFlow()
@@ -46,6 +57,28 @@ object VideoControlBridge {
         current.postMessage(JSONObject().put("type", "seek").put("time", seconds))
     }
 
+    private fun command(message: JSONObject, what: String) {
+        val current = port
+        if (current == null) {
+            BrowserLog.error("video", "$what skipped: the video control is not connected")
+            return
+        }
+        current.postMessage(message)
+    }
+
+    fun play() = command(JSONObject().put("type", "play"), "Play")
+    fun pause() = command(JSONObject().put("type", "pause"), "Pause")
+
+    /** Asks the page itself to leave full screen, so it can enter full screen again afterwards. */
+    fun exitFullScreen() = command(JSONObject().put("type", "exit"), "Exit full screen")
+
+    /** Sets the playback speed, 1.0 is normal. */
+    fun setRate(rate: Double) = command(JSONObject().put("type", "rate").put("value", rate), "Speed")
+    fun setMuted(muted: Boolean) = command(JSONObject().put("type", "mute").put("value", muted), "Mute")
+
+    /** [cover] fills the screen and crops the edges; otherwise the whole picture is shown. */
+    fun setFit(cover: Boolean) = command(JSONObject().put("type", "fit").put("value", if (cover) "cover" else "contain"), "Fit")
+
     /** Moves the full-screen video by [seconds] from where the page last reported it, clamped to its length. */
     fun skip(seconds: Double) {
         val now = _state.value
@@ -70,6 +103,12 @@ object VideoControlBridge {
                         seconds = json.optDouble("t", 0.0),
                         duration = json.optDouble("d", 0.0),
                         paused = json.optBoolean("paused"),
+                        ended = json.optBoolean("ended"),
+                        rate = json.optDouble("rate", 1.0),
+                        muted = json.optBoolean("muted"),
+                        width = json.optInt("w"),
+                        height = json.optInt("h"),
+                        title = json.optString("title"),
                     )
                 }
 

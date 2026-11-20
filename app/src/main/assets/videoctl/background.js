@@ -6,7 +6,7 @@ function nativePort() {
   if (!port) {
     port = browser.runtime.connectNative("ora");
     port.onMessage.addListener((msg) => {
-      if (msg && msg.type === "seek" && activeTab !== null) {
+      if (msg && msg.type !== "state" && activeTab !== null) {
         browser.tabs.sendMessage(activeTab, msg).catch(() => {});
       }
     });
