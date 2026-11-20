@@ -1118,8 +1118,12 @@ private fun BrowserContent(
                 hostState = notices,
                 modifier = Modifier.padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 0.dp),
             ) { data ->
+                // The message rises 12 dp as it fades in (Standard); the host fades it out when it leaves.
+                val rise = remember(data) { Animatable(0f) }
+                LaunchedEffect(data) { rise.animateTo(1f, OraMotion.standard()) }
                 Snackbar(
                     snackbarData = data,
+                    modifier = Modifier.graphicsLayer { alpha = rise.value; translationY = (1f - rise.value) * 12.dp.toPx() },
                     shape = RoundedCornerShape(BrowserTokens.RadiusMedium),
                     containerColor = browserColors().Surface,
                     contentColor = browserColors().AddressBarText,
