@@ -95,6 +95,23 @@ object OraMotion {
     fun <T> sheetSnap(): FiniteAnimationSpec<T> =
         if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.9f, stiffness = 520f) else tween(0)
 
+    /** Quick, 120 ms, standard ease out: press, switch thumb, check fill, icon swaps. */
+    const val QUICK_MS = 120
+    fun <T> quick(): FiniteAnimationSpec<T> =
+        tween(durationMillis = if (ValueAnimator.areAnimatorsEnabled()) QUICK_MS else 0, easing = LinearOutSlowInEasing)
+
+    /** Standard, 220 ms, emphasised ease out (0.2, 0, 0, 1): menus, panel sections, chips, snackbars. */
+    const val STANDARD_MS = 220
+    private val emphasised: Easing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+    fun <T> standard(): FiniteAnimationSpec<T> =
+        tween(durationMillis = if (ValueAnimator.areAnimatorsEnabled()) STANDARD_MS else 0, easing = emphasised)
+
+    /** Leaving, 150 ms, ease in (0.3, 0, 1, 1): anything that goes away. */
+    const val LEAVE_MS = 150
+    private val easeIn: Easing = CubicBezierEasing(0.3f, 0f, 1f, 1f)
+    fun <T> leave(): FiniteAnimationSpec<T> =
+        tween(durationMillis = if (ValueAnimator.areAnimatorsEnabled()) LEAVE_MS else 0, easing = easeIn)
+
     /** Spatial spring: damping 0.9, stiffness 400, no visible bounce. Used for the tab switch travel and zoom. */
     fun <T> spatial(): FiniteAnimationSpec<T> =
         if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.9f, stiffness = 400f) else tween(0)
