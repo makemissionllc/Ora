@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
+- Closing a tab card now fades it out and its neighbours slide together, and tabs added to or removed from the group strip slide in and out, with the active ring fading between icons. (`cef0b34`)
 - Small motion polish: switches slide their thumb and fade their colour, the tab count rolls up or down, Reload and Stop turn as they swap, and messages at the bottom rise into place. Motion follows the Remove animations setting. (`4e2e39f`)
 - Swiping the address bar or bottom bar sideways now lifts the page into a small card with your neighbouring tabs beside it. The cards follow your finger, the domain shows underneath, and releasing settles on the nearest tab. Tapping a tab in the group strip slides straight to it. The page is swapped in behind the cards, so there is no blank flash. With Remove animations on, it is a short fade instead. (`5ce52a2`)
 - When the page you are on belongs to a tab group, a strip of that group's tabs now shows above the bottom bar (phone) or under the address row (tablet), with a button to add a tab to the group and a sheet for the group's tabs. Long-press a link and choose Open in new tab in group to open it in the background in any group. Turn the strip off in Settings > Tabs. (`6b02830`)
