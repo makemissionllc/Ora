@@ -108,6 +108,7 @@ fun SettingsScreen(
     val openLinksMode by settings.openLinksInApps.collectAsState()
     val videoGestures by settings.videoGestures.collectAsState()
     val videoBackExits by settings.videoBackExits.collectAsState()
+    val videoAutoPip by settings.videoAutoPip.collectAsState()
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
     val fadePagesIn by settings.fadePagesIn.collectAsState()
@@ -661,6 +662,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = videoBackExits, label = "Switch", onChange = { settings.setVideoBackExits(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setVideoAutoPip(!videoAutoPip) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Small window when you leave", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "A full-screen video that is playing keeps playing in a small window when you go to the home screen.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = videoAutoPip, label = "Switch", onChange = { settings.setVideoAutoPip(it) })
                             }
                         }
                     }

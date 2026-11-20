@@ -68,11 +68,14 @@ fun VideoFullScreenEffect(active: Boolean) {
             controller.hide(WindowInsetsCompat.Type.systemBars())
             // The screen stays awake while a video plays full screen.
             view.keepScreenOn = true
+            // The picture runs into the notch area instead of leaving black bars beside it.
+            window.attributes = window.attributes.also { it.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES }
             BrowserLog.info("page", "Video full screen: system bars hidden")
         }
         onDispose {
             if (active && window != null) {
                 view.keepScreenOn = false
+                window.attributes = window.attributes.also { it.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT }
                 WindowCompat.getInsetsController(window, view).show(WindowInsetsCompat.Type.systemBars())
                 BrowserLog.info("page", "Video full screen ended: system bars shown")
             }

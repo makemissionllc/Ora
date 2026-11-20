@@ -93,7 +93,7 @@ private const val HOLD_SPEED = 2.0
  * or when a screen reader is on.
  */
 @Composable
-fun VideoPlayerControls(tablet: Boolean, swipes: Boolean, onExit: () -> Unit, modifier: Modifier = Modifier) {
+fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onExit: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
     val audio = remember(context) { context.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager }
@@ -133,6 +133,19 @@ fun VideoPlayerControls(tablet: Boolean, swipes: Boolean, onExit: () -> Unit, mo
     DisposableEffect(activity, wide) {
         if (!tablet && wide) activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         onDispose { if (!tablet && wide) activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED }
+    }
+    // Going home while the video plays turns it into a small window instead of stopping it.
+    val playing = video?.paused == false
+    val pipWide = video?.width?.takeIf { it > 0 } ?: 16
+    val pipHigh = video?.height?.takeIf { it > 0 } ?: 9
+    DisposableEffect(activity, autoPip, playing, pipWide, pipHigh) {
+        if (autoPip && playing) {
+            val r = Rational(pipWide, pipHigh).let { r -> if (r.toFloat() > 2.39f) Rational(239, 100) else if (r.toFloat() < 0.42f) Rational(42, 100) else r }
+            activity?.setPictureInPictureParams(PictureInPictureParams.Builder().setAspectRatio(r).setAutoEnterEnabled(true).build())
+        }
+        onDispose {
+            if (autoPip && playing) activity?.setPictureInPictureParams(PictureInPictureParams.Builder().setAutoEnterEnabled(false).build())
+        }
     }
     DisposableEffect(activity) {
         val listener = Consumer<PictureInPictureModeChangedInfo> { inPip = it.isInPictureInPictureMode }
