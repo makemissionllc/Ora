@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.CheckMark
 import com.makemission.ora.ui.DisclosureChevron
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -288,9 +289,7 @@ fun SettingsScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(mode.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
-                                        if (mode == appearance) {
-                                            Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
-                                        }
+                                        CheckMark(mode == appearance, "Selected")
                                     }
                                 }
                             }
@@ -429,9 +428,7 @@ fun SettingsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(style.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
-                                    if (style == motionStyle) {
-                                        Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
-                                    }
+                                    CheckMark(style == motionStyle, "Selected")
                                 }
                             }
                         }
@@ -467,9 +464,7 @@ fun SettingsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(target.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
-                                    if (target == swipeTarget) {
-                                        Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
-                                    }
+                                    CheckMark(target == swipeTarget, "Selected")
                                 }
                             }
                             Text(
@@ -494,9 +489,7 @@ fun SettingsScreen(
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Text(effect.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
-                                    if (effect == swipeEffect) {
-                                        Icon(Icons.Filled.Check, contentDescription = "Selected", tint = browserColors().Accent)
-                                    }
+                                    CheckMark(effect == swipeEffect, "Selected")
                                 }
                             }
                         }
