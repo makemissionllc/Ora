@@ -23,6 +23,12 @@ enum class Shortcut(val group: String, val label: String, val keys: String) {
     PREVIOUS_TAB("Tabs", "Previous tab", "Ctrl+Shift+Tab or Ctrl+Page Up"),
     TAB_1("Tabs", "Go to tab 1 to 8", "Ctrl+1 to Ctrl+8"),
     LAST_TAB("Tabs", "Go to the last tab", "Ctrl+9"),
+    ZOOM_IN("Page", "Larger text on pages", "Ctrl+Plus"),
+    ZOOM_OUT("Page", "Smaller text on pages", "Ctrl+Minus"),
+    ZOOM_RESET("Page", "Reset text size", "Ctrl+0"),
+    COPY_ADDRESS("Page", "Copy the page address", "Ctrl+Shift+C"),
+    DUPLICATE_TAB("Tabs", "Duplicate this tab", "Ctrl+Shift+K"),
+    QUICK_SWITCHER("Ora", "Quick switcher: tabs, bookmarks, history, actions", "Ctrl+K"),
     LIBRARY("Ora", "Library: bookmarks, reading list and history", "Ctrl+H"),
     SETTINGS("Ora", "Settings", "Ctrl+,"),
     HELP("Ora", "Keyboard shortcuts", "Ctrl+/ or F1"),
@@ -79,10 +85,17 @@ object KeyShortcuts {
             KeyEvent.KEYCODE_N -> Shortcut.NEW_PRIVATE_TAB
             KeyEvent.KEYCODE_T -> Shortcut.REOPEN_TAB
             KeyEvent.KEYCODE_TAB -> Shortcut.PREVIOUS_TAB
+            KeyEvent.KEYCODE_C -> Shortcut.COPY_ADDRESS
+            KeyEvent.KEYCODE_K -> Shortcut.DUPLICATE_TAB
+            KeyEvent.KEYCODE_EQUALS, KeyEvent.KEYCODE_PLUS -> Shortcut.ZOOM_IN
             KeyEvent.KEYCODE_PAGE_UP -> null
             else -> null
         } else when (keyCode) {
             KeyEvent.KEYCODE_L -> Shortcut.ADDRESS
+            KeyEvent.KEYCODE_K -> Shortcut.QUICK_SWITCHER
+            KeyEvent.KEYCODE_EQUALS, KeyEvent.KEYCODE_PLUS, KeyEvent.KEYCODE_NUMPAD_ADD -> Shortcut.ZOOM_IN
+            KeyEvent.KEYCODE_MINUS, KeyEvent.KEYCODE_NUMPAD_SUBTRACT -> Shortcut.ZOOM_OUT
+            KeyEvent.KEYCODE_0, KeyEvent.KEYCODE_NUMPAD_0 -> Shortcut.ZOOM_RESET
             KeyEvent.KEYCODE_F -> Shortcut.FIND
             KeyEvent.KEYCODE_R -> Shortcut.RELOAD
             KeyEvent.KEYCODE_D -> Shortcut.BOOKMARK

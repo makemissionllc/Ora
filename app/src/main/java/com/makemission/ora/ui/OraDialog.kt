@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -83,7 +84,8 @@ fun OraDialog(
         onDismissRequest = close,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false, dismissOnBackPress = true, dismissOnClickOutside = false),
     ) {
-        Box(Modifier.fillMaxSize()) {
+        // The card centres in the space above the keyboard, so a field inside a dialog is never covered.
+        Box(Modifier.fillMaxSize().imePadding()) {
             AnimatedVisibility(visibleState = visible, modifier = Modifier.matchParentSize(), enter = fadeIn(OraMotion.overlayFadeIn()), exit = fadeOut(OraMotion.overlayFadeOut())) {
                 Box(Modifier.fillMaxSize().background(colors.Scrim.copy(alpha = 0.4f)).clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = close))
             }
@@ -105,7 +107,7 @@ fun OraDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     if (title != null) ProvideTextStyle(TextStyle(fontSize = 20.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)) { title() }
-                    if (text != null) Box(Modifier.verticalScroll(rememberScrollState())) {
+                    if (text != null) Box(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
                         ProvideTextStyle(TextStyle(fontSize = 14.sp, color = colors.SecondaryText)) { text() }
                     }
                     Row(Modifier.align(Alignment.End), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -48,6 +48,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `bookmarks/`: the bookmark store.
 - `browser/KeyShortcuts.kt`, `browser/ShortcutsCard.kt`: physical keyboard shortcuts (`MainActivity.dispatchKeyEvent` feeds `KeyShortcuts`; BrowserScreen acts on them) and the card that lists them.
 - `settings/SettingsRepository.kt` `BarButton`: the action behind the round button in the Compact bar (picked in Settings > Tabs).
+- `browser/QuickSwitcher.kt`: the Ctrl+K quick switcher and its pure `quickMatches` ranking.
 - `browser/PagePdf.kt`: Save as PDF (GeckoView `saveAsPdf`, written to Downloads/Ora through MediaStore, named from the page title).
 - `readinglist/`: `ReadingListRepository`, the pages saved to read later, one list per profile (`ora_reading_list`, never from a private tab). `browser/ReadingListViews.kt` draws it in the phone Library and the tablet sidebar (a pinned row above Private tabs).
 - `history/`: `HistoryRepository`, the browsing history store. Each profile has its own list, and a page is recorded when it finishes loading (never in a private tab). `browser/HistoryViews.kt` draws the list in the tablet sidebar and the phone Library.
