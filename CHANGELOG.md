@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Fixed**
+- On the phone with the Top bar layout, the address bar now starts below the clock and status icons instead of drawing under them. The page moves down to match. (`f54fd83`)
+
 **Added**
 - Hashing labs: three new switches in Settings > Labs. Show download fingerprints adds the file's SHA-256, grouped in blocks of eight with a Copy button, to a finished download's details so you can compare it with the publisher's checksum. App fingerprint in Diagnostics shows the SHA-256 of Ora's installed package and of its signing certificate, to compare with a trusted copy. Hash sites in the log replaces website names in Diagnostics with short codes such as site-7711d22c; the codes change each time Ora starts. Also fixed: the site card on phones no longer sits behind the bottom bar, so Dismiss and Go back can be tapped. (`03fb184`)
 - Scam and AI-built site patterns lab: when switched on in Settings > Labs, Ora reads the page on your device and mentions common scam signs in the site card: asking for a wallet seed phrase, a sign-in for a well-known brand on another address, prize wording, fake urgency, very deep discounts, unusual payment methods, a shop without contact or returns pages, and unusual addresses. It also notes when a page looks quickly built (a site builder or stock marketing phrases). Each finding quotes what it saw. These are hints, not proof, and one weak sign alone stays silent. (`2fa9a47`)
