@@ -10,6 +10,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Added**
+- Frequent sites: Ora now counts how often you open each page and ranks your history by visits and how recent they are. Pages you visit most also match what you type in the address bar, and tapping the bar before typing warms your top sites so they open sooner. Old history still works and counts as one visit each. Never in private tabs. (`cd48c83`)
+- Faster connections: preloading now opens a real connection to the site, not just the address lookup, so the page can start straight away. (`cd48c83`)
+- Load the top page ahead: a new switch under Settings > Search fetches the page behind the first address suggestion before you open it. It is off by default, uses extra data, follows the Preloading choice, skips addresses with a query or actions like logout, and is never used in private tabs. (`cd48c83`)
+- Slow page tips: when a page takes more than 8 seconds to load, a tip says why (offline, the site is slow to answer, Data Saver, or almost done) and offers Try again, Stop loading or Keep waiting. Turn it off with Slow page tips under Settings > Search. (`cd48c83`)
+
 **Fixed**
 - Big downloads no longer stop by themselves and wait for you to tap Resume. They carry on after Ora is closed by the system or the tablet sleeps, and after a lost connection they are tried again every 2 minutes (up to 30 tries without new data, never for a missing or forbidden file). While it waits, the row says Connection lost. Trying again soon. A download you pause yourself still stays paused. (`1428738`)
 
