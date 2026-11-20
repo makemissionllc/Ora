@@ -16,6 +16,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.outlined.AddToHomeScreen
 import androidx.compose.material.icons.outlined.Article
+import androidx.compose.material.icons.outlined.PictureAsPdf
 import androidx.compose.material.icons.outlined.OpenInBrowser
 import androidx.compose.material.icons.outlined.ChevronRight
 import androidx.compose.material.icons.outlined.ContentCopy
@@ -96,6 +97,7 @@ fun BrowserMenuSheet(
     /** Reading list: true when the open page is saved there. */
     isReadLater: Boolean = false,
     onReadLater: () -> Unit = {},
+    onSavePdf: () -> Unit = {},
     onDismiss: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
@@ -131,6 +133,7 @@ fun BrowserMenuSheet(
             isBookmarked = isBookmarked,
             isReadLater = isReadLater,
             onReadLater = { act(onReadLater) },
+            onSavePdf = { act(onSavePdf) },
             onShare = { act(onShare) },
             onBookmark = { act(onBookmark) },
             onNewTab = { act(onNewTab) },
@@ -167,6 +170,7 @@ private fun BrowserMenuItems(
     isBookmarked: Boolean,
     isReadLater: Boolean,
     onReadLater: () -> Unit,
+    onSavePdf: () -> Unit,
     onShare: () -> Unit,
     onBookmark: () -> Unit,
     onNewTab: () -> Unit,
@@ -220,6 +224,7 @@ private fun BrowserMenuItems(
                 Icons.Outlined.Article, if (isReadLater) "Remove from reading list" else "Add to reading list", onReadLater,
                 subtitle = if (isReadLater) "Saved to read later" else null,
             )
+            MenuRow(Icons.Outlined.PictureAsPdf, "Save as PDF", onSavePdf, subtitle = "To Downloads, named after the page")
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)
             // Quality of life: when a site's passkey sign-in fails in Ora, one tap carries the page to another browser.
