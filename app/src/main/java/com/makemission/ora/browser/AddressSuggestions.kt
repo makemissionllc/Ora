@@ -6,10 +6,10 @@ import com.makemission.ora.settings.isSearchInput
  * One row in the address bar dropdown. [target] is what gets loaded when the row is tapped,
  * for example a full URL, or the typed text when the row offers a search.
  */
-data class AddressSuggestion(val title: String, val subtitle: String, val target: String, val kind: SuggestionKind = SuggestionKind.LOCAL)
+data class AddressSuggestion(val title: String, val subtitle: String, val target: String, val kind: SuggestionKind = SuggestionKind.LOCAL, val visits: Int = 0)
 
 /** Where a suggestion came from: a bookmark or open tab, a phrase the search engine offered, or the typed text itself. */
-enum class SuggestionKind { LOCAL, QUERY, SEARCH, COMMAND }
+enum class SuggestionKind { LOCAL, QUERY, SEARCH, COMMAND, HISTORY }
 
 /**
  * Puts the engine's phrases into the list the way Google does: the phrases first, as plain searches, then the
@@ -17,7 +17,7 @@ enum class SuggestionKind { LOCAL, QUERY, SEARCH, COMMAND }
  */
 fun withQuerySuggestions(base: List<AddressSuggestion>, phrases: List<String>): List<AddressSuggestion> {
     if (phrases.isEmpty()) return base
-    val local = base.filter { it.kind == SuggestionKind.LOCAL }
+    val local = base.filter { it.kind == SuggestionKind.LOCAL || it.kind == SuggestionKind.HISTORY }
     val queries = phrases.map { AddressSuggestion(it, "", it, SuggestionKind.QUERY) }
     return queries + local.take(2)
 }

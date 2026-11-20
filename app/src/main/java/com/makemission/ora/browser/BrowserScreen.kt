@@ -95,6 +95,7 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -115,6 +116,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Bolt
 import com.makemission.ora.settings.ZapLogic
 import androidx.compose.material.icons.outlined.BookmarkBorder
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Tab
 import androidx.compose.material.icons.outlined.LibraryBooks
 import androidx.compose.material.icons.outlined.PictureAsPdf
@@ -193,6 +195,7 @@ import com.makemission.ora.history.HistoryEntry
 import com.makemission.ora.bookmarks.BookmarksRepository
 import com.makemission.ora.history.HistoryRepository
 import com.makemission.ora.history.topSites
+import com.makemission.ora.history.frecency
 import com.makemission.ora.profiles.Profile
 import com.makemission.ora.profiles.ProfileSwitcher
 import com.makemission.ora.profiles.ProfilesRepository
@@ -943,8 +946,16 @@ private fun BrowserContent(
     val addressCandidates = (
         bookmarkList.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) } +
             tabs.tabs.map { AddressSuggestion(it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url), it.url) } +
-            (if (selected.isPrivate) emptyList() else frequentSites.map { AddressSuggestion(it.title, displayUrl(it.url), it.url) })
+            (if (selected.isPrivate) emptyList() else historyList.sortedByDescending { it.frecency() }.take(150)
+                .map { AddressSuggestion(it.title.ifBlank { displayUrl(it.url) }, displayUrl(it.url), it.url, SuggestionKind.HISTORY, it.visits) })
         ).distinctBy { it.target }
+    DisposableEffect(history) {
+        AddressKeys.removeFromHistory = { url ->
+            history.remove(url)
+            InAppNotices.show("Removed from history")
+        }
+        onDispose { AddressKeys.removeFromHistory = null }
+    }
     LaunchedEffect(frequentSites) { Preloader.topSites = frequentSites.take(5).map { it.url } }
 
     /** Opens a saved address, a bookmark or a history entry, in a profile of its own when a rule says so. */
@@ -3128,6 +3139,18 @@ private fun AddressBar(
                         when (e.key) {
                             androidx.compose.ui.input.key.Key.DirectionDown -> { highlighted = (highlighted + 1).coerceAtMost(visualSuggestions.lastIndex); true }
                             androidx.compose.ui.input.key.Key.DirectionUp -> { highlighted = (highlighted - 1).coerceAtLeast(-1); true }
+                            androidx.compose.ui.input.key.Key.Tab -> {
+                                val step = if (e.isShiftPressed) -1 else 1
+                                highlighted = (highlighted + step).coerceIn(-1, visualSuggestions.lastIndex); true
+                            }
+                            androidx.compose.ui.input.key.Key.Delete -> {
+                                val pick = visualSuggestions.getOrNull(highlighted)
+                                if (pick?.kind == SuggestionKind.HISTORY) {
+                                    AddressKeys.removeFromHistory?.invoke(pick.target)
+                                    BrowserLog.info("keyboard", "Delete removed a history suggestion")
+                                    true
+                                } else false
+                            }
                             androidx.compose.ui.input.key.Key.Enter, androidx.compose.ui.input.key.Key.NumPadEnter -> {
                                 val pick = visualSuggestions.getOrNull(highlighted)
                                 if (pick == null) false else {
@@ -3307,7 +3330,7 @@ private fun AddressBar(
                         modifier = Modifier.background(if (rowIndex == highlighted) browserColors().SecondaryText.copy(alpha = 0.18f) else Color.Transparent),
                         leadingIcon = {
                             Icon(
-                                imageVector = when (suggestion.kind) { SuggestionKind.LOCAL -> Icons.Outlined.BookmarkBorder; SuggestionKind.COMMAND -> Icons.Outlined.Bolt; else -> Icons.Filled.Search },
+                                imageVector = when (suggestion.kind) { SuggestionKind.LOCAL -> Icons.Outlined.BookmarkBorder; SuggestionKind.HISTORY -> Icons.Outlined.History; SuggestionKind.COMMAND -> Icons.Outlined.Bolt; else -> Icons.Filled.Search },
                                 contentDescription = null,
                                 modifier = Modifier.size(20.dp),
                                 tint = browserColors().SecondaryText,
@@ -3323,7 +3346,7 @@ private fun AddressBar(
                                     color = browserColors().AddressBarText
                                 )
                                 if (suggestion.subtitle.isNotEmpty()) Text(
-                                    suggestion.subtitle,
+                                    if (suggestion.kind == SuggestionKind.HISTORY && suggestion.visits > 1) "${suggestion.subtitle} · ${suggestion.visits} visits" else suggestion.subtitle,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                     fontSize = 12.sp,
@@ -3342,6 +3365,20 @@ private fun AddressBar(
                                     modifier = Modifier.size(36.dp),
                                 ) {
                                     Icon(Icons.Filled.NorthWest, contentDescription = "Use this phrase", modifier = Modifier.size(18.dp), tint = browserColors().SecondaryText)
+                                }
+                            }
+                        } else if (suggestion.kind == SuggestionKind.HISTORY) {
+                            {
+                                // Forgets this one page without opening the history list.
+                                IconButton(
+                                    onClick = {
+                                        if (AddressKeys.removeFromHistory == null) BrowserLog.warn("history", "No remove handler is set", null)
+                                        AddressKeys.removeFromHistory?.invoke(suggestion.target)
+                                        BrowserLog.info("search", "A history suggestion was removed with its cross")
+                                    },
+                                    modifier = Modifier.size(36.dp),
+                                ) {
+                                    Icon(Icons.Filled.Close, contentDescription = "Remove from history", modifier = Modifier.size(18.dp), tint = browserColors().SecondaryText)
                                 }
                             }
                         } else null,
