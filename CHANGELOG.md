@@ -11,7 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-20
 
 **Added**
-- Saved sessions: save your open tabs under a name and open them again later, from the ⋮ menu (Saved sessions), the Quick switcher, or Ctrl+Shift+O. Private tabs are never saved. Opening a session skips pages that are already open and tells you so, a session is named for you (site and date) if you don't type one, Ctrl+Shift+S saves in one press, and deleting a session asks first. (`HASH`)
+- Saved sessions: save your open tabs under a name and open them again later, from the ⋮ menu (Saved sessions), the Quick switcher, or Ctrl+Shift+O. Private tabs are never saved. Opening a session skips pages that are already open and tells you so, a session is named for you (site and date) if you don't type one, Ctrl+Shift+S saves in one press, and deleting a session asks first. (`86dd201`)
 - Interactive tutorial in Settings > About. Six short lessons you try for real: search shortcuts, the Quick switcher, swiping between tabs, press and hold, keyboard shortcuts (tablet) and where to make Ora yours. Finishing a lesson ticks it and opens the next, the row shows how many are done, and Start over asks first. (`36bb20f`)
 
 **Changed**
