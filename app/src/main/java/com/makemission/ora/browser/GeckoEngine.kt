@@ -34,6 +34,8 @@ object GeckoEngine {
             com.makemission.ora.extensions.SiteScanBridge.install(it)
             // Bundled helper that hides page elements the user picked.
             com.makemission.ora.extensions.ZapperBridge.install(it)
+            // Bundled helper that applies per-site dark, wide and font tweaks.
+            com.makemission.ora.extensions.SiteTweaksBridge.install(it)
         }
 
     /**

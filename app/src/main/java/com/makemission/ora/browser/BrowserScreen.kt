@@ -656,6 +656,18 @@ private fun BrowserContent(
     var showShortcuts by remember { mutableStateOf(false) }
     var showSwitcher by remember { mutableStateOf(false) }
     var showSessions by remember { mutableStateOf(false) }
+    // Site tweaks: dark, wide text and a font per site. Never read or written for a private tab.
+    var showTweaks by remember { mutableStateOf(false) }
+    val tweakStore = remember { com.makemission.ora.settings.SiteTweaks.get(context) }
+    val tweakMap by tweakStore.tweaks.collectAsState()
+    LaunchedEffect(tweakMap) { com.makemission.ora.extensions.SiteTweaksBridge.apply(tweakMap) }
+    fun toggleDark() {
+        val site = if (selected.isPrivate) "" else com.makemission.ora.settings.siteKeyFor(selected.url)
+        if (site.isEmpty()) { InAppNotices.show("Open a page in a normal tab to change its colours"); return }
+        val now = tweakMap[site] ?: com.makemission.ora.settings.SiteTweak()
+        tweakStore.set(site, now.copy(dark = !now.dark))
+        InAppNotices.show(if (now.dark) "Dark colours off for $site" else "Dark colours on for $site")
+    }
     // Element zapper: hide rules per profile, pushed to the helper extension; the picker runs on the page itself.
     var showZapper by remember { mutableStateOf(false) }
     var zapPicking by remember { mutableStateOf(false) }
@@ -754,6 +766,7 @@ private fun BrowserContent(
             Shortcut.QUICK_SWITCHER -> showSwitcher = !showSwitcher
             Shortcut.SAVE_SESSION -> saveSession(com.makemission.ora.settings.SessionLogic.defaultName(sessionPages(), System.currentTimeMillis()))
             Shortcut.SESSIONS -> showSessions = !showSessions
+            Shortcut.SITE_TWEAKS -> showTweaks = !showTweaks
             Shortcut.ZAP -> if (zapPicking) { com.makemission.ora.extensions.ZapperBridge.cancel(); zapPicking = false } else startZapPick()
             Shortcut.NEW_TAB -> onNewTab()
             Shortcut.NEW_PRIVATE_TAB -> onNewPrivateTab()
@@ -946,6 +959,16 @@ private fun BrowserContent(
             selected.session.loadUri(url)
         }
     }
+    if (showTweaks) {
+        val tweakSite = if (selected.isPrivate) "" else com.makemission.ora.settings.siteKeyFor(selected.url)
+        SiteTweaksDialog(
+            site = tweakSite,
+            tweak = tweakMap[tweakSite] ?: com.makemission.ora.settings.SiteTweak(),
+            onChange = { tweakStore.set(tweakSite, it) },
+            onReset = { tweakStore.reset(tweakSite); InAppNotices.show("$tweakSite is back to normal") },
+            onDismiss = { showTweaks = false },
+        )
+    }
     if (showZapper) {
         ZapperDialog(
             siteName = hostOf(selected.url).ifBlank { "this page" },
@@ -984,6 +1007,8 @@ private fun BrowserContent(
             "Save session" -> saveSession(com.makemission.ora.settings.SessionLogic.defaultName(sessionPages(), System.currentTimeMillis()))
             "Saved sessions" -> showSessions = true
             "Hide an element" -> showZapper = true
+            "Site tweaks" -> showTweaks = true
+            "Toggle dark colours" -> toggleDark()
             else -> if (key.startsWith("session:")) sessionList.firstOrNull { it.name == key.removePrefix("session:") }?.let { openSession(it) }
         }
     }
@@ -1684,6 +1709,7 @@ private fun BrowserContent(
                         onQuickSwitcher = { showSwitcher = true },
                         onSessions = { showSessions = true },
                         onZap = { showZapper = true },
+                        onTweaks = { showTweaks = true },
                         onNewTab = { onNewTab() },
                         onNewPrivateTab = { onNewPrivateTab() },
                         onLibrary = { showLibrary = true },
