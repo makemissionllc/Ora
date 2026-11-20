@@ -29,6 +29,23 @@ enum class AppearanceMode(val key: String, val label: String) {
  * [BOTTOM] keeps the bottom toolbar with a tab row; [COMPACT] keeps only the address bar and a
  * menu button; [TOP] moves the whole toolbar to the top.
  */
+/** What the extra round button in the Compact bar does. Tabs is the default; the rest let people put a favourite one tap away. */
+enum class BarButton(val key: String, val label: String, val detail: String) {
+    TABS("tabs", "Tabs", "Open all your tabs. On a phone the button stays hidden; swipe the bar up instead."),
+    DOWNLOADS("downloads", "Downloads", "Open your downloaded files."),
+    LIBRARY("library", "Library", "Bookmarks, reading list and history."),
+    BOOKMARK("bookmark", "Bookmark this page", "Save or unsave the page you are on."),
+    SHARE("share", "Share", "Send the page's address to another app."),
+    NEW_TAB("new_tab", "New tab", "Open a fresh tab."),
+    FIND("find", "Find in page", "Search the text of the page."),
+    SAVE_PDF("save_pdf", "Save as PDF", "Save the page to Downloads."),
+    SETTINGS("settings", "Settings", "Open Ora's settings.");
+
+    companion object {
+        fun fromKey(key: String?): BarButton = entries.firstOrNull { it.key == key } ?: TABS
+    }
+}
+
 enum class BarStyle(val key: String, val label: String, val detail: String, val tabletDetail: String = detail) {
     TOP("top", "Top", "The address bar and every control sit at the top."),
     BOTTOM("bottom", "Bottom", "A larger bar at the bottom with tabs, bookmarks and menu."),
@@ -611,6 +628,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Control colours set to ${style.label}")
     }
 
+    private val _barButton = MutableStateFlow(BarButton.fromKey(prefs.getString(KEY_BAR_BUTTON, null)))
+    /** The action of the extra round button in the Compact bar. */
+    val barButton: StateFlow<BarButton> = _barButton.asStateFlow()
+
+    fun setBarButton(button: BarButton) {
+        prefs.edit().putString(KEY_BAR_BUTTON, button.key).apply()
+        _barButton.value = button
+        BrowserLog.info("settings", "Compact bar button set to ${button.label}")
+    }
+
     private val _phoneBarStyle = MutableStateFlow(BarStyle.fromKey(prefs.getString(KEY_PHONE_BAR, null), BarStyle.BOTTOM))
     /** Phone tab bar layout. */
     val phoneBarStyle: StateFlow<BarStyle> = _phoneBarStyle.asStateFlow()
@@ -746,6 +773,7 @@ class SettingsRepository(context: Context) {
         const val COOKIES_BLOCK_ALL = 2
         private const val KEY_PHONE_BAR = "phone_bar_style"
         private const val KEY_TABLET_BAR = "tablet_bar_style"
+        private const val KEY_BAR_BUTTON = "bar_button"
         const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"
         /** Search URL used when the address bar input is not a URL. %s is replaced by the query. */
         const val DEFAULT_SEARCH_TEMPLATE = "https://duckduckgo.com/?q=%s"

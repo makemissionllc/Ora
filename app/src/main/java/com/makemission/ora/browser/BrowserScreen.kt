@@ -105,6 +105,9 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.Tab
+import androidx.compose.material.icons.outlined.LibraryBooks
+import androidx.compose.material.icons.outlined.PictureAsPdf
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CircularProgressIndicator
@@ -209,6 +212,7 @@ import com.makemission.ora.ui.theme.dashedOutline
 import com.makemission.ora.ui.theme.privateBrowserColors
 import androidx.compose.runtime.SideEffect
 import com.makemission.ora.settings.AppearanceMode
+import com.makemission.ora.settings.BarButton
 import com.makemission.ora.settings.SettingsScreen
 import com.makemission.ora.settings.SearchEngine
 import com.makemission.ora.settings.isSearchInput
@@ -612,6 +616,22 @@ private fun BrowserContent(
         captureThumbnail(pageView, selected)
         showTabGrid = true
     }
+    // The extra round button in the Compact bar runs whichever action the user chose in Settings.
+    val barButton by settings.barButton.collectAsState()
+    val runBarButton: () -> Unit = {
+        BrowserLog.info("nav", "Compact bar button: ${barButton.label}")
+        when (barButton) {
+            BarButton.TABS -> openTabs()
+            BarButton.DOWNLOADS -> { downloadsOrigin = TransformOrigin(1f, 0f); showDownloads = true }
+            BarButton.LIBRARY -> showLibrary = true
+            BarButton.BOOKMARK -> toggleSelectedBookmark()
+            BarButton.SHARE -> shareUrl(context, selected.url)
+            BarButton.NEW_TAB -> onNewTab()
+            BarButton.FIND -> showFind = true
+            BarButton.SAVE_PDF -> savePdf()
+            BarButton.SETTINGS -> showSettings = true
+        }
+    }
     // A sideways swipe on the address bar moves through open tabs, the tab's pages or profiles, as the Settings choice
     // says, and the page moves with the chosen effect instead of cutting over. A swipe with nowhere to go bounces.
     val swipeMotion = rememberAddressSwipeMotion()
@@ -879,7 +899,10 @@ private fun BrowserContent(
                         candidates = addressCandidates,
                         onMore = { showMenu = true },
                         onSwipeUp = openTabs,
-                        onSwitchTab = switchTab
+                        onSwitchTab = switchTab,
+                        barButton = barButton,
+                        barButtonBookmarked = selectedBookmarked,
+                        onBarButton = runBarButton,
                     )
                 }
             }
@@ -904,6 +927,9 @@ private fun BrowserContent(
             onSwitchTab = switchTab,
             onSwipeDown = openTabs,
             onTabs = openTabs,
+            barButton = barButton,
+            barButtonBookmarked = selectedBookmarked,
+            onBarButton = runBarButton,
             onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
             showSidebar = showSidebar,
             pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth,
@@ -2175,6 +2201,10 @@ private fun FloatingCompactRow(
     startInset: Dp = 0.dp,
     /** Tablet: find in page, drawn in the address capsule's slot while it is open. */
     findBar: (@Composable () -> Unit)? = null,
+    /** The user's choice for the extra round button. Tabs on a phone means no button (a swipe up opens the tabs). */
+    barButton: BarButton = BarButton.TABS,
+    barButtonBookmarked: Boolean = false,
+    onBarButton: () -> Unit = {},
 ) {
     // 0 = full bar, 1 = shrunk. Shrinking uses the exit easing, growing back the enter easing.
     val shrink by animateFloatAsState(
@@ -2293,10 +2323,11 @@ private fun FloatingCompactRow(
                 }
             }
         }
-        if (onTabs != null) {
+        if (onTabs != null || barButton != BarButton.TABS) {
+            // Quality of life: the button turns into whatever the user picked, and tells screen readers its name.
             CompactSlot(shrink) {
-                FloatingCircleButton(onClick = onTabs, enabled = shrink < 0.5f, description = "Tabs") {
-                    Icon(Icons.Outlined.Tab, contentDescription = null)
+                FloatingCircleButton(onClick = { if (onTabs != null && barButton == BarButton.TABS) onTabs() else onBarButton() }, enabled = shrink < 0.5f, description = barButton.label) {
+                    Icon(barButtonIcon(barButton, barButtonBookmarked), contentDescription = null)
                 }
             }
         }
@@ -2306,6 +2337,19 @@ private fun FloatingCompactRow(
             }
         }
     }
+}
+
+/** The icon for the extra round button. The bookmark one fills in once the page is saved. */
+private fun barButtonIcon(button: BarButton, bookmarked: Boolean) = when (button) {
+    BarButton.TABS -> Icons.Outlined.Tab
+    BarButton.DOWNLOADS -> Icons.Filled.Download
+    BarButton.LIBRARY -> Icons.Outlined.LibraryBooks
+    BarButton.BOOKMARK -> if (bookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder
+    BarButton.SHARE -> Icons.Filled.Share
+    BarButton.NEW_TAB -> Icons.Filled.Add
+    BarButton.FIND -> Icons.Filled.Search
+    BarButton.SAVE_PDF -> Icons.Outlined.PictureAsPdf
+    BarButton.SETTINGS -> Icons.Outlined.Settings
 }
 
 /** A slot for one round button. It narrows to nothing as the row shrinks, so the button folds away instead of vanishing. */

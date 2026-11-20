@@ -128,6 +128,7 @@ fun SettingsScreen(
     val blockPopups by settings.blockPopups.collectAsState()
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
+    val barButton by settings.barButton.collectAsState()
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
@@ -571,6 +572,16 @@ fun SettingsScreen(
                         BarStyleList(selected = tabletBar, onSelect = { settings.setTabletBarStyle(it) }, tablet = true)
                         Text(
                             "Swipe the address bar up to open all tabs, or sideways to switch between open tabs.",
+                            modifier = Modifier.padding(start = 4.dp, top = 6.dp),
+                            fontSize = 14.sp,
+                            color = browserColors().SecondaryText
+                        )
+                    }
+                    if ((if (isTablet) tabletBar else phoneBar) == BarStyle.COMPACT && shown(SettingsCategory.TABS)) item {
+                        SectionTitle("Compact bar button")
+                        BarButtonList(selected = barButton, onSelect = { settings.setBarButton(it) })
+                        Text(
+                            "The round button beside the address bar in the Compact style.",
                             modifier = Modifier.padding(start = 4.dp, top = 6.dp),
                             fontSize = 14.sp,
                             color = browserColors().SecondaryText
@@ -1635,6 +1646,33 @@ private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit, table
                     Text(if (tablet) style.tabletDetail else style.detail, fontSize = 14.sp, color = browserColors().SecondaryText)
                 }
                 RadioButton(selected = style == selected, onClick = { onSelect(style) }, colors = mineralRadio())
+            }
+        }
+    }
+}
+
+@Composable
+private fun BarButtonList(selected: BarButton, onSelect: (BarButton) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+            .background(browserColors().Surface)
+    ) {
+        BarButton.entries.forEach { button ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onSelect(button) }
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(button.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                    Text(button.detail, fontSize = 14.sp, color = browserColors().SecondaryText)
+                }
+                RadioButton(selected = button == selected, onClick = { onSelect(button) }, colors = mineralRadio())
             }
         }
     }
