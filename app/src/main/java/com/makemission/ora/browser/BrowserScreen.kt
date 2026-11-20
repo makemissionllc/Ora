@@ -1961,6 +1961,7 @@ private fun BrowserToolbar(
                 currentUrl = tab.url,
                 isPrivate = tab.isPrivate,
                 appChip = tab.appLabel,
+                siteStats = tab.siteStats,
                 onAppChip = { tab.onAskApp() },
                 loading = tab.loading,
                 onSubmit = onSubmit,
@@ -2160,6 +2161,7 @@ private fun TabletToolbar(
                     currentUrl = tab.url,
                     isPrivate = tab.isPrivate,
                     appChip = tab.appLabel,
+                siteStats = tab.siteStats,
                     onAppChip = { tab.onAskApp() },
                     loading = tab.loading,
                     onSubmit = onSubmit,
@@ -2250,6 +2252,7 @@ private fun CompactToolbar(
                 currentUrl = tab.url,
                 isPrivate = tab.isPrivate,
                 appChip = tab.appLabel,
+                siteStats = tab.siteStats,
                 onAppChip = { tab.onAskApp() },
                 loading = tab.loading,
                 onSubmit = onSubmit,
@@ -2390,6 +2393,7 @@ private fun FloatingCompactRow(
                     currentUrl = tab.url,
                     isPrivate = tab.isPrivate,
                     appChip = tab.appLabel,
+                siteStats = tab.siteStats,
                     onAppChip = { tab.onAskApp() },
                     loading = tab.loading,
                     onSubmit = onSubmit,
@@ -2580,7 +2584,16 @@ private fun AddressBar(
     /** Name of an app that can open this page. Shows an "App" chip in the capsule; null shows none. */
     appChip: String? = null,
     onAppChip: () -> Unit = {},
+    /** Lab: facts about this page. When set, the padlock opens them as a card that unfolds from the capsule. */
+    siteStats: com.makemission.ora.labs.SiteStats? = null,
 ) {
+    // Site stats lab: the card unfolds from the capsule like the suggestions, and Back or a tap outside folds it back.
+    val statsShown = remember { androidx.compose.animation.core.MutableTransitionState(false) }
+    var statsOpen by remember { mutableStateOf(false) }
+    var lastStats by remember { mutableStateOf(siteStats) }
+    if (siteStats != null) lastStats = siteStats
+    LaunchedEffect(currentUrl) { statsOpen = false }
+    statsShown.targetState = statsOpen && siteStats != null
     var fieldValue by remember { mutableStateOf(TextFieldValue(displayUrl(currentUrl))) }
     var focused by remember { mutableStateOf(false) }
     // Set when the field gains focus so the whole address is selected; cleared once the user edits.
@@ -2668,8 +2681,13 @@ private fun AddressBar(
                 Spacer(Modifier.width(BrowserTokens.AddressBarTextStart))
                 Icon(
                     imageVector = Icons.Filled.Lock,
-                    contentDescription = "Secure connection",
-                    modifier = Modifier.size(BrowserTokens.LockIconSize),
+                    contentDescription = if (siteStats != null) "Site stats" else "Secure connection",
+                    modifier = Modifier.size(BrowserTokens.LockIconSize).then(
+                        if (siteStats != null) Modifier.clickable {
+                            statsOpen = !statsOpen
+                            BrowserLog.info("labs", "Site stats ${if (statsOpen) "opened" else "closed"} from the padlock")
+                        } else Modifier
+                    ),
                     tint = browserColors().SecondaryText
                 )
             }
@@ -2784,6 +2802,27 @@ private fun AddressBar(
                 color = browserColors().Accent,
                 trackColor = Color.Transparent
             )
+        }
+    }
+    androidx.activity.compose.BackHandler(enabled = statsShown.targetState) { statsOpen = false }
+    if ((statsShown.currentState || statsShown.targetState) && lastStats != null) Popup(
+        alignment = if (opensUp) Alignment.BottomStart else Alignment.TopStart,
+        offset = IntOffset(0, if (opensUp) -anchorHeightPx else anchorHeightPx),
+        onDismissRequest = { statsOpen = false },
+        properties = PopupProperties(focusable = true)
+    ) {
+        AnimatedVisibility(
+            visibleState = statsShown,
+            enter = fadeIn(OraMotion.overlayFadeIn()) + expandVertically(OraMotion.overlayScaleIn(), if (opensUp) Alignment.Bottom else Alignment.Top),
+            exit = fadeOut(OraMotion.overlayFadeOut()) + shrinkVertically(OraMotion.overlayScaleOut(), if (opensUp) Alignment.Bottom else Alignment.Top),
+        ) {
+            Column(
+                Modifier.width(anchorWidth).padding(top = if (opensUp) 0.dp else 4.dp, bottom = if (opensUp) 4.dp else 0.dp)
+                    .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+                    .background(browserColors().AddressBarBackground)
+            ) {
+                com.makemission.ora.labs.SiteStatsContent(lastStats!!)
+            }
         }
     }
     // Suggestions grow out of the address capsule: same colour, same width, the surface unfolds downward from the

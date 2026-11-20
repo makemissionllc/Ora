@@ -73,6 +73,10 @@ enum class LabFeature(val key: String, val label: String, val detail: String, va
         "hash_log_sites", "Hash sites in the log",
         "Replaces site names in new log entries with short codes (the same site gets the same code until Ora restarts), so a copied log does not reveal where you browsed."
     ),
+    SITE_STATS(
+        "site_stats", "Site stats card",
+        "Tap the padlock in the address bar to see the connection, who issued the site's certificate, when it runs out, its fingerprint, and how many trackers Ora blocked on this page."
+    ),
     SCENARIO_LOG(
         "scenario_log", "Log risky situations",
         "Writes to Diagnostics when a page fails its security check, crashes, or sends you through a long chain of redirects."
