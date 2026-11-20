@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Website pop-ups now work: date, time, month and week fields open a calendar or time picker (with Today or Now, and Clear), drop-down lists open a list you can tap, and alerts, confirmations, questions and leave-page warnings show in Ora's own dialogs. Each grows out of the spot you tapped. Before, nothing happened.  (`0e3ce2d`)"),
             ChangeItem(ChangeKind.FIXED, "Uploading works: tapping an Upload or Choose file button on a website now opens Android's file picker, for one file or several, and only shows the kinds of file the site accepts. Before, nothing happened.  (`efb97ed`)"),
             ChangeItem(ChangeKind.ADDED, "Frequent sites: Ora now counts how often you open each page and ranks your history by visits and how recent they are. Pages you visit most also match what you type in the address bar, and tapping the bar before typing warms your top sites so they open sooner. Old history still works and counts as one visit each. Never in private tabs.  (`cd48c83`)"),
             ChangeItem(ChangeKind.ADDED, "Faster connections: preloading now opens a real connection to the site, not just the address lookup, so the page can start straight away.  (`cd48c83`)"),

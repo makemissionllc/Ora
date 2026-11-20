@@ -81,6 +81,8 @@ object BrowserTokens {
     val RadiusLarge = 20.dp
 
     // Dimensions
+    /** One calendar day, one list row in a page prompt: a comfortable touch target. */
+    val PromptCell = 44.dp
     val ToolbarPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 10.dp, bottom = 10.dp)
     val ToolbarRowSpacing = 6.dp
     val HairlineHeight = 1.dp
