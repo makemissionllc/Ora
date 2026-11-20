@@ -10,6 +10,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Added**
+- Search shortcuts: type a keyword and a space in the address bar (yt cats, gh compose, w ada lovelace, maps nairobi) to search that site. Ten are built in, and Settings > Search lets you add your own or remove them, with a switch to turn them all off. (`2d47cc1`)
+- Address bar keys: Ctrl+Enter adds www and .com to a bare word, Alt+Enter opens what you typed in a new tab, and Ctrl+E or Alt+D jump to the address bar. (`2d47cc1`)
+
 **Fixed**
 - Full-screen video: the back arrow, skip, play, lock and speed buttons now respond to taps. Before, only tapping the picture worked. (`f154242`)
 
