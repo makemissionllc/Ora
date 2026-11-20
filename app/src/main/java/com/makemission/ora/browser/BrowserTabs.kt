@@ -465,6 +465,11 @@ class BrowserTab(
                 this@BrowserTab.title = title.orEmpty()
             }
 
+            // The tab switch keeps its picture over the page until the new session draws. First composite is the signal;
+            // first contentful paint is the backup.
+            override fun onFirstComposite(session: GeckoSession) { TabSwitchGesture.state?.painted(id) }
+            override fun onFirstContentfulPaint(session: GeckoSession) { TabSwitchGesture.state?.painted(id) }
+
             override fun onContextMenu(
                 session: GeckoSession,
                 screenX: Int,

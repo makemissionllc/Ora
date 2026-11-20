@@ -95,6 +95,14 @@ object OraMotion {
     fun <T> sheetSnap(): FiniteAnimationSpec<T> =
         if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.9f, stiffness = 520f) else tween(0)
 
+    /** Spatial spring: damping 0.9, stiffness 400, no visible bounce. Used for the tab switch travel and zoom. */
+    fun <T> spatial(): FiniteAnimationSpec<T> =
+        if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.9f, stiffness = 400f) else tween(0)
+
+    /** Reduced motion: a plain 120 ms fade, no travel or zoom. */
+    const val REDUCED_MS = 120
+    fun <T> reduced(): FiniteAnimationSpec<T> = tween(durationMillis = REDUCED_MS)
+
     /** Sheet leaving: a short ease-in so it drops away instead of bouncing. */
     fun <T> sheetExit(): FiniteAnimationSpec<T> = overlayTween(EXIT_MS, exitEasing())
 

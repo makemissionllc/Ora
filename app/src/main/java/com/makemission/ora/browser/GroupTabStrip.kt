@@ -117,7 +117,7 @@ fun GroupTabStrip(
                         Row(
                             Modifier.height(36.dp).clip(RoundedCornerShape(18.dp))
                                 .background(if (isOpen) colors.Accent else colors.GridBackground)
-                                .pressFeedback().clickable { tabs.select(tab.id) }.padding(horizontal = 12.dp),
+                                .pressFeedback().clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }.padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             SiteDot(tab, 18.dp)
@@ -134,7 +134,7 @@ fun GroupTabStrip(
                             Box(
                                 Modifier.size(40.dp).clip(CircleShape)
                                     .then(if (isOpen) Modifier.border(2.dp, g.color.color, CircleShape) else Modifier)
-                                    .pressFeedback().clickable { tabs.select(tab.id) }
+                                    .pressFeedback().clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }
                                     .semantics { contentDescription = tab.shownTitle(displayUrl(tab.url)) },
                                 contentAlignment = Alignment.Center,
                             ) { SiteDot(tab, 30.dp) }

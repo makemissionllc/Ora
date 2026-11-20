@@ -210,6 +210,10 @@ object BrowserTokens {
     val ProfileSwitcherPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
     /** How far a page slides when an address bar swipe switches it (Slide, and part of Jiggle). */
     val AddressSwipeDistance = 72.dp
+    /** Corner radius of the page capsule while a tab switch has lifted it. */
+    val TabSwitchCorner = 28.dp
+    /** Gap between the capsules in a tab switch. */
+    val TabSwitchGap = 16.dp
 }
 
 /** Every browser color. Pick one of [LightBrowserColors], [DarkBrowserColors] or [PureDarkBrowserColors]. */
