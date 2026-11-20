@@ -57,6 +57,10 @@ enum class LabFeature(val key: String, val label: String, val detail: String, va
         "social_trackers", "Strict social tracker blocking",
         "Also blocks social network buttons and widgets that follow you across sites. Some embedded posts may not show."
     ),
+    SCAM_PATTERNS(
+        "scam_patterns", "Scam and AI-built site patterns",
+        "Reads the page on your device and points out common scam signs (fake urgency, prizes, look-alike sign-ins, wallet phrases) and signs of a site-builder or generated page. These are hints, not proof: real shops can trigger them."
+    ),
     SCENARIO_LOG(
         "scenario_log", "Log risky situations",
         "Writes to Diagnostics when a page fails its security check, crashes, or sends you through a long chain of redirects."

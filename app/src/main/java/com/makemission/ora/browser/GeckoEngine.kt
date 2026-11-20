@@ -30,6 +30,8 @@ object GeckoEngine {
             ReaderBridge.install(it)
             // Bundled helper that shows pages in the font chosen in Settings, when that is switched on.
             com.makemission.ora.extensions.WebFontBridge.install(it)
+            // Bundled helper for the scam-pattern lab: reads the page's text on the device, only acted on when the lab is on.
+            com.makemission.ora.extensions.SiteScanBridge.install(it)
         }
 
     /**

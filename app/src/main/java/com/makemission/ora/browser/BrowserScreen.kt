@@ -480,6 +480,13 @@ private fun BrowserContent(
     }
     // Labs: opt-in protections. Each one is a GeckoView runtime setting, applied again whenever the set changes.
     val labs by settings.labs.collectAsState()
+    // Lab: judge the page the scan helper last read for the selected tab, when the scam-pattern lab is on.
+    val scanned = tabs.selected?.url?.let { com.makemission.ora.extensions.SiteScanBridge.reportFor(it) }
+    LaunchedEffect(scanned, labs) {
+        val tab = tabs.selected ?: return@LaunchedEffect
+        if (scanned == null || com.makemission.ora.labs.LabFeature.SCAM_PATTERNS !in labs) tab.setScanFindings(emptyList())
+        else tab.setScanFindings(com.makemission.ora.labs.ScamPatterns.inspect(scanned))
+    }
     LaunchedEffect(labs) {
         try {
             val on = { f: com.makemission.ora.labs.LabFeature -> f in labs }
