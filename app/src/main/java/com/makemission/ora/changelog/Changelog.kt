@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.FIXED, "On the tablet, the group row now sits in the layout under the address row, so it no longer covers the top of a site or hides the top row of the ⋯ menu. The row has no bar behind it and its group chip is sized to its name. The ⋯ menu fades at its bottom edge while more rows wait below, and Quick switcher and Add to reading list have their own icons."),
             ChangeItem(ChangeKind.ADDED, "Closing a tab card now fades it out and its neighbours slide together, and tabs added to or removed from the group strip slide in and out, with the active ring fading between icons."),
             ChangeItem(ChangeKind.ADDED, "Small motion polish: switches slide their thumb and fade their colour, the tab count rolls up or down, Reload and Stop turn as they swap, and messages at the bottom rise into place. Motion follows the Remove animations setting."),
             ChangeItem(ChangeKind.ADDED, "Swiping the address bar or bottom bar sideways now lifts the page into a small card with your neighbouring tabs beside it. The cards follow your finger, the domain shows underneath, and releasing settles on the nearest tab. Tapping a tab in the group strip slides straight to it. The page is swapped in behind the cards, so there is no blank flash. With Remove animations on, it is a short fade instead."),

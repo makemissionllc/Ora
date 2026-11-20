@@ -220,6 +220,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-20 | `b5eb329`..`dfb5169` | Tablet group row fixes: in-layout row (page and menu inset), menu bottom fade, new menu icons, V9-T-GroupStrip style. Built, not checked on a device (no screenshot taken) | Not applicable | Not checked |
 | 2026-11-20 | `f0debd4`..`cef0b34` | Audit 13 (closing a tab card) and 7 (group strip slide and ring fade; the ring fades, it does not glide). Audit 10 already morphs from its button (clearOrigin in HistoryViews). Built, not checked on a device. Not done: audit 1 (sidebar pill and swipe), 2, 3, 5, 6, 8 not audited against the spec | Not checked (build passes) | Not checked |
 | 2026-11-20 | `5996a54`..`4e2e39f` | Motion tokens (Quick, Standard, Leave, Spatial, Reduced in Motion.kt) and audit items 12, 4, 11, 9. Built, not checked on a device. Not done: audit 1, 2, 3, 5, 6, 7, 8, 10, 13 | Not checked (build passes) | Not checked |
 | 2026-11-20 | `5ce52a2` | Tab switch animation (spec item 5). Previous component: address bar / bottom toolbar, group strip. Built, not checked on a device. Not done: bars fading out during the lift, label change animation, Translate | Not checked (build passes; no device seen) | Not checked |
