@@ -97,6 +97,15 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    /**
+     * Keyboard shortcuts run before any view sees the key, so they work wherever the focus is, even on the web page.
+     * The browser screen takes the ones it knows; everything else goes on as usual.
+     */
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (com.makemission.ora.browser.KeyShortcuts.dispatch(event)) return true
+        return super.dispatchKeyEvent(event)
+    }
+
     // Lock again whenever Ora leaves the screen, so a phone put down mid-browse is not left open.
     override fun onStop() {
         super.onStop()
