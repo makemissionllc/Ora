@@ -197,6 +197,12 @@ class BrowserTab(
         now.forEach { addFinding(it) }
     }
 
+    /** Replaces the page-pattern findings (ids starting "scan.") with those for the page just read. */
+    fun setScanFindings(now: List<com.makemission.ora.labs.SiteFinding>) {
+        findings = findings.filterNot { it.id.startsWith("scan.") }
+        now.forEach { addFinding(it) }
+    }
+
     /** Dismisses the site card, remembering it for this site on this tab. [goBack] also leaves the page. */
     fun answerFindings(goBack: Boolean) {
         val site = popupSiteOf(url)

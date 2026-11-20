@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "Site scan",
+  "version": "1.0",
+  "description": "Reads what a page says about itself so Ora can point out common scam and AI-site-builder patterns.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "site-scan@ora.makemission.com"
+    }
+  },
+  "permissions": [
+    "nativeMessaging",
+    "geckoViewAddons",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
