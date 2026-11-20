@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-20
 
+**Added**
+- Pressing and holding a link or image now opens a fuller menu: it shows what you pressed, has quick Copy link and Share buttons, and lists Open in new tab, Open in private tab, Open in background tab and Add to reading list. An image that is also a link shows both sets. In a private tab, links open in private tabs and nothing is saved to the reading list. (`1918dc2`)
+
 **Fixed**
 - On the phone with the Top bar layout, the address bar now starts below the clock and status icons instead of drawing under them. The page moves down to match. (`f83eb02`)
 
