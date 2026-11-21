@@ -1,5 +1,6 @@
 package com.makemission.ora.extensions
 
+import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
@@ -347,12 +348,14 @@ fun ExtensionsScreen(
                 val shown = extensions.filter { filter.isBlank() || it.name.contains(filter.trim(), ignoreCase = true) }
                 if (shown.isEmpty()) item { Text("No installed extension matches \"${filter.trim()}\".", color = browserColors().SecondaryText, fontSize = 14.sp) }
                 itemsIndexed(shown, key = { _, ext -> ext.id }) { _, extension ->
+                    Box(oraRowMotion()) {
                     ExtensionRow(
                         extension = extension,
                         selected = tablet && extension.id == detail?.id,
                         onOpen = { openId = extension.id },
                         onToggle = { enabled -> repository.setEnabled(extension.id, enabled) },
                     )
+                    }
                 }
             }
         }

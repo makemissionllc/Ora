@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-21
 
 **Added**
+- The Extensions list and the Quick switcher now move like every other list: searching narrows them with rows sliding to close the gap, and rows fade in and out instead of snapping. (`30e7a8e`)
 - Lists now move instead of jump: when a row is removed, or a search narrows the list, the remaining rows slide up to close the gap and the removed row fades out, and new rows fade in. This covers bookmarks (Library, sidebar and menu), reading list, history, saved passwords and the private space list. (`6e67456`)
 
 **Fixed**
