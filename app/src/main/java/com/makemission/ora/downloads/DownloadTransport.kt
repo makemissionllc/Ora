@@ -7,6 +7,7 @@ import java.net.URL
 import org.mozilla.geckoview.GeckoRuntime
 import org.mozilla.geckoview.GeckoWebExecutor
 import org.mozilla.geckoview.WebRequest
+import org.mozilla.geckoview.WebResponse
 
 /** One HTTP response as the engine uses it. [close] ends the body at once, even while a read is blocked. */
 class RemoteResponse(
@@ -74,5 +75,20 @@ class GeckoTransport(
 
     private companion object {
         const val FETCH_TIMEOUT_MS = 60_000L
+    }
+}
+
+/**
+ * Hands the engine the stream a page gave to Ora, for blob: and data: files that no request can reach.
+ * It answers once; a second request fails, because the stream is used up.
+ */
+class PageStreamTransport(private val response: WebResponse) : DownloadTransport {
+    private var used = false
+
+    override fun get(url: String, headers: Map<String, String>): RemoteResponse {
+        if (used) throw IllegalStateException("This file only exists in the page it came from. Open the page and save it again.")
+        used = true
+        val body = response.body ?: throw IllegalStateException("The page gave no data for this file")
+        return RemoteResponse(200, emptyMap(), body) { runCatching { body.close() } }
     }
 }

@@ -89,6 +89,8 @@ class DownloadsRepository(
     private val privateIds: MutableSet<Long> = ConcurrentHashMap.newKeySet()
     /** The page each download started from, sent as the Referer. Kept for this run only. */
     private val referrers = ConcurrentHashMap<Long, String>()
+    /** Pages' own streams for blob: and data: files, which the network cannot fetch. Each is read once, then dropped. */
+    private val streams = ConcurrentHashMap<Long, WebResponse>()
     private val store = DownloadStore(context, File(dir, "queue.json"))
     private val jobs = ConcurrentHashMap<Long, Job>()
     /** The parts and validator for each unfinished download. Kept on failure so a retry resumes. */
@@ -169,13 +171,20 @@ class DownloadsRepository(
         val mime = header(response, "content-type")?.substringBefore(';')?.trim()
         val name = fileNameFor(response)
         val total = header(response, "content-length")?.toLongOrNull() ?: -1L
+        if (isPageOwned(url)) {
+            // A blob: or data: address only exists inside the page, so the app cannot request it again.
+            // The stream Gecko handed over is saved as it is.
+            begin(url, name, mime, total, pageUrl, isPrivate, response)
+            return
+        }
         runCatching { response.body?.close() }
         begin(url, name, mime, total, pageUrl, isPrivate)
     }
 
     /** Queues a file and starts it. [start] calls this; the tests call it directly, since they have no WebResponse. */
-    internal fun begin(url: String, fileName: String, mime: String?, total: Long, pageUrl: String, isPrivate: Boolean) {
+    internal fun begin(url: String, fileName: String, mime: String?, total: Long, pageUrl: String, isPrivate: Boolean, pageStream: WebResponse? = null) {
         val item = DownloadItem(id = nextId++, fileName = fileName, url = url, mimeType = mime, totalBytes = total)
+        pageStream?.let { streams[item.id] = it }
         if (isPrivate) privateIds.add(item.id)
         referrers[item.id] = pageUrl
         update { listOf(item) + it }
@@ -309,7 +318,8 @@ class DownloadsRepository(
                 fail(id, e.message ?: "The file changed on the server")
             } catch (e: Exception) {
                 if (e is IOException) waitingForNetwork.add(id)
-                fail(id, e.message ?: e.javaClass.simpleName)
+                // A file that only the page can read says so, instead of offering a Retry that cannot work.
+                fail(id, e.message ?: e.javaClass.simpleName, if (e is IllegalStateException) e.message ?: FAILED_TAP_TO_RETRY else FAILED_TAP_TO_RETRY)
                 if (e is IOException) scheduleAutoRetry(id, e.message)
             } finally {
                 // Removes only this run's job, so a resume that started a newer run is not dropped from the map.
@@ -320,11 +330,16 @@ class DownloadsRepository(
 
     private suspend fun run(id: Long, restarted: Boolean) {
         val item = find(id) ?: return
-        val engine = DownloadEngine(transportFor(id in privateIds, referrers[id]))
+        val pageStream = streams.remove(id)
+        if (pageStream == null && isPageOwned(item.url)) {
+            // The page's stream was used up (a retry, or the app restarted). The address cannot be fetched again.
+            throw IllegalStateException("This file only exists in the page it came from. Open the page and save it again.")
+        }
+        val engine = DownloadEngine(if (pageStream != null) PageStreamTransport(pageStream) else transportFor(id in privateIds, referrers[id]))
         val part = partFile(id)
         var task = tasks[id]
-        // Plain http without the setting: one connection, no probe, no range requests.
-        val plainHttp = item.url.startsWith("http://", ignoreCase = true) && !fastHttp()
+        // Plain http without the setting: one connection, no probe, no range requests. A page's own stream is the same.
+        val plainHttp = pageStream != null || (item.url.startsWith("http://", ignoreCase = true) && !fastHttp())
         if (task != null && !task.ranged) {
             // A stream without ranges cannot continue from its bytes, so it starts over.
             task.parts.forEach { it.seg = it.seg.copy(done = 0, finished = false) }
@@ -405,9 +420,9 @@ class DownloadsRepository(
         if (now - lastSave > 2000) saveNow()
     }
 
-    private fun fail(id: Long, message: String) {
+    private fun fail(id: Long, message: String, shown: String = FAILED_TAP_TO_RETRY) {
         val url = find(id)?.url ?: return
-        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.FAILED, error = FAILED_TAP_TO_RETRY, speed = 0) else it } }
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.FAILED, error = shown, speed = 0) else it } }
         saveNow()
         BrowserLog.error("download", downloadLogLine("Failed", url, ": $message"))
     }
@@ -559,6 +574,10 @@ class DownloadsRepository(
         private fun doneOf(part: Part): Long = doneOf(part.seg)
 
         private fun doneOf(s: Segment): Long = if (s.end >= 0) minOf(s.done, s.size) else s.done
+
+        /** True for blob: and data: addresses, which only the page that made them can read. */
+        internal fun isPageOwned(url: String): Boolean =
+            url.startsWith("blob:", ignoreCase = true) || url.startsWith("data:", ignoreCase = true)
 
         /** Name from Content-Disposition, else the last URL segment, else a fallback. */
         fun fileNameFor(response: WebResponse): String {
