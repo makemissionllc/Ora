@@ -25,6 +25,7 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
     - The new surface starts at the previous component's bounds (width, height, corner radius, colour) and animates to its own; its content fades in after the shape has mostly arrived, and fades out before the shape folds back.
     - Use `AnimatedContent`, `AnimatedVisibility` or shared-bounds style animation with `OraMotion`. Closing reverses the opening toward the same origin, including when the user dismisses by tapping outside or pressing back.
     - Where Android itself draws the surface (the system file picker, a permission dialog) a morph is not possible: record it as an exception in `PROGRESS.md`.
+10b. **Every new or changed surface animates in from where it came from, with no exceptions for small work.** Whenever you add or edit a component, page, sheet, dialog, list or feature file, its entry and exit must grow out of and fold back into the element that led to it, as in rule 10a. This applies to edits as well as new files: if you touch a surface that pops in or out, fix it in the same change. A page opened from a list row grows from that row; a category page grows from the category that was tapped and returns to it; a sheet grows from its button. The commit message and `PROGRESS.md` name the origin (or say there is none), and a change that adds or edits a surface without an origin animation is not finished. Only Android-drawn surfaces are exempt, and each is recorded in `PROGRESS.md`.
 11. **Animations are consistent.** Use the shared motion values, not per-screen numbers:
     - Overlay enter: fade in over 220 ms, scale from 0.88 over 280 ms, origin at the trigger.
     - Overlay exit: fade out over 160 ms, scale to 0.88 over 200 ms, same origin.
@@ -121,7 +122,7 @@ Follow this recipe so new work looks and moves like the rest of Ora. The example
 ### Done checklist for a new surface
 1. Reads colours and sizes from the theme and tokens; works in Light, Dark, Pure dark and the Private space.
 2. Phone and tablet layouts both exist and were looked at (rule 2); a device not checked is written as *Not checked* (rule 21).
-3. Opens and closes with the shared motion from its trigger; has a stable-key list.
+3. Opens and closes with the shared motion from the element that led to it (rules 10, 10a and 10b), whether the surface is new or only edited; has a stable-key list.
 4. Empty state, confirmation for destructive actions, and the one named quality-of-life feature.
 5. State in a repository, a Settings row if it has a preference, `BrowserLog` calls.
 6. `./gradlew assembleDebug` passes (check the APK time), then CHANGELOG, `Changelog.kt`, PROGRESS and README updated, commit with the hash recorded, pushed on the feature branch, then merged into `develop` (rule 34).
