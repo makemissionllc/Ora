@@ -127,6 +127,26 @@ class MainActivity : ComponentActivity() {
     private fun handleLink(intent: Intent?) {
         if (intent?.action != Intent.ACTION_VIEW) return
         val uri = intent.data ?: return
+        if (uri.scheme == "magnet") {
+            val link = com.makemission.ora.torrents.MagnetLink.parse(uri.toString())
+            if (link == null) BrowserLog.warn("torrents", "Ignored a magnet link from another app: it has no valid hash")
+            else {
+                BrowserLog.info("torrents", "A magnet link arrived from another app")
+                com.makemission.ora.torrents.TorrentOffers.offer(com.makemission.ora.torrents.TorrentOffer.Magnet(link))
+            }
+            return
+        }
+        if (intent.type == "application/x-bittorrent" || uri.path?.endsWith(".torrent", ignoreCase = true) == true) {
+            try {
+                val bytes = contentResolver.openInputStream(uri)?.use { it.readNBytes(5_000_000) }
+                if (bytes != null) com.makemission.ora.torrents.TorrentOffers.offer(
+                    com.makemission.ora.torrents.TorrentOffer.File(uri.lastPathSegment ?: "file.torrent", bytes)
+                )
+            } catch (t: Throwable) {
+                BrowserLog.error("torrents", "Could not read the .torrent file from another app", t)
+            }
+            return
+        }
         if (uri.scheme != "http" && uri.scheme != "https") {
             BrowserLog.warn("app", "Ignored a link from another app: ${uri.scheme ?: "no"} links are not opened")
             return

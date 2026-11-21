@@ -695,6 +695,18 @@ private fun BrowserContent(
     val deviceInbox = remember { com.makemission.ora.devices.DeviceHub.inbox(context) }
     val pairedDevices by com.makemission.ora.devices.DeviceHub.link(context).store.devices.collectAsState()
     var showSendToDevice by remember { mutableStateOf(false) }
+    var showTorrents by remember { mutableStateOf(false) }
+    var torrentsOrigin by remember { mutableStateOf(TransformOrigin(1f, 0f)) }
+    val torrentEngine = remember { com.makemission.ora.torrents.TorrentEngine.get(context) }
+    val torrentWifiOnly by settings.torrentsWifiOnly.collectAsState()
+    val torrentSeed by settings.torrentsSeed.collectAsState()
+    val torrentLimit by settings.torrentsSpeedLimit.collectAsState()
+    LaunchedEffect(torrentWifiOnly, torrentSeed, torrentLimit) { torrentEngine.applySettings(torrentWifiOnly, torrentSeed, torrentLimit) }
+    // Saved torrents resume when Ora opens, and the screen asks before adding a magnet link or file that arrives.
+    LaunchedEffect(Unit) { if (torrentEngine.store.entries.isNotEmpty()) torrentEngine.ensureStarted() }
+    val torrentOffer by com.makemission.ora.torrents.TorrentOffers.pending.collectAsState()
+    torrentOffer?.let { offer -> com.makemission.ora.torrents.AddTorrentDialog(offer, torrentEngine, onDone = {}) }
+    if (showTorrents) com.makemission.ora.torrents.TorrentsScreen(torrentEngine, isTablet, torrentsOrigin, onDismiss = { showTorrents = false })
     var arrivedTab by remember { mutableStateOf<com.makemission.ora.devices.ReceivedTab?>(null) }
     val shareCurrentPage by settings.deviceContinue.collectAsState()
     val syncReadingList by settings.deviceReading.collectAsState()
@@ -1901,6 +1913,7 @@ private fun BrowserContent(
                             }
                         },
                         onSendToDevice = if (deviceLinkOn) ({ UsageStats.count("menu.send_to_device"); showSendToDevice = true }) else null,
+                        onTorrents = { UsageStats.count("menu.torrents"); torrentsOrigin = TransformOrigin(1f, 0f); showTorrents = true },
                         sendToDeviceHint = if (pairedDevices.isEmpty()) "Pair a device in Settings first" else "${pairedDevices.size} paired",
                         onOpenInMainBrowser = selected.url.takeIf { remember(it) { MainBrowserHandoff.isAvailable(context, it) } }?.let { url ->
                             {

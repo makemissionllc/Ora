@@ -138,6 +138,8 @@ fun BrowserMenuSheet(
     /** Null hides the row. Set when Link my devices is on; opens the "Send to a device" card. [sendToDeviceHint] says how many are paired or waiting. */
     onSendToDevice: (() -> Unit)? = null,
     sendToDeviceHint: String? = null,
+    /** Opens the Torrents page. */
+    onTorrents: (() -> Unit)? = null,
     /** Null hides the row. A page another device had open in the last 15 minutes that is not open here: "Continue from <device>". */
     continueOffer: com.makemission.ora.devices.ContinueOffer? = null,
     onContinue: () -> Unit = {},
@@ -180,6 +182,7 @@ fun BrowserMenuSheet(
             onOpenInMainBrowser = onOpenInMainBrowser?.let { open -> { act(open) } },
             onSendToDevice = onSendToDevice?.let { send -> { act(send) } },
             sendToDeviceHint = sendToDeviceHint,
+            onTorrents = onTorrents?.let { open -> { act(open) } },
             continueOffer = continueOffer,
             onContinue = { act(onContinue) },
             closedTabTitle = closedTabTitle,
@@ -226,6 +229,7 @@ private fun BrowserMenuItems(
     onOpenInMainBrowser: (() -> Unit)?,
     onSendToDevice: (() -> Unit)?,
     sendToDeviceHint: String?,
+    onTorrents: (() -> Unit)?,
     continueOffer: com.makemission.ora.devices.ContinueOffer?,
     onContinue: () -> Unit,
     closedTabTitle: String?,
@@ -276,6 +280,7 @@ private fun BrowserMenuItems(
             if (onSendToDevice != null) {
                 MenuRow(Icons.Outlined.Devices, "Send to a device", onSendToDevice, subtitle = sendToDeviceHint, chevron = true)
             }
+            if (onTorrents != null) MenuRow(Icons.Outlined.Download, "Torrents", onTorrents, subtitle = "Magnet links and .torrent files", chevron = true)
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)
             // Quality of life: when a site's passkey sign-in fails in Ora, one tap carries the page to another browser.
             if (onOpenInMainBrowser != null) {

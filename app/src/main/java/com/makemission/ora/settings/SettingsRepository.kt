@@ -406,6 +406,37 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Device name changed")
     }
 
+    private val _torrentsWifiOnly = MutableStateFlow(prefs.getBoolean(KEY_TORRENTS_WIFI_ONLY, true))
+    /** When on, torrents only transfer on Wi-Fi (or another unmetered network) and wait on mobile data. On by default. */
+    val torrentsWifiOnly: StateFlow<Boolean> = _torrentsWifiOnly.asStateFlow()
+
+    fun setTorrentsWifiOnly(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_TORRENTS_WIFI_ONLY, enabled).apply()
+        _torrentsWifiOnly.value = enabled
+        BrowserLog.info("settings", "Torrents on Wi-Fi only ${if (enabled) "on" else "off"}")
+    }
+
+    private val _torrentsSeed = MutableStateFlow(prefs.getBoolean(KEY_TORRENTS_SEED, false))
+    /** When on, a finished torrent keeps sharing (seeding) until removed. When off it stops as soon as it is complete. */
+    val torrentsSeed: StateFlow<Boolean> = _torrentsSeed.asStateFlow()
+
+    fun setTorrentsSeed(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_TORRENTS_SEED, enabled).apply()
+        _torrentsSeed.value = enabled
+        BrowserLog.info("settings", "Keep sharing finished torrents ${if (enabled) "on" else "off"}")
+    }
+
+    private val _torrentsSpeedLimit = MutableStateFlow(prefs.getInt(KEY_TORRENTS_SPEED_LIMIT, 0))
+    /** Download speed cap in kilobytes per second; 0 means no cap. */
+    val torrentsSpeedLimit: StateFlow<Int> = _torrentsSpeedLimit.asStateFlow()
+
+    fun setTorrentsSpeedLimit(kbPerSecond: Int) {
+        val clean = kbPerSecond.coerceIn(0, 100_000)
+        prefs.edit().putInt(KEY_TORRENTS_SPEED_LIMIT, clean).apply()
+        _torrentsSpeedLimit.value = clean
+        BrowserLog.info("settings", "Torrent speed limit $clean KB/s")
+    }
+
     private val _cookieBehavior = MutableStateFlow(prefs.getInt(KEY_COOKIE_BEHAVIOR, COOKIES_ALLOW_ALL))
     /** Cookie policy, as GeckoView's CookieBehavior values: [COOKIES_ALLOW_ALL], [COOKIES_BLOCK_THIRD_PARTY] or [COOKIES_BLOCK_ALL]. */
     val cookieBehavior: StateFlow<Int> = _cookieBehavior.asStateFlow()
@@ -1018,6 +1049,9 @@ class SettingsRepository(context: Context) {
         private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"
         private const val KEY_DEVICE_LINK = "device_link"
         private const val KEY_DEVICE_NAME = "device_name"
+        private const val KEY_TORRENTS_WIFI_ONLY = "torrents_wifi_only"
+        private const val KEY_TORRENTS_SEED = "torrents_seed"
+        private const val KEY_TORRENTS_SPEED_LIMIT = "torrents_speed_limit"
         private const val KEY_DEVICE_CONTINUE = "device_continue"
         private const val KEY_DEVICE_READING = "device_reading"
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_ALL. */
