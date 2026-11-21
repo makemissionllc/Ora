@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -76,7 +74,8 @@ fun SendToDeviceDialog(
         onDismissRequest = onDismiss,
         title = { Text("Send to a device") },
         text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // OraDialog already scrolls its text; a second verticalScroll here crashed with an infinite height.
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (url != null) {
                     Text(title.ifBlank { LogPrivacy.domainOf(url) }, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 } else {
