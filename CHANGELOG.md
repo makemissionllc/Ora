@@ -11,7 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-21
 
 **Added**
-- Lists now move instead of jump: when a row is removed, or a search narrows the list, the remaining rows slide up to close the gap and the removed row fades out, and new rows fade in. This covers bookmarks (Library, sidebar and menu), reading list, history, saved passwords and the private space list. (`HASH`)
+- Lists now move instead of jump: when a row is removed, or a search narrows the list, the remaining rows slide up to close the gap and the removed row fades out, and new rows fade in. This covers bookmarks (Library, sidebar and menu), reading list, history, saved passwords and the private space list. (`6e67456`)
 
 **Fixed**
 - Settings polish: the Home page address field now has a Done key on the keyboard that saves it, and the Settings list sits above the keyboard so the field and its Save button are never covered. The Toolbar editor's preset chips (Classic, Reading, Minimal, Custom) stay on one line and scroll sideways when the screen is narrow, so Custom is no longer squashed. (`72ee43d`)
