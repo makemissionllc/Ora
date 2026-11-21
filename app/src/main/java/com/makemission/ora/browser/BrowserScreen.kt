@@ -693,7 +693,26 @@ private fun BrowserContent(
     val pairedDevices by com.makemission.ora.devices.DeviceHub.link(context).store.devices.collectAsState()
     var showSendToDevice by remember { mutableStateOf(false) }
     var arrivedTab by remember { mutableStateOf<com.makemission.ora.devices.ReceivedTab?>(null) }
-    LaunchedEffect(deviceLinkOn, deviceName) { com.makemission.ora.devices.DeviceHub.apply(context, deviceLinkOn, deviceName) }
+    val shareCurrentPage by settings.deviceContinue.collectAsState()
+    LaunchedEffect(deviceLinkOn, deviceName, shareCurrentPage) { com.makemission.ora.devices.DeviceHub.apply(context, deviceLinkOn, deviceName, shareCurrentPage) }
+    // Continue where you left off: publish the open page (never a private one) and look for a page on another device.
+    LaunchedEffect(selected.url, selected.title, selected.isPrivate) { com.makemission.ora.devices.ContinueState.publish(selected.url, selected.title, selected.isPrivate) }
+    val continueOffer by com.makemission.ora.devices.ContinueState.offer.collectAsState()
+    val continueScope = rememberCoroutineScope()
+    val refreshContinue: () -> Unit = {
+        if (deviceLinkOn) continueScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            com.makemission.ora.devices.ContinueState.refresh(com.makemission.ora.devices.DeviceHub.link(context), tabs.tabs.map { it.url })
+        }
+    }
+    LaunchedEffect(deviceLinkOn) { if (deviceLinkOn) refreshContinue() else com.makemission.ora.devices.ContinueState.clearOffer() }
+    LaunchedEffect(deviceLinkOn) { if (deviceLinkOn) com.makemission.ora.devices.DeviceHub.link(context).appeared.collect { refreshContinue() } }
+    LaunchedEffect(showMenu) { if (showMenu) refreshContinue() }
+    androidx.compose.runtime.DisposableEffect(deviceLinkOn) {
+        val owner = (context as? androidx.activity.ComponentActivity)?.lifecycle
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event -> if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) refreshContinue() }
+        owner?.addObserver(observer)
+        onDispose { owner?.removeObserver(observer) }
+    }
     LaunchedEffect(Unit) { deviceInbox.arrived.collect { arrivedTab = it } }
     // Site tweaks: dark, wide text and a font per site. Never read or written for a private tab.
     var showTweaks by remember { mutableStateOf(false) }
@@ -1855,6 +1874,15 @@ private fun BrowserContent(
                                 InAppNotices.show(if (selected.isPrivate) "Private tabs can't be added to the home screen" else "Open a page first")
                             } else {
                                 HomeShortcut.add(context, url, selected.title)
+                            }
+                        },
+                        continueOffer = continueOffer,
+                        onContinue = {
+                            continueOffer?.let { o ->
+                                tabs.newTab(o.url)
+                                com.makemission.ora.devices.ContinueState.clearOffer()
+                                UsageStats.count("menu.continue_from_device")
+                                BrowserLog.info("devices", "Continued a page from \"${o.deviceName}\"")
                             }
                         },
                         onSendToDevice = if (deviceLinkOn) ({ UsageStats.count("menu.send_to_device"); showSendToDevice = true }) else null,

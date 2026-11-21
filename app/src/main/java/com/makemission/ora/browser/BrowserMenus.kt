@@ -138,6 +138,9 @@ fun BrowserMenuSheet(
     /** Null hides the row. Set when Link my devices is on; opens the "Send to a device" card. [sendToDeviceHint] says how many are paired or waiting. */
     onSendToDevice: (() -> Unit)? = null,
     sendToDeviceHint: String? = null,
+    /** Null hides the row. A page another device had open in the last 15 minutes that is not open here: "Continue from <device>". */
+    continueOffer: com.makemission.ora.devices.ContinueOffer? = null,
+    onContinue: () -> Unit = {},
     /** Title of the tab "Reopen closed tab" would bring back, or null when no tab was closed this run. */
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
@@ -177,6 +180,8 @@ fun BrowserMenuSheet(
             onOpenInMainBrowser = onOpenInMainBrowser?.let { open -> { act(open) } },
             onSendToDevice = onSendToDevice?.let { send -> { act(send) } },
             sendToDeviceHint = sendToDeviceHint,
+            continueOffer = continueOffer,
+            onContinue = { act(onContinue) },
             closedTabTitle = closedTabTitle,
             onReopenClosed = { act(onReopenClosed) },
         )
@@ -221,6 +226,8 @@ private fun BrowserMenuItems(
     onOpenInMainBrowser: (() -> Unit)?,
     onSendToDevice: (() -> Unit)?,
     sendToDeviceHint: String?,
+    continueOffer: com.makemission.ora.devices.ContinueOffer?,
+    onContinue: () -> Unit,
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
 ) {
@@ -243,6 +250,10 @@ private fun BrowserMenuItems(
                 MenuAction(Icons.Outlined.Tab, "Library", onLibrary, Modifier.weight(1f))
             }
             Spacer(Modifier.height(6.dp))
+            // Quality of life: the row only shows when there is something new to continue, so it never offers a page already open here.
+            if (continueOffer != null) {
+                MenuRow(Icons.Outlined.Devices, "Continue from ${continueOffer.deviceName}", onContinue, subtitle = continueOffer.title.ifBlank { continueOffer.url }, chevron = true)
+            }
             MenuRow(Icons.Outlined.Search, "Find in page", onFind, chevron = true)
             MenuRow(
                 Icons.Outlined.Article, "Reader view", onReader,
