@@ -652,7 +652,7 @@ fun SettingsScreen(
                     if (shown(SettingsCategory.APPEARANCE)) item {
                         SectionTitle("Touch feedback")
                         val hapticStrength by settings.hapticStrength.collectAsState()
-                        val feel = com.makemission.ora.ui.LocalOraHaptics.current
+                        val platformHaptics = androidx.compose.ui.platform.LocalHapticFeedback.current
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -666,7 +666,7 @@ fun SettingsScreen(
                                         .clickable {
                                             settings.setHapticStrength(level)
                                             // Play a sample at the new level, so the choice can be felt before leaving the row.
-                                            feel.play(com.makemission.ora.ui.Feel.CONFIRM)
+                                            com.makemission.ora.ui.OraHaptics(platformHaptics) { level }.play(com.makemission.ora.ui.Feel.CONFIRM)
                                         }
                                         .padding(horizontal = 16.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
@@ -676,7 +676,7 @@ fun SettingsScreen(
                                         Text(level.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                         Text(level.detail, fontSize = 14.sp, color = browserColors().SecondaryText)
                                     }
-                                    RadioButton(selected = level == hapticStrength, onClick = null, colors = mineralRadio())
+                                    com.makemission.ora.ui.OraRadio(selected = level == hapticStrength, onClick = null)
                                 }
                             }
                         }
@@ -808,7 +808,7 @@ fun SettingsScreen(
                                         .padding(horizontal = 16.dp, vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    RadioButton(selected = readerPage == choice, onClick = { settings.setReaderPage(choice) }, colors = mineralRadio())
+                                    com.makemission.ora.ui.OraRadio(selected = readerPage == choice, onClick = { settings.setReaderPage(choice) })
                                     Text("${choice.label} page", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                                 }
                             }
@@ -1410,7 +1410,7 @@ fun SettingsScreen(
                                         color = browserColors().AddressBarText
                                     )
                                     // Default is chosen among the engines that are on.
-                                    RadioButton(
+                                    com.makemission.ora.ui.OraRadio(
                                         selected = engine == defaultEngine,
                                         enabled = on,
                                         onClick = { settings.setDefaultSearchEngine(engine) }
@@ -1959,7 +1959,7 @@ private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit, table
                     Text(style.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                     Text(if (tablet) style.tabletDetail else style.detail, fontSize = 14.sp, color = browserColors().SecondaryText)
                 }
-                RadioButton(selected = style == selected, onClick = { onSelect(style) }, colors = mineralRadio())
+                com.makemission.ora.ui.OraRadio(selected = style == selected, onClick = { onSelect(style) })
             }
         }
     }
@@ -1986,7 +1986,7 @@ private fun BarButtonList(selected: BarButton, onSelect: (BarButton) -> Unit) {
                     Text(button.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                     Text(button.detail, fontSize = 14.sp, color = browserColors().SecondaryText)
                 }
-                RadioButton(selected = button == selected, onClick = { onSelect(button) }, colors = mineralRadio())
+                com.makemission.ora.ui.OraRadio(selected = button == selected, onClick = { onSelect(button) })
             }
         }
     }
@@ -2013,7 +2013,7 @@ private fun CookieChoice(title: String, description: String, selected: Boolean, 
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RadioButton(selected = selected, onClick = onSelect, colors = mineralRadio())
+        com.makemission.ora.ui.OraRadio(selected = selected, onClick = onSelect)
         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
             Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
             Text(description, fontSize = 14.sp, color = browserColors().SecondaryText)

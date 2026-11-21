@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.layout.offset
@@ -312,7 +313,11 @@ fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) 
     // Quality of life: every flip gives a short haptic tick, so a switch feels like it moved.
     val haptics = com.makemission.ora.ui.LocalOraHaptics.current
     // The thumb slides and the track colour crossfades, both with the Quick token.
-    val thumbX by androidx.compose.animation.core.animateDpAsState(if (checked) 20.dp else 0.dp, OraMotion.quick(), label = "switch thumb")
+    // While the finger is down the knob stretches toward the side it will move to, and the slide then starts from there.
+    val press = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by press.collectIsPressedAsState()
+    val knobWidth by androidx.compose.animation.core.animateDpAsState(if (pressed) 26.dp else 20.dp, OraMotion.quick(), label = "switch knob width")
+    val thumbX by androidx.compose.animation.core.animateDpAsState(if (checked) 28.dp - knobWidth else 0.dp, OraMotion.quick(), label = "switch thumb")
     val track by androidx.compose.animation.animateColorAsState(if (checked) colors.Accent else colors.AddressBarBackground, OraMotion.quick(), label = "switch track")
     val thumb by androidx.compose.animation.animateColorAsState(if (checked) colors.GridBackground else colors.SecondaryText, OraMotion.quick(), label = "switch thumb colour")
     Box(
@@ -320,7 +325,7 @@ fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) 
             .size(width = 48.dp, height = 28.dp)
             .clip(RoundedCornerShape(14.dp))
             .background(track)
-            .toggleable(value = checked, role = Role.Switch, onValueChange = {
+            .toggleable(value = checked, role = Role.Switch, interactionSource = press, indication = null, onValueChange = {
                 haptics.toggle(it)
                 onChange(it)
             })
@@ -328,7 +333,7 @@ fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) 
             .padding(4.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
-        Box(Modifier.offset(x = thumbX).size(20.dp).clip(CircleShape).background(thumb))
+        Box(Modifier.offset(x = thumbX).size(width = knobWidth, height = 20.dp).clip(CircleShape).background(thumb))
     }
 }
 
