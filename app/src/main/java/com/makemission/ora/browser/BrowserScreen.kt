@@ -688,7 +688,9 @@ private fun BrowserContent(
     var showSwitcher by remember { mutableStateOf(false) }
     var showSessions by remember { mutableStateOf(false) }
     // Device link: the switch in Settings starts or stops it; pages other devices send arrive through the inbox.
-    val deviceLinkOn by settings.deviceLink.collectAsState()
+    // On only when the switch is on and Android lets Ora reach the local network (Android 17 asks first).
+    val deviceLinkSwitch by settings.deviceLink.collectAsState()
+    val deviceLinkOn = deviceLinkSwitch && com.makemission.ora.devices.LocalNetworkAccess.granted(context)
     val deviceName by settings.deviceName.collectAsState()
     val deviceInbox = remember { com.makemission.ora.devices.DeviceHub.inbox(context) }
     val pairedDevices by com.makemission.ora.devices.DeviceHub.link(context).store.devices.collectAsState()
