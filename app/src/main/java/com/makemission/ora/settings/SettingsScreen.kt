@@ -1,5 +1,11 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.theme.OraMotion
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.imePadding
 import com.makemission.ora.ui.CheckMark
 import com.makemission.ora.ui.DisclosureChevron
@@ -76,16 +82,16 @@ import com.makemission.ora.ui.theme.MotionStyle
 import com.makemission.ora.ui.theme.PaletteStyle
 import com.makemission.ora.ui.theme.browserColors
 
-/** Categories shown in the tablet rail. Phones show every section in one list instead. */
-private enum class SettingsCategory(val label: String) {
-    APPEARANCE("Appearance"),
-    TABS("Tabs"),
-    PRIVACY("Privacy"),
-    SEARCH("Search"),
-    HOME("Home page"),
-    LAB("Labs"),
-    DIAGNOSTICS("Diagnostics"),
-    ABOUT("About"),
+/** Categories: the tablet rail lists them beside the page, and the phone opens each from a list, as the iPhone does. */
+private enum class SettingsCategory(val label: String, val summary: String) {
+    APPEARANCE("Appearance", "Theme, colours, font, motion and touch feel"),
+    TABS("Tabs", "Tab bar, groups and how tabs behave"),
+    PRIVACY("Privacy", "Protections, PIN lock, downloads and site data"),
+    SEARCH("Search", "Engines, suggestions and shortcuts"),
+    HOME("Home page", "Home address, start page and resume"),
+    LAB("Labs", "Experiments you opt into"),
+    DIAGNOSTICS("Diagnostics", "Log, errors and feature counting"),
+    ABOUT("About", "Default browser, what's new, notice and setup"),
 }
 
 /**
@@ -199,6 +205,13 @@ fun SettingsScreen(
     var showTutorial by remember { mutableStateOf(false) }
     val tutorialDone by settings.tutorialDone.collectAsState()
     var category by rememberSaveable { mutableStateOf(SettingsCategory.APPEARANCE) }
+    // Phone: null shows the list of categories, otherwise that category's page. [lastPhoneCategory] keeps the page's
+    // content in place while it folds back into its row, so it does not empty before it has shrunk.
+    var phoneCategory by rememberSaveable { mutableStateOf<SettingsCategory?>(null) }
+    var lastPhoneCategory by remember { mutableStateOf(phoneCategory) }
+    if (phoneCategory != null) lastPhoneCategory = phoneCategory
+    var pageOrigin by remember { mutableStateOf(androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.2f)) }
+    androidx.activity.compose.BackHandler(enabled = !isTablet && phoneCategory != null) { phoneCategory = null }
     val savedLogins by PasswordStore.logins.collectAsState()
 
     if (showDiagnostics) {
@@ -225,7 +238,7 @@ fun SettingsScreen(
     }
 
     // On tablet only the selected category shows; on phone every section shows.
-    fun shown(section: SettingsCategory) = !isTablet || section == category
+    fun shown(section: SettingsCategory) = if (isTablet) section == category else section == lastPhoneCategory
 
     Column(
         modifier = Modifier
@@ -243,19 +256,26 @@ fun SettingsScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             IconButton(
-                onClick = onDone,
+                onClick = { if (!isTablet && phoneCategory != null) phoneCategory = null else onDone() },
                 modifier = Modifier.clip(CircleShape).background(browserColors().Surface),
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = browserColors().IconColor)
             }
-            Text(
-                "Settings",
+            // The title swaps between "Settings" and the open category's name, fading through.
+            androidx.compose.animation.AnimatedContent(
+                targetState = if (isTablet) null else phoneCategory,
+                transitionSpec = { androidx.compose.animation.fadeIn(OraMotion.standard()) togetherWith androidx.compose.animation.fadeOut(OraMotion.leave()) },
                 modifier = Modifier.weight(1f).padding(start = 4.dp),
-                fontSize = 28.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = browserColors().AddressBarText,
-                maxLines = 1,
-            )
+                label = "settings title",
+            ) { open ->
+                Text(
+                    open?.label ?: "Settings",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = browserColors().AddressBarText,
+                    maxLines = 1,
+                )
+            }
             Box(
                 modifier = Modifier
                     .height(40.dp)
@@ -279,6 +299,21 @@ fun SettingsScreen(
                 )
             }
             Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
+                // Phone: the category list. It fades back in as a page folds into the row that opened it.
+                if (!isTablet) androidx.compose.animation.AnimatedVisibility(
+                    visible = phoneCategory == null,
+                    enter = androidx.compose.animation.fadeIn(OraMotion.standard()),
+                    exit = androidx.compose.animation.fadeOut(OraMotion.leave()),
+                ) {
+                    SettingsCategoryList(onOpen = { section, origin -> pageOrigin = origin; phoneCategory = section })
+                }
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = isTablet || phoneCategory != null,
+                    enter = androidx.compose.animation.fadeIn(OraMotion.overlayFadeIn()) +
+                        androidx.compose.animation.scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE, transformOrigin = pageOrigin),
+                    exit = androidx.compose.animation.fadeOut(OraMotion.overlayFadeOut()) +
+                        androidx.compose.animation.scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE, transformOrigin = pageOrigin),
+                ) {
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     // Cap the width before filling it, so the tablet column stops at the content max.
@@ -593,7 +628,7 @@ fun SettingsScreen(
                             MineralSwitch(checked = tabletSidebar, label = "Switch", onChange = { settings.setTabletSidebar(it) })
                         }
                     }
-                    if (!isTablet) item {
+                    if (!isTablet && shown(SettingsCategory.TABS)) item {
                         SectionTitle("Phone tab bar")
                         BarStyleList(selected = phoneBar, onSelect = { settings.setPhoneBarStyle(it) })
                         Text(
@@ -603,7 +638,7 @@ fun SettingsScreen(
                             color = browserColors().SecondaryText
                         )
                     }
-                    if (!isTablet && phoneBar == BarStyle.TOP) item {
+                    if (!isTablet && phoneBar == BarStyle.TOP && shown(SettingsCategory.TABS)) item {
                         SectionTitle("Bottom toolbar")
                         ToolbarEditor(settings)
                         Text(
@@ -1785,6 +1820,7 @@ fun SettingsScreen(
                         }
                     }
                 }
+                }
             }
         }
     }
@@ -1883,6 +1919,50 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+}
+
+/**
+ * Phone category list: one card with a row per category, a plain line saying what is inside, and a chevron.
+ * Tapping a row reports where it sits (as a fraction of the list's height), so the page grows out of that row.
+ */
+@Composable
+private fun SettingsCategoryList(onOpen: (SettingsCategory, androidx.compose.ui.graphics.TransformOrigin) -> Unit) {
+    var listHeight by remember { mutableStateOf(1f) }
+    var listTop by remember { mutableStateOf(0f) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .onGloballyPositioned { listHeight = it.size.height.toFloat().coerceAtLeast(1f); listTop = it.positionInRoot().y },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                .background(browserColors().Surface),
+        ) {
+            SettingsCategory.entries.forEach { section ->
+                var centerY by remember { mutableStateOf(0f) }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 64.dp)
+                        .onGloballyPositioned { centerY = it.positionInRoot().y + it.size.height / 2f }
+                        .clickable { onOpen(section, androidx.compose.ui.graphics.TransformOrigin(0.5f, ((centerY - listTop) / listHeight).coerceIn(0f, 1f))) }
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                        Text(section.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                        Text(section.summary, fontSize = 14.sp, color = browserColors().SecondaryText)
+                    }
+                    Text("›", fontSize = 18.sp, color = browserColors().SecondaryText)
+                }
+            }
+        }
+        Spacer(Modifier.height(24.dp))
     }
 }
 
