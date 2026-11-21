@@ -174,6 +174,22 @@ class DeviceLink private constructor(context: Context) {
             .onFailure { BrowserLog.warn("devices", "Could not look for other devices", it) }
     }
 
+    /**
+     * Reads the announcement of every device already seen again. A device that starts or stops showing a pairing code
+     * re-announces itself, but Android only tells us about NEW services, so without this the code never shows up on
+     * a device that saw the other one earlier. Called while the pairing card is open.
+     */
+    fun refreshPeers() {
+        val known = _peers.value.values.map { it.serviceName }
+        if (known.isEmpty()) return
+        synchronized(resolveQueue) {
+            known.forEach { name ->
+                if (resolveQueue.none { it.serviceName == name }) resolveQueue.addLast(NsdServiceInfo().apply { serviceName = name; serviceType = SERVICE_TYPE })
+            }
+        }
+        resolveNext()
+    }
+
     @Suppress("DEPRECATION")
     private fun resolveNext() {
         val next = synchronized(resolveQueue) {
@@ -193,7 +209,11 @@ class DeviceLink private constructor(context: Context) {
                         val pairing = attrs["pair"]?.toString(Charsets.UTF_8) == "1"
                         val host = info.host ?: return
                         val known = _peers.value.containsKey(id)
-                        BrowserLog.info("devices", "Found \"$peerName\" at ${host.hostAddress}:${info.port}${if (pairing) ", showing a pairing code" else ""}")
+                        // Re-reads while the pairing card is open come back every few seconds; log only a change.
+                        val before = _peers.value[id]
+                        if (before == null || before.pairing != pairing || before.port != info.port) {
+                            BrowserLog.info("devices", "Found \"$peerName\" at ${host.hostAddress}:${info.port}${if (pairing) ", showing a pairing code" else ""}")
+                        }
                         _peers.value = _peers.value + (id to Peer(id, peerName, host, info.port, pairing, info.serviceName))
                         val paired = store.find(id)
                         if (paired != null) {

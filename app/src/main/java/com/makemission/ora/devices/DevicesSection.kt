@@ -228,6 +228,8 @@ private fun PairDialog(link: DeviceLink, onDismiss: () -> Unit) {
     // Showing a code is the default, so the other device can find this one at once.
     LaunchedEffect(Unit) { if (link.pairingCode.value == null) link.beginPairing() }
     DisposableEffect(Unit) { onDispose { link.endPairing() } }
+    // Re-read the other devices' announcements so a code one of them starts showing appears in the list.
+    LaunchedEffect(Unit) { while (true) { link.refreshPeers(); kotlinx.coroutines.delay(3000) } }
     LaunchedEffect(paired.size) { if (paired.size > startCount) onDismiss() }
 
     OraDialog(
