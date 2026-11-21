@@ -1,5 +1,7 @@
 package com.makemission.ora.devices
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +39,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.makemission.ora.browser.MineralSwitch
+import com.makemission.ora.log.BrowserLog
+import com.makemission.ora.notice.InAppNotices
 import com.makemission.ora.settings.SettingsRepository
 import com.makemission.ora.ui.OraDialog
 import com.makemission.ora.ui.theme.BrowserTokens
@@ -56,7 +60,9 @@ fun DevicesSection(settings: SettingsRepository) {
     val colors = browserColors()
     val context = LocalContext.current
     val link = remember { DeviceHub.link(context) }
-    val on by settings.deviceLink.collectAsState()
+    val switchOn by settings.deviceLink.collectAsState()
+    var allowed by remember { mutableStateOf(LocalNetworkAccess.granted(context)) }
+    val on = switchOn && allowed
     val name by settings.deviceName.collectAsState()
     val shareCurrent by settings.deviceContinue.collectAsState()
     val syncReading by settings.deviceReading.collectAsState()
@@ -65,12 +71,26 @@ fun DevicesSection(settings: SettingsRepository) {
     var renaming by remember { mutableStateOf(false) }
     var pairing by remember { mutableStateOf(false) }
     var forgetting by remember { mutableStateOf<PairedDevice?>(null) }
+    // Android 17 asks before an app may talk to other devices on the Wi-Fi; the link only turns on once it is allowed.
+    val askLocalNetwork = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { yes ->
+        allowed = yes
+        if (yes) {
+            BrowserLog.info("devices", "Local network access allowed")
+            settings.setDeviceLink(true)
+        } else {
+            BrowserLog.warn("devices", "Local network access was not allowed, so the device link stays off")
+            InAppNotices.show("Linking needs Nearby devices access. You can allow it in Ora's app settings.")
+        }
+    }
+    fun setLink(enable: Boolean) {
+        if (enable && !LocalNetworkAccess.granted(context)) askLocalNetwork.launch(LocalNetworkAccess.PERMISSION) else settings.setDeviceLink(enable)
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Link devices", modifier = Modifier.padding(start = 4.dp, bottom = 2.dp), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
         Row(
             modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
-                .clickable { settings.setDeviceLink(!on) }.padding(horizontal = 16.dp, vertical = 12.dp),
+                .clickable { setLink(!on) }.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
@@ -81,7 +101,7 @@ fun DevicesSection(settings: SettingsRepository) {
                     fontSize = 14.sp, color = colors.SecondaryText,
                 )
             }
-            MineralSwitch(checked = on, label = "Link my devices", onChange = { settings.setDeviceLink(it) })
+            MineralSwitch(checked = on, label = "Link my devices", onChange = { setLink(it) })
         }
         if (on) {
             Row(

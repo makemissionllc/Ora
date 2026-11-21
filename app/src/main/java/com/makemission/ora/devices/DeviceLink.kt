@@ -155,12 +155,13 @@ class DeviceLink private constructor(context: Context) {
 
     private fun discover() {
         val listener = object : NsdManager.DiscoveryListener {
-            override fun onDiscoveryStarted(type: String) {}
+            override fun onDiscoveryStarted(type: String) { BrowserLog.info("devices", "Looking for other devices on the network") }
             override fun onStartDiscoveryFailed(type: String, code: Int) { BrowserLog.warn("devices", "Could not look for other devices (code $code)") }
             override fun onStopDiscoveryFailed(type: String, code: Int) {}
             override fun onDiscoveryStopped(type: String) {}
             override fun onServiceFound(info: NsdServiceInfo) {
                 if (info.serviceName == serviceName || !info.serviceName.startsWith("Ora-")) return
+                BrowserLog.info("devices", "Saw ${info.serviceName} on the network")
                 synchronized(resolveQueue) { resolveQueue.addLast(info) }
                 resolveNext()
             }
@@ -182,7 +183,7 @@ class DeviceLink private constructor(context: Context) {
         val done = { synchronized(resolveQueue) { resolving = false }; resolveNext() }
         runCatching {
             nsd.resolveService(next, object : NsdManager.ResolveListener {
-                override fun onResolveFailed(info: NsdServiceInfo, code: Int) { done() }
+                override fun onResolveFailed(info: NsdServiceInfo, code: Int) { BrowserLog.warn("devices", "Could not reach ${info.serviceName} (code $code)"); done() }
                 override fun onServiceResolved(info: NsdServiceInfo) {
                     try {
                         val attrs = info.attributes
@@ -192,6 +193,7 @@ class DeviceLink private constructor(context: Context) {
                         val pairing = attrs["pair"]?.toString(Charsets.UTF_8) == "1"
                         val host = info.host ?: return
                         val known = _peers.value.containsKey(id)
+                        BrowserLog.info("devices", "Found \"$peerName\" at ${host.hostAddress}:${info.port}${if (pairing) ", showing a pairing code" else ""}")
                         _peers.value = _peers.value + (id to Peer(id, peerName, host, info.port, pairing, info.serviceName))
                         val paired = store.find(id)
                         if (paired != null) {

@@ -9,6 +9,8 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 
 ## Done
 
+- Device link permission on Android 17 (`fix/device-link-local-network-permission`, `HASH`): declared `ACCESS_LOCAL_NETWORK` (runtime permission on targetSdk 37, shown as "Nearby devices"); `LocalNetworkAccess` checks it; the Link my devices switch asks for it and shows a notice if declined; `DeviceHub.apply` does not start the link without it (this stopped Android's own device picker appearing at launch); `DeviceLink` logs discovery events to Diagnostics. Previous component: the Link my devices switch on Settings > Devices. Android-drawn surfaces (exceptions, no morph possible): the system permission dialog and the system "Choose a device to connect" picker.
+
 - Reading list sync across devices (`feature/reading-list-device-sync`, `fe789b4`): shared per-profile `ReadingListRepository`, removals and read marks merged last-writer-wins (`ReadingMerge`, unit tested), sync on device appearing and after local changes, "Sync reading list" switch in Settings > Devices. Previous component: the Devices category row; no new surface. Android-drawn surfaces: none.
 
 - Continue where you left off (`feature/device-continue`, `f3db92c`): "Continue from <device>" row in the page menu, shown for a page from a paired device under 15 minutes old that is not open here; Settings > Devices switch. Previous component: the page menu (row grows and folds with it). Android-drawn surfaces: none.
@@ -228,6 +230,8 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 
 ## Known issues
 
+- Android's own device picker (shown when discovery runs without the permission) names devices by service id ("Ora-xxxxxxxx"), not their friendly name. Consider naming the service from the device name.
+- Device linking needs Ora open on both devices; a stale network record can briefly show an old port or pairing state.
 - Reading list sync covers the first profile only (profile ids differ between devices). Not yet run between two real devices.
 
 - Device link works only while Ora is open on both devices and both are on the same Wi-Fi (there is no background service); pages for an away device wait in the outbox for 24 hours. Pairing uses a six digit code and closes after five wrong tries; it has not been run on a device yet.
@@ -253,6 +257,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
 | 2026-11-21 | `fe789b4` | Reading list sync across devices | Not checked (no adb; build and unit tests only) | Not checked |
+| 2026-11-21 | `HASH` | Device link permission on Android 17 | Phone (CPH2745, Android 17, serial 3C15C5000LM00000): before the fix the system device picker appeared and nothing was found; after it the permission prompt appeared, Allow turned the link on, no system picker at the next launch, and the log showed the tablet found. Tablet (25091RP04G, Android 16, serial 7ba8e294): log showed the phone found. Not checked: completing a pairing, Send to a device, Continue from, reading list sync, declining the permission | Tablet as listed in the same row |
 | 2026-11-21 | `f3db92c` | Continue where you left off | Not checked (no adb; build and unit tests only) | Not checked |
 | 2026-11-21 | `94c6cf1` | Settings illustrations | Not checked (no adb or emulator here; compiled only, drawings not yet looked at) | Not checked |
 | 2026-11-21 | `afac9c9` | Device link and Send to a device | Not checked (no adb here; build and unit tests only) | Not checked |
