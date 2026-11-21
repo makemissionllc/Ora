@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 - Lists now move instead of jump: when a row is removed, or a search narrows the list, the remaining rows slide up to close the gap and the removed row fades out, and new rows fade in. This covers bookmarks (Library, sidebar and menu), reading list, history, saved passwords and the private space list. (`6e67456`)
 
 **Fixed**
+- The Health check no longer reports crashes from before the version you have now, so a crash that was already fixed stops showing up. (`91283d8`)
 - Pairing codes now show on the other device without reopening anything: while "Pair a device" is open, Ora re-reads nearby devices every few seconds, so the device waiting to pair appears in the list. (`be483b7`)
 - Send to a device no longer closes Ora when it opens. The card now scrolls normally when the list is long. (`c639a6b`)
 - Linking devices now works on Android 17 phones. Android asks for "Nearby devices" access the first time you turn on Link my devices; allow it and your devices find each other. If you decline, Ora says so and stays unlinked instead of showing a confusing system picker, and Settings > Diagnostics now lists each device Ora sees on the network. (`f309e25`)
