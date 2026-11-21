@@ -233,6 +233,7 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 
 ## Known issues
 
+- Strongest private tabs: websites still see the language and region (en-KE) and the core count, because Gecko only spoofs these under full resistance, which would also change normal tabs. The network address is always visible without a VPN. A private tab's live picture can show in Android's Recents (no FLAG_SECURE yet). The private start page shows the normal shortcut tiles and bookmark count. DNT and Sec-GPC are sent (privacy signals, but also fingerprint bits).
 - Torrents: never run on a device (no adb). Files go to Ora's own folder (Android/data/com.makemission.ora/files/Torrents), not Downloads. jlibtorrent 1.2.0.18 is old and its native libraries are not 16 KB page aligned.
 
 - Android's own device picker (shown when discovery runs without the permission) names devices by service id ("Ora-xxxxxxxx"), not their friendly name. Consider naming the service from the device name.
@@ -261,6 +262,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-21 | `00f6000` | Strongest private tabs (morph: none, a Settings row) | Checked: private tab opens with dashed capsule; a test page saw time zone Atlantic/Reykjavik, screen 980x1648, frozen user agent; language still en-KE; after force-stop no private tab, history, session or log entry holds the page; Privacy card text seen | Not checked |
 | 2026-11-21 | `dda1397` | Torrenting | Not checked (no adb; build and unit tests only) | Not checked |
 | 2026-11-21 | `fe789b4` | Reading list sync across devices | Not checked (no adb; build and unit tests only) | Not checked |
 | 2026-11-21 | `f309e25` | Device link permission on Android 17 | Phone (CPH2745, Android 17, serial 3C15C5000LM00000): before the fix the system device picker appeared and nothing was found; after it the permission prompt appeared, Allow turned the link on, no system picker at the next launch, and the log showed the tablet found. Tablet (25091RP04G, Android 16, serial 7ba8e294): log showed the phone found. Not checked: completing a pairing, Send to a device, Continue from, reading list sync, declining the permission | Tablet as listed in the same row |
