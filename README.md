@@ -55,6 +55,8 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `assets/zapper/`, `extensions/ZapperBridge.kt`, `settings/ElementZapper.kt`, `browser/ZapperDialog.kt`: the element zapper (page picker script, bridge, per-profile rules, dialog).
 - `browser/CommandBar.kt`: the ">" command list shared by the address bar and the Quick switcher.
 - `settings/SavedSessions.kt` and `browser/SessionsDialog.kt`: named sets of open tabs (per profile, never private tabs) and the dialog that saves, opens and deletes them.
+- `settings/StartPageConfig.kt`, `browser/StartPage.kt`, `browser/StartPageEditor.kt`: the customizable start page (parts and order, shortcut source, tile look; pinned sites) and its Customize sheet.
+- `browser/QuickNewTab.kt`: the long-press menu on every New tab button (`rememberQuickMenu`, `quickAnchor`, `QuickNewTabMenu`).
 - `settings/TutorialScreen.kt`: the interactive tutorial (lessons, practice areas, saved progress).
 - `settings/SearchShortcuts.kt`: address bar search keywords (`resolve`, built-in list, your own saved in `SettingsRepository`).
 - `settings/SiteTextSizes.kt`: per-site text sizes (`siteKeyFor`, saved by host).

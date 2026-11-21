@@ -303,6 +303,37 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Ora video controls by default ${if (enabled) "on" else "off"}")
     }
 
+    private val _startPage = MutableStateFlow(loadStartPage())
+    /** How the start page is laid out and what it shows. */
+    val startPage: StateFlow<StartPageConfig> = _startPage.asStateFlow()
+
+    private fun loadStartPage() = StartPageConfig(
+        slots = parseSlots(prefs.getString(KEY_START_SLOTS, null)),
+        source = ShortcutSource.fromKey(prefs.getString(KEY_START_SOURCE, null)),
+        rows = prefs.getInt(KEY_START_ROWS, 2).coerceIn(StartPageConfig.MIN_ROWS, StartPageConfig.MAX_ROWS),
+        shape = TileShape.fromKey(prefs.getString(KEY_START_SHAPE, null)),
+        size = TileSize.fromKey(prefs.getString(KEY_START_SIZE, null)),
+        labels = prefs.getBoolean(KEY_START_LABELS, true),
+        pinned = parsePinned(prefs.getString(KEY_START_PINNED, null)),
+    )
+
+    /** Saves a new start page layout and says what changed in the log. */
+    fun setStartPage(config: StartPageConfig, what: String) {
+        prefs.edit()
+            .putString(KEY_START_SLOTS, encodeSlots(config.slots))
+            .putString(KEY_START_SOURCE, config.source.key)
+            .putInt(KEY_START_ROWS, config.rows)
+            .putString(KEY_START_SHAPE, config.shape.key)
+            .putString(KEY_START_SIZE, config.size.key)
+            .putBoolean(KEY_START_LABELS, config.labels)
+            .putString(KEY_START_PINNED, encodePinned(config.pinned))
+            .apply()
+        _startPage.value = config
+        BrowserLog.info("settings", "Start page: $what")
+    }
+
+    fun resetStartPage() = setStartPage(StartPageConfig(), "reset to the default layout")
+
     private val _videoBackExits = MutableStateFlow(prefs.getBoolean(KEY_VIDEO_BACK_EXITS, true))
     /** When on, Back leaves a full-screen video instead of going back a page. */
     val videoBackExits: StateFlow<Boolean> = _videoBackExits.asStateFlow()
@@ -884,6 +915,13 @@ class SettingsRepository(context: Context) {
         private const val KEY_VIDEO_GESTURES = "video_gestures"
         private const val KEY_VIDEO_BACK_EXITS = "video_back_exits"
         private const val KEY_VIDEO_ORA_CONTROLS = "video_ora_controls"
+        private const val KEY_START_SLOTS = "start_slots"
+        private const val KEY_START_SOURCE = "start_source"
+        private const val KEY_START_ROWS = "start_rows"
+        private const val KEY_START_SHAPE = "start_shape"
+        private const val KEY_START_SIZE = "start_size"
+        private const val KEY_START_LABELS = "start_labels"
+        private const val KEY_START_PINNED = "start_pinned"
         private const val KEY_VIDEO_AUTO_PIP = "video_auto_pip"
         private const val KEY_READER_SIZE = "reader_size"
         private const val KEY_READER_SERIF = "reader_serif"
