@@ -126,6 +126,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -266,6 +267,11 @@ private enum class PhoneOverlay { NONE, TABS, LIBRARY, SETTINGS, EXTENSIONS }
 
 /** Bottom-right corner, where the tabs button sits. Overlays scale out of and into this point. */
 private val MORPH_ORIGIN = TransformOrigin(0.85f, 1f)
+
+/** [press] (window pixels) as a fraction of the window, so an overlay can grow from where the finger went down. [fallback] when unknown. */
+internal fun windowOrigin(press: androidx.compose.ui.geometry.Offset, window: androidx.compose.ui.unit.IntSize, fallback: TransformOrigin): TransformOrigin =
+    if (!press.isSpecified || window.width <= 0 || window.height <= 0) fallback
+    else TransformOrigin((press.x / window.width).coerceIn(0f, 1f), (press.y / window.height).coerceIn(0f, 1f))
 
 /** Overlays that slide in from the right edge instead of growing out of the tabs button. */
 private val SLIDE_OVERLAYS = setOf(PhoneOverlay.LIBRARY, PhoneOverlay.SETTINGS, PhoneOverlay.EXTENSIONS)
@@ -532,6 +538,13 @@ private fun BrowserContent(
         }
     }
     var showTabGrid by remember { mutableStateOf(false) }
+    // Where the tab overview grows from: the spot that was pressed to open it, and the one it folds back into.
+    var tabsOrigin by remember { mutableStateOf(MORPH_ORIGIN) }
+    val openHaptics = LocalHapticFeedback.current
+    val windowSizePx = with(LocalDensity.current) {
+        val cfg = androidx.compose.ui.platform.LocalConfiguration.current
+        androidx.compose.ui.unit.IntSize(cfg.screenWidthDp.dp.roundToPx(), cfg.screenHeightDp.dp.roundToPx())
+    }
     var showMenu by remember { mutableStateOf(false) }
     /** Tablet: each tap on ⋯ while the panel is open adds one, which slides it closed. */
     var menuCloseRequests by remember { mutableIntStateOf(0) }
@@ -822,6 +835,8 @@ private fun BrowserContent(
     /** Opens the tab grid, refreshing the current tab's preview first. */
     val openTabs: () -> Unit = {
         captureThumbnail(pageView, selected)
+        openHaptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        tabsOrigin = windowOrigin(com.makemission.ora.ui.LastPress.position, windowSizePx, MORPH_ORIGIN)
         showTabGrid = true
     }
     // The extra round button in the Compact bar runs whichever action the user chose in Settings.
@@ -1835,7 +1850,7 @@ private fun BrowserContent(
                             // Pages slide in from the right edge and leave the same way.
                             intoSlide -> (slideInHorizontally(OraMotion.enter()) { it } + fadeIn(OraMotion.enter())) togetherWith
                                 if (outOfSlide) slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit())
-                                else scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleOut(), transformOrigin = MORPH_ORIGIN) + fadeOut(OraMotion.overlayFadeOut())
+                                else scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleOut(), transformOrigin = tabsOrigin) + fadeOut(OraMotion.overlayFadeOut())
                             // Returning to the page: the slide pages leave to the right.
                             outOfSlide -> (fadeIn(OraMotion.enter())) togetherWith
                                 (slideOutHorizontally(OraMotion.exit()) { it } + fadeOut(OraMotion.exit()))
@@ -1843,11 +1858,11 @@ private fun BrowserContent(
                             else -> (fadeIn(OraMotion.overlayFadeIn()) + scaleIn(
                                 initialScale = OraMotion.MORPH_SCALE,
                                 animationSpec = OraMotion.overlayScaleIn(),
-                                transformOrigin = MORPH_ORIGIN
+                                transformOrigin = tabsOrigin
                             )) togetherWith (fadeOut(OraMotion.overlayFadeOut()) + scaleOut(
                                 targetScale = OraMotion.MORPH_SCALE,
                                 animationSpec = OraMotion.overlayScaleOut(),
-                                transformOrigin = MORPH_ORIGIN
+                                transformOrigin = tabsOrigin
                             ))
                         }
                     },
@@ -2026,8 +2041,8 @@ private fun BrowserContent(
     AnimatedVisibility(
         visible = tabletTabsOpen,
         modifier = Modifier.fillMaxSize(),
-        enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(initialScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleIn(), transformOrigin = MORPH_ORIGIN),
-        exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleOut(), transformOrigin = MORPH_ORIGIN),
+        enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(initialScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleIn(), transformOrigin = tabsOrigin),
+        exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(targetScale = OraMotion.MORPH_SCALE, animationSpec = OraMotion.overlayScaleOut(), transformOrigin = tabsOrigin),
     ) {
         TabOverviewContent(
             tablet = true,
