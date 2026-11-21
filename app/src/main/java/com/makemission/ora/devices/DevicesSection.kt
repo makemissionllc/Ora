@@ -58,6 +58,7 @@ fun DevicesSection(settings: SettingsRepository) {
     val link = remember { DeviceHub.link(context) }
     val on by settings.deviceLink.collectAsState()
     val name by settings.deviceName.collectAsState()
+    val shareCurrent by settings.deviceContinue.collectAsState()
     val paired by link.store.devices.collectAsState()
     val peers by link.peers.collectAsState()
     var renaming by remember { mutableStateOf(false) }
@@ -90,6 +91,18 @@ fun DevicesSection(settings: SettingsRepository) {
             ) {
                 Text("This device is called", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText)
                 Text("$name ›", fontSize = 14.sp, color = colors.SecondaryText)
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
+                    .clickable { settings.setDeviceContinue(!shareCurrent) }.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text("Continue on another device", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText)
+                    Text("Let your paired devices see the page you have open, so they can offer to continue it. Private tabs are never shared.", fontSize = 14.sp, color = colors.SecondaryText)
+                }
+                MineralSwitch(checked = shareCurrent, label = "Continue on another device", onChange = { settings.setDeviceContinue(it) })
             }
             Text("Paired devices", modifier = Modifier.padding(start = 4.dp, top = 8.dp), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)) {

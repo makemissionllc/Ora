@@ -375,6 +375,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Link devices ${if (enabled) "on" else "off"}")
     }
 
+    private val _deviceContinue = MutableStateFlow(prefs.getBoolean(KEY_DEVICE_CONTINUE, true))
+    /** When on (and Link my devices is on), your other devices may ask which page you have open, so they can offer "Continue from this device". Private tabs are never shared. */
+    val deviceContinue: StateFlow<Boolean> = _deviceContinue.asStateFlow()
+
+    fun setDeviceContinue(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEVICE_CONTINUE, enabled).apply()
+        _deviceContinue.value = enabled
+        BrowserLog.info("settings", "Continue on another device ${if (enabled) "on" else "off"}")
+    }
+
     private val _deviceName = MutableStateFlow(prefs.getString(KEY_DEVICE_NAME, null) ?: com.makemission.ora.devices.PairedDevices.defaultName())
     /** The name other devices see for this one. Starts as the phone or tablet model. */
     val deviceName: StateFlow<String> = _deviceName.asStateFlow()
@@ -998,6 +1008,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"
         private const val KEY_DEVICE_LINK = "device_link"
         private const val KEY_DEVICE_NAME = "device_name"
+        private const val KEY_DEVICE_CONTINUE = "device_continue"
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_ALL. */
         const val COOKIES_ALLOW_ALL = 0
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY. */
