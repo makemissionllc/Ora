@@ -1666,13 +1666,14 @@ private fun BrowserContent(
                 FirstUseTipHost(
                     seen = tipsSeen,
                     tablet = isTablet,
+                    inGroup = !selected.isPrivate && selected.groupId != null,
                     ready = selected.url != BrowserTabs.START_URL && !selected.loading && !selected.isPrivate &&
                         tabs.pendingAppLink == null && tabs.pendingPopup == null &&
                         phoneOverlay == PhoneOverlay.NONE && !tabletTabsOpen,
                     onGotIt = { settings.markTipSeen(it) },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp else 16.dp),
+                        .padding(bottom = if (!isTablet) with(density) { bottomBarPx.toDp() } + 12.dp + (if (selected.groupId != null && !selected.isPrivate) 64.dp else 0.dp) else 16.dp),
                 )
                 // Slow page tip: after a long wait, say why and offer a way out. Shares the first-use tip's spot and motion.
                 val slowTips by settings.slowLoadTips.collectAsState()

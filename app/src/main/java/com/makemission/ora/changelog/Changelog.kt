@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "21 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Two new hints that explain themselves once: \"Flip between tabs\" (drag the address bar sideways to move to the next or previous tab) and, the first time you open a tab that is in a group, \"This tab is in a group\" (what the row of icons is, what + does and what the coloured dot opens). Each has Got it and never returns. (`HASH`)"),
+            ChangeItem(ChangeKind.FIXED, "In a group with many tabs, the group row now scrolls to the tab you opened, so the open tab is never hidden off the edge of the row. (`HASH`)"),
             ChangeItem(ChangeKind.ADDED, "Settings on the phone is now a short list of categories (Appearance, Tabs, Privacy, Search, Home page, Labs, Diagnostics, About), each with a line saying what is inside, like the Settings app on a phone. Tap one and its page grows out of the row you tapped; the back arrow, or the system Back, folds it back into the list, and the title changes with the page. The tablet keeps its side rail. (`63c7ac9`)"),
             ChangeItem(ChangeKind.ADDED, "The Extensions list and the Quick switcher now move like every other list: searching narrows them with rows sliding to close the gap, and rows fade in and out instead of snapping. (`30e7a8e`)"),
             ChangeItem(ChangeKind.ADDED, "Lists now move instead of jump: when a row is removed, or a search narrows the list, the remaining rows slide up to close the gap and the removed row fades out, and new rows fade in. This covers bookmarks (Library, sidebar and menu), reading list, history, saved passwords and the private space list. (`6e67456`)"),

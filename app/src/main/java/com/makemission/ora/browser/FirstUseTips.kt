@@ -32,10 +32,12 @@ import com.makemission.ora.ui.theme.OraMotion
 import com.makemission.ora.ui.theme.browserColors
 
 /** A one-line hint about a gesture, shown once on the first real page. Each tip has its own "seen" flag. */
-data class FirstUseTip(val id: String, val title: String, val text: String, val tabletOnly: Boolean = false)
+data class FirstUseTip(val id: String, val title: String, val text: String, val tabletOnly: Boolean = false, val groupOnly: Boolean = false)
 
 val FirstUseTips: List<FirstUseTip> = listOf(
     FirstUseTip("tabs-swipe", "Swipe the bar up for tabs", "Drag the address bar upwards to see all your tabs."),
+    FirstUseTip("switch-swipe", "Flip between tabs", "Drag the address bar sideways to move to the next or previous tab. Drag it up to see them all."),
+    FirstUseTip("group-strip", "This tab is in a group", "The row shows the group's tabs. Tap an icon to switch, tap + to add a tab to the group, or tap the coloured dot for the group's tabs and options.", groupOnly = true),
     FirstUseTip("quick-switcher", "Find anything fast", "Open the ⋯ menu and choose Quick switcher, or press Ctrl+K, to jump to a tab, bookmark or page."),
     FirstUseTip("search-shortcuts", "Search one site", "Type yt cats or gh compose in the address bar to search YouTube or GitHub directly."),
     FirstUseTip("sidebar-swipe", "Swipe from the left edge", "Drag in from the left edge of the screen to open the tab sidebar.", tabletOnly = true),
@@ -50,10 +52,12 @@ fun FirstUseTipHost(
     seen: Set<String>,
     tablet: Boolean,
     ready: Boolean,
+    /** True while the open tab is in a group, which unlocks the group strip tip. */
+    inGroup: Boolean = false,
     onGotIt: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val next = FirstUseTips.firstOrNull { it.id !in seen && (!it.tabletOnly || tablet) }
+    val next = FirstUseTips.firstOrNull { it.id !in seen && (!it.tabletOnly || tablet) && (!it.groupOnly || inGroup) }
     var shown by remember { mutableStateOf<FirstUseTip?>(null) }
     if (next != null && ready) shown = next
     AnimatedVisibility(

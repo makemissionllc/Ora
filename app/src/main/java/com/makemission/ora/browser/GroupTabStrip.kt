@@ -121,6 +121,10 @@ fun GroupTabStrip(
             // One ring glides to the active icon (Standard speed) instead of a ring on each icon. Remove animations: it jumps.
             val activeIndex = members.indexOfFirst { it.id == tabs.selectedId }.coerceAtLeast(0)
             val reduced = com.makemission.ora.ui.theme.LocalReducedMotion.current
+            // With many tabs the open one can be scrolled out of sight: bring it back into view.
+            androidx.compose.runtime.LaunchedEffect(activeIndex, members.size) {
+                if (listState.layoutInfo.visibleItemsInfo.none { it.index == activeIndex }) listState.animateScrollToItem(activeIndex)
+            }
             val ringPos by androidx.compose.animation.core.animateFloatAsState(activeIndex.toFloat(), if (reduced) androidx.compose.animation.core.snap() else OraMotion.standard(), label = "ring glide")
             val stepPx = with(androidx.compose.ui.platform.LocalDensity.current) { (48.dp + 8.dp).toPx() }
             val insetPx = with(androidx.compose.ui.platform.LocalDensity.current) { (2.dp + 4.dp).toPx() }
