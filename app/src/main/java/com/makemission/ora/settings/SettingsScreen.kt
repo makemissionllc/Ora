@@ -90,6 +90,7 @@ private enum class SettingsCategory(val label: String, val summary: String) {
     SEARCH("Search", "Engines, suggestions and shortcuts"),
     HOME("Home page", "Home address, start page and resume"),
     DEVICES("Devices", "Link your other devices and send pages between them"),
+    TORRENTS("Torrents", "Magnet links, Wi-Fi only, speed and seeding"),
     LAB("Labs", "Experiments you opt into"),
     DIAGNOSTICS("Diagnostics", "Log, errors and feature counting"),
     ABOUT("About", "Default browser, what's new, notice and setup"),
@@ -335,6 +336,7 @@ fun SettingsScreen(
                                 SettingsCategory.SEARCH -> SettingsScene.SEARCH
                                 SettingsCategory.HOME -> SettingsScene.HOME
                                 SettingsCategory.DEVICES -> SettingsScene.DEVICES
+                                SettingsCategory.TORRENTS -> SettingsScene.TORRENTS
                                 SettingsCategory.LAB -> SettingsScene.LABS
                                 SettingsCategory.DIAGNOSTICS -> SettingsScene.DIAGNOSTICS
                                 SettingsCategory.ABOUT -> SettingsScene.ABOUT
@@ -1665,6 +1667,9 @@ fun SettingsScreen(
                     }
                     if (shown(SettingsCategory.DEVICES)) item {
                         com.makemission.ora.devices.DevicesSection(settings)
+                    }
+                    if (shown(SettingsCategory.TORRENTS)) item {
+                        com.makemission.ora.torrents.TorrentsSettingsSection(settings)
                     }
                     if (shown(SettingsCategory.DIAGNOSTICS)) item {
                         SectionTitle("Diagnostics")

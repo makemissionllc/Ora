@@ -45,6 +45,7 @@ enum class SettingsScene(val caption: String) {
     SEARCH("Type in the address bar and Ora suggests, using the engine you chose."),
     HOME("Choose what a new tab shows: your tiles, or any page you like."),
     DEVICES("Send a page from your phone and it opens on your tablet, over your own Wi-Fi."),
+    TORRENTS("Tap a magnet link and Ora fetches it in pieces from many people, on Wi-Fi."),
     LABS("Try early ideas. Each one is off until you turn it on."),
     DIAGNOSTICS("Ora keeps a readable log, so when something breaks you can see why."),
     ABOUT("What is new, which version this is, and how to set Ora up again."),
@@ -104,6 +105,7 @@ private fun SceneCanvas(scene: SettingsScene) {
             SettingsScene.SEARCH -> search(t, u, cx, cy, p)
             SettingsScene.HOME -> home(t, u, cx, cy, p)
             SettingsScene.DEVICES -> devices(t, u, cx, cy, p)
+            SettingsScene.TORRENTS -> torrents(t, u, cx, cy, p)
             SettingsScene.LABS -> labs(t, u, cx, cy, p)
             SettingsScene.DIAGNOSTICS -> diagnostics(t, u, cx, cy, p)
             SettingsScene.ABOUT -> about(t, u, cx, cy, p)
@@ -322,6 +324,27 @@ private fun DrawScope.devices(t: Float, u: Float, cx: Float, cy: Float, p: Pal) 
     val tap = Offset(phone.x, phone.y + 12 * u)
     val tip = handAt(t, listOf(0f to Offset(cx - 130 * u, cy + 80 * u), 0.3f to tap, 0.46f to tap, 0.6f to Offset(cx - 130 * u, cy + 80 * u), 1f to Offset(cx - 130 * u, cy + 80 * u)))
     hand(tip, press(t, 0.36f), handShow(t), u, p)
+}
+
+private fun DrawScope.torrents(t: Float, u: Float, cx: Float, cy: Float, p: Pal) {
+    val phone = Offset(cx + 30 * u, cy + 6 * u)
+    frame(phone, 60 * u, 90 * u, 9 * u, p.soft, p.ink, u)
+    // Four small sources around the phone send pieces in; the progress bar on the screen fills as they land.
+    val sources = listOf(Offset(cx - 120 * u, cy - 40 * u), Offset(cx - 130 * u, cy + 30 * u), Offset(cx + 120 * u, cy - 36 * u), Offset(cx + 126 * u, cy + 40 * u))
+    sources.forEach { drawCircle(p.ink.copy(alpha = 0.35f), 7 * u, it) }
+    val go = seg(t, 0.38f, 0.86f)
+    sources.forEachIndexed { i, s ->
+        val k = ((go * 3f) - i * 0.22f).let { it - kotlin.math.floor(it) }
+        if (go > 0f && go < 1f) drawCircle(p.accent, 3.5f * u, Offset(mix(s.x, phone.x, k), mix(s.y, phone.y, k)))
+    }
+    box(Offset(phone.x, phone.y - 22 * u), 36 * u, 6 * u, 3 * u, p.ink.copy(alpha = 0.4f))
+    box(Offset(phone.x, phone.y + 6 * u), 38 * u, 7 * u, 3.5f * u, p.card)
+    val w = 38 * u * go
+    if (w > 0f) box(Offset(phone.x - 19 * u + w / 2, phone.y + 6 * u), w, 7 * u, 3.5f * u, p.accent)
+    val tap = Offset(phone.x, phone.y - 22 * u)
+    val away = Offset(cx - 20 * u, cy + 84 * u)
+    val tip = handAt(t, listOf(0f to away, 0.28f to tap, 0.42f to tap, 0.58f to away, 1f to away))
+    hand(tip, press(t, 0.34f), handShow(t), u, p)
 }
 
 private fun DrawScope.labs(t: Float, u: Float, cx: Float, cy: Float, p: Pal) {

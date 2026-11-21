@@ -70,6 +70,12 @@ dependencies {
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.mozilla.geckoview)
+    // BitTorrent engine (libtorrent) and its native libraries for each phone and tablet CPU.
+    implementation(libs.jlibtorrent)
+    implementation(libs.jlibtorrent.abi.arm64)
+    implementation(libs.jlibtorrent.abi.arm)
+    implementation(libs.jlibtorrent.abi.x64)
+    implementation(libs.jlibtorrent.abi.x86)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)

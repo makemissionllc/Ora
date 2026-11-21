@@ -501,6 +501,22 @@ class BrowserTab(
             }
 
             override fun onExternalResponse(session: GeckoSession, response: WebResponse) {
+                val isTorrent = response.headers["content-type"]?.contains("application/x-bittorrent", ignoreCase = true) == true ||
+                    response.uri.substringBefore('?').endsWith(".torrent", ignoreCase = true)
+                if (isTorrent && !this@BrowserTab.isPrivate) {
+                    val stream = response.body
+                    Thread {
+                        try {
+                            val bytes = stream?.use { it.readNBytes(5_000_000) }
+                            if (bytes != null) com.makemission.ora.torrents.TorrentOffers.offer(
+                                com.makemission.ora.torrents.TorrentOffer.File(response.uri.substringBefore('?').substringAfterLast('/'), bytes)
+                            )
+                        } catch (t: Throwable) {
+                            plog.error("torrents", "Could not read a .torrent file from a page", t)
+                        }
+                    }.start()
+                    return
+                }
                 onDownload(response, this@BrowserTab.url, this@BrowserTab.isPrivate)
             }
 
@@ -758,6 +774,21 @@ class BrowserTabs(
             }
             pendingAppLink = PendingAppLink(tab.id, uri, match.label, domain, web = true, fromPrivate = private, fallbackUrl = null)
             return AllowOrDeny.ALLOW
+        }
+
+        if (uri.startsWith("magnet:", ignoreCase = true)) {
+            if (!userCaused) return AllowOrDeny.DENY
+            if (private) {
+                InAppNotices.show("Torrents are not available in private tabs, because peers can see your address.")
+                return AllowOrDeny.DENY
+            }
+            val link = com.makemission.ora.torrents.MagnetLink.parse(uri)
+            if (link == null) InAppNotices.show("That magnet link is not valid.")
+            else {
+                BrowserLog.info("torrents", "A magnet link was tapped on a page")
+                com.makemission.ora.torrents.TorrentOffers.offer(com.makemission.ora.torrents.TorrentOffer.Magnet(link))
+            }
+            return AllowOrDeny.DENY
         }
 
         if (!AppLinks.isAppScheme(uri)) return AllowOrDeny.ALLOW

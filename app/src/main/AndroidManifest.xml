@@ -72,7 +72,30 @@
                 <data android:scheme="http" />
                 <data android:scheme="https" />
             </intent-filter>
+            <!-- Magnet links and .torrent files from other apps open Ora's "Add this torrent?" card. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="magnet" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="content" />
+                <data android:scheme="file" />
+                <data android:mimeType="application/x-bittorrent" />
+            </intent-filter>
         </activity>
+        <service
+            android:name=".torrents.TorrentService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
             <service
             android:name=".downloads.DownloadService"
             android:exported="false"
