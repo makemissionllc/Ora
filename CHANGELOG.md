@@ -11,13 +11,13 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-21
 
 **Added**
-- Two new hints that explain themselves once: "Flip between tabs" (drag the address bar sideways to move to the next or previous tab) and, the first time you open a tab that is in a group, "This tab is in a group" (what the row of icons is, what + does and what the coloured dot opens). Each has Got it and never returns.  (`HASH`)
+- Two new hints that explain themselves once: "Flip between tabs" (drag the address bar sideways to move to the next or previous tab) and, the first time you open a tab that is in a group, "This tab is in a group" (what the row of icons is, what + does and what the coloured dot opens). Each has Got it and never returns.  (`faf2b62`)
 - Settings on the phone is now a short list of categories (Appearance, Tabs, Privacy, Search, Home page, Labs, Diagnostics, About), each with a line saying what is inside, like the Settings app on a phone. Tap one and its page grows out of the row you tapped; the back arrow, or the system Back, folds it back into the list, and the title changes with the page. The tablet keeps its side rail. (`63c7ac9`)
 - The Extensions list and the Quick switcher now move like every other list: searching narrows them with rows sliding to close the gap, and rows fade in and out instead of snapping. (`30e7a8e`)
 - Lists now move instead of jump: when a row is removed, or a search narrows the list, the remaining rows slide up to close the gap and the removed row fades out, and new rows fade in. This covers bookmarks (Library, sidebar and menu), reading list, history, saved passwords and the private space list. (`6e67456`)
 
 **Fixed**
-- In a group with many tabs, the group row now scrolls to the tab you opened, so the open tab is never hidden off the edge of the row. (`HASH`)
+- In a group with many tabs, the group row now scrolls to the tab you opened, so the open tab is never hidden off the edge of the row. (`faf2b62`)
 - Settings polish: the Home page address field now has a Done key on the keyboard that saves it, and the Settings list sits above the keyboard so the field and its Save button are never covered. The Toolbar editor's preset chips (Classic, Reading, Minimal, Custom) stay on one line and scroll sideways when the screen is narrow, so Custom is no longer squashed. (`72ee43d`)
 - Two settings that did nothing now work. Settings > Downloads > Download notifications now really turns the per-download notifications off and on (the one notice Android requires while a download runs stays). The Home page address is now used by the Home button, and Home opens the Ora start page when it is empty, which is the new default. Saving it shows a notice, and the field says what an empty address does. (`4503b02`)
 
