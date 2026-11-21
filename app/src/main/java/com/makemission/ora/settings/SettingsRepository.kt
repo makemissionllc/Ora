@@ -122,10 +122,11 @@ class SettingsRepository(context: Context) {
     val homePage: StateFlow<String> = _homePage.asStateFlow()
 
     fun setHomePage(url: String) {
-        val value = url.trim().ifEmpty { DEFAULT_HOME_PAGE }
+        val typed = url.trim()
+        val value = if (typed.isEmpty() || typed.contains("://")) typed else "https://$typed"
         prefs.edit().putString(KEY_HOME_PAGE, value).apply()
         _homePage.value = value
-        BrowserLog.info("settings", "Home page set to $value")
+        BrowserLog.info("settings", if (value.isEmpty()) "Home page reset to the start page" else "Home page set")
     }
 
     private val _appearance = MutableStateFlow(
@@ -973,7 +974,13 @@ class SettingsRepository(context: Context) {
         private const val KEY_PHONE_BAR = "phone_bar_style"
         private const val KEY_TABLET_BAR = "tablet_bar_style"
         private const val KEY_BAR_BUTTON = "bar_button"
-        const val DEFAULT_HOME_PAGE = "https://www.mozilla.org/"
+        /** Empty means the Ora start page, which is what Home opened before the address was honoured. */
+        const val DEFAULT_HOME_PAGE = ""
+
+        /** Read straight from storage, for code with no repository instance (the download notifier). */
+        fun downloadNotificationsEnabled(context: Context): Boolean =
+            context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getBoolean(KEY_DOWNLOAD_NOTIFICATIONS, true)
         /** Search URL used when the address bar input is not a URL. %s is replaced by the query. */
         const val DEFAULT_SEARCH_TEMPLATE = "https://duckduckgo.com/?q=%s"
     }

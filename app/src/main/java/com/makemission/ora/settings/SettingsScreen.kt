@@ -1230,10 +1230,14 @@ fun SettingsScreen(
                                 onValueChange = { homeDraft = it },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Address") }
+                                label = { Text("Address") },
+                                placeholder = { Text("Empty opens the Ora start page") }
                             )
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                TextButton(onClick = { settings.setHomePage(homeDraft) }) {
+                                TextButton(onClick = {
+                                    settings.setHomePage(homeDraft)
+                                    com.makemission.ora.notice.InAppNotices.show(if (homeDraft.isBlank()) "Home opens the start page" else "Home page saved")
+                                }) {
                                     Text("Save", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
                                 }
                             }

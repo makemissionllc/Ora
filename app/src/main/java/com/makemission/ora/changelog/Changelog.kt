@@ -12,6 +12,12 @@ data class ChangeDay(val date: String, val items: List<ChangeItem>)
 /** Newest first. Keep in step with CHANGELOG.md, per AGENTS.md rule 20. */
 val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
+        date = "21 Nov 2026",
+        items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Two settings that did nothing now work. Settings > Downloads > Download notifications now really turns the per-download notifications off and on (the one notice Android requires while a download runs stays). The Home page address is now used by the Home button, and Home opens the Ora start page when it is empty, which is the new default. Saving it shows a notice, and the field says what an empty address does. (`4503b02`)"),
+        ),
+    ),
+    ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "The tab overview now grows out of the spot you touched to open it (the tabs button, or the address bar you swiped) and folds back into the same spot, instead of always starting from the bottom-right corner. A small tick tells you it opened. (`497ff27`)"),
