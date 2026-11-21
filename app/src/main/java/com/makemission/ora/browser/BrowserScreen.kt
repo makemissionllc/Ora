@@ -840,6 +840,18 @@ private fun BrowserContent(
             BarButton.SETTINGS -> showSettings = true
         }
     }
+    // Held on the round button: everything the bar can do, so no action needs a trip through Settings or the menu.
+    val barQuickActions = listOf(
+        QuickAction("New tab") { onNewTab() },
+        QuickAction("New private tab") { onNewPrivateTab() },
+        QuickAction("Find in page") { showFind = true },
+        QuickAction(if (selectedBookmarked) "Remove bookmark" else "Bookmark this page") { toggleSelectedBookmark() },
+        QuickAction("Share") { shareUrl(context, selected.url) },
+        QuickAction("Downloads") { downloadsOrigin = TransformOrigin(1f, 0f); showDownloads = true },
+        QuickAction("Library", "Bookmarks, reading list, history") { showLibrary = true },
+        QuickAction("Reopen closed tab", tabs.lastClosedTitle) { onReopenClosed() },
+        QuickAction("Settings") { showSettings = true },
+    )
     // A sideways swipe on the address bar moves through open tabs, the tab's pages or profiles, as the Settings choice
     // says, and the page moves with the chosen effect instead of cutting over. A swipe with nowhere to go bounces.
     val swipeMotion = rememberAddressSwipeMotion()
@@ -1277,6 +1289,7 @@ private fun BrowserContent(
                         barButton = barButton,
                         barButtonBookmarked = selectedBookmarked,
                         onBarButton = runBarButton,
+                        quickActions = barQuickActions,
                     )
                 }
             }
@@ -1304,6 +1317,7 @@ private fun BrowserContent(
             barButton = barButton,
             barButtonBookmarked = selectedBookmarked,
             onBarButton = runBarButton,
+                        quickActions = barQuickActions,
             onToggleSidebar = { settings.setTabletSidebar(!showSidebar) },
             showSidebar = showSidebar,
             pillMaxWidth = BrowserTokens.TabletCompactPillMaxWidth,
@@ -2719,6 +2733,8 @@ private fun FloatingCompactRow(
     barButton: BarButton = BarButton.TABS,
     barButtonBookmarked: Boolean = false,
     onBarButton: () -> Unit = {},
+    /** Every action the round button can do, shown in a menu when it is held. Empty turns the menu off. */
+    quickActions: List<QuickAction> = emptyList(),
 ) {
     // 0 = full bar, 1 = shrunk. Shrinking uses the exit easing, growing back the enter easing.
     val shrink by animateFloatAsState(
@@ -2841,8 +2857,24 @@ private fun FloatingCompactRow(
         if (onTabs != null || barButton != BarButton.TABS) {
             // Quality of life: the button turns into whatever the user picked, and tells screen readers its name.
             CompactSlot(shrink) {
-                FloatingCircleButton(onClick = { if (onTabs != null && barButton == BarButton.TABS) onTabs() else onBarButton() }, enabled = shrink < 0.5f, description = barButton.label) {
-                    Icon(barButtonIcon(barButton, barButtonBookmarked), contentDescription = null)
+                val quick = rememberQuickMenu()
+                QuickActionsMenu(quick, quickActions)
+                FloatingCircleButton(
+                    onClick = { if (onTabs != null && barButton == BarButton.TABS) onTabs() else onBarButton() },
+                    enabled = shrink < 0.5f,
+                    description = barButton.label,
+                    // Quality of life: hold this button for every action the bar can do, in one menu that grows out of it.
+                    onLongClick = if (quickActions.isNotEmpty()) ({ quick.open = true }) else null,
+                    modifier = Modifier.quickAnchor(quick),
+                ) {
+                    // A changed icon (a bookmark saved or removed) lands with a small bounce instead of swapping.
+                    AnimatedContent(
+                        targetState = barButtonIcon(barButton, barButtonBookmarked),
+                        transitionSpec = {
+                            (fadeIn(OraMotion.quick()) + scaleIn(OraMotion.pop(), initialScale = 0.5f)) togetherWith fadeOut(OraMotion.quick())
+                        },
+                        label = "bar button icon",
+                    ) { icon -> Icon(icon, contentDescription = null) }
                 }
             }
         }
@@ -2882,12 +2914,15 @@ private fun FloatingCircleButton(
     enabled: Boolean,
     description: String,
     onLongClick: (() -> Unit)? = null,
+    modifier: Modifier = Modifier,
     icon: @Composable () -> Unit,
 ) {
     val colors = browserColors()
     Box(
-        modifier = Modifier
+        modifier = modifier
             .size(BrowserTokens.PhoneCompactCircle)
+            // Every round button sinks to 94% under the finger and springs back, so a touch is felt before it acts.
+            .then(if (enabled) Modifier.pressFeedback() else Modifier)
             .shadow(BrowserTokens.PhoneCompactElevation, CircleShape)
             .clip(CircleShape)
             .background(colors.AddressBarBackground)
@@ -2896,7 +2931,7 @@ private fun FloatingCircleButton(
                 role = Role.Button,
                 onClickLabel = description,
                 onClick = onClick,
-                onLongClickLabel = if (onLongClick != null) "$description: start page" else null,
+                onLongClickLabel = if (onLongClick != null) "$description: more options" else null,
                 onLongClick = onLongClick
             ),
         contentAlignment = Alignment.Center

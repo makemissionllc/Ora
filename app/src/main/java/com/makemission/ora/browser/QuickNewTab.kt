@@ -24,6 +24,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -82,6 +84,16 @@ internal fun quickEntries(
     if (!inPrivate) groupNames.take(3).forEach { (id, name) -> add(QuickEntry("group:$id", "New tab in $name")) }
 }
 
+/** One choice in a quick menu. [run] is called when it is tapped. */
+class QuickAction(val title: String, val subtitle: String? = null, val run: () -> Unit)
+
+/** The quick menu behind the Compact bar's round button: every action it can be set to, reachable with one long press. */
+@Composable
+fun QuickActionsMenu(state: QuickMenuState, actions: List<QuickAction>, onDone: () -> Unit = {}) {
+    if (!state.open) return
+    QuickMenuPopup(state, actions, "actions", onDone)
+}
+
 /**
  * The menu a long press on any New tab button opens: a private tab (or a normal one from the private space), paste
  * and open, reopen the last closed tab, and a new tab in a group. It grows out of the button that was pressed
@@ -107,6 +119,18 @@ fun QuickNewTabMenu(
     val entries = remember(inPrivate, clipText, tabs.lastClosedTitle, tabs.groups.size) {
         quickEntries(inPrivate, clipText, tabs.lastClosedTitle, tabs.groups.map { it.id to it.name }, pasteOk)
     }
+    val actions = entries.map { entry ->
+        QuickAction(entry.title, entry.subtitle) { run(entry, tabs, onNewTab, onNewPrivateTab, clipText) }
+    }
+    QuickMenuPopup(state, actions, "new tab", onDone)
+}
+
+/** The popup both quick menus share: grows out of the pressed button, rows arrive in turn, folds back on dismiss. */
+@Composable
+internal fun QuickMenuPopup(state: QuickMenuState, actions: List<QuickAction>, name: String, onDone: () -> Unit) {
+    val colors = browserColors()
+    val density = LocalDensity.current
+    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
     val visible = remember { MutableTransitionState(false).apply { targetState = true } }
     var cardTopLeft by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     var cardSize by remember { mutableStateOf(IntSize.Zero) }
@@ -123,20 +147,23 @@ fun QuickNewTabMenu(
             ((anchor.center.y - cardTopLeft.y) / cardSize.height).coerceIn(0f, 1f),
         )
     } else TransformOrigin.Center
-
     // Above the button when it sits in the lower half of the window, below it otherwise; never off the sides.
+    val above = anchor.center.y > with(density) { LocalConfiguration.current.screenHeightDp.dp.toPx() } / 2f
     val position = remember(anchor) {
         object : PopupPositionProvider {
             override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize, layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
                 val x = (anchor.center.x - popupContentSize.width / 2f).toInt()
                     .coerceIn(marginPx, (windowSize.width - popupContentSize.width - marginPx).coerceAtLeast(marginPx))
-                val above = anchor.center.y > windowSize.height / 2f
-                val y = if (above) anchor.top.toInt() - popupContentSize.height - gapPx else anchor.bottom.toInt() + gapPx
+                val up = anchor.center.y > windowSize.height / 2f
+                val y = if (up) anchor.top.toInt() - popupContentSize.height - gapPx else anchor.bottom.toInt() + gapPx
                 return IntOffset(x, y.coerceIn(marginPx, (windowSize.height - popupContentSize.height - marginPx).coerceAtLeast(marginPx)))
             }
         }
     }
-    LaunchedEffect(Unit) { BrowserLog.info("tabs", "Quick new tab menu opened (${entries.size} choices)") }
+    LaunchedEffect(Unit) {
+        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+        BrowserLog.info("tabs", "Quick $name menu opened (${actions.size} choices)")
+    }
     Popup(popupPositionProvider = position, onDismissRequest = close, properties = PopupProperties(focusable = true)) {
         AnimatedVisibility(
             visibleState = visible,
@@ -151,20 +178,26 @@ fun QuickNewTabMenu(
                     .background(colors.Surface)
                     .padding(vertical = 6.dp),
             ) {
-                entries.forEach { entry ->
+                // Rows nearest the button arrive first, so the menu reads as unfolding out of it.
+                val ordered = if (above) actions.asReversed() else actions
+                ordered.forEachIndexed { order, action ->
+                    var shown by remember { mutableStateOf(false) }
+                    LaunchedEffect(Unit) { shown = true }
+                    val progress by androidx.compose.animation.core.animateFloatAsState(if (shown) 1f else 0f, OraMotion.stagger(order), label = "quick row")
                     Column(
                         Modifier
+                            .graphicsLayer { alpha = progress; translationY = (1f - progress) * (if (above) 10.dp.toPx() else -10.dp.toPx()) }
                             .heightIn(min = 48.dp)
                             .clickable {
-                                run(entry, tabs, onNewTab, onNewPrivateTab, clipText)
+                                action.run()
                                 onDone()
                                 close()
                             }
                             .padding(horizontal = 18.dp, vertical = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
                     ) {
-                        Text(entry.title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (entry.subtitle != null) Text(entry.subtitle, fontSize = 12.sp, color = colors.SecondaryText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(action.title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        if (action.subtitle != null) Text(action.subtitle, fontSize = 12.sp, color = colors.SecondaryText, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
