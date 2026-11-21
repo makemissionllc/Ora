@@ -13,6 +13,7 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 - Send to a device crash (`fix/send-to-device-dialog-crash`, `c639a6b`): removed a `verticalScroll` nested in `OraDialog`'s already scrolling text slot (infinite-height crash on open). Previous component: the Send to a device menu row, unchanged.
 - Device link permission on Android 17 (`fix/device-link-local-network-permission`, `f309e25`): declared `ACCESS_LOCAL_NETWORK` (runtime permission on targetSdk 37, shown as "Nearby devices"); `LocalNetworkAccess` checks it; the Link my devices switch asks for it and shows a notice if declined; `DeviceHub.apply` does not start the link without it (this stopped Android's own device picker appearing at launch); `DeviceLink` logs discovery events to Diagnostics. Previous component: the Link my devices switch on Settings > Devices. Android-drawn surfaces (exceptions, no morph possible): the system permission dialog and the system "Choose a device to connect" picker.
 
+- Torrenting (`feature/torrents`, `dda1397`): jlibtorrent engine, magnet and .torrent adds, Torrents page (sheet on phone, overlay on tablet), Settings > Torrents (Wi-Fi only, seeding, speed cap), data-sync foreground service, no torrents in private tabs. Previous component: the page menu "Torrents" row; the Add card grows out of the tapped link. Quality of life: Paste button and duplicate check. Android-drawn surfaces: none.
 - Reading list sync across devices (`feature/reading-list-device-sync`, `fe789b4`): shared per-profile `ReadingListRepository`, removals and read marks merged last-writer-wins (`ReadingMerge`, unit tested), sync on device appearing and after local changes, "Sync reading list" switch in Settings > Devices. Previous component: the Devices category row; no new surface. Android-drawn surfaces: none.
 
 - Continue where you left off (`feature/device-continue`, `f3db92c`): "Continue from <device>" row in the page menu, shown for a page from a paired device under 15 minutes old that is not open here; Settings > Devices switch. Previous component: the page menu (row grows and folds with it). Android-drawn surfaces: none.
@@ -232,6 +233,8 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 
 ## Known issues
 
+- Torrents: never run on a device (no adb). Files go to Ora's own folder (Android/data/com.makemission.ora/files/Torrents), not Downloads. jlibtorrent 1.2.0.18 is old and its native libraries are not 16 KB page aligned.
+
 - Android's own device picker (shown when discovery runs without the permission) names devices by service id ("Ora-xxxxxxxx"), not their friendly name. Consider naming the service from the device name.
 - Device linking needs Ora open on both devices; a stale network record can briefly show an old port or pairing state.
 - Reading list sync covers the first profile only (profile ids differ between devices). Not yet run between two real devices.
@@ -258,6 +261,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-21 | `dda1397` | Torrenting | Not checked (no adb; build and unit tests only) | Not checked |
 | 2026-11-21 | `fe789b4` | Reading list sync across devices | Not checked (no adb; build and unit tests only) | Not checked |
 | 2026-11-21 | `f309e25` | Device link permission on Android 17 | Phone (CPH2745, Android 17, serial 3C15C5000LM00000): before the fix the system device picker appeared and nothing was found; after it the permission prompt appeared, Allow turned the link on, no system picker at the next launch, and the log showed the tablet found. Tablet (25091RP04G, Android 16, serial 7ba8e294): log showed the phone found. Not checked: completing a pairing, Send to a device, Continue from, reading list sync, declining the permission | Tablet as listed in the same row |
 | 2026-11-21 | `f3db92c` | Continue where you left off | Not checked (no adb; build and unit tests only) | Not checked |

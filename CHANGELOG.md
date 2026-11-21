@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-21
 
 **Added**
+- Torrents. Tap a magnet link on a page, open one from another app, open a .torrent file, or paste a link on the new Torrents page (page menu). Ora asks first, downloads in the background with a notification, and tells you when it finishes. Settings > Torrents: Wi-Fi only (on by default), keep sharing when finished, and a speed limit. Private tabs never start torrents. A Paste button and a check for torrents already in your list make adding quick. (`dda1397`)
 - Reading list sync. Pages you save to read later, mark as read or remove now follow you to your other linked devices over the same Wi-Fi, and a notice says how many pages arrived. Turn it off in Settings > Devices. (`fe789b4`)
 - Continue where you left off. When another of your linked devices had a page open in the last 15 minutes, the page menu shows Continue from that device, and one tap opens the page here. The row stays hidden if you already have the page open. Turn it off in Settings > Devices; private tabs are never shared. (`f3db92c`)
 - Every Settings page now opens with a small animated drawing, in the style of Google's settings pages: a hand taps a switch, a tab, a lock or the search bar, and the device shows what that setting does. On Devices, a page flies from the phone to the tablet. A sentence under each drawing says what the page is for. With system animations off it shows one still picture. (`94c6cf1`)
