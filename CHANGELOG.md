@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-21
 
 **Fixed**
+- Settings polish: the Home page address field now has a Done key on the keyboard that saves it, and the Settings list sits above the keyboard so the field and its Save button are never covered. The Toolbar editor's preset chips (Classic, Reading, Minimal, Custom) stay on one line and scroll sideways when the screen is narrow, so Custom is no longer squashed. (`72ee43d`)
 - Two settings that did nothing now work. Settings > Downloads > Download notifications now really turns the per-download notifications off and on (the one notice Android requires while a download runs stays). The Home page address is now used by the Home button, and Home opens the Ora start page when it is empty, which is the new default. Saving it shows a notice, and the field says what an empty address does. (`4503b02`)
 
 ### 2026-11-20
