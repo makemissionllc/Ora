@@ -75,7 +75,9 @@ internal fun quickEntries(
 ): List<QuickEntry> = buildList {
     add(if (inPrivate) QuickEntry("normal", "New tab") else QuickEntry("private", "New private tab"))
     val clip = clipboard?.trim().orEmpty()
-    if (canPaste && clip.isNotEmpty()) add(QuickEntry("paste", "Paste and open", clip.take(60)))
+    // Only an address is shown back; anything else (a copied password, say) is never printed in a menu.
+    val looksLikeAddress = clip.none { it.isWhitespace() } && (clip.contains("://") || clip.contains('.'))
+    if (canPaste && clip.isNotEmpty()) add(QuickEntry("paste", "Paste and open", if (looksLikeAddress) clip.take(60) else "Text from the clipboard"))
     if (closedTitle != null) add(QuickEntry("reopen", "Reopen closed tab", closedTitle))
     if (!inPrivate) groupNames.take(3).forEach { (id, name) -> add(QuickEntry("group:$id", "New tab in $name")) }
 }

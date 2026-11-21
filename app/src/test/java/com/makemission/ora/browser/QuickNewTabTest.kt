@@ -20,4 +20,10 @@ class QuickNewTabTest {
         assertEquals(listOf("private"), quickEntries(false, "  ", null, emptyList(), true).map { it.id })
         assertEquals(listOf("private"), quickEntries(false, "x", null, emptyList(), false).map { it.id })
     }
+
+    @Test fun clipboardTextIsOnlyShownWhenItIsAnAddress() {
+        assertEquals("example.com/a", quickEntries(false, "example.com/a", null, emptyList(), true)[1].subtitle)
+        assertEquals("Text from the clipboard", quickEntries(false, "hunter2Secret", null, emptyList(), true)[1].subtitle)
+        assertEquals("Text from the clipboard", quickEntries(false, "my pass.word x", null, emptyList(), true)[1].subtitle)
+    }
 }
