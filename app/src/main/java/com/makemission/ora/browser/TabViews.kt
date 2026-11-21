@@ -18,6 +18,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.animation.AnimatedContent
@@ -269,7 +270,8 @@ fun TabGrid(
             }
             gridItems(gridTabs, key = { it.id }) { tab ->
                 // Closing a card fades it out and its neighbours slide together to close the gap.
-                Box(Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave())) {
+                // The cards rise into place one after another when the overview opens, the first ones first.
+                Box(Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).arriveInTurn(gridTabs.indexOf(tab))) {
                 TabTile(
                     title = tab.shownTitle(displayUrl(tab.url)),
                     thumbnail = tab.thumbnail,
@@ -391,6 +393,25 @@ internal fun PillButton(
     ) {
         if (icon != null) Icon(icon, contentDescription = null, tint = content, modifier = Modifier.size(18.dp))
         Text(text, color = content, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+    }
+}
+
+/** Rises 14 dp and fades in on the stagger timing, [order] places after the first. Later rows (past eight) just appear. */
+@Composable
+private fun Modifier.arriveInTurn(order: Int): Modifier {
+    var shown by remember { mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(Unit) { shown = true }
+    val progress by androidx.compose.animation.core.animateFloatAsState(
+        if (shown || order >= 8) 1f else 0f,
+        OraMotion.stagger(order),
+        label = "tile arrive",
+    )
+    return graphicsLayer {
+        alpha = progress
+        translationY = (1f - progress) * 14.dp.toPx()
+        val scale = 0.96f + 0.04f * progress
+        scaleX = scale
+        scaleY = scale
     }
 }
 
