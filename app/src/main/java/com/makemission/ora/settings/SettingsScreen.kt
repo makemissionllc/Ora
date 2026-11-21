@@ -108,6 +108,7 @@ fun SettingsScreen(
     val openLinksMode by settings.openLinksInApps.collectAsState()
     val videoGestures by settings.videoGestures.collectAsState()
     val videoBackExits by settings.videoBackExits.collectAsState()
+    val videoOraControls by settings.videoOraControls.collectAsState()
     val videoAutoPip by settings.videoAutoPip.collectAsState()
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
@@ -670,6 +671,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = videoGestures, label = "Switch", onChange = { settings.setVideoGestures(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setVideoOraControls(!videoOraControls) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Ora controls by default", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Off: a full-screen video shows the site's own controls, and Ora's open from a small icon beside the video. On: Ora's controls open straight away.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = videoOraControls, label = "Switch", onChange = { settings.setVideoOraControls(it) })
                             }
                             Row(
                                 modifier = Modifier

@@ -37,6 +37,21 @@ object VideoControlBridge {
 
     private var port: WebExtension.Port? = null
 
+    /** Counts touches on a full-screen video's page, so the app can show its small controls handle for a moment. */
+    private val _pokes = MutableStateFlow(0)
+    val pokes: StateFlow<Int> = _pokes.asStateFlow()
+
+    private var oraControls = false
+
+    /**
+     * Tells the page whether Ora's own controls are on. When they are not, the site's controls stay visible and
+     * untouched; when they are, the site's are hidden so the two sets do not draw over each other.
+     */
+    fun setOraControls(on: Boolean) {
+        oraControls = on
+        port?.postMessage(JSONObject().put("type", "ui").put("ora", on))
+    }
+
     fun install(runtime: GeckoRuntime) {
         runtime.webExtensionController.ensureBuiltIn(RESOURCE_PATH, EXTENSION_ID).accept(
             { extension ->
@@ -94,9 +109,11 @@ object VideoControlBridge {
         override fun onConnect(connected: WebExtension.Port) {
             port = connected
             BrowserLog.info("video", "Video control connected")
+            connected.postMessage(JSONObject().put("type", "ui").put("ora", oraControls))
             connected.setDelegate(object : WebExtension.PortDelegate {
                 override fun onPortMessage(message: Any, port: WebExtension.Port) {
                     val json = message as? JSONObject ?: return
+                    if (json.optString("type") == "poke") { _pokes.value++; return }
                     if (json.optString("type") != "state") return
                     _state.value = State(
                         hasVideo = json.optBoolean("has"),

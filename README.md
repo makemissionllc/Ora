@@ -49,6 +49,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `browser/KeyShortcuts.kt`, `browser/ShortcutsCard.kt`: physical keyboard shortcuts (`MainActivity.dispatchKeyEvent` feeds `KeyShortcuts`; BrowserScreen acts on them) and the card that lists them.
 - `settings/SettingsRepository.kt` `BarButton`: the action behind the round button in the Compact bar (picked in Settings > Tabs).
 - `browser/QuickSwitcher.kt`: the Ctrl+K quick switcher and its pure `quickMatches` ranking.
+- `browser/VideoPlayerControls.kt`: Ora's full-screen video player and the handle that opens it over the site's own controls.
 - `browser/AddressSuggestions.kt`: address dropdown rows (bookmarks, tabs, history with remove, engine phrases, commands).
 - `assets/sitetweaks/`, `extensions/SiteTweaksBridge.kt`, `settings/SiteTweaks.kt`, `browser/SiteTweaksDialog.kt`: per-site dark, wide text and font.
 - `assets/zapper/`, `extensions/ZapperBridge.kt`, `settings/ElementZapper.kt`, `browser/ZapperDialog.kt`: the element zapper (page picker script, bridge, per-profile rules, dialog).

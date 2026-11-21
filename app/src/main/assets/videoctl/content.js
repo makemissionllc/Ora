@@ -3,6 +3,10 @@
 // their video inside an iframe, which has its own full-screen element.
 (() => {
   let wasActive = false;
+  // True when Ora draws its own controls. Otherwise the site's own controls stay, and nothing is hidden.
+  let oraControls = false;
+  let timer = null;
+  let lastPoke = 0;
 
   function fullScreenVideo() {
     const el = document.fullscreenElement;
@@ -60,15 +64,43 @@
     }
   }
 
-  // Send while a full-screen video exists, and once more when it leaves full screen.
-  setInterval(() => {
+  // A touch on the page tells Ora to show its small controls handle for a moment. Capture phase, never stopped.
+  function poke() {
+    const now = Date.now();
+    if (now - lastPoke < 400) return;
+    lastPoke = now;
+    browser.runtime.sendMessage({ type: "poke" }).catch(() => {});
+  }
+
+  function report() {
     const s = snapshot();
-    if (s.has) hideSiteControls(); else if (wasActive) showSiteControls();
+    if (s.has && oraControls) hideSiteControls(); else showSiteControls();
     if (s.has || wasActive) {
       wasActive = s.has;
-      browser.runtime.sendMessage(s).catch(() => {});
+      browser.runtime.sendMessage(s).then((reply) => {
+        if (reply && typeof reply.ora === "boolean") oraControls = reply.ora;
+      }).catch(() => {});
     }
-  }, 250);
+    if (!s.has) stop();
+  }
+
+  // The report loop runs only while something in this frame is full screen, so ordinary pages pay nothing for it.
+  function start() {
+    if (timer !== null) return;
+    document.addEventListener("touchstart", poke, true);
+    timer = setInterval(report, 250);
+    report();
+  }
+  function stop() {
+    if (timer === null) return;
+    clearInterval(timer);
+    timer = null;
+    document.removeEventListener("touchstart", poke, true);
+  }
+  document.addEventListener("fullscreenchange", () => {
+    if (document.fullscreenElement) start(); else { report(); stop(); }
+  });
+  if (document.fullscreenElement) start();
 
   browser.runtime.onMessage.addListener((msg) => {
     const v = fullScreenVideo();
