@@ -540,7 +540,7 @@ private fun BrowserContent(
     var showTabGrid by remember { mutableStateOf(false) }
     // Where the tab overview grows from: the spot that was pressed to open it, and the one it folds back into.
     var tabsOrigin by remember { mutableStateOf(MORPH_ORIGIN) }
-    val openHaptics = LocalHapticFeedback.current
+    val openHaptics = com.makemission.ora.ui.LocalOraHaptics.current
     val windowSizePx = with(LocalDensity.current) {
         val cfg = androidx.compose.ui.platform.LocalConfiguration.current
         androidx.compose.ui.unit.IntSize(cfg.screenWidthDp.dp.roundToPx(), cfg.screenHeightDp.dp.roundToPx())
@@ -598,7 +598,12 @@ private fun BrowserContent(
     val selectedId = tabs.selectedId
     // One place for the bookmark state and toggle, shared by the phone and tablet bars and the menu.
     val selectedBookmarked = bookmarkList.any { it.url == selected.url }
-    val toggleSelectedBookmark = { bookmarks.toggle(selected.url, selected.title) }
+    val bookmarkHaptics = com.makemission.ora.ui.LocalOraHaptics.current
+    val toggleSelectedBookmark = {
+        // Saved is a confirmation; removing is a lighter close.
+        bookmarkHaptics.play(if (bookmarkList.any { it.url == selected.url }) com.makemission.ora.ui.Feel.CLOSE else com.makemission.ora.ui.Feel.CONFIRM)
+        bookmarks.toggle(selected.url, selected.title)
+    }
     // Reading list: save or unsave the open page. Private tabs and the start page are refused, and each answer is said aloud.
     /** Reader view on or off for the current page. Shared by the menu and the toolbar button. */
     val toggleReader: () -> Unit = {
@@ -835,7 +840,7 @@ private fun BrowserContent(
     /** Opens the tab grid, refreshing the current tab's preview first. */
     val openTabs: () -> Unit = {
         captureThumbnail(pageView, selected)
-        openHaptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+        openHaptics.play(com.makemission.ora.ui.Feel.THRESHOLD)
         tabsOrigin = windowOrigin(com.makemission.ora.ui.LastPress.position, windowSizePx, MORPH_ORIGIN)
         showTabGrid = true
     }
@@ -2188,7 +2193,7 @@ private fun BrowserPage(
     // Pull to refresh: pulling down from the top of the page reloads it. A small indicator follows the finger
     // and stays while the page reloads. The page itself keeps scrolling as before.
     var pull by remember { mutableStateOf(0.dp) }
-    val pullHaptics = LocalHapticFeedback.current
+    val pullHaptics = com.makemission.ora.ui.LocalOraHaptics.current
     val indicatorVisible = pull > 0.dp || tab.loading
     Box(
         modifier = Modifier
@@ -2204,7 +2209,7 @@ private fun BrowserPage(
                     tab.session.reload()
                 },
                 // Quality of life: one short tick when the pull is far enough to reload, so the release feels sure.
-                onThreshold = { pullHaptics.performHapticFeedback(HapticFeedbackType.TextHandleMove) }
+                onThreshold = { pullHaptics.play(com.makemission.ora.ui.Feel.THRESHOLD) }
             )
     ) {
         // The space above the page, filled with the page's top colour. The page moves down by the same height, so

@@ -73,7 +73,12 @@ class MainActivity : ComponentActivity() {
                 com.makemission.ora.extensions.WebFontBridge.apply(if (webFont) font.key else null)
             }
             OraTheme(font = font) {
-              androidx.compose.runtime.CompositionLocalProvider(com.makemission.ora.browser.LocalHints provides settings) {
+              val hapticStrength = settings.hapticStrength.collectAsState()
+              val oraHaptics = com.makemission.ora.ui.rememberOraHaptics(hapticStrength)
+              androidx.compose.runtime.CompositionLocalProvider(
+                  com.makemission.ora.browser.LocalHints provides settings,
+                  com.makemission.ora.ui.LocalOraHaptics provides oraHaptics,
+              ) {
                 val profiles = remember { ProfilesRepository(applicationContext) }
                 androidx.compose.foundation.layout.Box(
                     androidx.compose.ui.Modifier.pointerInput(Unit) {

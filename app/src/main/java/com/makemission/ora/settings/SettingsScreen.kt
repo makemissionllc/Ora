@@ -650,6 +650,38 @@ fun SettingsScreen(
                         )
                     }
                     if (shown(SettingsCategory.APPEARANCE)) item {
+                        SectionTitle("Touch feedback")
+                        val hapticStrength by settings.hapticStrength.collectAsState()
+                        val feel = com.makemission.ora.ui.LocalOraHaptics.current
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                        ) {
+                            com.makemission.ora.ui.HapticStrength.entries.forEach { level ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            settings.setHapticStrength(level)
+                                            // Play a sample at the new level, so the choice can be felt before leaving the row.
+                                            feel.play(com.makemission.ora.ui.Feel.CONFIRM)
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(level.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                        Text(level.detail, fontSize = 14.sp, color = browserColors().SecondaryText)
+                                    }
+                                    RadioButton(selected = level == hapticStrength, onClick = null, colors = mineralRadio())
+                                }
+                            }
+                        }
+                    }
+                    if (shown(SettingsCategory.APPEARANCE)) item {
                         SectionTitle("Video")
                         Column(
                             modifier = Modifier

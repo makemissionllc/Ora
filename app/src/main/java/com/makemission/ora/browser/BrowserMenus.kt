@@ -310,7 +310,7 @@ private fun MenuRow(
 fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) {
     val colors = browserColors()
     // Quality of life: every flip gives a short haptic tick, so a switch feels like it moved.
-    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val haptics = com.makemission.ora.ui.LocalOraHaptics.current
     // The thumb slides and the track colour crossfades, both with the Quick token.
     val thumbX by androidx.compose.animation.core.animateDpAsState(if (checked) 20.dp else 0.dp, OraMotion.quick(), label = "switch thumb")
     val track by androidx.compose.animation.animateColorAsState(if (checked) colors.Accent else colors.AddressBarBackground, OraMotion.quick(), label = "switch track")
@@ -321,7 +321,7 @@ fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) 
             .clip(RoundedCornerShape(14.dp))
             .background(track)
             .toggleable(value = checked, role = Role.Switch, onValueChange = {
-                haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                haptics.toggle(it)
                 onChange(it)
             })
             .semantics { contentDescription = label }

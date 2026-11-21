@@ -130,7 +130,7 @@ fun QuickNewTabMenu(
 internal fun QuickMenuPopup(state: QuickMenuState, actions: List<QuickAction>, name: String, onDone: () -> Unit) {
     val colors = browserColors()
     val density = LocalDensity.current
-    val haptics = androidx.compose.ui.platform.LocalHapticFeedback.current
+    val haptics = com.makemission.ora.ui.LocalOraHaptics.current
     val visible = remember { MutableTransitionState(false).apply { targetState = true } }
     var cardTopLeft by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
     var cardSize by remember { mutableStateOf(IntSize.Zero) }
@@ -161,7 +161,7 @@ internal fun QuickMenuPopup(state: QuickMenuState, actions: List<QuickAction>, n
         }
     }
     LaunchedEffect(Unit) {
-        haptics.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+        haptics.play(com.makemission.ora.ui.Feel.LONG_PRESS)
         BrowserLog.info("tabs", "Quick $name menu opened (${actions.size} choices)")
     }
     Popup(popupPositionProvider = position, onDismissRequest = close, properties = PopupProperties(focusable = true)) {
@@ -189,6 +189,7 @@ internal fun QuickMenuPopup(state: QuickMenuState, actions: List<QuickAction>, n
                             .graphicsLayer { alpha = progress; translationY = (1f - progress) * (if (above) 10.dp.toPx() else -10.dp.toPx()) }
                             .heightIn(min = 48.dp)
                             .clickable {
+                                haptics.play(com.makemission.ora.ui.Feel.SELECT)
                                 action.run()
                                 onDone()
                                 close()
