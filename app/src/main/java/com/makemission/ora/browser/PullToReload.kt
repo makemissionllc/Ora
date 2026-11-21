@@ -23,8 +23,10 @@ fun Modifier.pullToReload(
     /** Called once per pull, the first time the finger reaches the threshold (a haptic tick on the phone and tablet). */
     onThreshold: () -> Unit = {},
 ): Modifier = pointerInput(canPull) {
-    val threshold = BrowserTokens.PullRefreshThreshold.toPx()
+    val designed = BrowserTokens.PullRefreshThreshold.toPx()
     awaitEachGesture {
+        // Learned from how far this person really pulls; never below the floor, so a light brush cannot reload.
+        val threshold = designed * com.makemission.ora.adaptive.Adaptive.pullScale
         val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
         // Only a gesture that starts at the top of the page can become a pull.
         val pulling = canPull()
@@ -37,9 +39,11 @@ fun Modifier.pullToReload(
             if (!change.pressed) {
                 if (pulling && distance >= threshold) {
                     UsageStats.gesture("pull_to_refresh", "registered", null, "pull=${distance.toInt()}")
+                    com.makemission.ora.adaptive.PullLearner.recordRegistered()
                     onRefresh()
                 } else if (pulling && distance > 24f) {
                     UsageStats.gesture("pull_to_refresh", "ignored", "released_early", "pull=${distance.toInt()} need=${threshold.toInt()}")
+                    com.makemission.ora.adaptive.PullLearner.recordEarly((distance / designed * 100).toInt())
                 } else if (!pulling && downward > threshold) {
                     // A downward drag that began below the top of the page is a scroll, not a refresh.
                     // Counted only: a scroll that starts below the top is normal, so it is not written to the log.

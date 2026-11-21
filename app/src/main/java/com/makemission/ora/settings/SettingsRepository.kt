@@ -636,6 +636,89 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Strongest private tabs ${if (enabled) "on" else "off"}")
     }
 
+    private val _adaptiveMode = MutableStateFlow(com.makemission.ora.adaptive.AdaptiveMode.fromKey(prefs.getString(KEY_ADAPTIVE_MODE, null)))
+    /** How much Ora may tune itself from how it is used: off, suggest (the default) or automatic. */
+    val adaptiveMode: StateFlow<com.makemission.ora.adaptive.AdaptiveMode> = _adaptiveMode.asStateFlow()
+
+    fun setAdaptiveMode(mode: com.makemission.ora.adaptive.AdaptiveMode) {
+        prefs.edit().putString(KEY_ADAPTIVE_MODE, mode.key).apply()
+        _adaptiveMode.value = mode
+        UsageStats.count("setting.adaptive_mode")
+        BrowserLog.info("adaptive", "Adapting to use: ${mode.label}")
+    }
+
+    private val _pullScale = MutableStateFlow(prefs.getFloat(KEY_PULL_SCALE, 1f).coerceIn(com.makemission.ora.adaptive.Adaptive.PULL_MIN, 1f))
+    /** Share of the designed pull-to-refresh distance that is needed. Learned from how far the person pulls. */
+    val pullScale: StateFlow<Float> = _pullScale.asStateFlow()
+
+    init {
+        com.makemission.ora.adaptive.Adaptive.pullScale = _pullScale.value
+    }
+
+    private fun writePullScale(scale: Float) {
+        val value = scale.coerceIn(com.makemission.ora.adaptive.Adaptive.PULL_MIN, 1f)
+        prefs.edit().putFloat(KEY_PULL_SCALE, value).apply()
+        _pullScale.value = value
+        com.makemission.ora.adaptive.Adaptive.pullScale = value
+    }
+
+    /** One change Ora made from use, kept so it can be undone. [previous] is the old value in its own form. */
+    data class AdaptiveChange(val fix: com.makemission.ora.adaptive.Fix, val text: String, val previous: String)
+
+    private fun loadChanges(): List<AdaptiveChange> = prefs.getString(KEY_ADAPTIVE_CHANGES, "").orEmpty().split('\n').mapNotNull { line ->
+        val parts = line.split('|')
+        val fix = com.makemission.ora.adaptive.Fix.entries.firstOrNull { it.name == parts.getOrNull(0) } ?: return@mapNotNull null
+        AdaptiveChange(fix, parts.getOrNull(1).orEmpty(), parts.getOrNull(2).orEmpty())
+    }
+
+    private val _adaptiveChanges = MutableStateFlow(loadChanges())
+    /** Changes made from use that can still be undone, newest last. */
+    val adaptiveChanges: StateFlow<List<AdaptiveChange>> = _adaptiveChanges.asStateFlow()
+
+    private fun saveChanges(list: List<AdaptiveChange>) {
+        val kept = list.takeLast(5)
+        prefs.edit().putString(KEY_ADAPTIVE_CHANGES, kept.joinToString("\n") { "${it.fix.name}|${it.text.replace('|', ' ')}|${it.previous}" }).apply()
+        _adaptiveChanges.value = kept
+    }
+
+    /**
+     * Does what [fix] says and keeps the old value so it can be undone. Returns a plain sentence about what changed,
+     * or null when there was nothing to change. [automatic] only changes the wording of the log.
+     */
+    fun applyAdaptiveFix(fix: com.makemission.ora.adaptive.Fix, automatic: Boolean): String? {
+        val text = when (fix) {
+            com.makemission.ora.adaptive.Fix.SHORTER_PULL -> {
+                val target = com.makemission.ora.adaptive.PullLearner.recommendedScale(_pullScale.value) ?: return null
+                val before = _pullScale.value
+                writePullScale(target)
+                com.makemission.ora.adaptive.PullLearner.reset()
+                saveChanges(_adaptiveChanges.value + AdaptiveChange(fix, "Pulling to refresh needs ${((1 - target) * 100).toInt()}% less distance", before.toString()))
+                "Pulling to refresh now needs ${((1 - target) * 100).toInt()}% less distance."
+            }
+            com.makemission.ora.adaptive.Fix.PRELOAD_WIFI -> {
+                if (_preloadMode.value != PreloadMode.ALWAYS) return null
+                val before = _preloadMode.value
+                setPreloadMode(PreloadMode.WIFI)
+                saveChanges(_adaptiveChanges.value + AdaptiveChange(fix, "Look-ahead now runs on Wi-Fi only", before.key))
+                "Looking ahead now runs on Wi-Fi only."
+            }
+        }
+        UsageStats.count(if (automatic) "adaptive.auto_applied" else "adaptive.applied")
+        BrowserLog.info("adaptive", "${if (automatic) "Applied automatically" else "Applied"}: $text")
+        return text
+    }
+
+    /** Puts back what [change] replaced and forgets the change. */
+    fun undoAdaptiveChange(change: AdaptiveChange) {
+        when (change.fix) {
+            com.makemission.ora.adaptive.Fix.SHORTER_PULL -> writePullScale(change.previous.toFloatOrNull() ?: 1f)
+            com.makemission.ora.adaptive.Fix.PRELOAD_WIFI -> setPreloadMode(PreloadMode.fromKey(change.previous))
+        }
+        saveChanges(_adaptiveChanges.value - change)
+        UsageStats.count("adaptive.undone")
+        BrowserLog.info("adaptive", "Undone: ${change.text}")
+    }
+
     private val _fingerprintingProtection = MutableStateFlow(prefs.getBoolean(KEY_FINGERPRINTING_PROTECTION, false))
     /** When on, GeckoView hides details that sites use to recognise your device, such as some hardware and font details. */
     val fingerprintingProtection: StateFlow<Boolean> = _fingerprintingProtection.asStateFlow()
@@ -1044,6 +1127,9 @@ class SettingsRepository(context: Context) {
         private const val KEY_DOWNLOAD_NOTIFICATIONS = "download_notifications"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_STRONG_PRIVATE_TABS = "strong_private_tabs"
+        private const val KEY_ADAPTIVE_MODE = "adaptive_mode"
+        private const val KEY_PULL_SCALE = "pull_scale"
+        private const val KEY_ADAPTIVE_CHANGES = "adaptive_changes"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
         private const val KEY_APP_LOCK = "app_lock_record"
         private const val KEY_APP_LOCK_WHOLE = "app_lock_whole"
