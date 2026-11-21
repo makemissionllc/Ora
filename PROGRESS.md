@@ -9,6 +9,8 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 
 ## Done
 
+- Settings illustrations (`feature/settings-illustrations`, `94c6cf1`): a looping hand-and-device drawing at the top of each Settings page (`settings/SettingsIllustrations.kt`), nine scenes. Previous component: the Settings category row (page) and the rail (tablet, fades). No Android-drawn surfaces.
+
 - Device link and Send to a device (`feature/device-link-send-tab`, `afac9c9`): Settings > Devices (switch, name, pairing by six digit code, forget), encrypted LAN transport with an outbox, "Send to a device" in the page menu, and a card when a page arrives. Previous component: the Devices category row (page), the pressed control (cards), the "Send to a device" menu row (Send card); the arrival card has none (driven by another device). Android-drawn surfaces: none.
 
 - Phone Settings as categories (`63c7ac9`, `settings/SettingsScreen.kt` `SettingsCategoryList`): the phone opens a list of eight categories with a summary line each; a tap opens that category's page, which grows out of the tapped row (`OraMotion` overlay scale from 0.88, origin at the row) and folds back on the back arrow or system Back; the header title crossfades. Previous component: the tapped category row (the Settings overlay itself slides in from the right, unchanged). The tablet keeps its rail. QoL: each category says what is inside it, so nobody scrolls to find a setting. Not done: search across settings.
@@ -245,6 +247,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-21 | `94c6cf1` | Settings illustrations | Not checked (no adb or emulator here; compiled only, drawings not yet looked at) | Not checked |
 | 2026-11-21 | `afac9c9` | Device link and Send to a device | Not checked (no adb here; build and unit tests only) | Not checked |
 | 2026-11-21 | `63c7ac9` | Phone Settings categories | Phone (Wi-Fi): list of eight categories shown; Privacy and Tabs each opened with only their own sections; the back arrow and the system Back both returned to the list. A first build showed the bar picker under Privacy; fixed. The grow-from-row motion was too quick to catch. Not checked: the other categories, Light and Pure dark. | Not checked (tablet rail unchanged in code, not seen) |
 | 2026-11-21 | `30e7a8e` | Extensions list and quick switcher row motion | Phone (Wi-Fi): Quick switcher typed `goo` and the rows narrowed to matches; Extensions opened from the menu and its search took input. The slide itself was too quick to catch. | Not checked |

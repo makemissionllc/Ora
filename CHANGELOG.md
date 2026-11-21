@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-21
 
 **Added**
+- Every Settings page now opens with a small animated drawing, in the style of Google's settings pages: a hand taps a switch, a tab, a lock or the search bar, and the device shows what that setting does. On Devices, a page flies from the phone to the tablet. A sentence under each drawing says what the page is for. With system animations off it shows one still picture. (`94c6cf1`)
 - Link your phone and tablet. A new Devices page in Settings pairs your Ora devices over the same Wi-Fi with a six digit code, with no account and no server; everything between them is sealed. The page menu gets Send to a device, and the other device offers to open the page. If that device is asleep or away, the page waits (up to a day) and goes when it is back on the Wi-Fi. (`afac9c9`)
 - Settings on the phone is now a short list of categories (Appearance, Tabs, Privacy, Search, Home page, Labs, Diagnostics, About), each with a line saying what is inside, like the Settings app on a phone. Tap one and its page grows out of the row you tapped; the back arrow, or the system Back, folds it back into the list, and the title changes with the page. The tablet keeps its side rail. (`63c7ac9`)
 - The Extensions list and the Quick switcher now move like every other list: searching narrows them with rows sliding to close the gap, and rows fade in and out instead of snapping. (`30e7a8e`)
