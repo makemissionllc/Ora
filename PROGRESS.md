@@ -262,6 +262,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-21 | `HASH` | Smooth scrolling: asks for the fastest refresh rate (Settings > Appearance switch; origin: none, a Settings row) | Not checked: the wireless install stalled, so the new build never ran. Before the fix the phone's display supported up to 165 Hz but Ora ran at 90 Hz | Not checked: tablet not connected over ADB this session |
 | 2026-11-21 | `97ad9ec` | Fix: blob:/data: downloads failed (origin: none, no new surface; the failed row text changes in place) | Not checked | Diagnosed on the tablet (`7ba8e294`): log showed "HTTP 0" then "error=0x11" for a blob: download from remove.bg, confirmed in `ora_downloads.db`. Built and installed the fix; `assembleDebug` passes. Not checked: a new blob download after the fix (not tapped yet) |
 | 2026-11-21 | `00f6000` | Strongest private tabs (morph: none, a Settings row) | Checked: private tab opens with dashed capsule; a test page saw time zone Atlantic/Reykjavik, screen 980x1648, frozen user agent; language still en-KE; after force-stop no private tab, history, session or log entry holds the page; Privacy card text seen | Not checked |
 | 2026-11-21 | `dda1397` | Torrenting | Not checked (no adb; build and unit tests only) | Not checked |

@@ -5,6 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -57,6 +59,8 @@ class MainActivity : ComponentActivity() {
         }
         handleLink(intent)
         enableEdgeToEdge()
+        // Applies the Smooth scrolling setting now and whenever it changes.
+        lifecycleScope.launch { settings.smoothScrolling.collect { applyRefreshRate(it) } }
         setContent {
             val font by settings.font.collectAsState()
             val webFont by settings.webFont.collectAsState()
@@ -94,6 +98,25 @@ class MainActivity : ComponentActivity() {
               }
             }
         }
+    }
+
+    /**
+     * Android keeps an app on a modest refresh rate (often 60 or 90 Hz) unless it asks for more, which makes
+     * scrolling look choppy on a 120 to 165 Hz screen. This asks for the fastest mode that has the screen's
+     * current size, or lets the system choose again (mode 0) when the setting is off.
+     */
+    private fun applyRefreshRate(fastest: Boolean) {
+        val display = display ?: return
+        val current = display.mode
+        val best = if (fastest) {
+            display.supportedModes
+                .filter { it.physicalWidth == current.physicalWidth && it.physicalHeight == current.physicalHeight }
+                .maxByOrNull { it.refreshRate }
+        } else null
+        val attrs = window.attributes
+        attrs.preferredDisplayModeId = best?.modeId ?: 0
+        window.attributes = attrs
+        BrowserLog.info("app", if (best != null) "Refresh rate: asked for ${best.refreshRate.toInt()} Hz (screen is at ${current.refreshRate.toInt()} Hz)" else "Refresh rate: left to the system")
     }
 
     override fun onDestroy() {
