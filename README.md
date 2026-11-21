@@ -56,6 +56,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `browser/CommandBar.kt`: the ">" command list shared by the address bar and the Quick switcher.
 - `settings/SavedSessions.kt` and `browser/SessionsDialog.kt`: named sets of open tabs (per profile, never private tabs) and the dialog that saves, opens and deletes them.
 - `settings/StartPageConfig.kt`, `browser/StartPage.kt`, `browser/StartPageEditor.kt`: the customizable start page (parts and order, shortcut source, tile look; pinned sites) and its Customize sheet.
+- `ui/Haptics.kt`: the touch feelings and strengths (`Feel`, `HapticStrength`, `LocalOraHaptics`); the Settings row is Touch feedback.
 - `browser/QuickNewTab.kt`: the long-press menu on every New tab button (`rememberQuickMenu`, `quickAnchor`, `QuickNewTabMenu`).
 - `settings/TutorialScreen.kt`: the interactive tutorial (lessons, practice areas, saved progress).
 - `settings/SearchShortcuts.kt`: address bar search keywords (`resolve`, built-in list, your own saved in `SettingsRepository`).

@@ -739,6 +739,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Control colours set to ${style.label}")
     }
 
+    private val _hapticStrength = MutableStateFlow(com.makemission.ora.ui.HapticStrength.fromKey(prefs.getString(KEY_HAPTICS, null)))
+    /** How much Ora vibrates on touch. */
+    val hapticStrength: StateFlow<com.makemission.ora.ui.HapticStrength> = _hapticStrength.asStateFlow()
+
+    fun setHapticStrength(strength: com.makemission.ora.ui.HapticStrength) {
+        prefs.edit().putString(KEY_HAPTICS, strength.key).apply()
+        _hapticStrength.value = strength
+        BrowserLog.info("settings", "Touch feedback set to ${strength.label}")
+    }
+
     private val _barButton = MutableStateFlow(BarButton.fromKey(prefs.getString(KEY_BAR_BUTTON, null)))
     /** The action of the extra round button in the Compact bar. */
     val barButton: StateFlow<BarButton> = _barButton.asStateFlow()
@@ -974,6 +984,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_PHONE_BAR = "phone_bar_style"
         private const val KEY_TABLET_BAR = "tablet_bar_style"
         private const val KEY_BAR_BUTTON = "bar_button"
+        private const val KEY_HAPTICS = "haptic_strength"
         /** Empty means the Ora start page, which is what Home opened before the address was honoured. */
         const val DEFAULT_HOME_PAGE = ""
 

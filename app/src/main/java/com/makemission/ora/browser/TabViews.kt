@@ -115,6 +115,7 @@ fun TabGrid(
     /** Opens a bookmark or history address in a new tab. */
     onOpenUrl: (String) -> Unit = {},
 ) {
+    val haptics = com.makemission.ora.ui.LocalOraHaptics.current
     // Search open tabs by title or address, as the sidebar does; the grid shows only the matches.
     var query by rememberSaveable { mutableStateOf("") }
     val needle = query.trim()
@@ -276,8 +277,8 @@ fun TabGrid(
                     title = tab.shownTitle(displayUrl(tab.url)),
                     thumbnail = tab.thumbnail,
                     selected = tab.id == tabs.selectedId,
-                    onClick = { onSelect(tab.id) },
-                    onClose = { onClose(tab.id) },
+                    onClick = { haptics.play(com.makemission.ora.ui.Feel.SELECT); onSelect(tab.id) },
+                    onClose = { haptics.play(com.makemission.ora.ui.Feel.CLOSE); onClose(tab.id) },
                     onLongClick = { groupState.addTo = tab },
                     groupColor = tabs.groups.firstOrNull { it.id == tab.groupId }?.color?.color,
                     dragTabId = tab.id.takeIf { !tab.isPrivate },
@@ -306,8 +307,8 @@ fun TabGrid(
                         title = tab.shownTitle(displayUrl(tab.url)),
                         thumbnail = tab.thumbnail,
                         selected = false,
-                        onClick = { onSelect(tab.id) },
-                        onClose = { onClose(tab.id) },
+                        onClick = { haptics.play(com.makemission.ora.ui.Feel.SELECT); onSelect(tab.id) },
+                        onClose = { haptics.play(com.makemission.ora.ui.Feel.CLOSE); onClose(tab.id) },
                         onLongClick = { groupState.addTo = tab },
                         groupColor = null,
                         dragTabId = tab.id,
@@ -872,12 +873,13 @@ private enum class SidebarPanel { TABS, BOOKMARKS, HISTORY }
 
 @Composable
 internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, pill: Boolean = false, onClick: () -> Unit) {
+    val haptics = com.makemission.ora.ui.LocalOraHaptics.current
     Box(
         modifier = modifier
             .fillMaxSize()
             .clip(if (pill) androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(BrowserTokens.RadiusSmall))
             .background(if (selected) (if (pill) browserColors().Accent else browserColors().SidebarSelected) else Color.Transparent)
-            .clickable(onClick = onClick),
+            .clickable { if (!selected) haptics.play(com.makemission.ora.ui.Feel.SELECT); onClick() },
         contentAlignment = Alignment.Center
     ) {
         com.makemission.ora.ui.RollingText(
@@ -996,7 +998,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.inactiveSection(
     if (inactive.isEmpty()) return
     item(key = "inactive_header") { InactiveHeader(inactive.size, open, onToggle) }
     if (open) items(inactive, key = { it.id }) { tab ->
-        SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == selectedId, onClick = { onSelect(tab.id) }, onLongClick = { onLongClick(tab) }, dragTabId = tab.id)
+        val haptics = com.makemission.ora.ui.LocalOraHaptics.current
+        SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == selectedId, onClick = { haptics.play(com.makemission.ora.ui.Feel.SELECT); onSelect(tab.id) }, onLongClick = { onLongClick(tab) }, dragTabId = tab.id)
     }
 }
 

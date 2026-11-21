@@ -17,6 +17,7 @@ import com.makemission.ora.ui.theme.OraMotion
  */
 fun Modifier.pressFeedback(): Modifier = composed {
     val scale = remember { Animatable(1f) }
+    val haptics = LocalOraHaptics.current
     this
         .graphicsLayer {
             scaleX = scale.value
@@ -25,6 +26,7 @@ fun Modifier.pressFeedback(): Modifier = composed {
         .pointerInput(Unit) {
             detectTapGestures(
                 onPress = {
+                    haptics.play(Feel.TICK)
                     scale.animateTo(OraMotion.PRESS_SCALE, OraMotion.pressDown())
                     tryAwaitRelease()
                     scale.animateTo(1f, OraMotion.pressRelease())

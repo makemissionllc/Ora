@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import androidx.compose.ui.composed
 import android.content.ClipData
 import android.content.ClipDescription
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -32,7 +33,8 @@ private const val TAB_DRAG_LABEL = "ora-tab"
  * without moving still calls [onLongPress], so "Add to group" keeps working. Drags stay inside Ora.
  */
 @OptIn(ExperimentalFoundationApi::class)
-fun Modifier.tabDragSource(tabId: Long, accent: Color, onLongPress: (() -> Unit)?): Modifier =
+fun Modifier.tabDragSource(tabId: Long, accent: Color, onLongPress: (() -> Unit)?): Modifier = composed {
+    val haptics = com.makemission.ora.ui.LocalOraHaptics.current
     dragAndDropSource(
         drawDragDecoration = {
             drawRoundRect(accent.copy(alpha = 0.85f), size = this.size, cornerRadius = CornerRadius(12.dp.toPx()))
@@ -52,6 +54,8 @@ fun Modifier.tabDragSource(tabId: Long, accent: Color, onLongPress: (() -> Unit)
                 @Suppress("UNREACHABLE_CODE") true
             }
             if (held != null) return@awaitEachGesture
+            // Held long enough: the card is lifted.
+            haptics.play(com.makemission.ora.ui.Feel.LONG_PRESS)
             val press = down
             // Held in place and let go: the old long-press action. Moving after the hold: a drag.
             val slop = viewConfiguration.touchSlop
@@ -68,21 +72,25 @@ fun Modifier.tabDragSource(tabId: Long, accent: Color, onLongPress: (() -> Unit)
         }
         },
     )
+}
 
 /** Accepts a tab dropped on it. [onHover] says whether a tab is over it now, for highlighting. */
 @OptIn(ExperimentalFoundationApi::class)
-fun Modifier.tabDropTarget(onHover: (Boolean) -> Unit, onDrop: (Long) -> Unit): Modifier =
+fun Modifier.tabDropTarget(onHover: (Boolean) -> Unit, onDrop: (Long) -> Unit): Modifier = composed {
+    val haptics = com.makemission.ora.ui.LocalOraHaptics.current
     dragAndDropTarget(
         shouldStartDragAndDrop = { it.toAndroidDragEvent().clipDescription?.label == TAB_DRAG_LABEL },
         target = object : DragAndDropTarget {
-            override fun onEntered(event: DragAndDropEvent) = onHover(true)
+            override fun onEntered(event: DragAndDropEvent) { haptics.play(com.makemission.ora.ui.Feel.THRESHOLD); onHover(true) }
             override fun onExited(event: DragAndDropEvent) = onHover(false)
             override fun onEnded(event: DragAndDropEvent) = onHover(false)
             override fun onDrop(event: DragAndDropEvent): Boolean {
                 onHover(false)
                 val id = event.toAndroidDragEvent().clipData?.getItemAt(0)?.text?.toString()?.toLongOrNull() ?: return false
+                haptics.play(com.makemission.ora.ui.Feel.CONFIRM)
                 onDrop(id)
                 return true
             }
         },
     )
+}
