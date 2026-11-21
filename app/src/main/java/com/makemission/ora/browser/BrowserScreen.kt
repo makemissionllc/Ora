@@ -377,10 +377,29 @@ private fun BrowserContent(
     val fadePagesIn by settings.fadePagesIn.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val httpsOnly by settings.httpsOnly.collectAsState()
-    LaunchedEffect(httpsOnly) {
+    val strongPrivate by settings.strongPrivateTabs.collectAsState()
+    LaunchedEffect(httpsOnly, strongPrivate) {
         GeckoEngine.runtime(context).settings.setAllowInsecureConnections(
-            if (httpsOnly) GeckoRuntimeSettings.HTTPS_ONLY else GeckoRuntimeSettings.ALLOW_ALL
+            when {
+                httpsOnly -> GeckoRuntimeSettings.HTTPS_ONLY
+                strongPrivate -> GeckoRuntimeSettings.HTTPS_ONLY_PRIVATE
+                else -> GeckoRuntimeSettings.ALLOW_ALL
+            }
         )
+    }
+    // Strongest private tabs: these Gecko settings apply to private sessions only, so normal tabs are unchanged.
+    LaunchedEffect(strongPrivate) {
+        try {
+            val rt = GeckoEngine.runtime(context)
+            rt.settings.setFingerprintingProtectionPrivateBrowsing(strongPrivate)
+            rt.settings.contentBlocking.setCookieBehaviorPrivateMode(
+                if (strongPrivate) ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY_AND_ISOLATE_OTHERS else ContentBlocking.CookieBehavior.ACCEPT_NON_TRACKERS
+            )
+            rt.settings.contentBlocking.setEmailTrackerBlockingPrivateBrowsing(strongPrivate)
+            BrowserLog.info("privacy", "Strongest private tabs ${if (strongPrivate) "applied" else "off"}")
+        } catch (e: Exception) {
+            BrowserLog.error("privacy", "Could not apply the strongest private tab protections", e)
+        }
     }
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
@@ -516,13 +535,13 @@ private fun BrowserContent(
         if (scanned == null || com.makemission.ora.labs.LabFeature.SCAM_PATTERNS !in labs) tab.setScanFindings(emptyList())
         else tab.setScanFindings(com.makemission.ora.labs.ScamPatterns.inspect(scanned))
     }
-    LaunchedEffect(labs) {
+    LaunchedEffect(labs, strongPrivate) {
         try {
             val on = { f: com.makemission.ora.labs.LabFeature -> f in labs }
             val runtime = GeckoEngine.runtime(context)
             val blocking = runtime.settings.contentBlocking
             blocking.setQueryParameterStrippingEnabled(on(com.makemission.ora.labs.LabFeature.TRACKING_PARAMS))
-            blocking.setQueryParameterStrippingPrivateBrowsingEnabled(on(com.makemission.ora.labs.LabFeature.TRACKING_PARAMS))
+            blocking.setQueryParameterStrippingPrivateBrowsingEnabled(on(com.makemission.ora.labs.LabFeature.TRACKING_PARAMS) || strongPrivate)
             blocking.setBounceTrackingProtectionMode(
                 if (on(com.makemission.ora.labs.LabFeature.BOUNCE_TRACKERS)) ContentBlocking.BounceTrackingProtectionMode.BOUNCE_TRACKING_PROTECTION_MODE_ENABLED
                 else ContentBlocking.BounceTrackingProtectionMode.BOUNCE_TRACKING_PROTECTION_MODE_DISABLED
@@ -1618,6 +1637,7 @@ private fun BrowserContent(
                     .onSizeChanged { tabSwitch.pageWidthPx = it.width.toFloat() }
             ) {
                 BrowserPage(
+                    strongPrivate = strongPrivate,
                     tab = selected,
                     pageView = pageView,
                     bookmarks = bookmarkList,
@@ -2241,6 +2261,7 @@ private fun TabOverviewContent(
 @Composable
 private fun BrowserPage(
     tab: BrowserTab,
+    strongPrivate: Boolean,
     pageView: PageView,
     bookmarks: List<Bookmark>,
     blockAds: Boolean,
@@ -2386,6 +2407,7 @@ private fun BrowserPage(
                     blockAds = blockAds,
                     onSubmit = onSubmit,
                     isPrivate = tab.isPrivate,
+                    strongPrivate = strongPrivate,
                     config = startConfig,
                     history = history,
                     onCustomize = onCustomize,
