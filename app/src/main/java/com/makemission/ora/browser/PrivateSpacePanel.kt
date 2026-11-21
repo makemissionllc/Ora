@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -82,7 +83,7 @@ fun PrivateSpacePanel(
                 val title = tab.shownTitle(displayUrl(tab.url))
                 val selected = tab.id == tabs.selectedId
                 Row(
-                    modifier = Modifier
+                    modifier = oraRowMotion()
                         .fillMaxWidth()
                         .height(BrowserTokens.SidebarRowHeight)
                         .clip(RoundedCornerShape(12.dp))

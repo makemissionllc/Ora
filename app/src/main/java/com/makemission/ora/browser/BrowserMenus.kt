@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.drawWithContent
@@ -568,7 +569,7 @@ fun LibraryScreen(
                 }
                 items(shownBookmarks, key = { it.url }) { bookmark ->
                     Row(
-                        modifier = Modifier
+                        modifier = oraRowMotion()
                             .fillMaxWidth()
                             .heightIn(min = 60.dp)
                             .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))

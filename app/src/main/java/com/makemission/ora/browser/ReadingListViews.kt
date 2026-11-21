@@ -1,5 +1,7 @@
 package com.makemission.ora.browser
 
+import androidx.compose.foundation.layout.Box
+import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -87,11 +89,11 @@ internal fun ReadingList(
         }
         if (unread.isNotEmpty()) {
             item(key = "h-unread") { ReadingHeading("Unread (${unread.size})") }
-            items(unread, key = { it.url }) { ReadingRow(it, onOpen, onToggleRead, onRemove) }
+            items(unread, key = { it.url }) { Box(oraRowMotion()) { ReadingRow(it, onOpen, onToggleRead, onRemove) } }
         }
         if (read.isNotEmpty()) {
             item(key = "h-read") { ReadingHeading("Read (${read.size})") }
-            items(read, key = { it.url }) { ReadingRow(it, onOpen, onToggleRead, onRemove) }
+            items(read, key = { it.url }) { Box(oraRowMotion()) { ReadingRow(it, onOpen, onToggleRead, onRemove) } }
         }
         if (readCount > 0) {
             item(key = "clear") {

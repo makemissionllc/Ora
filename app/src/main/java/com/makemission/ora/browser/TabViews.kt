@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.oraRowMotion
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -749,12 +750,12 @@ fun TabSidebar(
                         item { EmptySidebarText(if (bookmarks.isEmpty()) "No bookmarks yet. Use the bookmark button to save a page." else "No bookmarks match \"$needle\"") }
                     }
                     items(shownBookmarks, key = { it.url }) { bookmark ->
-                        SidebarRow(
+                        Box(oraRowMotion()) { SidebarRow(
                             label = bookmark.title,
                             url = bookmark.url,
                             selected = false,
                             onClick = { onOpenBookmark(bookmark.url) }
-                        )
+                        ) }
                     }
                 } else {
                     if (shownTabs.isEmpty() && (needle.isEmpty() || (shownBookmarks.isEmpty() && history.none { it.title.contains(needle, true) || it.url.contains(needle, true) }))) {

@@ -1,5 +1,7 @@
 package com.makemission.ora.passwords
 
+import androidx.compose.foundation.layout.Box
+import com.makemission.ora.ui.oraRowMotion
 import com.makemission.ora.ui.theme.BrowserTokens
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -103,6 +105,7 @@ fun PasswordsScreen(onDone: () -> Unit) {
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(shown, key = { it.guid }) { login ->
+                Box(oraRowMotion()) {
                 PasswordRow(
                     login = login,
                     isRevealed = login.guid in revealed,
@@ -114,6 +117,7 @@ fun PasswordsScreen(onDone: () -> Unit) {
                     },
                     onDelete = { pendingDelete = login },
                 )
+                }
             }
         }
     }

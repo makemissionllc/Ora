@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.oraRowMotion
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
@@ -134,7 +135,7 @@ internal fun HistoryList(
                     )
                 }
                 items(rows, key = { it.url }) { entry ->
-                    HistoryRow(entry, onOpen = { onOpen(entry.url) }, onRemove = { onRemove(entry.url) })
+                    Box(oraRowMotion()) { HistoryRow(entry, onOpen = { onOpen(entry.url) }, onRemove = { onRemove(entry.url) }) }
                 }
             }
             if (entries.isNotEmpty()) {
