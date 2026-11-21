@@ -32,6 +32,12 @@ internal class DownloadNotifier(
     @SuppressLint("MissingPermission")
     private fun sync(items: List<DownloadItem>) {
         val manager = NotificationManagerCompat.from(context)
+        if (!com.makemission.ora.settings.SettingsRepository.downloadNotificationsEnabled(context)) {
+            // The switch is off: take down what is up and post nothing. The service's own notice stays (Android requires it).
+            posted.keys.toList().forEach { manager.cancel(notificationId(it)) }
+            posted.clear()
+            return
+        }
         val live = items.associateBy { it.id }
         (posted.keys - live.keys).toList().forEach { manager.cancel(notificationId(it)); posted.remove(it) }
         for (item in items) {

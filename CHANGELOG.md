@@ -8,6 +8,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ## Unreleased
 
+### 2026-11-21
+
+**Fixed**
+- Two settings that did nothing now work. Settings > Downloads > Download notifications now really turns the per-download notifications off and on (the one notice Android requires while a download runs stays). The Home page address is now used by the Home button, and Home opens the Ora start page when it is empty, which is the new default. Saving it shows a notice, and the field says what an empty address does. (`HASH`)
+
 ### 2026-11-20
 
 **Added**
