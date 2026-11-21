@@ -80,7 +80,7 @@ object GeckoEngine {
         Preloader.mode = mode
         val ahead = Preloader.allowedNow(mode)
         BrowserLog.info("preload", "Preloading ${mode.label}; Gecko speculative connections ${if (ahead) "on" else "off"}")
-        val extra = (if (ahead) PRELOAD_PREFS else "") + labPrefs(context)
+        val extra = (if (ahead) PRELOAD_PREFS else "") + labPrefs(context) + strongPrivatePrefs(context)
         return "prefs:\n  dom.disable_open_during_load: false\n$extra" + "env: {}\nargs: []\n"
     }
 
@@ -94,6 +94,17 @@ object GeckoEngine {
         val referrer = com.makemission.ora.labs.LabFeature.REDUCED_REFERRER in on
         BrowserLog.info("labs", "Start-up labs: reduced referrer ${if (referrer) "on" else "off"}")
         return if (referrer) "  network.http.referer.XOriginPolicy: 1\n  network.http.referer.trimmingPolicy: 2\n  network.http.referer.XOriginTrimmingPolicy: 2\n" else ""
+    }
+
+    /**
+     * Strongest private tabs, start-up part: Gecko's full fingerprint resistance for private windows only
+     * (pbmode). Sites then see English (US) as the language, UTC as the time zone, a rounded window size and
+     * no real hardware details. Normal tabs are not touched. Takes effect the next time Ora starts.
+     */
+    private fun strongPrivatePrefs(context: Context): String {
+        val on = com.makemission.ora.settings.SettingsRepository(context).strongPrivateTabs.value
+        BrowserLog.info("privacy", "Start-up: private-tab fingerprint resistance ${if (on) "on" else "off"}")
+        return if (on) "  privacy.resistFingerprinting.pbmode: true\n  privacy.spoof_english: 2\n  privacy.resistFingerprinting.letterboxing: false\n" else ""
     }
 
     private const val PRELOAD_PREFS = "  network.predictor.enabled: true\n" +

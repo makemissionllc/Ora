@@ -74,6 +74,8 @@ fun StartPage(
     onOpenInNewTab: (String) -> Unit = {},
     /** Private tabs say so on the start page, so the user knows what is not kept. */
     isPrivate: Boolean = false,
+    /** Strongest private tabs is on: the Privacy card says what a private tab hides. */
+    strongPrivate: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     val colors = browserColors()
@@ -158,7 +160,11 @@ fun StartPage(
                     ) {
                         StatusCard(
                             label = "PRIVACY",
-                            value = if (blockAds) "Blocking ads and trackers" else "Standard protection",
+                            value = when {
+                                isPrivate && strongPrivate -> "Private: details hidden, HTTPS only"
+                                blockAds -> "Blocking ads and trackers"
+                                else -> "Standard protection"
+                            },
                             modifier = Modifier.weight(1f)
                         )
                         StatusCard(

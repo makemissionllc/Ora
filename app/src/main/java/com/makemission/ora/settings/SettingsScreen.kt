@@ -176,6 +176,7 @@ fun SettingsScreen(
     val appLockWholeApp by settings.appLockWholeApp.collectAsState()
     var appLockDialog by remember { mutableStateOf(false) }
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
+    val strongPrivateTabs by settings.strongPrivateTabs.collectAsState()
     val labsOn by settings.labs.collectAsState()
     val quickResume by settings.quickResume.collectAsState()
     val siteTextSizes = remember { SiteTextSizes.get(noticeContext) }
@@ -1303,6 +1304,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = fingerprintingProtection, label = "Switch", onChange = { settings.setFingerprintingProtection(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setStrongPrivateTabs(!strongPrivateTabs) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Strongest private tabs", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Private tabs only: hide your language, time zone and device details, use HTTPS only, keep cookies isolated and strip tracking links. Your network address is still visible to sites; use a VPN to hide it.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = strongPrivateTabs, label = "Switch", onChange = { settings.setStrongPrivateTabs(it) })
                             }
                         }
                     }
