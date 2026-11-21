@@ -73,6 +73,7 @@ fun LockScreen(
         enter = fadeIn(OraMotion.overlayFadeIn()) + scaleIn(OraMotion.overlayScaleIn(), OraMotion.MORPH_SCALE),
         exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), OraMotion.MORPH_SCALE)
     ) {
+        com.makemission.ora.ui.ScreenOwnsStatusBar()
         var pin by remember { mutableStateOf("") }
         var error by remember { mutableStateOf<String?>(null) }
         var waitMs by remember { mutableStateOf(AppLock.lockoutRemainingMs(settings)) }

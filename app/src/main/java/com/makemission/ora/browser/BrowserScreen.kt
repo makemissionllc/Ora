@@ -1032,12 +1032,15 @@ private fun BrowserContent(
      * The colour behind the status bar: the start page's grey on the start page, otherwise the page's own top colour
      * once it has loaded, and the theme background until one is known. It eases between colours with the shared enter motion.
      */
-    val stripColor = if (selected.url == BrowserTabs.START_URL) {
+    // A full-screen app page that is open owns the bar: its own background, no scroll fade (see ScreenOwnsStatusBar).
+    val ownedStrip = com.makemission.ora.ui.StatusBarOwner.color
+    val stripColor = ownedStrip ?: if (selected.url == BrowserTabs.START_URL) {
         browserColors().GridBackground
     } else {
         selected.topColor ?: MaterialTheme.colorScheme.background
     }
-    val barColor by animateColorAsState(stripColor, OraMotion.enter(), label = "status strip")
+    val easedStrip by animateColorAsState(stripColor, OraMotion.enter(), label = "status strip")
+    val barColor = ownedStrip ?: easedStrip
     // Dark icons on a light strip, light icons on a dark one. Set on the window so the system bar follows the page.
     val statusWindow = (context as? Activity)?.window
     LaunchedEffect(stripColor, statusWindow) {
@@ -2051,7 +2054,7 @@ private fun BrowserContent(
             // The page runs up under the status bar: a solid strip in the page's colour at the top, a soft fade once it scrolls.
             StatusBarOverlay(
                 color = barColor,
-                scrolled = selected.scrolled,
+                scrolled = selected.scrolled && ownedStrip == null,
                 modifier = Modifier.align(Alignment.TopCenter),
             )
             // Transparent around the pill: the page shows through, so the row seems to float over it.
@@ -2090,7 +2093,7 @@ private fun BrowserContent(
                 // Phone: the strip behind the status bar matches the page's top colour, and fades once the page scrolls.
                 StatusBarOverlay(
                     color = barColor,
-                    scrolled = selected.scrolled,
+                    scrolled = selected.scrolled && ownedStrip == null,
                     modifier = Modifier.align(Alignment.TopCenter),
                 )
             }

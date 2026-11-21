@@ -58,6 +58,7 @@ private const val ARM_DELAY_MS = 1000L
  */
 @Composable
 fun BeforeYouStartScreen(onAccept: () -> Unit) {
+    com.makemission.ora.ui.ScreenOwnsStatusBar()
     val tablet = LocalConfiguration.current.screenWidthDp >= 600
     var armed by remember { mutableStateOf(false) }
     var showFull by remember { mutableStateOf(false) }
