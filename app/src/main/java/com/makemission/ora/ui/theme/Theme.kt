@@ -110,6 +110,8 @@ object BrowserTokens {
     /** Corner radius for cards on Settings, Extensions and the library. */
     val CardRadius = RadiusMedium
     val SettingsCardRadius = 20.dp
+    /** Height of the drawn, animated scene at the top of each Settings page. */
+    val SettingsIllustrationHeight = 156.dp
 
     /** Widest the reader's control bar grows (design: tablet reader view). */
     val ReaderBarWidth = 560.dp

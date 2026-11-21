@@ -324,6 +324,24 @@ fun SettingsScreen(
                         // Keep the list above the keyboard so a field being edited and its Save button stay reachable.
                         .imePadding(),
                 ) {
+                    // The drawn scene for the open category: a hand taps, the device responds (see SettingsIllustration).
+                    item {
+                        val open = if (isTablet) category else (lastPhoneCategory ?: category)
+                        SettingsIllustration(
+                            when (open) {
+                                SettingsCategory.APPEARANCE -> SettingsScene.APPEARANCE
+                                SettingsCategory.TABS -> SettingsScene.TABS
+                                SettingsCategory.PRIVACY -> SettingsScene.PRIVACY
+                                SettingsCategory.SEARCH -> SettingsScene.SEARCH
+                                SettingsCategory.HOME -> SettingsScene.HOME
+                                SettingsCategory.DEVICES -> SettingsScene.DEVICES
+                                SettingsCategory.LAB -> SettingsScene.LABS
+                                SettingsCategory.DIAGNOSTICS -> SettingsScene.DIAGNOSTICS
+                                SettingsCategory.ABOUT -> SettingsScene.ABOUT
+                            },
+                            modifier = Modifier.padding(bottom = 16.dp),
+                        )
+                    }
                     if (shown(SettingsCategory.APPEARANCE)) item {
                         SectionTitle("Appearance")
                         Column(

@@ -12,6 +12,7 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 - Reading list sync across devices (`feature/reading-list-device-sync`, `fe789b4`): shared per-profile `ReadingListRepository`, removals and read marks merged last-writer-wins (`ReadingMerge`, unit tested), sync on device appearing and after local changes, "Sync reading list" switch in Settings > Devices. Previous component: the Devices category row; no new surface. Android-drawn surfaces: none.
 
 - Continue where you left off (`feature/device-continue`, `f3db92c`): "Continue from <device>" row in the page menu, shown for a page from a paired device under 15 minutes old that is not open here; Settings > Devices switch. Previous component: the page menu (row grows and folds with it). Android-drawn surfaces: none.
+- Settings illustrations (`feature/settings-illustrations`, `94c6cf1`): a looping hand-and-device drawing at the top of each Settings page (`settings/SettingsIllustrations.kt`), nine scenes. Previous component: the Settings category row (page) and the rail (tablet, fades). No Android-drawn surfaces.
 
 - Device link and Send to a device (`feature/device-link-send-tab`, `afac9c9`): Settings > Devices (switch, name, pairing by six digit code, forget), encrypted LAN transport with an outbox, "Send to a device" in the page menu, and a card when a page arrives. Previous component: the Devices category row (page), the pressed control (cards), the "Send to a device" menu row (Send card); the arrival card has none (driven by another device). Android-drawn surfaces: none.
 
@@ -253,6 +254,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | --- | --- | --- | --- | --- |
 | 2026-11-21 | `fe789b4` | Reading list sync across devices | Not checked (no adb; build and unit tests only) | Not checked |
 | 2026-11-21 | `f3db92c` | Continue where you left off | Not checked (no adb; build and unit tests only) | Not checked |
+| 2026-11-21 | `94c6cf1` | Settings illustrations | Not checked (no adb or emulator here; compiled only, drawings not yet looked at) | Not checked |
 | 2026-11-21 | `afac9c9` | Device link and Send to a device | Not checked (no adb here; build and unit tests only) | Not checked |
 | 2026-11-21 | `63c7ac9` | Phone Settings categories | Phone (Wi-Fi): list of eight categories shown; Privacy and Tabs each opened with only their own sections; the back arrow and the system Back both returned to the list. A first build showed the bar picker under Privacy; fixed. The grow-from-row motion was too quick to catch. Not checked: the other categories, Light and Pure dark. | Not checked (tablet rail unchanged in code, not seen) |
 | 2026-11-21 | `30e7a8e` | Extensions list and quick switcher row motion | Phone (Wi-Fi): Quick switcher typed `goo` and the rows narrowed to matches; Extensions opened from the menu and its search took input. The slide itself was too quick to catch. | Not checked |
