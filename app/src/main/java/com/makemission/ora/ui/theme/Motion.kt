@@ -199,4 +199,12 @@ object OraMotion {
             animation = tween(durationMillis = if (ValueAnimator.areAnimatorsEnabled()) 1100 else 0, easing = FastOutSlowInEasing),
             repeatMode = androidx.compose.animation.core.RepeatMode.Reverse,
         )
+
+    /** One full play of a Settings page illustration (a hand taps, the device responds), then it starts over. */
+    const val ILLUSTRATION_MS = 5200
+    fun illustrationLoop(): androidx.compose.animation.core.InfiniteRepeatableSpec<Float> =
+        androidx.compose.animation.core.infiniteRepeatable(
+            animation = tween(durationMillis = ILLUSTRATION_MS, easing = androidx.compose.animation.core.LinearEasing),
+            repeatMode = androidx.compose.animation.core.RepeatMode.Restart,
+        )
 }
