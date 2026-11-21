@@ -175,6 +175,19 @@ object OraMotion {
         if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow)
         else tween(durationMillis = 0)
 
+    /** Rows of a menu arriving one after another: each starts [STAGGER_MS] later than the one above, over the standard time. */
+    const val STAGGER_MS = 28
+    fun <T> stagger(index: Int): FiniteAnimationSpec<T> =
+        tween(
+            durationMillis = if (ValueAnimator.areAnimatorsEnabled()) STANDARD_MS else 0,
+            delayMillis = if (ValueAnimator.areAnimatorsEnabled()) (index.coerceAtMost(8)) * STAGGER_MS else 0,
+            easing = emphasised,
+        )
+
+    /** An icon that has just changed state (a saved bookmark, a stop turning into a reload) lands with a small bounce. */
+    fun <T> pop(): FiniteAnimationSpec<T> =
+        if (ValueAnimator.areAnimatorsEnabled()) spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMedium) else tween(0)
+
     /** One slow breath of the "still loading" pulse. Instant when the system has animations turned off. */
     const val PULSE_MS = 1100
     /** Lowest opacity of the pulse; the placeholder stays readable at its dimmest. */
