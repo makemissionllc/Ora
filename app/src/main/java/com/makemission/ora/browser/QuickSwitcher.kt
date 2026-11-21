@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -144,7 +145,7 @@ fun QuickSwitcher(items: List<QuickItem>, onPick: (QuickItem) -> Unit, onDismiss
                 } else LazyColumn(state = listState, modifier = Modifier.heightIn(max = 360.dp)) {
                     itemsIndexed(results, key = { _, item -> "${item.kind}:${item.key}" }) { index, item ->
                         Row(
-                            Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                            oraRowMotion().fillMaxWidth().heightIn(min = 48.dp)
                                 .background(if (index == selected) colors.AddressBarBackground else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(BrowserTokens.RadiusSmall))
                                 .clickable { pick(item) }.padding(horizontal = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
