@@ -60,6 +60,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `settings/SavedSessions.kt` and `browser/SessionsDialog.kt`: named sets of open tabs (per profile, never private tabs) and the dialog that saves, opens and deletes them.
 - `settings/StartPageConfig.kt`, `browser/StartPage.kt`, `browser/StartPageEditor.kt`: the customizable start page (parts and order, shortcut source, tile look; pinned sites) and its Customize sheet.
 - `ui/Haptics.kt`: the touch feelings and strengths (`Feel`, `HapticStrength`, `LocalOraHaptics`); the Settings row is Touch feedback.
+- `ui/ScreenStatusBar.kt`: `ScreenOwnsStatusBar()`, the hook every full-screen app page calls so the status bar takes the page's own background and icon colour while it is open; the browser's site tint returns when it closes.
 - `ui/RowMotion.kt`: `oraRowMotion()`, the shared fade and slide for list rows (use it on every keyed list row).
 - `browser/QuickNewTab.kt`: the long-press menu on every New tab button (`rememberQuickMenu`, `quickAnchor`, `QuickNewTabMenu`).
 - `settings/TutorialScreen.kt`: the interactive tutorial (lessons, practice areas, saved progress).

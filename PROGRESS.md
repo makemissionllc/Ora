@@ -145,6 +145,7 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 - Default browser row in Settings > About, and web links from other apps open in a new tab (`462778d`). The system request dialog is not yet checked on a device.
 - Keeps tabs, the page and the search when the screen rotates (`configChanges` in the manifest, so the activity is not recreated).
 - Clears the link menu when a new page starts.
+- Full-screen app pages own the status bar (Settings and subpages, Library, Downloads, Extensions, first-run, App lock) through `ScreenOwnsStatusBar()` in `ui/ScreenStatusBar.kt`; the site tint returns when they close (`5e49250`). Rule 22 was lifted by the user for this change only. Previous component: none (system-level bar, no morph).
 
 ## Being finished
 
@@ -476,3 +477,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-21 | `be483b7` | Pairing code visibility | Phone (CPH2745, Android 17): the Pair a device card listed 25091RP04G and pairing completed (log: Paired with 25091RP04G). | Tablet (25091RP04G, Android 16): showed the code; pairing completed. Light and Pure dark: Not checked. |
 | 2026-11-21 | `c639a6b` | Send to a device crash fix | Phone: received a page from the tablet, the From card showed Later and Open, Open loaded the page. The phone Send dialog itself: Not checked. | Tablet: the Send card opened without a crash and Send delivered. Send later and phone-to-tablet: Not checked. |
 | 2026-11-21 | n/a | Continue from another device, reading list sync | Not checked | Not checked (the tablet was in use, so testing stopped) |
+| 2026-11-21 | `5e49250` | Status bar on app screens | Phone (CPH2745, Android 17), screenshots: Dark theme, Settings from a white site and from a dark site showed a Basalt bar with light icons, and the site tint returned after closing. Light theme, Settings from the dark site showed a Stone bar with dark icons and the dark tint returned after Done; Library from the white site showed a Stone bar with dark icons and the white strip returned after Done. Not checked: Downloads, Extensions, first-run screens, App lock, Pure dark | Not checked |

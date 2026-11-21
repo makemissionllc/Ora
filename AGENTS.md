@@ -63,6 +63,7 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
     - `BrowserTokens.StatusScrollFade` (the 84 dp fade) in `ui/theme/Theme.kt`.
     - `topColor` on the tab in `browser/BrowserTabs.kt`.
     There is no `ThemeColor.kt` or `assets/theme-color/` on this line; the page's own `theme-color` is not read. Keep all of it exactly as it is in the current code.
+22a. **One sanctioned hook.** Full-screen app pages (Settings and subpages, Library, Downloads, Extensions, onboarding, App lock) own the bar through `ScreenOwnsStatusBar()` in `ui/ScreenStatusBar.kt`; a new full-screen page calls it too. The user allowed this one change to the frozen code; it does not lift rule 22 for anything else.
 23. **Ask before touching the status bar.** If a task appears to need a status-bar change, stop and check with the user first, every time, even when the change looks small. Do not edit status-bar code without that yes.
 
 ## Layout rules (protected)
