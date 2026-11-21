@@ -365,6 +365,27 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Password autofill ${if (enabled) "on" else "off"}")
     }
 
+    private val _deviceLink = MutableStateFlow(prefs.getBoolean(KEY_DEVICE_LINK, false))
+    /** When on, this device finds the person's other Ora devices on the same Wi-Fi and can exchange pages with the ones it was paired with. Off until chosen. */
+    val deviceLink: StateFlow<Boolean> = _deviceLink.asStateFlow()
+
+    fun setDeviceLink(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEVICE_LINK, enabled).apply()
+        _deviceLink.value = enabled
+        BrowserLog.info("settings", "Link devices ${if (enabled) "on" else "off"}")
+    }
+
+    private val _deviceName = MutableStateFlow(prefs.getString(KEY_DEVICE_NAME, null) ?: com.makemission.ora.devices.PairedDevices.defaultName())
+    /** The name other devices see for this one. Starts as the phone or tablet model. */
+    val deviceName: StateFlow<String> = _deviceName.asStateFlow()
+
+    fun setDeviceName(name: String) {
+        val clean = name.trim().take(40).ifBlank { com.makemission.ora.devices.PairedDevices.defaultName() }
+        prefs.edit().putString(KEY_DEVICE_NAME, clean).apply()
+        _deviceName.value = clean
+        BrowserLog.info("settings", "Device name changed")
+    }
+
     private val _cookieBehavior = MutableStateFlow(prefs.getInt(KEY_COOKIE_BEHAVIOR, COOKIES_ALLOW_ALL))
     /** Cookie policy, as GeckoView's CookieBehavior values: [COOKIES_ALLOW_ALL], [COOKIES_BLOCK_THIRD_PARTY] or [COOKIES_BLOCK_ALL]. */
     val cookieBehavior: StateFlow<Int> = _cookieBehavior.asStateFlow()
@@ -975,6 +996,8 @@ class SettingsRepository(context: Context) {
         const val TEXT_SIZE_STEP = 10
         private const val KEY_AUTOFILL_PASSWORDS = "autofill_passwords"
         private const val KEY_COOKIE_BEHAVIOR = "cookie_behavior"
+        private const val KEY_DEVICE_LINK = "device_link"
+        private const val KEY_DEVICE_NAME = "device_name"
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_ALL. */
         const val COOKIES_ALLOW_ALL = 0
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY. */

@@ -686,6 +686,15 @@ private fun BrowserContent(
     var showShortcuts by remember { mutableStateOf(false) }
     var showSwitcher by remember { mutableStateOf(false) }
     var showSessions by remember { mutableStateOf(false) }
+    // Device link: the switch in Settings starts or stops it; pages other devices send arrive through the inbox.
+    val deviceLinkOn by settings.deviceLink.collectAsState()
+    val deviceName by settings.deviceName.collectAsState()
+    val deviceInbox = remember { com.makemission.ora.devices.DeviceHub.inbox(context) }
+    val pairedDevices by com.makemission.ora.devices.DeviceHub.link(context).store.devices.collectAsState()
+    var showSendToDevice by remember { mutableStateOf(false) }
+    var arrivedTab by remember { mutableStateOf<com.makemission.ora.devices.ReceivedTab?>(null) }
+    LaunchedEffect(deviceLinkOn, deviceName) { com.makemission.ora.devices.DeviceHub.apply(context, deviceLinkOn, deviceName) }
+    LaunchedEffect(Unit) { deviceInbox.arrived.collect { arrivedTab = it } }
     // Site tweaks: dark, wide text and a font per site. Never read or written for a private tab.
     var showTweaks by remember { mutableStateOf(false) }
     val tweakStore = remember { com.makemission.ora.settings.SiteTweaks.get(context) }
@@ -1039,6 +1048,31 @@ private fun BrowserContent(
             onPick = { startZapPick() },
             onShowAgain = { host -> elementZapper.clear(host); InAppNotices.show("Hidden parts of $host are back. Reload the page to see them.") },
             onDismiss = { showZapper = false },
+        )
+    }
+    if (showSendToDevice) {
+        val sendable = selected.url.takeIf { !selected.isPrivate && it != BrowserTabs.START_URL && com.makemission.ora.devices.TabInbox.isWebAddress(it) }
+        com.makemission.ora.devices.SendToDeviceDialog(
+            url = sendable,
+            title = selected.title,
+            inbox = deviceInbox,
+            onOpenReceived = { item -> tabs.newTab(item.url); deviceInbox.remove(item.id); BrowserLog.info("devices", "Opened a page from \"${item.fromName}\"") },
+            onDismiss = { showSendToDevice = false },
+        )
+    }
+    // A page arrived from another device. Previous component: none (it is driven by the other device, not by a press here).
+    arrivedTab?.let { item ->
+        com.makemission.ora.ui.OraDialog(
+            onDismissRequest = { arrivedTab = null },
+            title = { Text("From ${item.fromName}") },
+            text = { Text("${item.title}\n${com.makemission.ora.log.LogPrivacy.domainOf(item.url)}") },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { arrivedTab = null }) { Text("Later", color = browserColors().SecondaryText) } },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    tabs.newTab(item.url); deviceInbox.remove(item.id); arrivedTab = null
+                    BrowserLog.info("devices", "Opened a page from \"${item.fromName}\"")
+                }) { Text("Open", color = browserColors().Accent, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold) }
+            },
         )
     }
     if (showSessions) {
@@ -1823,6 +1857,8 @@ private fun BrowserContent(
                                 HomeShortcut.add(context, url, selected.title)
                             }
                         },
+                        onSendToDevice = if (deviceLinkOn) ({ UsageStats.count("menu.send_to_device"); showSendToDevice = true }) else null,
+                        sendToDeviceHint = if (pairedDevices.isEmpty()) "Pair a device in Settings first" else "${pairedDevices.size} paired",
                         onOpenInMainBrowser = selected.url.takeIf { remember(it) { MainBrowserHandoff.isAvailable(context, it) } }?.let { url ->
                             {
                                 UsageStats.count("menu.open_in_main_browser")

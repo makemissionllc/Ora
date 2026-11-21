@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.outlined.AddToHomeScreen
+import androidx.compose.material.icons.outlined.Devices
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Article
@@ -134,6 +135,9 @@ fun BrowserMenuSheet(
     onAddToHome: () -> Unit,
     /** Null hides the row; set on https pages only (see [MainBrowserHandoff]). */
     onOpenInMainBrowser: (() -> Unit)? = null,
+    /** Null hides the row. Set when Link my devices is on; opens the "Send to a device" card. [sendToDeviceHint] says how many are paired or waiting. */
+    onSendToDevice: (() -> Unit)? = null,
+    sendToDeviceHint: String? = null,
     /** Title of the tab "Reopen closed tab" would bring back, or null when no tab was closed this run. */
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
@@ -171,6 +175,8 @@ fun BrowserMenuSheet(
             onCopyAddress = { act(onCopyAddress) },
             onAddToHome = { act(onAddToHome) },
             onOpenInMainBrowser = onOpenInMainBrowser?.let { open -> { act(open) } },
+            onSendToDevice = onSendToDevice?.let { send -> { act(send) } },
+            sendToDeviceHint = sendToDeviceHint,
             closedTabTitle = closedTabTitle,
             onReopenClosed = { act(onReopenClosed) },
         )
@@ -213,6 +219,8 @@ private fun BrowserMenuItems(
     onCopyAddress: () -> Unit,
     onAddToHome: () -> Unit,
     onOpenInMainBrowser: (() -> Unit)?,
+    onSendToDevice: (() -> Unit)?,
+    sendToDeviceHint: String?,
     closedTabTitle: String?,
     onReopenClosed: () -> Unit,
 ) {
@@ -253,6 +261,10 @@ private fun BrowserMenuItems(
             MenuRow(Icons.Outlined.Folder, "Saved sessions", onSessions, subtitle = "Save your open tabs, or open a saved set")
             MenuRow(Icons.Outlined.PictureAsPdf, "Save as PDF", onSavePdf, subtitle = "To Downloads, named after the page")
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
+            // Quality of life: pages sent to a device that is asleep wait in an outbox and arrive when it wakes.
+            if (onSendToDevice != null) {
+                MenuRow(Icons.Outlined.Devices, "Send to a device", onSendToDevice, subtitle = sendToDeviceHint, chevron = true)
+            }
             MenuRow(Icons.Outlined.AddToHomeScreen, "Add to home screen", onAddToHome)
             // Quality of life: when a site's passkey sign-in fails in Ora, one tap carries the page to another browser.
             if (onOpenInMainBrowser != null) {
