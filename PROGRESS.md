@@ -9,6 +9,8 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 
 ## Done
 
+- Reading list sync across devices (`feature/reading-list-device-sync`, `fe789b4`): shared per-profile `ReadingListRepository`, removals and read marks merged last-writer-wins (`ReadingMerge`, unit tested), sync on device appearing and after local changes, "Sync reading list" switch in Settings > Devices. Previous component: the Devices category row; no new surface. Android-drawn surfaces: none.
+
 - Continue where you left off (`feature/device-continue`, `f3db92c`): "Continue from <device>" row in the page menu, shown for a page from a paired device under 15 minutes old that is not open here; Settings > Devices switch. Previous component: the page menu (row grows and folds with it). Android-drawn surfaces: none.
 - Settings illustrations (`feature/settings-illustrations`, `94c6cf1`): a looping hand-and-device drawing at the top of each Settings page (`settings/SettingsIllustrations.kt`), nine scenes. Previous component: the Settings category row (page) and the rail (tablet, fades). No Android-drawn surfaces.
 
@@ -226,6 +228,8 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 
 ## Known issues
 
+- Reading list sync covers the first profile only (profile ids differ between devices). Not yet run between two real devices.
+
 - Device link works only while Ora is open on both devices and both are on the same Wi-Fi (there is no background service); pages for an away device wait in the outbox for 24 hours. Pairing uses a six digit code and closes after five wrong tries; it has not been run on a device yet.
 
 - Phone, USB keyboard events sent by adb: Ctrl+Shift+D and Ctrl+Shift+O sometimes did nothing once the page or address bar had been used, yet worked straight after launch (seen 2026-11-20). Cause not found; not checked with a real keyboard.
@@ -248,6 +252,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-21 | `fe789b4` | Reading list sync across devices | Not checked (no adb; build and unit tests only) | Not checked |
 | 2026-11-21 | `f3db92c` | Continue where you left off | Not checked (no adb; build and unit tests only) | Not checked |
 | 2026-11-21 | `94c6cf1` | Settings illustrations | Not checked (no adb or emulator here; compiled only, drawings not yet looked at) | Not checked |
 | 2026-11-21 | `afac9c9` | Device link and Send to a device | Not checked (no adb here; build and unit tests only) | Not checked |

@@ -385,6 +385,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Continue on another device ${if (enabled) "on" else "off"}")
     }
 
+    private val _deviceReading = MutableStateFlow(prefs.getBoolean(KEY_DEVICE_READING, true))
+    /** When on (and Link my devices is on), the reading list is kept the same on every paired device. Only the first profile is synced. */
+    val deviceReading: StateFlow<Boolean> = _deviceReading.asStateFlow()
+
+    fun setDeviceReading(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEVICE_READING, enabled).apply()
+        _deviceReading.value = enabled
+        BrowserLog.info("settings", "Reading list sync ${if (enabled) "on" else "off"}")
+    }
+
     private val _deviceName = MutableStateFlow(prefs.getString(KEY_DEVICE_NAME, null) ?: com.makemission.ora.devices.PairedDevices.defaultName())
     /** The name other devices see for this one. Starts as the phone or tablet model. */
     val deviceName: StateFlow<String> = _deviceName.asStateFlow()
@@ -1009,6 +1019,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_DEVICE_LINK = "device_link"
         private const val KEY_DEVICE_NAME = "device_name"
         private const val KEY_DEVICE_CONTINUE = "device_continue"
+        private const val KEY_DEVICE_READING = "device_reading"
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_ALL. */
         const val COOKIES_ALLOW_ALL = 0
         /** GeckoView ContentBlocking.CookieBehavior.ACCEPT_FIRST_PARTY. */

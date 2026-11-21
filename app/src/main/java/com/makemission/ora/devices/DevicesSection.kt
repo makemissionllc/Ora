@@ -59,6 +59,7 @@ fun DevicesSection(settings: SettingsRepository) {
     val on by settings.deviceLink.collectAsState()
     val name by settings.deviceName.collectAsState()
     val shareCurrent by settings.deviceContinue.collectAsState()
+    val syncReading by settings.deviceReading.collectAsState()
     val paired by link.store.devices.collectAsState()
     val peers by link.peers.collectAsState()
     var renaming by remember { mutableStateOf(false) }
@@ -103,6 +104,18 @@ fun DevicesSection(settings: SettingsRepository) {
                     Text("Let your paired devices see the page you have open, so they can offer to continue it. Private tabs are never shared.", fontSize = 14.sp, color = colors.SecondaryText)
                 }
                 MineralSwitch(checked = shareCurrent, label = "Continue on another device", onChange = { settings.setDeviceContinue(it) })
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
+                    .clickable { settings.setDeviceReading(!syncReading) }.padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text("Sync reading list", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText)
+                    Text("Keep the pages you saved to read later the same on every paired device. Applies to your first profile; private tabs are never added.", fontSize = 14.sp, color = colors.SecondaryText)
+                }
+                MineralSwitch(checked = syncReading, label = "Sync reading list", onChange = { settings.setDeviceReading(it) })
             }
             Text("Paired devices", modifier = Modifier.padding(start = 4.dp, top = 8.dp), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
             Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)) {
