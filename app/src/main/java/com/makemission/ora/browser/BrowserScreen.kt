@@ -353,6 +353,8 @@ private fun BrowserContent(
     fun historyFor(id: String): HistoryRepository = historyByProfile.getOrPut(id) { HistoryRepository(context, id) }
     val history = remember(profileId) { historyFor(profileId) }
     val historyList by history.entries.collectAsState()
+    val startConfig by settings.startPage.collectAsState()
+    var showStartEditor by remember { mutableStateOf(false) }
     val saveHistory by settings.saveHistory.collectAsState()
     // Site permission answers are per profile too, the same as history.
     val sitePermissionStores = remember { HashMap<String, SitePermissionStore>() }
@@ -1519,8 +1521,16 @@ private fun BrowserContent(
                     zoneColor = barColor,
                     // Phone Compact: the page ends above the floating row, which GeckoView is told about (0 elsewhere).
                     bottomClipPx = if (phoneCompact) bottomBarPx else 0,
-                    onSubmit = { input -> submitAddress(input) }
+                    onSubmit = { input -> submitAddress(input) },
+                    startConfig = startConfig,
+                    history = historyList,
+                    onCustomize = { showStartEditor = true },
+                    onOpenInNewTab = { url ->
+                        tabs.newTab(url, isPrivate = selected.isPrivate)
+                        InAppNotices.show("Opened in a new tab")
+                    },
                 )
+                if (showStartEditor) StartPageEditor(startConfig, settings) { showStartEditor = false }
                 // The tab switch capsules cover the page while a switch runs, so the new session swaps in unseen.
                 TabSwitchOverlay(tabSwitch)
                 // The full-screen video's own player controls sit over the page (tap for controls, swipes, skip, speed).
@@ -2116,6 +2126,10 @@ private fun BrowserPage(
     /** Phone Compact only: the height of the floating row at the bottom, which the page ends above. 0 elsewhere. */
     bottomClipPx: Int,
     onSubmit: (String) -> Unit,
+    startConfig: com.makemission.ora.settings.StartPageConfig,
+    history: List<com.makemission.ora.history.HistoryEntry>,
+    onCustomize: () -> Unit,
+    onOpenInNewTab: (String) -> Unit,
 ) {
     // The start page's content starts below the status bar on phones. Web pages run up under it: the strip behind
     // the bar takes the page's top colour, so the page reads as starting below it.
@@ -2241,6 +2255,10 @@ private fun BrowserPage(
                     blockAds = blockAds,
                     onSubmit = onSubmit,
                     isPrivate = tab.isPrivate,
+                    config = startConfig,
+                    history = history,
+                    onCustomize = onCustomize,
+                    onOpenInNewTab = onOpenInNewTab,
                     modifier = Modifier.fillMaxSize().padding(top = topInset),
                 )
             }

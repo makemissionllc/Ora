@@ -167,6 +167,10 @@ object BrowserTokens {
     val StartWideBreakpoint = 600.dp
     val StartSearchPadding = 16.dp
     val StartTileSize = 64.dp
+    val StartTileSmall = 52.dp
+    val StartTileLarge = 76.dp
+    /** Space a tile's slot adds to the tile itself, so names have room. */
+    val StartTileSlotExtra = 20.dp
     val StartTileRadius = RadiusLarge
     val StartTileSlot = 84.dp
     val StartCardPadding = 16.dp

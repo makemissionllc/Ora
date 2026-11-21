@@ -109,6 +109,8 @@ fun SettingsScreen(
     val videoGestures by settings.videoGestures.collectAsState()
     val videoBackExits by settings.videoBackExits.collectAsState()
     val videoOraControls by settings.videoOraControls.collectAsState()
+    val startPage by settings.startPage.collectAsState()
+    var showStartEditor by rememberSaveable { mutableStateOf(false) }
     val videoAutoPip by settings.videoAutoPip.collectAsState()
     val homePage by settings.homePage.collectAsState()
     val websiteTheme by settings.websiteTheme.collectAsState()
@@ -211,6 +213,7 @@ fun SettingsScreen(
         return
     }
     if (showShortcuts) com.makemission.ora.browser.ShortcutsCard(onDismiss = { showShortcuts = false })
+    if (showStartEditor) com.makemission.ora.browser.StartPageEditor(startPage, settings) { showStartEditor = false }
     if (showNotice) {
         com.makemission.ora.onboarding.NoticeScreen(tablet = androidx.compose.ui.platform.LocalConfiguration.current.screenWidthDp >= 600, onDone = { showNotice = false })
         return
@@ -1233,6 +1236,29 @@ fun SettingsScreen(
                                 TextButton(onClick = { settings.setHomePage(homeDraft) }) {
                                     Text("Save", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
                                 }
+                            }
+                        }
+                    }
+                    if (shown(SettingsCategory.HOME)) item {
+                        SectionTitle("Start page")
+                        // Opens the same sheet as the Customize button on the start page itself.
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable { showStartEditor = true }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text("Customize start page", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                Text(
+                                    "Choose the parts, their order, where the shortcuts come from and how the tiles look. ${startPage.shown.size} of 4 parts are on.",
+                                    fontSize = 14.sp,
+                                    color = browserColors().SecondaryText
+                                )
                             }
                         }
                     }

@@ -18,6 +18,8 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -118,6 +120,9 @@ fun TabGrid(
     // Normal and private tabs live in separate spaces (UI v2). The segmented control switches between them.
     var inPrivate by rememberSaveable { mutableStateOf(tabs.selected?.isPrivate == true) }
     val groupState = remember { GroupDialogState() }
+    // Long-pressing a New tab button opens the quick menu (private tab, paste and open, reopen, new tab in a group).
+    val quick = rememberQuickMenu()
+    QuickNewTabMenu(quick, tabs, inPrivate, onNewTab = { onNewTab() }, onNewPrivateTab = onNewPrivateTab, onDone = onDone)
     // The group whose tabs fill the overview, opened from its stacked card. Null shows groups and loose tabs.
     var openGroupId by rememberSaveable { mutableStateOf<String?>(null) }
     val openGroup = tabs.groups.firstOrNull { it.id == openGroupId }
@@ -318,7 +323,14 @@ fun TabGrid(
                     .padding(bottom = 16.dp),
                 horizontalArrangement = Arrangement.Center
             ) {
-                PillButton(if (inPrivate) "New private tab" else "New tab", onClick = { if (inPrivate) { onNewPrivateTab(); onDone() } else onNewTab() }, primary = true, icon = Icons.Filled.Add)
+                PillButton(
+                    if (inPrivate) "New private tab" else "New tab",
+                    onClick = { if (inPrivate) { onNewPrivateTab(); onDone() } else onNewTab() },
+                    primary = true,
+                    icon = Icons.Filled.Add,
+                    modifier = Modifier.quickAnchor(quick),
+                    onLongClick = { quick.open = true },
+                )
             }
             return@Column
         }
@@ -341,7 +353,8 @@ fun TabGrid(
                         .size(width = 64.dp, height = 52.dp)
                         .clip(RoundedCornerShape(26.dp))
                         .background(browserColors().Accent)
-                        .clickable { if (inPrivate) { onNewPrivateTab(); onDone() } else onNewTab() },
+                        .quickAnchor(quick)
+                        .combinedClickable(onLongClick = { quick.open = true }) { if (inPrivate) { onNewPrivateTab(); onDone() } else onNewTab() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().GridBackground, modifier = Modifier.size(24.dp))
@@ -355,15 +368,23 @@ fun TabGrid(
 
 /** Pill button from the Mineral design: Chalk fill with dark text when primary, Shale fill with Chalk text otherwise. */
 @Composable
-internal fun PillButton(text: String, onClick: () -> Unit, primary: Boolean = false, icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
+@OptIn(ExperimentalFoundationApi::class)
+internal fun PillButton(
+    text: String,
+    onClick: () -> Unit,
+    primary: Boolean = false,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    modifier: Modifier = Modifier,
+    onLongClick: (() -> Unit)? = null,
+) {
     val fill = if (primary) browserColors().Accent else browserColors().AddressBarBackground
     val content = if (primary) browserColors().GridBackground else browserColors().AddressBarText
     Row(
-        modifier = Modifier
+        modifier = modifier
             .height(48.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(fill)
-            .clickable(onClick = onClick)
+            .combinedClickable(onLongClick = onLongClick, onClick = onClick)
             .padding(horizontal = 22.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -533,6 +554,8 @@ fun TabSidebar(
     // The private space opens inside the sidebar from the pinned bottom row, in the Obsidian colours.
     var inPrivate by remember { mutableStateOf(tabs.selected?.isPrivate == true) }
     val groupState = remember { GroupDialogState() }
+    val quick = rememberQuickMenu()
+    QuickNewTabMenu(quick, tabs, inPrivate, onNewTab = onNewTab, onNewPrivateTab = onNewPrivateTab)
     var panel by remember { mutableStateOf(SidebarPanel.TABS) }
     val pillPos = remember { androidx.compose.animation.core.Animatable(0f) }
     val sidebarScope = androidx.compose.runtime.rememberCoroutineScope()
@@ -639,10 +662,18 @@ fun TabSidebar(
                 fontWeight = FontWeight.SemiBold,
                 color = browserColors().SecondaryText
             )
-            if (panel == SidebarPanel.TABS) {
-                IconButton(onClick = onNewTab) {
-                    Icon(Icons.Filled.Add, contentDescription = "New tab", tint = browserColors().Accent)
-                }
+            // The + is on every panel (Tabs, Bookmarks, History), so a new tab is one tap away wherever the sidebar is.
+            // Long-press opens the quick menu. In the private space it opens a private tab.
+            Box(
+                Modifier
+                    .size(48.dp)
+                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .quickAnchor(quick)
+                    .combinedClickable(onLongClick = { quick.open = true }) { if (inPrivate) onNewPrivateTab() else onNewTab() }
+                    .semantics { contentDescription = if (inPrivate) "New private tab" else "New tab" },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = null, tint = browserColors().Accent)
             }
         }
         // The list moves 24 dp in the direction of the change and fades through. A sideways swipe on it changes section,
