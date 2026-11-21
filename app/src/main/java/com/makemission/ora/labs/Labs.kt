@@ -77,6 +77,30 @@ enum class LabFeature(val key: String, val label: String, val detail: String, va
         "site_stats", "Site stats card",
         "Tap the padlock in the address bar to see the connection, who issued the site's certificate, when it runs out, its fingerprint, and how many trackers Ora blocked on this page."
     ),
+    HIDE_LOCAL_IP(
+        "hide_local_ip", "Hide local address from calls",
+        "Stops video-call technology (WebRTC) from telling websites your device's address on the local network. Calls still work. Applies the next time Ora starts.",
+        restart = true
+    ),
+    NO_WEBGL(
+        "no_webgl", "Turn off WebGL",
+        "Removes 3D graphics from web pages, which sites can use to tell devices apart. Some maps, games and 3D viewers stop working. Applies the next time Ora starts.",
+        restart = true
+    ),
+    NO_PDF_SCRIPTS(
+        "no_pdf_scripts", "Block scripts in PDFs",
+        "PDF files opened in Ora can no longer run their own scripts. Forms still show, but fancy calculations inside them may not. Applies the next time Ora starts.",
+        restart = true
+    ),
+    NO_SENSORS(
+        "no_sensors", "Block motion sensors and gamepads",
+        "Stops websites from reading the phone's tilt and motion sensors and from seeing game controllers, both of which can help identify a device. Applies the next time Ora starts.",
+        restart = true
+    ),
+    HIDE_PRIVATE_RECENTS(
+        "hide_private_recents", "Hide private tabs in Recents",
+        "While a private tab is on screen, Android's app switcher shows a blank card instead of the page. Screenshots and screen recording are also blocked during that time."
+    ),
     SCENARIO_LOG(
         "scenario_log", "Log risky situations",
         "Writes to Diagnostics when a page fails its security check, crashes, or sends you through a long chain of redirects."

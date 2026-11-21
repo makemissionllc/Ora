@@ -92,8 +92,15 @@ object GeckoEngine {
     private fun labPrefs(context: Context): String {
         val on = com.makemission.ora.settings.SettingsRepository(context).labs.value
         val referrer = com.makemission.ora.labs.LabFeature.REDUCED_REFERRER in on
-        BrowserLog.info("labs", "Start-up labs: reduced referrer ${if (referrer) "on" else "off"}")
-        return if (referrer) "  network.http.referer.XOriginPolicy: 1\n  network.http.referer.trimmingPolicy: 2\n  network.http.referer.XOriginTrimmingPolicy: 2\n" else ""
+        // Each start-up lab adds only its own prefs, so a lab that is off leaves Gecko's defaults alone.
+        val prefs = StringBuilder()
+        if (referrer) prefs.append("  network.http.referer.XOriginPolicy: 1\n  network.http.referer.trimmingPolicy: 2\n  network.http.referer.XOriginTrimmingPolicy: 2\n")
+        if (com.makemission.ora.labs.LabFeature.HIDE_LOCAL_IP in on) prefs.append("  media.peerconnection.ice.default_address_only: true\n  media.peerconnection.ice.no_host: true\n")
+        if (com.makemission.ora.labs.LabFeature.NO_WEBGL in on) prefs.append("  webgl.disabled: true\n")
+        if (com.makemission.ora.labs.LabFeature.NO_PDF_SCRIPTS in on) prefs.append("  pdfjs.enableScripting: false\n")
+        if (com.makemission.ora.labs.LabFeature.NO_SENSORS in on) prefs.append("  device.sensors.enabled: false\n  dom.gamepad.enabled: false\n")
+        BrowserLog.info("labs", "Start-up labs: ${on.filter { it.restart }.joinToString { it.key }.ifEmpty { "none" }}")
+        return prefs.toString()
     }
 
     /**
