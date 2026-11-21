@@ -44,6 +44,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `browser/AutofillBridge.kt`: a hidden 1 px view beside Compose that passes the page's login fields to Android's autofill framework. The framework walk stops at Compose's root view, so the GeckoView inside it is otherwise never seen.
 - `ui/theme/`: `Theme.kt` holds `BrowserTokens` (dimensions) and `browserColors()` (palettes for Light, Dark and Pure dark). `Motion.kt` holds the shared `OraMotion` values. `ui/PressFeedback.kt` has the `pressFeedback()` modifier that gives touchable elements their press response.
 - `profiles/`: `ProfilesRepository` keeps the profile list and the active one; `ProfileSwitcher` is the chip row shown in the tab overview and sidebar. Each profile's bookmarks are stored under its own key.
+- `devices/`: device linking over the local network. `DeviceLink` (discovery with NsdManager, pairing, sealed messages, outbox), `DeviceLinkCrypto`, `PairedDevices` (identity, paired list, outbox), `TabInbox` (pages sent here), `DevicesSection` (Settings > Devices), `SendToDeviceDialog`, and `DeviceHub`, which connects features to the link.
 - `log/`: `BrowserLog`, which every error and browser event goes through. It shows on Settings > Diagnostics. `UsageStats` counts feature use (action names only) on the same page.
 - `bookmarks/`: the bookmark store.
 - `browser/KeyShortcuts.kt`, `browser/ShortcutsCard.kt`: physical keyboard shortcuts (`MainActivity.dispatchKeyEvent` feeds `KeyShortcuts`; BrowserScreen acts on them) and the card that lists them.
