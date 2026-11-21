@@ -52,6 +52,9 @@ class MainActivity : ComponentActivity() {
             BrowserLog.info("app", "Started")
             UsageStats.init(applicationContext)
             com.makemission.ora.adaptive.PullLearner.init(applicationContext)
+            com.makemission.ora.adaptive.Adaptive.updatedAt = try {
+                packageManager.getPackageInfo(packageName, 0).lastUpdateTime
+            } catch (_: Exception) { 0L }
             AppLock.init(settings)
         } else {
             BrowserLog.info("app", "Window recreated (saved state ${if (savedInstanceState != null) "present" else "absent"}); startup not repeated")

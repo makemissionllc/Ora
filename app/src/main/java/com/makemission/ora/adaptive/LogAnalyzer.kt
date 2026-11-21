@@ -24,13 +24,14 @@ object LogAnalyzer {
     ): List<Insight> {
         val out = mutableListOf<Insight>()
 
-        val crashes = entries.filter { it.level == LogLevel.ERROR && it.tag == "crash" }
+        // Only crashes since this build was installed: older ones came from code that has since been replaced.
+        val crashes = entries.filter { it.level == LogLevel.ERROR && it.tag == "crash" && it.time >= Adaptive.updatedAt }
         if (crashes.isNotEmpty()) {
             val last = crashes.last()
             // Only the kind of failure, not the whole message, and when it last happened.
             val kind = last.message.removePrefix("Uncaught exception on main: ").substringBefore(':').take(60)
             val whenText = java.text.SimpleDateFormat("d MMM HH:mm", java.util.Locale.getDefault()).format(java.util.Date(last.time))
-            out += Insight("crash", "Ora stopped unexpectedly ${times(crashes.size)}", "The latest was a $kind on $whenText. If you have updated Ora since, it may already be fixed. The full report is in Log and errors.")
+            out += Insight("crash", "Ora stopped unexpectedly ${times(crashes.size)}", "The latest was a $kind on $whenText, since this version was installed. The full report is in Log and errors.")
         }
 
         val times = entries.mapNotNull { loaded.find(it.message)?.groupValues?.get(1)?.toLongOrNull() }.filter { it > 50 }.sorted()

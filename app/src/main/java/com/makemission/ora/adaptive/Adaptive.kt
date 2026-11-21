@@ -29,6 +29,10 @@ object Adaptive {
     @Volatile
     var pullScale: Float = 1f
 
+    /** When this build of Ora was installed or last updated. Crashes logged before it belong to an older build. */
+    @Volatile
+    var updatedAt: Long = 0L
+
     /** A pull never needs less than this share of the designed distance, so a brush of the finger cannot reload. */
     const val PULL_MIN = 0.6f
 }
