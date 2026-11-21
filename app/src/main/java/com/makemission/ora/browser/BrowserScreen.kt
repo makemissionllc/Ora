@@ -2,6 +2,7 @@ package com.makemission.ora.browser
 
 import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlin.math.roundToInt
 import androidx.compose.ui.layout.layout
 import androidx.compose.animation.EnterExitState
@@ -352,7 +353,7 @@ private fun BrowserContent(
     val profileList by profiles.profiles.collectAsState()
     val bookmarks = remember(profileId) { BookmarksRepository(context, profileId) }
     val bookmarkList by bookmarks.bookmarks.collectAsState()
-    val reading = remember(profileId) { com.makemission.ora.readinglist.ReadingListRepository(context, profileId) }
+    val reading = remember(profileId) { com.makemission.ora.readinglist.ReadingListRepository.shared(context, profileId) }
     val readingList by reading.items.collectAsState()
     // History is per profile as well. One list per profile is shared by its tabs and its views, so they never disagree.
     val historyByProfile = remember { HashMap<String, HistoryRepository>() }
@@ -694,7 +695,19 @@ private fun BrowserContent(
     var showSendToDevice by remember { mutableStateOf(false) }
     var arrivedTab by remember { mutableStateOf<com.makemission.ora.devices.ReceivedTab?>(null) }
     val shareCurrentPage by settings.deviceContinue.collectAsState()
-    LaunchedEffect(deviceLinkOn, deviceName, shareCurrentPage) { com.makemission.ora.devices.DeviceHub.apply(context, deviceLinkOn, deviceName, shareCurrentPage) }
+    val syncReadingList by settings.deviceReading.collectAsState()
+    LaunchedEffect(deviceLinkOn, deviceName, shareCurrentPage, syncReadingList) { com.makemission.ora.devices.DeviceHub.apply(context, deviceLinkOn, deviceName, shareCurrentPage, syncReadingList) }
+    // Reading list sync: when a paired device appears, and a moment after the first profile's list changes here.
+    LaunchedEffect(deviceLinkOn, syncReadingList) {
+        if (!deviceLinkOn || !syncReadingList) return@LaunchedEffect
+        val link = com.makemission.ora.devices.DeviceHub.link(context)
+        val syncNow = suspend { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.makemission.ora.devices.ReadingSync.syncAll(context, link) } }
+        syncNow()
+        kotlinx.coroutines.coroutineScope {
+            launch { link.appeared.collect { syncNow() } }
+            launch { com.makemission.ora.devices.ReadingSync.repo(context).items.drop(1).collectLatest { delay(2000); syncNow() } }
+        }
+    }
     // Continue where you left off: publish the open page (never a private one) and look for a page on another device.
     LaunchedEffect(selected.url, selected.title, selected.isPrivate) { com.makemission.ora.devices.ContinueState.publish(selected.url, selected.title, selected.isPrivate) }
     val continueOffer by com.makemission.ora.devices.ContinueState.offer.collectAsState()
