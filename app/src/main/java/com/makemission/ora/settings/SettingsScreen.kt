@@ -89,6 +89,7 @@ private enum class SettingsCategory(val label: String, val summary: String) {
     PRIVACY("Privacy", "Protections, PIN lock, downloads and site data"),
     SEARCH("Search", "Engines, suggestions and shortcuts"),
     HOME("Home page", "Home address, start page and resume"),
+    DEVICES("Devices", "Link your other devices and send pages between them"),
     LAB("Labs", "Experiments you opt into"),
     DIAGNOSTICS("Diagnostics", "Log, errors and feature counting"),
     ABOUT("About", "Default browser, what's new, notice and setup"),
@@ -1643,6 +1644,9 @@ fun SettingsScreen(
                             color = browserColors().SecondaryText,
                             modifier = Modifier.padding(top = 8.dp, start = 4.dp)
                         )
+                    }
+                    if (shown(SettingsCategory.DEVICES)) item {
+                        com.makemission.ora.devices.DevicesSection(settings)
                     }
                     if (shown(SettingsCategory.DIAGNOSTICS)) item {
                         SectionTitle("Diagnostics")

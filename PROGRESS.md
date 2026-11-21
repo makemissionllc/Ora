@@ -9,6 +9,8 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 
 ## Done
 
+- Device link and Send to a device (`feature/device-link-send-tab`, `afac9c9`): Settings > Devices (switch, name, pairing by six digit code, forget), encrypted LAN transport with an outbox, "Send to a device" in the page menu, and a card when a page arrives. Previous component: the Devices category row (page), the pressed control (cards), the "Send to a device" menu row (Send card); the arrival card has none (driven by another device). Android-drawn surfaces: none.
+
 - Phone Settings as categories (`63c7ac9`, `settings/SettingsScreen.kt` `SettingsCategoryList`): the phone opens a list of eight categories with a summary line each; a tap opens that category's page, which grows out of the tapped row (`OraMotion` overlay scale from 0.88, origin at the row) and folds back on the back arrow or system Back; the header title crossfades. Previous component: the tapped category row (the Settings overlay itself slides in from the right, unchanged). The tablet keeps its rail. QoL: each category says what is inside it, so nobody scrolls to find a setting. Not done: search across settings.
 - List row motion (`6e67456`, `ui/RowMotion.kt`): `oraRowMotion()` gives every list the same fade in, fade out and slide to close the gap (Standard and Leave speeds) on bookmarks (Library, sidebar, menu), reading list, history, passwords and the private space list. Previous component: none (rows inside an existing list). QoL: searching a list now visibly narrows it instead of snapping. Already done before: tab grid, group strip, downloads. Extensions list and quick switcher done on `feature/extensions-switcher-row-motion` (`30e7a8e`); previous component for both is the menu row that opened them.
 - Settings layout polish (`72ee43d`, `settings/SettingsScreen.kt`, `settings/ToolbarEditor.kt`): Settings list uses `imePadding`, the Home page field has an IME Done action that saves, and the toolbar preset chips scroll sideways on one line. No new surface, so no morph. QoL: Done on the keyboard saves the Home page.
@@ -221,6 +223,8 @@ Priority 2 and Priority 3 are listed in the same file. Nothing is chosen to buil
 
 ## Known issues
 
+- Device link works only while Ora is open on both devices and both are on the same Wi-Fi (there is no background service); pages for an away device wait in the outbox for 24 hours. Pairing uses a six digit code and closes after five wrong tries; it has not been run on a device yet.
+
 - Phone, USB keyboard events sent by adb: Ctrl+Shift+D and Ctrl+Shift+O sometimes did nothing once the page or address bar had been used, yet worked straight after launch (seen 2026-11-20). Cause not found; not checked with a real keyboard.
 - Page `alert()` showed no dialog on `prompts.html` on the tablet (seen 2026-11-20, three taps) but works on a clean page (`alert.html`: dialog shown, OK closed it). Cause not found; may be that page or tap timing. Watch for it again.
 - Back with the suggestions list open and the keyboard already hidden leaves Ora instead of closing the list (seen 2026-11-20).
@@ -241,6 +245,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
+| 2026-11-21 | `afac9c9` | Device link and Send to a device | Not checked (no adb here; build and unit tests only) | Not checked |
 | 2026-11-21 | `63c7ac9` | Phone Settings categories | Phone (Wi-Fi): list of eight categories shown; Privacy and Tabs each opened with only their own sections; the back arrow and the system Back both returned to the list. A first build showed the bar picker under Privacy; fixed. The grow-from-row motion was too quick to catch. Not checked: the other categories, Light and Pure dark. | Not checked (tablet rail unchanged in code, not seen) |
 | 2026-11-21 | `30e7a8e` | Extensions list and quick switcher row motion | Phone (Wi-Fi): Quick switcher typed `goo` and the rows narrowed to matches; Extensions opened from the menu and its search took input. The slide itself was too quick to catch. | Not checked |
 | 2026-11-21 | `6e67456` | List row motion | Phone (USB): Library > Bookmarks search for `exa` narrowed the list and the remaining row moved to the top; the slide itself was too quick to catch in screenshots. Not checked: other lists. | Not checked |
