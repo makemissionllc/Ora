@@ -1,5 +1,7 @@
 package com.makemission.ora.settings
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -93,7 +95,7 @@ fun ToolbarEditor(settings: SettingsRepository) {
             (items.map { it.icon() } + Icons.Filled.MoreVert).forEach { Icon(it, contentDescription = null, tint = colors.AddressBarText, modifier = Modifier.size(24.dp)) }
         }
         // Presets. Editing a preset switches the chip to Custom.
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             (ToolbarConfig.PRESETS.map { it.first } + "Custom").forEach { name ->
                 val on = name == preset
                 Box(
@@ -102,7 +104,7 @@ fun ToolbarEditor(settings: SettingsRepository) {
                         .clickable(enabled = name != "Custom") { ToolbarConfig.PRESETS.firstOrNull { it.first == name }?.let { settings.setToolbarItems(it.second) } }
                         .padding(horizontal = 16.dp),
                     contentAlignment = Alignment.Center,
-                ) { Text(name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (on) colors.GridBackground else colors.AddressBarText) }
+                ) { Text(name, fontSize = 14.sp, fontWeight = FontWeight.Medium, maxLines = 1, softWrap = false, color = if (on) colors.GridBackground else colors.AddressBarText) }
             }
         }
         Text("In the bar", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)

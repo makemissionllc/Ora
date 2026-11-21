@@ -1167,6 +1167,11 @@ private fun BrowserContent(
             }
         }
     }
+    val goHome: () -> Unit = {
+        val home = settings.homePage.value
+        BrowserLog.info("nav", "Home pressed: ${if (home.isEmpty()) "start page" else "saved home page"}")
+        if (home.isEmpty()) selected.url = BrowserTabs.START_URL else selected.session.loadUri(home)
+    }
     val onNewTabInGroup: (TabGroup) -> Unit = { g ->
         val t = tabs.newTab(BrowserTabs.START_URL, select = true)
         tabs.moveToGroup(t.id, g.id)
@@ -1260,7 +1265,7 @@ private fun BrowserContent(
                             ToolbarItem.TABS -> openTabs()
                             ToolbarItem.SHARE -> shareUrl(context, selected.url)
                             ToolbarItem.BOOKMARK -> toggleSelectedBookmark()
-                            ToolbarItem.HOME -> selected.url = BrowserTabs.START_URL
+                            ToolbarItem.HOME -> goHome()
                             ToolbarItem.RELOAD -> selected.session.reload()
                             ToolbarItem.NEW_TAB -> onNewTab()
                             ToolbarItem.PRIVATE_TAB -> onNewPrivateTab()

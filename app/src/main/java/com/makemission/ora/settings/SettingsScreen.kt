@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import androidx.compose.foundation.layout.imePadding
 import com.makemission.ora.ui.CheckMark
 import com.makemission.ora.ui.DisclosureChevron
 import androidx.compose.foundation.background
@@ -283,7 +284,9 @@ fun SettingsScreen(
                     // Cap the width before filling it, so the tablet column stops at the content max.
                     modifier = Modifier
                         .then(if (isTablet) Modifier.widthIn(max = BrowserTokens.SettingsContentMaxWidth) else Modifier)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        // Keep the list above the keyboard so a field being edited and its Save button stay reachable.
+                        .imePadding(),
                 ) {
                     if (shown(SettingsCategory.APPEARANCE)) item {
                         SectionTitle("Appearance")
@@ -1261,11 +1264,20 @@ fun SettingsScreen(
                                 value = homeDraft,
                                 onValueChange = { homeDraft = it },
                                 singleLine = true,
+                                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Done),
+                                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onDone = {
+                                    settings.setHomePage(homeDraft)
+                                    com.makemission.ora.notice.InAppNotices.show(if (homeDraft.isBlank()) "Home opens the start page" else "Home page saved")
+                                }),
                                 modifier = Modifier.fillMaxWidth(),
-                                label = { Text("Address") }
+                                label = { Text("Address") },
+                                placeholder = { Text("Empty opens the Ora start page") }
                             )
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                                TextButton(onClick = { settings.setHomePage(homeDraft) }) {
+                                TextButton(onClick = {
+                                    settings.setHomePage(homeDraft)
+                                    com.makemission.ora.notice.InAppNotices.show(if (homeDraft.isBlank()) "Home opens the start page" else "Home page saved")
+                                }) {
                                     Text("Save", color = browserColors().Accent, fontWeight = FontWeight.SemiBold)
                                 }
                             }

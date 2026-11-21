@@ -12,6 +12,13 @@ data class ChangeDay(val date: String, val items: List<ChangeItem>)
 /** Newest first. Keep in step with CHANGELOG.md, per AGENTS.md rule 20. */
 val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
+        date = "21 Nov 2026",
+        items = listOf(
+            ChangeItem(ChangeKind.FIXED, "Settings polish: the Home page address field now has a Done key on the keyboard that saves it, and the Settings list sits above the keyboard so the field and its Save button are never covered. The Toolbar editor's preset chips (Classic, Reading, Minimal, Custom) stay on one line and scroll sideways when the screen is narrow, so Custom is no longer squashed. (`72ee43d`)"),
+            ChangeItem(ChangeKind.FIXED, "Two settings that did nothing now work. Settings > Downloads > Download notifications now really turns the per-download notifications off and on (the one notice Android requires while a download runs stays). The Home page address is now used by the Home button, and Home opens the Ora start page when it is empty, which is the new default. Saving it shows a notice, and the field says what an empty address does. (`4503b02`)"),
+        ),
+    ),
+    ChangeDay(
         date = "20 Nov 2026",
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "Choices and switches feel more alive: a switch's knob stretches while your finger is on it and then slides, and every radio choice in Settings has a new round button whose dot pops in with a small bounce. Also fixed: picking a Touch feedback level played its sample at the previous level, so choosing Off still buzzed once. (`698c051`)"),
