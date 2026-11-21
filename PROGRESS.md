@@ -241,7 +241,7 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 
 | Date | Commit | Change | Phone | Tablet |
 | --- | --- | --- | --- | --- |
-| 2026-11-21 | `63c7ac9` | Phone Settings categories | Phone (Wi-Fi): list of eight categories shown; Privacy opened with its title. First build showed the Tabs bar picker under Privacy; fixed and reinstalled, see next check. Tablet: Not checked | Not checked |
+| 2026-11-21 | `63c7ac9` | Phone Settings categories | Phone (Wi-Fi): list of eight categories shown; Privacy and Tabs each opened with only their own sections; the back arrow and the system Back both returned to the list. A first build showed the bar picker under Privacy; fixed. The grow-from-row motion was too quick to catch. Not checked: the other categories, Light and Pure dark. | Not checked (tablet rail unchanged in code, not seen) |
 | 2026-11-21 | `30e7a8e` | Extensions list and quick switcher row motion | Phone (Wi-Fi): Quick switcher typed `goo` and the rows narrowed to matches; Extensions opened from the menu and its search took input. The slide itself was too quick to catch. | Not checked |
 | 2026-11-21 | `6e67456` | List row motion | Phone (USB): Library > Bookmarks search for `exa` narrowed the list and the remaining row moved to the top; the slide itself was too quick to catch in screenshots. Not checked: other lists. | Not checked |
 | 2026-11-21 | `698c051` | Radio and switch micro-motion | Phone (USB): new radios drawn correctly with ring and dot; a held switch toggled on release and back; knob stretch only judged from a frame mid-press, small. Reduced-motion not checked. | Not checked (tablet not on adb) |
