@@ -636,6 +636,28 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "PIN lock covers ${if (whole) "the whole app" else "private tabs only"}")
     }
 
+    private val _appLockBiometric = MutableStateFlow(prefs.getBoolean(KEY_APP_LOCK_BIO, false))
+    /** True: the lock screen offers the fingerprint or face check first. The PIN always still works. */
+    val appLockBiometric: StateFlow<Boolean> = _appLockBiometric.asStateFlow()
+
+    fun setAppLockBiometric(on: Boolean) {
+        prefs.edit().putBoolean(KEY_APP_LOCK_BIO, on).apply()
+        _appLockBiometric.value = on
+        UsageStats.count("setting.app_lock_biometric")
+        BrowserLog.info("settings", "Fingerprint or face unlock ${if (on) "on" else "off"}")
+    }
+
+    private val _appLockHistory = MutableStateFlow(prefs.getBoolean(KEY_APP_LOCK_HISTORY, false))
+    /** True: the History list stays behind the lock until it is opened with the PIN or fingerprint. */
+    val appLockHistory: StateFlow<Boolean> = _appLockHistory.asStateFlow()
+
+    fun setAppLockHistory(on: Boolean) {
+        prefs.edit().putBoolean(KEY_APP_LOCK_HISTORY, on).apply()
+        _appLockHistory.value = on
+        UsageStats.count("setting.app_lock_history")
+        BrowserLog.info("settings", "History lock ${if (on) "on" else "off"}")
+    }
+
     fun appLockFailures(): Int = prefs.getInt(KEY_APP_LOCK_FAILS, 0)
     fun appLockLockedUntil(): Long = prefs.getLong(KEY_APP_LOCK_UNTIL, 0L)
     fun setAppLockFailures(count: Int, lockedUntil: Long) {
@@ -1235,6 +1257,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
         private const val KEY_APP_LOCK = "app_lock_record"
         private const val KEY_APP_LOCK_WHOLE = "app_lock_whole"
+        private const val KEY_APP_LOCK_BIO = "app_lock_biometric"
+        private const val KEY_APP_LOCK_HISTORY = "app_lock_history"
         private const val KEY_APP_LOCK_FAILS = "app_lock_fails"
         private const val KEY_APP_LOCK_UNTIL = "app_lock_until"
         private const val KEY_HTTPS_ONLY = "https_only"

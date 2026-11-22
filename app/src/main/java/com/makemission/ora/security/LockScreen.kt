@@ -46,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -88,6 +89,13 @@ fun LockScreen(
             }
         }
 
+        val context = androidx.compose.ui.platform.LocalContext.current
+        val biometricOn by settings.appLockBiometric.collectAsState()
+        val biometricReady = biometricOn && remember { BiometricUnlock.available(context) }
+        fun askBiometric() = BiometricUnlock.prompt(context, title) { AppLock.unlockWithBiometric(settings) }
+        // Quality of life: the fingerprint prompt appears by itself when the lock screen does, once per showing.
+        LaunchedEffect(biometricReady) { if (biometricReady && waitMs <= 0) askBiometric() }
+
         fun submit() {
             if (pin.isEmpty() || waitMs > 0) return
             val attempt = pin
@@ -128,6 +136,10 @@ fun LockScreen(
             }
             // Keeps its height so the keypad does not jump when a message appears.
             Text(message ?: " ", fontSize = 13.sp, color = if (message != null) Mineral.Ember else Color.Transparent)
+            if (biometricReady) {
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = { askBiometric() }) { Text("Use fingerprint or face", color = colors.Accent) }
+            }
             if (leaveLabel != null) {
                 Spacer(Modifier.height(8.dp))
                 TextButton(onClick = onLeave) {
