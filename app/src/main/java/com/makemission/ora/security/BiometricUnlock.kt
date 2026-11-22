@@ -14,7 +14,8 @@ object BiometricUnlock {
     fun available(context: Context): Boolean = runCatching {
         context.getSystemService(BiometricManager::class.java)
             ?.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
-    }.getOrDefault(false)
+    }.onFailure { BrowserLog.error("security", "Could not ask whether a fingerprint is enrolled", it) }
+        .getOrDefault(false)
 
     private tailrec fun Context.activity(): Activity? = when (this) {
         is Activity -> this

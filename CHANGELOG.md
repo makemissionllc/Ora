@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-22
 
 **Fixed**
+- Fingerprint unlock now works. Ora was asking the phone the wrong way, so it said no fingerprint was set up even when one was. The lock screen also says "History is locked" with a Not now button when you open it from History, instead of talking about private tabs. (`22ea6c8`)
 - Find in page no longer hides under the status bar on the phone. The search box now sits just below it. (`b014e47`)
 
 **Added**
