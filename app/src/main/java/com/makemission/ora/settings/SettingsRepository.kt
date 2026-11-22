@@ -39,10 +39,25 @@ enum class BarButton(val key: String, val label: String, val detail: String) {
     NEW_TAB("new_tab", "New tab", "Open a fresh tab."),
     FIND("find", "Find in page", "Search the text of the page."),
     SAVE_PDF("save_pdf", "Save as PDF", "Save the page to Downloads."),
-    SETTINGS("settings", "Settings", "Open Ora's settings.");
+    SETTINGS("settings", "Settings", "Open Ora's settings."),
+    FORWARD("forward", "Forward", "Go forward one page. Dimmed when there is no page ahead."),
+    RELOAD("reload", "Reload", "Load the page again."),
+    HOME("home", "Start page", "Jump to the start page."),
+    REOPEN("reopen", "Reopen closed tab", "Bring back the tab you closed last."),
+    OFF("off", "Off", "No extra button: only the address bar and the menu.");
 
     companion object {
         fun fromKey(key: String?): BarButton = entries.firstOrNull { it.key == key } ?: TABS
+    }
+}
+
+/** Which side of the address bar the extra round button sits on. Right, beside the menu, is the default. */
+enum class BarButtonSide(val key: String, val label: String) {
+    LEFT("left", "Left of the address bar"),
+    RIGHT("right", "Right of the address bar");
+
+    companion object {
+        fun fromKey(key: String?): BarButtonSide = entries.firstOrNull { it.key == key } ?: RIGHT
     }
 }
 
@@ -861,6 +876,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Compact bar button set to ${button.label}")
     }
 
+    private val _barButtonSide = MutableStateFlow(BarButtonSide.fromKey(prefs.getString(KEY_BAR_BUTTON_SIDE, null)))
+    /** Which side of the address bar the extra round button is on. */
+    val barButtonSide: StateFlow<BarButtonSide> = _barButtonSide.asStateFlow()
+
+    fun setBarButtonSide(side: BarButtonSide) {
+        prefs.edit().putString(KEY_BAR_BUTTON_SIDE, side.key).apply()
+        _barButtonSide.value = side
+        BrowserLog.info("settings", "Compact bar button moved to the ${side.key}")
+    }
+
     private val _phoneBarStyle = MutableStateFlow(BarStyle.fromKey(prefs.getString(KEY_PHONE_BAR, null), BarStyle.BOTTOM))
     /** Phone tab bar layout. */
     val phoneBarStyle: StateFlow<BarStyle> = _phoneBarStyle.asStateFlow()
@@ -1096,6 +1121,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_PHONE_BAR = "phone_bar_style"
         private const val KEY_TABLET_BAR = "tablet_bar_style"
         private const val KEY_BAR_BUTTON = "bar_button"
+        private const val KEY_BAR_BUTTON_SIDE = "bar_button_side"
         private const val KEY_HAPTICS = "haptic_strength"
         /** Empty means the Ora start page, which is what Home opened before the address was honoured. */
         const val DEFAULT_HOME_PAGE = ""
