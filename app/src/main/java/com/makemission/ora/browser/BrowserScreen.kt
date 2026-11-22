@@ -25,7 +25,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.TextButton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.combinedClickable
@@ -991,7 +993,17 @@ private fun BrowserContent(
         if (view == null) done(null) else view.capturePixels().accept({ b -> done(b) }, { done(null) })
     }
     // Pictures of tabs that are gone are freed.
-    LaunchedEffect(tabs.tabs.size) { ThumbnailCache.retainOnly(tabs.tabs.map { it.id }.toSet()) }
+    LaunchedEffect(tabs.tabs.size) {
+        ThumbnailCache.retainOnly(tabs.tabs.map { it.id }.toSet())
+        withContext(Dispatchers.IO) { ThumbnailStore.retainOnly(tabs.tabs.filter { !it.isPrivate }.map { it.url }) }
+    }
+    // A page that finished loading gets a fresh picture a moment later, so the tab grid shows it however the tab is left.
+    LaunchedEffect(selected.id, selected.loading) {
+        if (!selected.loading && !selected.isPrivate) {
+            kotlinx.coroutines.delay(3000)
+            captureThumbnail(pageView, selected)
+        }
+    }
     val switchTab: (Int) -> Unit = { delta ->
         swipeScope.launch {
             when (swipeTarget) {
@@ -2494,7 +2506,7 @@ private fun captureThumbnail(pageView: PageView, tab: BrowserTab) {
     // Private tabs keep no picture of their pages, so the tab grid shows a placeholder for them.
     if (tab.isPrivate) return
     pageView.view?.capturePixels()?.accept(
-        { bitmap -> if (bitmap != null) { tab.thumbnail = bitmap.asImageBitmap(); ThumbnailCache.putHalf(tab.id, bitmap) } },
+        { bitmap -> if (bitmap != null && !ThumbnailStore.looksBlank(bitmap)) { tab.thumbnail = bitmap.asImageBitmap(); ThumbnailCache.putHalf(tab.id, bitmap); Thread { ThumbnailStore.save(tab.url, bitmap) }.start() } },
         { }
     )
 }
