@@ -1875,6 +1875,8 @@ fun SettingsScreen(
                             }
                             MineralSwitch(checked = usageStats, label = "Switch", onChange = { settings.setUsageStats(it) })
                         }
+                        Spacer(Modifier.height(8.dp))
+                        com.makemission.ora.adaptive.SmartTuningSection(settings)
                     }
                     if (shown(SettingsCategory.ABOUT)) item {
                         SectionTitle("About")

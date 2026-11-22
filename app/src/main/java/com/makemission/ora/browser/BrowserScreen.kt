@@ -562,6 +562,15 @@ private fun BrowserContent(
         if (scanned == null || com.makemission.ora.labs.LabFeature.SCAM_PATTERNS !in labs) tab.setScanFindings(emptyList())
         else tab.setScanFindings(com.makemission.ora.labs.ScamPatterns.inspect(scanned))
     }
+    // Adapting to use: in Automatic mode, a while after start-up, small safe changes are made and the person is told.
+    val adaptiveMode by settings.adaptiveMode.collectAsState()
+    LaunchedEffect(adaptiveMode) {
+        if (adaptiveMode != com.makemission.ora.adaptive.AdaptiveMode.AUTO) return@LaunchedEffect
+        kotlinx.coroutines.delay(20_000)
+        com.makemission.ora.adaptive.AdaptiveRunner.runAutomatic(settings).forEach {
+            com.makemission.ora.notice.InAppNotices.show("$it You can undo this in Settings > Diagnostics.")
+        }
+    }
     LaunchedEffect(labs, strongPrivate) {
         try {
             val on = { f: com.makemission.ora.labs.LabFeature -> f in labs }
@@ -2495,7 +2504,7 @@ private fun BrowserPage(
             Box(
                 modifier = Modifier
                     .size(BrowserTokens.PullRefreshIndicatorSize)
-                    .graphicsLayer { translationY = (pull.coerceAtMost(BrowserTokens.PullRefreshThreshold) / 2).toPx() }
+                    .graphicsLayer { translationY = (pull.coerceAtMost(BrowserTokens.PullRefreshThreshold * com.makemission.ora.adaptive.Adaptive.pullScale) / 2).toPx() }
                     .clip(CircleShape)
                     .background(browserColors().AddressBarBackground)
                     .shadow(BrowserTokens.AddressBarElevation, CircleShape),
@@ -2509,7 +2518,7 @@ private fun BrowserPage(
                     )
                 } else {
                     CircularProgressIndicator(
-                        progress = { (pull / BrowserTokens.PullRefreshThreshold).coerceIn(0f, 1f) },
+                        progress = { (pull / (BrowserTokens.PullRefreshThreshold * com.makemission.ora.adaptive.Adaptive.pullScale)).coerceIn(0f, 1f) },
                         modifier = Modifier.size(20.dp),
                         strokeWidth = 2.dp,
                         color = browserColors().Accent
