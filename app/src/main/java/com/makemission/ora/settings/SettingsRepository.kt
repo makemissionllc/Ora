@@ -993,24 +993,31 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Touch feedback set to ${strength.label}")
     }
 
-    private val _barButton = MutableStateFlow(BarButton.fromKey(prefs.getString(KEY_BAR_BUTTON, null)))
-    /** The action of the extra round button in the Compact bar. */
-    val barButton: StateFlow<BarButton> = _barButton.asStateFlow()
+    // Old saves held one button and a side. The button becomes the default for that side; the other side starts Off.
+    private val legacyBarButton = BarButton.fromKey(prefs.getString(KEY_BAR_BUTTON, null))
+    private val legacyOnLeft = BarButtonSide.fromKey(prefs.getString(KEY_BAR_BUTTON_SIDE, null)) == BarButtonSide.LEFT
 
-    fun setBarButton(button: BarButton) {
-        prefs.edit().putString(KEY_BAR_BUTTON, button.key).apply()
-        _barButton.value = button
-        BrowserLog.info("settings", "Compact bar button set to ${button.label}")
-    }
+    private val _barButtonLeft = MutableStateFlow(
+        prefs.getString(KEY_BAR_BUTTON_LEFT, null)?.let { BarButton.fromKey(it) } ?: if (legacyOnLeft) legacyBarButton else BarButton.OFF
+    )
+    /** The shortcut left of the address bar in the Compact style. Off hides it. */
+    val barButtonLeft: StateFlow<BarButton> = _barButtonLeft.asStateFlow()
 
-    private val _barButtonSide = MutableStateFlow(BarButtonSide.fromKey(prefs.getString(KEY_BAR_BUTTON_SIDE, null)))
-    /** Which side of the address bar the extra round button is on. */
-    val barButtonSide: StateFlow<BarButtonSide> = _barButtonSide.asStateFlow()
+    private val _barButtonRight = MutableStateFlow(
+        prefs.getString(KEY_BAR_BUTTON_RIGHT, null)?.let { BarButton.fromKey(it) } ?: if (legacyOnLeft) BarButton.OFF else legacyBarButton
+    )
+    /** The shortcut right of the address bar, beside the menu. Off hides it. */
+    val barButtonRight: StateFlow<BarButton> = _barButtonRight.asStateFlow()
 
-    fun setBarButtonSide(side: BarButtonSide) {
-        prefs.edit().putString(KEY_BAR_BUTTON_SIDE, side.key).apply()
-        _barButtonSide.value = side
-        BrowserLog.info("settings", "Compact bar button moved to the ${side.key}")
+    fun setBarButton(side: BarButtonSide, button: BarButton) {
+        if (side == BarButtonSide.LEFT) {
+            prefs.edit().putString(KEY_BAR_BUTTON_LEFT, button.key).apply()
+            _barButtonLeft.value = button
+        } else {
+            prefs.edit().putString(KEY_BAR_BUTTON_RIGHT, button.key).apply()
+            _barButtonRight.value = button
+        }
+        BrowserLog.info("settings", "Compact bar ${side.key} button set to ${button.label}")
     }
 
     private val _phoneBarStyle = MutableStateFlow(BarStyle.fromKey(prefs.getString(KEY_PHONE_BAR, null), BarStyle.BOTTOM))
@@ -1256,6 +1263,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_TABLET_BAR = "tablet_bar_style"
         private const val KEY_BAR_BUTTON = "bar_button"
         private const val KEY_BAR_BUTTON_SIDE = "bar_button_side"
+        private const val KEY_BAR_BUTTON_LEFT = "bar_button_left"
+        private const val KEY_BAR_BUTTON_RIGHT = "bar_button_right"
         private const val KEY_HAPTICS = "haptic_strength"
         /** Empty means the Ora start page, which is what Home opened before the address was honoured. */
         const val DEFAULT_HOME_PAGE = ""

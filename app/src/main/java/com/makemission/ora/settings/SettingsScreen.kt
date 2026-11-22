@@ -144,8 +144,8 @@ fun SettingsScreen(
     val blockPopups by settings.blockPopups.collectAsState()
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
-    val barButton by settings.barButton.collectAsState()
-    val barButtonSide by settings.barButtonSide.collectAsState()
+    val barButtonLeft by settings.barButtonLeft.collectAsState()
+    val barButtonRight by settings.barButtonRight.collectAsState()
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
@@ -769,31 +769,41 @@ fun SettingsScreen(
                         }
                     }
                     if ((if (isTablet) tabletBar else phoneBar) == BarStyle.COMPACT && shown(SettingsCategory.TABS)) item {
-                        SectionTitle("Compact bar button")
-                        BarButtonList(selected = barButton, tablet = isTablet, onSelect = { settings.setBarButton(it) })
-                        androidx.compose.animation.AnimatedVisibility(
-                            visible = barButton != BarButton.OFF,
-                            enter = androidx.compose.animation.fadeIn(OraMotion.enter()) + androidx.compose.animation.expandVertically(OraMotion.enter()),
-                            exit = androidx.compose.animation.fadeOut(OraMotion.exit()) + androidx.compose.animation.shrinkVertically(OraMotion.exit()),
-                        ) {
-                          Column {
-                            SectionTitle("Button side")
-                            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(browserColors().Surface)) {
-                                com.makemission.ora.settings.BarButtonSide.entries.forEach { side ->
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth().pressFeedback().clickable { settings.setBarButtonSide(side) }.padding(horizontal = 16.dp, vertical = 12.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(side.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
-                                        com.makemission.ora.ui.OraRadio(selected = side == barButtonSide, onClick = { settings.setBarButtonSide(side) })
-                                    }
-                                }
+                        SectionTitle("Compact bar shortcuts")
+                        // Which side is being set. The list below grows out of the pill that was tapped and swaps in place.
+                        var editSide by rememberSaveable { mutableStateOf(com.makemission.ora.settings.BarButtonSide.RIGHT) }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(bottom = 10.dp)) {
+                            com.makemission.ora.settings.BarButtonSide.entries.forEach { side ->
+                                val job = if (side == com.makemission.ora.settings.BarButtonSide.LEFT) barButtonLeft else barButtonRight
+                                com.makemission.ora.browser.PillButton(
+                                    text = (if (side == com.makemission.ora.settings.BarButtonSide.LEFT) "Left: " else "Right: ") + job.label,
+                                    onClick = { editSide = side },
+                                    primary = side == editSide,
+                                    modifier = Modifier.weight(1f),
+                                )
                             }
-                          }
+                        }
+                        androidx.compose.animation.AnimatedContent(
+                            targetState = editSide,
+                            transitionSpec = {
+                                (androidx.compose.animation.fadeIn(OraMotion.overlayFadeIn()) + androidx.compose.animation.scaleIn(OraMotion.overlayScaleIn(), OraMotion.MORPH_SCALE)) togetherWith
+                                    (androidx.compose.animation.fadeOut(OraMotion.overlayFadeOut()) + androidx.compose.animation.scaleOut(OraMotion.overlayScaleOut(), OraMotion.MORPH_SCALE))
+                            },
+                            label = "shortcut side list",
+                        ) { side ->
+                            BarButtonList(
+                                selected = if (side == com.makemission.ora.settings.BarButtonSide.LEFT) barButtonLeft else barButtonRight,
+                                tablet = isTablet,
+                                onSelect = { settings.setBarButton(side, it) },
+                            )
                         }
                         Text(
-                            "The round button beside the address bar in the Compact style. Hold it for every action the bar can do.",
+                            // Quality of life: say plainly what the bar looks like, including when both shortcuts are off.
+                            if (barButtonLeft == BarButton.OFF && barButtonRight == BarButton.OFF) {
+                                "No shortcuts: the bar shows only the address bar and the menu. Pick a job for Left or Right above."
+                            } else {
+                                "Left: ${barButtonLeft.label}. Right: ${barButtonRight.label}. Hold a shortcut for every action the bar can do."
+                            },
                             modifier = Modifier.padding(start = 4.dp, top = 6.dp),
                             fontSize = 14.sp,
                             color = browserColors().SecondaryText
