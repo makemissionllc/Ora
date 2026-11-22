@@ -155,6 +155,14 @@ fun TabGrid(
             dismissButton = { TextButton(onClick = { confirmCloseAll = false }) { Text("Cancel") } },
         )
     }
+    var confirmClosePrivate by remember { mutableStateOf(false) }
+    if (confirmClosePrivate) {
+        ClosePrivateDialog(privateCount, { confirmClosePrivate = false }) {
+            confirmClosePrivate = false
+            tabs.closePrivate()
+            onDone()
+        }
+    }
     androidx.compose.runtime.CompositionLocalProvider(
         com.makemission.ora.ui.theme.LocalBrowserColors provides if (inPrivate) com.makemission.ora.ui.theme.privateBrowserColors(browserColors()) else browserColors()
     ) {
@@ -172,7 +180,7 @@ fun TabGrid(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                TextButton(onClick = { if (inPrivate) { tabs.closePrivate(); onDone() } else confirmCloseAll = true }, enabled = if (inPrivate) privateCount > 0 else allTabs.size > 1) {
+                TextButton(onClick = { if (inPrivate) confirmClosePrivate = true else confirmCloseAll = true }, enabled = if (inPrivate) privateCount > 0 else allTabs.size > 1) {
                     Text(if (inPrivate) "Close private" else "Close all", color = Mineral.Ember, fontWeight = FontWeight.SemiBold)
                 }
                 Text(text = if (inPrivate) "$privateCount private" else countText, color = browserColors().AddressBarText, fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
@@ -349,7 +357,7 @@ fun TabGrid(
             horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             val closeEnabled = if (inPrivate) privateCount > 0 else allTabs.size > 1
-            TextButton(onClick = { if (inPrivate) { tabs.closePrivate(); onDone() } else confirmCloseAll = true }, enabled = closeEnabled, modifier = Modifier.height(48.dp)) {
+            TextButton(onClick = { if (inPrivate) confirmClosePrivate = true else confirmCloseAll = true }, enabled = closeEnabled, modifier = Modifier.height(48.dp)) {
                 Text(if (inPrivate) "Close private" else "Close all", color = if (closeEnabled) Mineral.Ember else browserColors().DisabledIcon, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             }
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -369,6 +377,23 @@ fun TabGrid(
         }
     }
     }
+}
+
+/**
+ * Closing every private tab asks first: nothing about a private tab is kept, so it cannot be brought back. The card is
+ * the shared OraDialog, raised by the Close private button (its previous component).
+ */
+@Composable
+internal fun ClosePrivateDialog(count: Int, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    OraDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (count == 1) "Close this private tab?" else "Close all $count private tabs?") },
+        text = { Text("Private tabs are not saved anywhere, so they cannot be brought back.") },
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text(if (count == 1) "Close tab" else "Close all", color = Mineral.Ember, fontWeight = FontWeight.SemiBold) }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 /** Pill button from the Mineral design: Chalk fill with dark text when primary, Shale fill with Chalk text otherwise. */
@@ -603,10 +628,18 @@ fun TabSidebar(
         needle.isEmpty() || it.title.contains(needle, true) || it.url.contains(needle, true)
     }
 
+    var confirmClosePrivate by remember { mutableStateOf(false) }
     androidx.compose.runtime.CompositionLocalProvider(
         com.makemission.ora.ui.theme.LocalBrowserColors provides if (inPrivate) com.makemission.ora.ui.theme.privateBrowserColors(browserColors()) else browserColors()
     ) {
     val privateCount = tabs.tabs.count { it.isPrivate }
+    if (confirmClosePrivate) {
+        ClosePrivateDialog(privateCount, { confirmClosePrivate = false }) {
+            confirmClosePrivate = false
+            tabs.closePrivate()
+            inPrivate = false
+        }
+    }
     GroupDialogs(tabs, groupState)
     Column(
         modifier = Modifier
@@ -624,7 +657,7 @@ fun TabSidebar(
             }
             PrivateSpacePanel(tabs = tabs, onSelect = { tabs.select(it) }, onNewPrivateTab = onNewPrivateTab, onLock = onLockPrivate, modifier = Modifier.weight(1f))
             if (privateCount > 0) Box(
-                modifier = Modifier.fillMaxWidth().height(44.dp).pressFeedback().clip(androidx.compose.foundation.shape.CircleShape).clickable { tabs.closePrivate(); inPrivate = false },
+                modifier = Modifier.fillMaxWidth().height(44.dp).pressFeedback().clip(androidx.compose.foundation.shape.CircleShape).clickable { confirmClosePrivate = true },
                 contentAlignment = Alignment.Center,
             ) { Text("Close private", color = Mineral.Ember, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
             return@Column
