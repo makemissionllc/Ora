@@ -2282,9 +2282,13 @@ private fun BrowserContent(
     LockScreen(
         settings = settings,
         visible = lockScreenVisible(AppLock.locked, lockWholeApp, selected.isPrivate, AppLock.unlockWanted),
-        title = "Private tabs are locked",
-        leaveLabel = "Go to a regular tab",
+        title = if (selected.isPrivate) "Private tabs are locked" else "History is locked",
+        leaveLabel = if (selected.isPrivate) "Go to a regular tab" else "Not now",
         onLeave = {
+            if (!selected.isPrivate) {
+                AppLock.dismissUnlockRequest()
+                return@LockScreen
+            }
             UsageStats.count("security.leave_private")
             AppLock.dismissUnlockRequest()
             val regular = tabs.tabs.firstOrNull { !it.isPrivate }
