@@ -181,6 +181,8 @@ fun SettingsScreen(
     val httpsOnly by settings.httpsOnly.collectAsState()
     val appLockRecord by settings.appLockRecord.collectAsState()
     val appLockWholeApp by settings.appLockWholeApp.collectAsState()
+    val appLockBiometric by settings.appLockBiometric.collectAsState()
+    val appLockHistory by settings.appLockHistory.collectAsState()
     var appLockDialog by remember { mutableStateOf(false) }
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val strongPrivateTabs by settings.strongPrivateTabs.collectAsState()
@@ -1375,6 +1377,48 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = appLockWholeApp, label = "Switch", onChange = { settings.setAppLockWholeApp(it) })
+                            }
+                            if (appLockRecord != null) {
+                                val bioContext = androidx.compose.ui.platform.LocalContext.current
+                                val bioAvailable = remember { com.makemission.ora.security.BiometricUnlock.available(bioContext) }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .pressFeedback().clickable(enabled = bioAvailable) { settings.setAppLockBiometric(!appLockBiometric) }
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                        Text("Unlock with fingerprint or face", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                        Text(
+                                            // Quality of life: say plainly why the switch is unavailable instead of leaving it dead.
+                                            if (bioAvailable) "Use the phone's fingerprint or face check instead of typing the PIN. The PIN still works."
+                                            else "Add a fingerprint or face in the phone's own settings first. Until then the PIN is the only way in.",
+                                            fontSize = 14.sp,
+                                            color = browserColors().SecondaryText
+                                        )
+                                    }
+                                    MineralSwitch(checked = appLockBiometric && bioAvailable, label = "Switch", onChange = { if (bioAvailable) settings.setAppLockBiometric(it) })
+                                }
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .pressFeedback().clickable { settings.setAppLockHistory(!appLockHistory) }
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                        Text("Lock History", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                        Text(
+                                            "Keep the History list behind the lock too. It opens after the PIN or fingerprint, and locks again when you leave Ora.",
+                                            fontSize = 14.sp,
+                                            color = browserColors().SecondaryText
+                                        )
+                                    }
+                                    MineralSwitch(checked = appLockHistory, label = "Switch", onChange = { settings.setAppLockHistory(it) })
+                                }
                             }
                             Row(
                                 modifier = Modifier

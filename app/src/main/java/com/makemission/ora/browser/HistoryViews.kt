@@ -33,6 +33,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +77,51 @@ private class ListGeometry {
  */
 @Composable
 internal fun HistoryList(
+    entries: List<HistoryEntry>,
+    query: String,
+    historyOff: Boolean,
+    onOpen: (String) -> Unit,
+    onRemove: (String) -> Unit,
+    onClear: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // With History locked, the list is swapped for a card that asks for the PIN or fingerprint. Origin: the History
+    // list itself; the card fades and scales in its place with the shared overlay motion and back again on unlock.
+    val appSettings = LocalHints.current
+    val guarded = appSettings?.appLockHistory?.let { it.collectAsState() }?.value ?: false
+    val locked = appSettings != null && com.makemission.ora.security.AppLock.historyLocked(appSettings, guarded)
+    androidx.compose.animation.AnimatedContent(
+        targetState = locked,
+        modifier = modifier,
+        transitionSpec = {
+            (androidx.compose.animation.fadeIn(OraMotion.overlayFadeIn()) + androidx.compose.animation.scaleIn(OraMotion.overlayScaleIn(), OraMotion.MORPH_SCALE)) togetherWith
+                (androidx.compose.animation.fadeOut(OraMotion.overlayFadeOut()) + androidx.compose.animation.scaleOut(OraMotion.overlayScaleOut(), OraMotion.MORPH_SCALE))
+        },
+        label = "history lock",
+    ) { isLocked ->
+        if (isLocked) HistoryLockedCard() else HistoryListContent(entries, query, historyOff, onOpen, onRemove, onClear, Modifier.fillMaxSize())
+    }
+}
+
+@Composable
+private fun HistoryLockedCard() {
+    val colors = browserColors()
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier.clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.Surface).padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text("History is locked", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
+            Text("Unlock with your PIN or fingerprint to see the pages you visited.", fontSize = 14.sp, color = colors.SecondaryText, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Spacer(Modifier.height(4.dp))
+            com.makemission.ora.browser.PillButton(text = "Unlock", onClick = { com.makemission.ora.security.AppLock.requestUnlock() }, primary = true)
+        }
+    }
+}
+
+@Composable
+private fun HistoryListContent(
     entries: List<HistoryEntry>,
     query: String,
     historyOff: Boolean,

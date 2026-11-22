@@ -50,6 +50,20 @@ object AppLock {
         }
     }
 
+    /** Opens the lock after the system fingerprint or face check passed. Wrong tries never count against the PIN. */
+    fun unlockWithBiometric(settings: SettingsRepository) {
+        if (!locked) return
+        settings.setAppLockFailures(0, 0)
+        locked = false
+        unlockWanted = false
+        UsageStats.count("security.unlock_biometric")
+        BrowserLog.info("security", "App unlocked with fingerprint or face")
+    }
+
+    /** True while the History list must stay hidden: the lock is set, engaged, and History is guarded. */
+    fun historyLocked(settings: SettingsRepository, guarded: Boolean): Boolean =
+        guarded && locked && settings.appLockRecord.value != null
+
     fun lockoutRemainingMs(settings: SettingsRepository): Long =
         (settings.appLockLockedUntil() - System.currentTimeMillis()).coerceAtLeast(0)
 
