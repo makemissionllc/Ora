@@ -14,7 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "22 Nov 2026",
         items = listOf(
-            ChangeItem(ChangeKind.ADDED, "Close private tabs when away. A new switch in Settings > Privacy (off by default): if you leave Ora for more than a minute, your private tabs close by themselves, so nobody who picks up your phone finds them. Coming back takes you to your normal tabs. A short trip, like picking a file, does not close anything. (`HASH`)"),
+            ChangeItem(ChangeKind.ADDED, "Close private tabs when away. A new switch in Settings > Privacy (off by default): if you leave Ora for more than a minute, your private tabs close by themselves, so nobody who picks up your phone finds them. Coming back takes you to your normal tabs. A short trip, like picking a file, does not close anything. (`7d883da`)"),
             ChangeItem(ChangeKind.ADDED, "Everything you tap now answers your finger. Buttons, menu tiles, list rows, settings rows, tabs and chips sink a little and tick while you hold them, then spring back when you let go. Wide rows sink less, and full-screen areas stay still so the page never wobbles. Menu backdrops and sheet bodies no longer move when you touch them. (`30ad7d9`)"),
         ),
     ),
