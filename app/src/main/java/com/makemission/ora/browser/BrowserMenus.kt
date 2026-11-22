@@ -22,6 +22,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.outlined.AddToHomeScreen
 import androidx.compose.material.icons.outlined.Devices
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material.icons.outlined.Article
@@ -111,6 +112,7 @@ fun BrowserMenuSheet(
     isReadLater: Boolean = false,
     onReadLater: () -> Unit = {},
     onSavePdf: () -> Unit = {},
+    onSaveImages: () -> Unit = {},
     onQuickSwitcher: () -> Unit = {},
     onSessions: () -> Unit = {},
     onZap: () -> Unit = {},
@@ -159,6 +161,7 @@ fun BrowserMenuSheet(
             isReadLater = isReadLater,
             onReadLater = { act(onReadLater) },
             onSavePdf = { act(onSavePdf) },
+            onSaveImages = { act(onSaveImages) },
             onQuickSwitcher = { act(onQuickSwitcher) },
             onSessions = { act(onSessions) },
             onZap = { act(onZap) },
@@ -205,6 +208,7 @@ private fun BrowserMenuItems(
     isReadLater: Boolean,
     onReadLater: () -> Unit,
     onSavePdf: () -> Unit,
+    onSaveImages: () -> Unit,
     onQuickSwitcher: () -> Unit,
     onSessions: () -> Unit,
     onZap: () -> Unit,
@@ -276,6 +280,8 @@ private fun BrowserMenuItems(
             MenuRow(Icons.Outlined.VisibilityOff, "Hide an element", onZap, subtitle = "Pick a banner or bar to hide on this site")
             MenuRow(Icons.Outlined.Folder, "Saved sessions", onSessions, subtitle = "Save your open tabs, or open a saved set")
             MenuRow(Icons.Outlined.PictureAsPdf, "Save as PDF", onSavePdf, subtitle = "To Downloads, named after the page")
+            // Quality of life: every image on the page, picked from thumbnails and saved in one go.
+            MenuRow(Icons.Outlined.Image, "Save all images", onSaveImages, subtitle = "Pick from this page's images", chevron = true)
             MenuRow(Icons.Outlined.ContentCopy, "Copy page address", onCopyAddress)
             // Quality of life: pages sent to a device that is asleep wait in an outbox and arrive when it wakes.
             if (onSendToDevice != null) {

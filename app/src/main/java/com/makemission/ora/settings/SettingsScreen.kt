@@ -179,6 +179,7 @@ fun SettingsScreen(
     }
     val globalPrivacyControl by settings.globalPrivacyControl.collectAsState()
     val httpsOnly by settings.httpsOnly.collectAsState()
+    val rejectCookieBanners by settings.rejectCookieBanners.collectAsState()
     val appLockRecord by settings.appLockRecord.collectAsState()
     val appLockWholeApp by settings.appLockWholeApp.collectAsState()
     val appLockBiometric by settings.appLockBiometric.collectAsState()
@@ -1473,6 +1474,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = fingerprintingProtection, label = "Switch", onChange = { settings.setFingerprintingProtection(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .pressFeedback().clickable { settings.setRejectCookieBanners(!rejectCookieBanners) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Reject cookie banners", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "Clicks Reject on cookie pop-ups Ora recognises, so fewer trackers are allowed and fewer pop-ups cover the page. Pop-ups it does not know stay. Takes effect the next time Ora starts.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = rejectCookieBanners, label = "Switch", onChange = { settings.setRejectCookieBanners(it) })
                             }
                             Row(
                                 modifier = Modifier

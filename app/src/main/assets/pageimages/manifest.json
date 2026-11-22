@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "Page images",
+  "version": "1.0",
+  "description": "Lists the images on a page when Ora asks, for Save all images.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "page-images@ora.makemission.com"
+    }
+  },
+  "permissions": [
+    "nativeMessaging",
+    "geckoViewAddons",
+    "<all_urls>"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start"
+    }
+  ]
+}

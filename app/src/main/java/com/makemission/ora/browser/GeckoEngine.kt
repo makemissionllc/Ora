@@ -30,6 +30,7 @@ object GeckoEngine {
         VideoControlBridge.install(rt)
         ReaderBridge.install(rt)
         com.makemission.ora.extensions.SiteScanBridge.install(rt)
+        com.makemission.ora.extensions.PageImagesBridge.install(rt)
         BrowserLog.info("app", "Reader, video and scan helpers installed after start-up")
     }
 
@@ -98,7 +99,7 @@ object GeckoEngine {
         Preloader.mode = mode
         val ahead = Preloader.allowedNow(mode)
         BrowserLog.info("preload", "Preloading ${mode.label}; Gecko speculative connections ${if (ahead) "on" else "off"}")
-        val extra = (if (ahead) PRELOAD_PREFS else "") + labPrefs(context) + strongPrivatePrefs(context)
+        val extra = (if (ahead) PRELOAD_PREFS else "") + labPrefs(context) + strongPrivatePrefs(context) + cookieBannerPrefs(context)
         return "prefs:\n  dom.disable_open_during_load: false\n$extra" + "env: {}\nargs: []\n"
     }
 
@@ -130,6 +131,17 @@ object GeckoEngine {
         val on = com.makemission.ora.settings.SettingsRepository(context).strongPrivateTabs.value
         BrowserLog.info("privacy", "Start-up: private-tab fingerprint resistance ${if (on) "on" else "off"}")
         return if (on) "  privacy.resistFingerprinting.pbmode: true\n  privacy.spoof_english: 2\n  privacy.resistFingerprinting.letterboxing: false\n" else ""
+    }
+
+    /**
+     * Reject cookie banners: Gecko's cookie banner service answers Reject on the pop-ups it has rules for, in normal and
+     * private windows. GeckoView 160 has no Java setting for it any more, so it is a start-up preference and a change
+     * takes effect the next time Ora starts.
+     */
+    private fun cookieBannerPrefs(context: Context): String {
+        val on = com.makemission.ora.settings.SettingsRepository(context).rejectCookieBanners.value
+        BrowserLog.info("privacy", "Start-up: reject cookie banners ${if (on) "on" else "off"}")
+        return if (on) "  cookiebanners.service.mode: 1\n  cookiebanners.service.mode.privateBrowsing: 1\n  cookiebanners.service.enableGlobalRules: true\n" else ""
     }
 
     private const val PRELOAD_PREFS = "  network.predictor.enabled: true\n" +

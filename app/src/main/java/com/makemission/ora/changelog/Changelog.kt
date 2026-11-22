@@ -14,6 +14,8 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "22 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Save all images. The page menu has a new Save all images row. It lists every picture on the page as thumbnails (all picked at first, with All and None and a count), and Save sends the picked ones to Downloads. Repeats are shown once, a page with no pictures says so, and saving more than 20 asks first and says how many. In a private tab the downloads are private and are not kept in your list. (`22d91ba`)"),
+            ChangeItem(ChangeKind.ADDED, "Reject cookie banners. A new switch in Settings > Privacy (off by default) makes Ora answer Reject on the cookie pop-ups it recognises, in normal and private tabs. It takes effect the next time Ora starts. (`aa930ca`)"),
             ChangeItem(ChangeKind.ADDED, "Unlock Ora with your fingerprint or face, and lock your History. With the PIN lock on, Settings > Privacy has two new switches: Unlock with fingerprint or face (the prompt appears by itself on the lock screen, and the PIN still works), and Lock History, which keeps the History list on phone and tablet behind the same lock until you unlock. (`68129d3`)"),
             ChangeItem(ChangeKind.FIXED, "Fingerprint unlock now works. Ora was asking the phone the wrong way, so it said no fingerprint was set up even when one was. The lock screen also says \"History is locked\" with a Not now button when you open it from History, instead of talking about private tabs. (`22ea6c8`)"),
             ChangeItem(ChangeKind.FIXED, "Find in page no longer hides under the status bar on the phone. The search box now sits just below it. (`b014e47`)"),

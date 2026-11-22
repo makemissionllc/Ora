@@ -753,6 +753,7 @@ private fun BrowserContent(
     var showShortcuts by remember { mutableStateOf(false) }
     var showSwitcher by remember { mutableStateOf(false) }
     var showSessions by remember { mutableStateOf(false) }
+    var showPageImages by remember { mutableStateOf(false) }
     // Device link: the switch in Settings starts or stops it; pages other devices send arrive through the inbox.
     // On only when the switch is on and Android lets Ora reach the local network (Android 17 asks first).
     val deviceLinkSwitch by settings.deviceLink.collectAsState()
@@ -1992,6 +1993,9 @@ private fun BrowserContent(
                         isReadLater = selectedSaved,
                         onReadLater = toggleReadLater,
                         onSavePdf = savePdf,
+                        onSaveImages = {
+                            if (selected.url.isBlank() || selected.url == BrowserTabs.START_URL) com.makemission.ora.notice.InAppNotices.show("Open a page first, then save its images") else showPageImages = true
+                        },
                         onQuickSwitcher = { showSwitcher = true },
                         onSessions = { showSessions = true },
                         onZap = { showZapper = true },
@@ -2193,6 +2197,9 @@ private fun BrowserContent(
     }
     // A page's own questions (alerts, lists, dates). The dialog grows out of the spot that was touched.
     PagePromptHost()
+    if (showPageImages) key(selectedId) {
+        SavePageImagesSheet(pageUrl = selected.url, isPrivate = selected.isPrivate, onDismiss = { showPageImages = false })
+    }
     saveImageAs?.let { t ->
         key(t) {
             SaveImageSheet(
