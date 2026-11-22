@@ -1029,6 +1029,7 @@ private fun BrowserContent(
     val showSidebar by settings.tabletSidebar.collectAsState()
     val toolbarItems by settings.toolbarItems.collectAsState()
     val showGroupStrip by settings.showGroupStrip.collectAsState()
+    val switchToOpenTab by settings.switchToOpenTab.collectAsState()
     val groupDialogs = remember { GroupDialogState() }
     /** Link waiting for a group choice in the picker. */
     var groupPickFor by remember { mutableStateOf<String?>(null) }
@@ -1223,6 +1224,17 @@ private fun BrowserContent(
             if (target != null && target != profileId && profileList.any { it.id == target }) {
                 BrowserLog.info("profiles", "A rule opened a site in another profile")
                 profiles.openIn(target, loadable)
+                return
+            }
+        }
+        // A page already open in another tab of the same kind (private or normal) is switched to, not loaded twice.
+        if (!isSearchInput(input) && switchToOpenTab && com.makemission.ora.settings.SearchShortcuts.resolve(input) == null) {
+            val wanted = sameTabKey(toLoadableUrl(input, defaultEngine.template))
+            val existing = tabs.tabs.firstOrNull { it.id != selected.id && it.isPrivate == selected.isPrivate && sameTabKey(it.url) == wanted }
+            if (existing != null) {
+                tabs.select(existing.id)
+                BrowserLog.info("tabs", "Switched to an already open tab ${if (existing.isPrivate) "(private)" else existing.id.toString()}")
+                InAppNotices.show("Already open, switched to that tab")
                 return
             }
         }
@@ -3809,3 +3821,7 @@ private fun PrivateChip() {
         Text("Private", color = Mineral.Fog, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
     }
 }
+
+/** A page address reduced so two spellings of the same page compare equal: no scheme, "www.", fragment or trailing slash, in lower case. */
+internal fun sameTabKey(url: String): String =
+    url.trim().lowercase().substringBefore('#').removePrefix("https://").removePrefix("http://").removePrefix("www.").trimEnd('/')
