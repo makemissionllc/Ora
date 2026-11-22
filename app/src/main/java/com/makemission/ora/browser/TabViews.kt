@@ -265,6 +265,13 @@ fun TabGrid(
         // Loose tabs not opened in 14 days wait in a collapsed row; a search still finds them.
         val inactiveTabs = if (shownGroup == null && needle.isEmpty()) tabList.filter { t -> (t.groupId == null || tabs.groups.none { it.id == t.groupId }) && tabs.isInactive(t) } else emptyList()
         var inactiveOpen by remember { mutableStateOf(false) }
+        val duplicateCount = tabs.duplicateTabs().size
+        var confirmDuplicates by remember { mutableStateOf(false) }
+        if (confirmDuplicates) CloseDuplicatesDialog(duplicateCount, { confirmDuplicates = false }) {
+            confirmDuplicates = false
+            val closed = tabs.closeDuplicates()
+            com.makemission.ora.notice.InAppNotices.show(if (closed == 1) "Closed 1 duplicate tab" else "Closed $closed duplicate tabs")
+        }
         if (shownGroup != null && gridTabs.isEmpty()) {
             EmptySidebarText("No tabs in this group. Long-press a tab and choose Add to group.")
         }
@@ -274,6 +281,11 @@ fun TabGrid(
             verticalArrangement = Arrangement.spacedBy(BrowserTokens.GridSpacing),
             horizontalArrangement = Arrangement.spacedBy(BrowserTokens.GridSpacing)
         ) {
+            if (shownGroup == null && needle.isEmpty() && !inPrivate && duplicateCount > 0) {
+                item(key = "duplicates", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                    Box(Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave())) { DuplicatesRow(duplicateCount) { confirmDuplicates = true } }
+                }
+            }
             if (shownGroup == null && needle.isEmpty()) {
                 gridItems(tabs.groups.toList(), key = { "g" + it.id }) { group ->
                     GroupCard(group, tabs.tabsIn(group.id).size, onClick = { openGroupId = group.id }, onDropTab = { tabs.moveToGroup(it, group.id) })
@@ -629,6 +641,13 @@ fun TabSidebar(
     }
 
     var confirmClosePrivate by remember { mutableStateOf(false) }
+    val sidebarDuplicates = tabs.duplicateTabs().size
+    var sidebarConfirmDuplicates by remember { mutableStateOf(false) }
+    if (sidebarConfirmDuplicates) CloseDuplicatesDialog(sidebarDuplicates, { sidebarConfirmDuplicates = false }) {
+        sidebarConfirmDuplicates = false
+        val closed = tabs.closeDuplicates()
+        com.makemission.ora.notice.InAppNotices.show(if (closed == 1) "Closed 1 duplicate tab" else "Closed $closed duplicate tabs")
+    }
     androidx.compose.runtime.CompositionLocalProvider(
         com.makemission.ora.ui.theme.LocalBrowserColors provides if (inPrivate) com.makemission.ora.ui.theme.privateBrowserColors(browserColors()) else browserColors()
     ) {
@@ -816,6 +835,7 @@ fun TabSidebar(
                             }
                         }
                         val loose = shownTabs.filter { t -> (t.groupId == null || tabs.groups.none { it.id == t.groupId }) && (!tabs.isInactive(t) || needle.isNotEmpty()) }
+                        if (needle.isEmpty() && sidebarDuplicates > 0) item(key = "duplicates") { Box(Modifier.animateItem()) { DuplicatesRow(sidebarDuplicates) { sidebarConfirmDuplicates = true } } }
                         if (tabs.groups.isNotEmpty()) item(key = "loose") {
                             var hovering by remember { mutableStateOf(false) }
                             Text("Not in a group", modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(if (hovering) browserColors().SidebarSelected else Color.Transparent).tabDropTarget({ hovering = it }) { tabs.moveToGroup(it, null) }.padding(start = 12.dp, top = 10.dp, bottom = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
@@ -838,6 +858,7 @@ fun TabSidebar(
                             }
                         }
                     } else {
+                        if (needle.isEmpty() && sidebarDuplicates > 0) item(key = "duplicates") { Box(Modifier.animateItem()) { DuplicatesRow(sidebarDuplicates) { sidebarConfirmDuplicates = true } } }
                         items(shownTabs.filter { !tabs.isInactive(it) || needle.isNotEmpty() }, key = { it.id }) { tab ->
                             SidebarRow(tab.shownTitle(displayUrl(tab.url)), tab.url, tab.id == tabs.selectedId, onClick = { tabs.select(tab.id) }, onLongClick = { groupState.addTo = tab }, dragTabId = tab.id)
                         }
@@ -1058,4 +1079,28 @@ private fun androidx.compose.foundation.lazy.LazyListScope.searchMatches(
 @Composable
 private fun FoundLabel(text: String) {
     Text(text, modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
+}
+
+/** A row offering to close tabs that repeat an open page. Tapping it asks first, saying how many would close. */
+@Composable
+private fun DuplicatesRow(count: Int, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().height(44.dp).pressFeedback().clip(RoundedCornerShape(12.dp)).background(browserColors().AddressBarBackground).clickable(onClick = onClick).padding(horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(if (count == 1) "1 duplicate tab" else "$count duplicate tabs", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText, modifier = Modifier.weight(1f))
+        Text("Close duplicates", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = browserColors().Accent)
+    }
+}
+
+/** Confirmation for closing duplicate tabs: the one you keep stays open, and the others can be reopened. */
+@Composable
+private fun CloseDuplicatesDialog(count: Int, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    OraDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (count == 1) "Close 1 duplicate tab?" else "Close $count duplicate tabs?") },
+        text = { Text("One tab of each page stays open. You can bring the others back from \"Reopen closed tab\" in the menu.") },
+        confirmButton = { TextButton(onClick = onConfirm) { Text("Close duplicates", color = Mineral.Ember, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
