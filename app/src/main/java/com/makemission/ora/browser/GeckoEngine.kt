@@ -33,6 +33,24 @@ object GeckoEngine {
         BrowserLog.info("app", "Reader, video and scan helpers installed after start-up")
     }
 
+    /** The HTTPS-only mode the settings ask for, kept so a one-time pause can put it back. */
+    @Volatile private var httpsMode = GeckoRuntimeSettings.ALLOW_ALL
+
+    /** Records the mode the settings chose and applies it. */
+    fun applyHttpsMode(context: Context, mode: Int) {
+        httpsMode = mode
+        runtime(context).settings.setAllowInsecureConnections(mode)
+    }
+
+    /** Lets one plain-HTTP load through. [resumeHttpsOnly] puts the chosen mode back when that load ends. */
+    fun pauseHttpsOnly(context: Context) {
+        runtime(context).settings.setAllowInsecureConnections(GeckoRuntimeSettings.ALLOW_ALL)
+    }
+
+    fun resumeHttpsOnly(context: Context) {
+        runtime(context).settings.setAllowInsecureConnections(httpsMode)
+    }
+
     fun runtime(context: Context): GeckoRuntime =
         runtime ?: createRuntime(context.applicationContext).also {
             runtime = it

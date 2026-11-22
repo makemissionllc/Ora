@@ -382,7 +382,8 @@ private fun BrowserContent(
     val httpsOnly by settings.httpsOnly.collectAsState()
     val strongPrivate by settings.strongPrivateTabs.collectAsState()
     LaunchedEffect(httpsOnly, strongPrivate) {
-        GeckoEngine.runtime(context).settings.setAllowInsecureConnections(
+        GeckoEngine.applyHttpsMode(
+            context,
             when {
                 httpsOnly -> GeckoRuntimeSettings.HTTPS_ONLY
                 strongPrivate -> GeckoRuntimeSettings.HTTPS_ONLY_PRIVATE
@@ -390,6 +391,8 @@ private fun BrowserContent(
             }
         )
     }
+    val offerBlockedAllow by settings.offerBlockedAllow.collectAsState()
+    LaunchedEffect(offerBlockedAllow) { ErrorPage.offerAllow = offerBlockedAllow }
     // Strongest private tabs: these Gecko settings apply to private sessions only, so normal tabs are unchanged.
     LaunchedEffect(strongPrivate) {
         try {
