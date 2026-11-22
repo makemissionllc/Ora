@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -54,7 +55,7 @@ fun ZapperDialog(
                     fontSize = 13.sp, lineHeight = 18.sp, color = colors.SecondaryText,
                 )
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = 44.dp).background(colors.Accent, RoundedCornerShape(BrowserTokens.RadiusSmall)).clickable(onClick = onPick).padding(horizontal = 14.dp),
+                    Modifier.fillMaxWidth().heightIn(min = 44.dp).pressFeedback().background(colors.Accent, RoundedCornerShape(BrowserTokens.RadiusSmall)).clickable(onClick = onPick).padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) { Text("Pick an element", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.GridBackground) }
                 if (summary.isEmpty()) {

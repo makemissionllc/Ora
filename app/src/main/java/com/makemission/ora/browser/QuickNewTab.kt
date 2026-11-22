@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
@@ -188,7 +189,7 @@ internal fun QuickMenuPopup(state: QuickMenuState, actions: List<QuickAction>, n
                         Modifier
                             .graphicsLayer { alpha = progress; translationY = (1f - progress) * (if (above) 10.dp.toPx() else -10.dp.toPx()) }
                             .heightIn(min = 48.dp)
-                            .clickable {
+                            .pressFeedback().clickable {
                                 haptics.play(com.makemission.ora.ui.Feel.SELECT)
                                 action.run()
                                 onDone()

@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.CheckMark
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -48,7 +49,7 @@ fun SearchChooserSheet(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onChoose(engine) }
+                        .pressFeedback().clickable { onChoose(engine) }
                         .padding(vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween

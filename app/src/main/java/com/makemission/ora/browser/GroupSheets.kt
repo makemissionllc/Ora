@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.CheckMark
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -122,7 +123,7 @@ fun GroupDialogs(tabs: BrowserTabs, state: GroupDialogState, onGroupClosed: () -
 private fun SheetRow(label: String, dot: GroupColor? = null, checked: Boolean = false, icon: Boolean = false, ember: Boolean = false, onClick: () -> Unit) {
     val colors = browserColors()
     Row(
-        modifier = Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp),
+        modifier = Modifier.fillMaxWidth().height(48.dp).pressFeedback().clip(RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -149,7 +150,7 @@ private fun GroupEditorSheet(initial: TabGroup?, onDismiss: () -> Unit, onSave: 
                 GroupColor.entries.forEach { option ->
                     val picked = option == color
                     Row(
-                        modifier = Modifier.height(44.dp).clip(RoundedCornerShape(50))
+                        modifier = Modifier.height(44.dp).pressFeedback().clip(RoundedCornerShape(50))
                             .background(if (picked) colors.Accent else colors.AddressBarBackground)
                             .clickable { color = option }.padding(horizontal = 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -164,7 +165,7 @@ private fun GroupEditorSheet(initial: TabGroup?, onDismiss: () -> Unit, onSave: 
                 TextButton(onClick = onDismiss) { Text("Cancel", color = colors.SecondaryText) }
                 Box(Modifier.weight(1f))
                 Box(
-                    Modifier.height(48.dp).clip(RoundedCornerShape(24.dp)).background(colors.Accent).clickable { onSave(name, color) }.padding(horizontal = 26.dp),
+                    Modifier.height(48.dp).pressFeedback().clip(RoundedCornerShape(24.dp)).background(colors.Accent).clickable { onSave(name, color) }.padding(horizontal = 26.dp),
                     contentAlignment = Alignment.Center,
                 ) { Text(if (initial == null) "Create" else "Save", color = colors.GridBackground, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
             }
@@ -224,14 +225,14 @@ fun GroupSheet(tabs: BrowserTabs, group: TabGroup, state: GroupDialogState, onNe
                 }
                 Box {
                     Text("Options", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText,
-                        modifier = Modifier.clip(RoundedCornerShape(12.dp)).clickable { menu = true }.padding(horizontal = 12.dp, vertical = 12.dp))
+                        modifier = Modifier.pressFeedback().clip(RoundedCornerShape(12.dp)).clickable { menu = true }.padding(horizontal = 12.dp, vertical = 12.dp))
                     GroupMenu(expanded = menu, onDismiss = { menu = false }, group = group, tabs = tabs, state = state, onUngrouped = onDismiss)
                 }
             }
             members.forEach { tab ->
                 val open = tab.id == tabs.selectedId
                 Row(
-                    Modifier.fillMaxWidth().height(48.dp).clip(RoundedCornerShape(12.dp))
+                    Modifier.fillMaxWidth().height(48.dp).pressFeedback().clip(RoundedCornerShape(12.dp))
                         .background(if (open) colors.Accent else Color.Transparent)
                         .clickable { tabs.select(tab.id); onDismiss() }.padding(horizontal = 12.dp),
                     verticalAlignment = Alignment.CenterVertically,

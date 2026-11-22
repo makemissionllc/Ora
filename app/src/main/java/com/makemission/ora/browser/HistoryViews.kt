@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.oraRowMotion
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -243,7 +244,7 @@ private fun ClearHistoryConfirm(
                     .clip(RoundedCornerShape(BrowserTokens.QuickMenuRadius))
                     .background(colors.AddressBarBackground)
                     // Taps on the card do not reach the scrim behind it.
-                    .clickable(onClick = {})
+                    .pressFeedback().clickable(onClick = {})
                     .padding(20.dp)
             ) {
                 Text(
@@ -283,7 +284,7 @@ private fun HistoryRow(entry: HistoryEntry, onOpen: () -> Unit, onRemove: () -> 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .clickable(onClick = onOpen)
             .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically

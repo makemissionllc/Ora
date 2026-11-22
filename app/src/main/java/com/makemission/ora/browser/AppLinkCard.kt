@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -79,7 +80,7 @@ fun AppLinkCard(
                 color = colors.SecondaryText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.height(44.dp).clickable(onClick = onStay).padding(horizontal = 12.dp),
+                modifier = Modifier.height(44.dp).pressFeedback().clickable(onClick = onStay).padding(horizontal = 12.dp),
             )
             Spacer(Modifier.weight(1f))
             if (!pending.fromPrivate) {

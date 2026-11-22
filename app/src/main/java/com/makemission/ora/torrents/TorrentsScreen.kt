@@ -1,5 +1,6 @@
 package com.makemission.ora.torrents
 
+import com.makemission.ora.ui.pressFeedback
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility

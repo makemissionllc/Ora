@@ -1,5 +1,6 @@
 package com.makemission.ora.torrents
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +36,7 @@ fun TorrentsSettingsSection(settings: SettingsRepository) {
 
     @Composable
     fun toggle(title: String, body: String, on: Boolean, change: (Boolean) -> Unit) = Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
+        Modifier.fillMaxWidth().pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
             .clickable { change(!on) }.padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,

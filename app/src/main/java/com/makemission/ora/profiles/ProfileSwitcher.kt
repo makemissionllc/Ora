@@ -1,5 +1,6 @@
 package com.makemission.ora.profiles
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.ui.unit.dp
@@ -206,7 +207,7 @@ private fun ProfileSheet(
                     Row(
                         modifier = Modifier
                             .height(44.dp)
-                            .clip(RoundedCornerShape(50))
+                            .pressFeedback().clip(RoundedCornerShape(50))
                             .background(if (picked) colors.Accent else colors.AddressBarBackground)
                             .clickable { tint = option; onTintPreview(option) }
                             .padding(horizontal = 16.dp),
@@ -227,7 +228,7 @@ private fun ProfileSheet(
                 Box(
                     modifier = Modifier
                         .height(44.dp)
-                        .clip(RoundedCornerShape(50))
+                        .pressFeedback().clip(RoundedCornerShape(50))
                         .background(colors.Accent)
                         .clickable { onSave(name, tint) }
                         .padding(horizontal = 22.dp),

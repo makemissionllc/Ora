@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -146,7 +147,7 @@ fun QuickSwitcher(items: List<QuickItem>, onPick: (QuickItem) -> Unit, onDismiss
                     itemsIndexed(results, key = { _, item -> "${item.kind}:${item.key}" }) { index, item ->
                         Row(
                             oraRowMotion().fillMaxWidth().heightIn(min = 48.dp)
-                                .background(if (index == selected) colors.AddressBarBackground else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(BrowserTokens.RadiusSmall))
+                                .pressFeedback().background(if (index == selected) colors.AddressBarBackground else androidx.compose.ui.graphics.Color.Transparent, RoundedCornerShape(BrowserTokens.RadiusSmall))
                                 .clickable { pick(item) }.padding(horizontal = 10.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),

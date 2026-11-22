@@ -98,7 +98,7 @@ fun LinkQuickMenu(
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
-            .clickable(onClick = close)
+            .pressFeedback().clickable(onClick = close)
     ) {
         val cardWidth = BrowserTokens.QuickMenuWidth
         val gap = BrowserTokens.QuickMenuEdgeGap
@@ -130,7 +130,7 @@ fun LinkQuickMenu(
                 modifier = Modifier
                     .width(cardWidth)
                     .heightIn(max = maxHeight - top - gap)
-                    .clip(RoundedCornerShape(BrowserTokens.QuickMenuRadius))
+                    .pressFeedback().clip(RoundedCornerShape(BrowserTokens.QuickMenuRadius))
                     .background(colors.AddressBarBackground)
                     .clickable(onClick = {})
                     .verticalScroll(rememberScrollState())

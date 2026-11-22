@@ -2984,7 +2984,7 @@ private fun FloatingCompactRow(
                     Box(
                         modifier = Modifier
                             .matchParentSize()
-                            .clip(BrowserTokens.PhoneCompactPill)
+                            .pressFeedback().clip(BrowserTokens.PhoneCompactPill)
                             .clickable {
                                 BrowserLog.info("nav", "Tapped the shrunk address bar: showed the toolbar")
                                 tab.showChrome()
@@ -3323,7 +3323,7 @@ private fun AddressBar(
                     imageVector = Icons.Filled.Lock,
                     contentDescription = if (siteStats != null) "Site stats" else "Secure connection",
                     modifier = Modifier.size(BrowserTokens.LockIconSize).then(
-                        if (siteStats != null) Modifier.clickable {
+                        if (siteStats != null) Modifier.pressFeedback().clickable {
                             statsOpen = !statsOpen
                             BrowserLog.info("labs", "Site stats ${if (statsOpen) "opened" else "closed"} from the padlock")
                         } else Modifier
@@ -3772,7 +3772,7 @@ private fun AppChip(label: String, onClick: () -> Unit) {
         modifier = Modifier
             .padding(start = 6.dp)
             .heightIn(min = 32.dp)
-            .clip(CircleShape)
+            .pressFeedback().clip(CircleShape)
             .background(colors.GridBackground)
             .clickable(onClickLabel = "Open in the $label app", onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 5.dp),

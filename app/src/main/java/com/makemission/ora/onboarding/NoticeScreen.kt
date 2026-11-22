@@ -1,5 +1,6 @@
 package com.makemission.ora.onboarding
 
+import com.makemission.ora.ui.pressFeedback
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -56,7 +57,7 @@ fun NoticeScreen(tablet: Boolean, onDone: () -> Unit) {
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = browserColors().Accent,
-                    modifier = Modifier.heightIn(min = 44.dp).clickable(onClick = onDone).padding(horizontal = 8.dp),
+                    modifier = Modifier.heightIn(min = 44.dp).pressFeedback().clickable(onClick = onDone).padding(horizontal = 8.dp),
                 )
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -75,7 +76,7 @@ fun NoticeScreen(tablet: Boolean, onDone: () -> Unit) {
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = browserColors().Accent,
-                    modifier = Modifier.heightIn(min = 44.dp).clickable { copyNotice(context) }.padding(vertical = 12.dp),
+                    modifier = Modifier.heightIn(min = 44.dp).pressFeedback().clickable { copyNotice(context) }.padding(vertical = 12.dp),
                 )
             }
         }

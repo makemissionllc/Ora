@@ -70,7 +70,7 @@ Ora is an Android browser (`com.makemission.ora`) built on GeckoView with Kotlin
 24. Overlays and panels start below the floating Compact row and never clip their own content. Too tall means scroll, never cut.
 25. The tablet sidebar holds its own sidebar, back and forward buttons. The floating row never draws over the sidebar.
 26. Find in page replaces the address capsule in place.
-27. Surfaces are flat. No grain, noise, texture or ripple. The press response is the 94% scale only.
+27. Surfaces are flat. No grain, noise, texture or ripple. The press response is a scale only: 94% on small controls, 97.5% on wide rows (over 220 dp), none on full-screen areas (`pressFeedback()`). Put `pressFeedback()` before `.clip/.background` so the whole tile shrinks, and never on a scrim or a sheet body.
 28. Dashed lines mean private or temporary and are used for nothing else.
 29. Tints change Ora's surfaces only, never web content.
 

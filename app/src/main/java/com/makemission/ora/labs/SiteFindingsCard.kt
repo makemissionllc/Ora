@@ -1,5 +1,6 @@
 package com.makemission.ora.labs
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -93,7 +94,7 @@ fun SiteFindingsHost(
                     color = colors.SecondaryText,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.heightIn(min = 44.dp).clickable(onClick = onDismiss).padding(horizontal = 12.dp, vertical = 12.dp),
+                    modifier = Modifier.heightIn(min = 44.dp).pressFeedback().clickable(onClick = onDismiss).padding(horizontal = 12.dp, vertical = 12.dp),
                 )
                 Spacer(Modifier.weight(1f))
                 if (shown.any { it.leave }) PillButton(text = "Go back", onClick = onGoBack, primary = true)

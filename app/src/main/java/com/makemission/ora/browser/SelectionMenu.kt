@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -123,7 +124,7 @@ fun SelectionMenu(
                 "Close",
                 color = colors.Accent,
                 fontSize = 14.sp,
-                modifier = Modifier.clickable(onClick = onDismiss).padding(4.dp)
+                modifier = Modifier.pressFeedback().clickable(onClick = onDismiss).padding(4.dp)
             )
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -161,7 +162,7 @@ private fun SelectionChip(label: String, onClick: () -> Unit) {
         color = colors.AddressBarText,
         fontSize = 14.sp,
         modifier = Modifier
-            .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.CardRadius))
             .background(colors.AddressBarBackground)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp)

@@ -647,7 +647,7 @@ private fun FilterTrack(selected: DownloadFilter, onSelect: (DownloadFilter) -> 
                 modifier = Modifier
                     .weight(1f)
                     .height(36.dp)
-                    .clip(CircleShape)
+                    .pressFeedback().clip(CircleShape)
                     .background(fill)
                     .clickable { onSelect(option) }
                     .padding(horizontal = 4.dp),
@@ -759,7 +759,7 @@ private fun DownloadRow(
                         color = colors.Accent,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.height(44.dp).clickable { actions.onOpen(item, anchor.centre()) }.padding(horizontal = 10.dp).wrapContentHeight(Alignment.CenterVertically),
+                        modifier = Modifier.height(44.dp).pressFeedback().clickable { actions.onOpen(item, anchor.centre()) }.padding(horizontal = 10.dp).wrapContentHeight(Alignment.CenterVertically),
                     )
                     IconTile(Icons.Outlined.Info, "Show details") { actions.onDetails(item) }
                     IconTile(Icons.Outlined.Delete, "Delete file") { actions.onDelete(item) }
@@ -1273,7 +1273,7 @@ private fun ConfirmCard(
                     .clip(RoundedCornerShape(BrowserTokens.QuickMenuRadius))
                     .background(colors.AddressBarBackground)
                     // Taps on the card do not reach the scrim behind it.
-                    .clickable(onClick = {})
+                    .pressFeedback().clickable(onClick = {})
                     .padding(20.dp),
             ) {
                 Text(

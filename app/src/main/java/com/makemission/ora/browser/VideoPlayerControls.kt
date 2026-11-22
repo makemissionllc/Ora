@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import android.app.Activity
 import android.app.PictureInPictureParams
 import android.content.Context
@@ -263,7 +264,7 @@ fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onEx
                 val ended = video?.ended == true
                 val paused = video?.paused != false
                 Box(
-                    Modifier.size(72.dp).clip(CircleShape).background(colors.Accent).clickable { togglePlay() }
+                    Modifier.size(72.dp).pressFeedback().clip(CircleShape).background(colors.Accent).clickable { togglePlay() }
                         .semantics { contentDescription = if (ended) "Replay" else if (paused) "Play" else "Pause" },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -306,7 +307,7 @@ fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onEx
                     PlayerButton(Icons.Outlined.Lock, "Lock the controls") { locked = true; shown = true; say("Controls locked") }
                     val rate = v.rate
                     Box(
-                        Modifier.height(48.dp).clip(RoundedCornerShape(24.dp)).background(colors.AddressBarBackground)
+                        Modifier.height(48.dp).pressFeedback().clip(RoundedCornerShape(24.dp)).background(colors.AddressBarBackground)
                             .clickable {
                                 val next = SPEEDS.firstOrNull { it > rate + 0.01 } ?: SPEEDS.first()
                                 VideoControlBridge.setRate(next); say("Speed ${speedLabel(next)}"); touches++
@@ -331,7 +332,7 @@ fun VideoPlayerControls(autoPip: Boolean, tablet: Boolean, swipes: Boolean, onEx
             enter = fadeIn(OraMotion.enter()), exit = fadeOut(OraMotion.exit()),
         ) {
             Box(
-                Modifier.size(56.dp).clip(CircleShape).background(colors.Surface.copy(alpha = 0.92f))
+                Modifier.size(56.dp).pressFeedback().clip(CircleShape).background(colors.Surface.copy(alpha = 0.92f))
                     .clickable { locked = false; show(); say("Controls unlocked") }
                     .semantics { contentDescription = "Unlock the controls" },
                 contentAlignment = Alignment.Center,
@@ -361,7 +362,7 @@ private fun speedLabel(rate: Double): String = if (rate == rate.toInt().toDouble
 private fun PlayerButton(icon: ImageVector, label: String, big: Boolean = false, onClick: () -> Unit) {
     val colors = browserColors()
     Box(
-        Modifier.size(if (big) 56.dp else 48.dp).clip(CircleShape).clickable(onClick = onClick).semantics { contentDescription = label },
+        Modifier.size(if (big) 56.dp else 48.dp).pressFeedback().clip(CircleShape).clickable(onClick = onClick).semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
     ) { Icon(icon, null, tint = colors.AddressBarText, modifier = Modifier.size(if (big) 32.dp else 24.dp)) }
 }
@@ -392,7 +393,7 @@ fun VideoControlsHandle(onOpen: () -> Unit, modifier: Modifier = Modifier) {
             exit = fadeOut(OraMotion.overlayFadeOut()) + scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE),
         ) {
             Box(
-                Modifier.size(48.dp).clip(CircleShape).background(colors.Surface.copy(alpha = 0.82f))
+                Modifier.size(48.dp).pressFeedback().clip(CircleShape).background(colors.Surface.copy(alpha = 0.82f))
                     .clickable { BrowserLog.info("video", "Ora controls opened from the handle"); onOpen() }
                     .semantics { contentDescription = "Open Ora's video controls" },
                 contentAlignment = Alignment.Center,

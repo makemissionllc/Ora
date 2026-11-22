@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.CheckMark
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -55,7 +56,7 @@ fun FontPicker(settings: SettingsRepository) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { open = !open }
+                .pressFeedback().clickable { open = !open }
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -70,7 +71,7 @@ fun FontPicker(settings: SettingsRepository) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { settings.setWebFont(!onWeb) }
+                .pressFeedback().clickable { settings.setWebFont(!onWeb) }
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -107,7 +108,7 @@ fun FontPicker(settings: SettingsRepository) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .heightIn(min = 44.dp)
-                            .clickable { settings.setFont(font) }
+                            .pressFeedback().clickable { settings.setFont(font) }
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,

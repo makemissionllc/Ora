@@ -1,5 +1,6 @@
 package com.makemission.ora.onboarding
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -89,7 +90,7 @@ internal fun TextAction(text: String, onClick: () -> Unit) {
         fontSize = 15.sp,
         fontWeight = FontWeight.SemiBold,
         color = browserColors().Accent,
-        modifier = Modifier.heightIn(min = 44.dp).clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 12.dp),
+        modifier = Modifier.heightIn(min = 44.dp).pressFeedback().clickable(onClick = onClick).padding(horizontal = 8.dp, vertical = 12.dp),
     )
 }
 
@@ -111,7 +112,7 @@ private fun ProgressBar(current: Int) {
 internal fun ChoiceCard(selected: Boolean, title: String, detail: String, onClick: () -> Unit, preview: @Composable () -> Unit) {
     Row(
         Modifier.fillMaxWidth().heightIn(min = 72.dp)
-            .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.CardRadius))
             .background(if (selected) browserColors().SidebarSelected else browserColors().Surface)
             .clickable(onClick = onClick).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -132,7 +133,7 @@ internal fun PillChoices(options: List<String>, selectedIndex: Int, onPick: (Int
     Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         options.forEachIndexed { i, label ->
             Box(
-                Modifier.weight(1f).fillMaxHeight().heightIn(min = 44.dp).clip(RoundedCornerShape(22.dp))
+                Modifier.weight(1f).fillMaxHeight().heightIn(min = 44.dp).pressFeedback().clip(RoundedCornerShape(22.dp))
                     .background(if (i == selectedIndex) browserColors().Accent else browserColors().AddressBarBackground)
                     .clickable { onPick(i) },
                 contentAlignment = Alignment.Center,

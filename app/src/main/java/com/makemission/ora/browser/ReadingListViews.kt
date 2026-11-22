@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.layout.Box
 import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.foundation.clickable
@@ -139,7 +140,7 @@ private fun ReadingRow(item: ReadingItem, onOpen: (ReadingItem) -> Unit, onToggl
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 60.dp)
-            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .clickable { onOpen(item) }
             .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -1,5 +1,6 @@
 package com.makemission.ora.onboarding
 
+import com.makemission.ora.ui.pressFeedback
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -223,7 +224,7 @@ internal fun ProfileStep(profiles: ProfilesRepository, tablet: Boolean, onBack: 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ProfileTint.entries.forEach { t ->
                 Box(
-                    Modifier.size(44.dp).clip(CircleShape).background(t.marker)
+                    Modifier.size(44.dp).pressFeedback().clip(CircleShape).background(t.marker)
                         .border(BorderStroke(if (t == active.tint) 3.dp else 0.dp, browserColors().Accent), CircleShape)
                         .clickable { profiles.setTint(active.id, t) },
                 )
@@ -234,7 +235,7 @@ internal fun ProfileStep(profiles: ProfilesRepository, tablet: Boolean, onBack: 
             listOf("Work", "School", "Other").forEach { label ->
                 val exists = list.any { it.name.equals(label, ignoreCase = true) }
                 Box(
-                    Modifier.heightIn(min = 44.dp).clip(CircleShape)
+                    Modifier.heightIn(min = 44.dp).pressFeedback().clip(CircleShape)
                         .background(if (exists) browserColors().SidebarSelected else browserColors().AddressBarBackground)
                         .clickable(enabled = !exists) {
                             // Adding makes the new profile active; put the first one back so setup stays on it.

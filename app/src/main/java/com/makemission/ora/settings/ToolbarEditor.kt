@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.animation.animateContentSize
@@ -99,7 +100,7 @@ fun ToolbarEditor(settings: SettingsRepository) {
             (ToolbarConfig.PRESETS.map { it.first } + "Custom").forEach { name ->
                 val on = name == preset
                 Box(
-                    Modifier.heightIn48().clip(RoundedCornerShape(24.dp))
+                    Modifier.heightIn48().pressFeedback().clip(RoundedCornerShape(24.dp))
                         .background(if (on) colors.Accent else colors.Surface)
                         .clickable(enabled = name != "Custom") { ToolbarConfig.PRESETS.firstOrNull { it.first == name }?.let { settings.setToolbarItems(it.second) } }
                         .padding(horizontal = 16.dp),
@@ -133,7 +134,7 @@ fun ToolbarEditor(settings: SettingsRepository) {
                         Icon(item.icon(), contentDescription = null, tint = colors.AddressBarText, modifier = Modifier.padding(end = 12.dp))
                         Text(item.label, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText, modifier = Modifier.weight(1f))
                         Box(
-                            Modifier.size(48.dp).clickable { settings.setToolbarItems(items - item) }.semantics { contentDescription = "Remove ${item.label}" },
+                            Modifier.size(48.dp).pressFeedback().clickable { settings.setToolbarItems(items - item) }.semantics { contentDescription = "Remove ${item.label}" },
                             contentAlignment = Alignment.Center,
                         ) { Icon(Icons.Filled.Remove, contentDescription = null, tint = Mineral.Ember) }
                     }
@@ -152,7 +153,7 @@ fun ToolbarEditor(settings: SettingsRepository) {
                 addable.forEach { item ->
                     key(item) {
                         Row(
-                            Modifier.fillMaxWidth().height(RowHeight).clickable(enabled = !full) { settings.setToolbarItems(items + item) }.padding(start = 16.dp, end = 4.dp),
+                            Modifier.fillMaxWidth().height(RowHeight).pressFeedback().clickable(enabled = !full) { settings.setToolbarItems(items + item) }.padding(start = 16.dp, end = 4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Icon(item.icon(), contentDescription = null, tint = if (full) colors.SecondaryText else colors.AddressBarText, modifier = Modifier.padding(end = 12.dp))
@@ -168,7 +169,7 @@ fun ToolbarEditor(settings: SettingsRepository) {
         }
         Text(
             "Reset to Classic", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText,
-            modifier = Modifier.clip(RoundedCornerShape(24.dp)).clickable { settings.resetToolbar() }.padding(horizontal = 4.dp, vertical = 12.dp),
+            modifier = Modifier.pressFeedback().clip(RoundedCornerShape(24.dp)).clickable { settings.resetToolbar() }.padding(horizontal = 4.dp, vertical = 12.dp),
         )
     }
 }

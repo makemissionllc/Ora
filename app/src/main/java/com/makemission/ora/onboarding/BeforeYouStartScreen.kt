@@ -1,5 +1,6 @@
 package com.makemission.ora.onboarding
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -99,7 +100,7 @@ fun BeforeYouStartScreen(onAccept: () -> Unit) {
                             val b = it.boundsInRoot()
                             origin = TransformOrigin(b.center.x / rootSize.x, b.center.y / rootSize.y)
                         }
-                        .clickable {
+                        .pressFeedback().clickable {
                             BrowserLog.info("notice", "Full notice opened from Before you start")
                             showFull = true
                         }
