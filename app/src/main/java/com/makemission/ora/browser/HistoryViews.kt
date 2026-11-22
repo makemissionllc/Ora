@@ -114,14 +114,12 @@ internal fun HistoryList(
             }
             if (shown.isEmpty()) {
                 item(key = "empty") {
-                    Text(
+                    com.makemission.ora.ui.EmptyDoodleState(
+                        if (entries.isEmpty()) com.makemission.ora.ui.Doodle.HISTORY else com.makemission.ora.ui.Doodle.SEARCH,
                         when {
                             entries.isEmpty() -> "No history yet. Pages you visit show up here."
                             else -> "No history matches \"$needle\""
                         },
-                        color = colors.SecondaryText,
-                        fontSize = 13.sp,
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp)
                     )
                 }
             }

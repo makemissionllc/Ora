@@ -267,6 +267,7 @@ fun DownloadsScreen(
                         actions = rowActions,
                         onCopyLink = { copyLink(context, it) },
                         emptyText = filter.emptyText,
+                        hasOthers = all.isNotEmpty(),
                         finishedCount = finishedCount,
                         footer = footer,
                         onClearFinished = { confirmClear = true },
@@ -280,6 +281,7 @@ fun DownloadsScreen(
                         activeRows = activeRows,
                         otherRows = otherRows,
                         emptyText = filter.emptyText,
+                        hasOthers = all.isNotEmpty(),
                         finishedCount = finishedCount,
                         footer = footer,
                         onClearFinished = { confirmClear = true },
@@ -318,6 +320,7 @@ fun DownloadsScreen(
                             activeRows = activeRows,
                             otherRows = otherRows,
                             emptyText = filter.emptyText,
+                        hasOthers = all.isNotEmpty(),
                             finishedCount = finishedCount,
                         footer = footer,
                             onClearFinished = { confirmClear = true },
@@ -364,6 +367,7 @@ private fun PhonePage(
     activeRows: List<DownloadItem>,
     otherRows: List<DownloadItem>,
     emptyText: String,
+    hasOthers: Boolean,
     finishedCount: Int,
     footer: String?,
     onClearFinished: () -> Unit,
@@ -383,12 +387,9 @@ private fun PhonePage(
         item(key = "filter") { FilterTrack(filter, onFilter) }
         if (visible.isEmpty()) {
             item(key = "empty") {
-                Text(
-                    emptyText,
-                    modifier = Modifier.padding(vertical = 16.dp, horizontal = 4.dp),
-                    fontSize = 14.sp,
-                    color = colors.SecondaryText,
-                )
+                com.makemission.ora.ui.EmptyDoodleState(com.makemission.ora.ui.Doodle.DOWNLOAD, emptyText) {
+                    ShowAllLink(filter, hasOthers, onFilter)
+                }
             }
         }
         if (activeRows.isNotEmpty()) {
@@ -440,6 +441,7 @@ private fun TabletPage(
     actions: RowActions,
     onCopyLink: (DownloadItem) -> Unit,
     emptyText: String,
+    hasOthers: Boolean,
     finishedCount: Int,
     footer: String?,
     onClearFinished: () -> Unit,
@@ -454,7 +456,9 @@ private fun TabletPage(
             Column(Modifier.weight(0.42f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 FilterTrack(filter, onFilter)
                 if (visible.isEmpty()) {
-                    Text(emptyText, modifier = Modifier.padding(horizontal = 4.dp), fontSize = 14.sp, color = colors.SecondaryText)
+                    com.makemission.ora.ui.EmptyDoodleState(com.makemission.ora.ui.Doodle.DOWNLOAD, emptyText) {
+                        ShowAllLink(filter, hasOthers, onFilter)
+                    }
                 }
                 val activeRows = visible.filter { it.isLive }
                 val otherRows = visible.filterNot { it.isLive }
@@ -1336,5 +1340,26 @@ private fun PhoneDetail(item: DownloadItem, actions: RowActions, onCopyLink: () 
             Text("Details", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = colors.AddressBarText)
         }
         DownloadDetail(item = item, actions = actions, onCopyLink = onCopyLink, modifier = Modifier.weight(1f), compact = true)
+    }
+}
+
+/**
+ * Quality of life: a filter that shows nothing while other downloads exist offers one tap back to All, instead of
+ * leaving the user to find the filter again. Hidden when All is already chosen or there are no downloads at all.
+ */
+@Composable
+private fun ShowAllLink(filter: DownloadFilter, hasOthers: Boolean, onFilter: (DownloadFilter) -> Unit) {
+    if (filter == DownloadFilter.ALL || !hasOthers) return
+    val colors = browserColors()
+    Box(
+        modifier = Modifier
+            .height(44.dp)
+            .pressFeedback().clip(CircleShape)
+            .background(colors.AddressBarBackground)
+            .clickable { onFilter(DownloadFilter.ALL) }
+            .padding(horizontal = 18.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text("Show all downloads", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
     }
 }

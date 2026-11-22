@@ -79,12 +79,10 @@ internal fun ReadingList(
     LazyColumn(modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         if (shown.isEmpty()) {
             item(key = "empty") {
-                Text(
+                com.makemission.ora.ui.EmptyDoodleState(
+                    if (items.isEmpty()) com.makemission.ora.ui.Doodle.READING else com.makemission.ora.ui.Doodle.SEARCH,
                     if (items.isEmpty()) "Nothing saved yet. Open a page, then choose Add to reading list in the menu."
                     else "Nothing matches \"$needle\"",
-                    color = colors.SecondaryText,
-                    fontSize = 14.sp,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 16.dp),
                 )
             }
         }
