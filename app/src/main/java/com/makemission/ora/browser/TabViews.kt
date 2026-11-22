@@ -15,6 +15,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -276,7 +277,8 @@ fun TabGrid(
                 Box(Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).arriveInTurn(gridTabs.indexOf(tab))) {
                 TabTile(
                     title = tab.shownTitle(displayUrl(tab.url)),
-                    thumbnail = tab.thumbnail,
+                    thumbnail = rememberTabPicture(tab),
+                    host = displayUrl(tab.url),
                     selected = tab.id == tabs.selectedId,
                     onClick = { haptics.play(com.makemission.ora.ui.Feel.SELECT); onSelect(tab.id) },
                     onClose = { haptics.play(com.makemission.ora.ui.Feel.CLOSE); onClose(tab.id) },
@@ -306,7 +308,8 @@ fun TabGrid(
                 if (inactiveOpen) gridItems(inactiveTabs, key = { it.id }) { tab ->
                     TabTile(
                         title = tab.shownTitle(displayUrl(tab.url)),
-                        thumbnail = tab.thumbnail,
+                        thumbnail = rememberTabPicture(tab),
+                    host = displayUrl(tab.url),
                         selected = false,
                         onClick = { haptics.play(com.makemission.ora.ui.Feel.SELECT); onSelect(tab.id) },
                         onClose = { haptics.play(com.makemission.ora.ui.Feel.CLOSE); onClose(tab.id) },
@@ -431,6 +434,8 @@ private fun TabTile(
     groupColor: Color? = null,
     /** Set to let the tile be dragged onto a group. Long press without moving still calls [onLongClick]. */
     dragTabId: Long? = null,
+    /** The site's address, shown on the card when no picture of the page exists yet, so the tab is still recognisable. */
+    host: String = "",
 ) {
     Column(
         modifier = if (dragTabId != null) Modifier.tabDragSource(dragTabId, browserColors().Accent, onLongClick).clickable(onClick = onClick)
@@ -458,8 +463,11 @@ private fun TabTile(
                         modifier = Modifier.fillMaxSize()
                     )
                 } else {
-                    // No preview yet: the plain card breathes so it reads as waiting, not broken.
-                    Box(Modifier.fillMaxSize().pulse(true).background(browserColors().GridBackground.copy(alpha = 0.35f)))
+                    // No picture yet: the card shows the site's letter and address, so the tab can still be told apart.
+                    Column(Modifier.fillMaxSize().background(browserColors().GridBackground.copy(alpha = 0.35f)).padding(12.dp), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(title.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "•", fontSize = 40.sp, fontWeight = FontWeight.Bold, color = browserColors().AddressBarText)
+                        if (host.isNotBlank()) Text(host, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis, color = browserColors().SecondaryText)
+                    }
                 }
                 // Plain box instead of IconButton: IconButton's minimum touch target clipped the badge.
                 Box(
@@ -1024,4 +1032,17 @@ private fun androidx.compose.foundation.lazy.LazyListScope.searchMatches(
 @Composable
 private fun FoundLabel(text: String) {
     Text(text, modifier = Modifier.padding(start = 12.dp, top = 12.dp, bottom = 4.dp), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = browserColors().SecondaryText)
+}
+
+/**
+ * The picture to show for a tab: the fresh one from this run, else the one in memory, else the one saved on disk
+ * for its address (which survives a restart). Private tabs have none, by design.
+ */
+@Composable
+internal fun rememberTabPicture(tab: BrowserTab): ImageBitmap? {
+    val fresh = tab.thumbnail ?: ThumbnailCache.get(tab.id)?.asImageBitmap()
+    if (fresh != null || tab.isPrivate) return fresh
+    return androidx.compose.runtime.produceState<ImageBitmap?>(null, tab.url) {
+        value = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { ThumbnailStore.load(tab.url) }?.asImageBitmap()
+    }.value
 }
