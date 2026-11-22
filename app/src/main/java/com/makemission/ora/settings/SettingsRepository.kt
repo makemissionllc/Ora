@@ -685,6 +685,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Global Privacy Control ${if (enabled) "on" else "off"}")
     }
 
+    private val _rejectCookieBanners = MutableStateFlow(prefs.getBoolean(KEY_REJECT_COOKIE_BANNERS, false))
+    /** When on, Gecko answers "Reject" on cookie consent banners it knows (normal and private tabs). Off by default. */
+    val rejectCookieBanners: StateFlow<Boolean> = _rejectCookieBanners.asStateFlow()
+
+    fun setRejectCookieBanners(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_REJECT_COOKIE_BANNERS, enabled).apply()
+        _rejectCookieBanners.value = enabled
+        BrowserLog.info("settings", "Reject cookie banners ${if (enabled) "on" else "off"}")
+    }
+
     private val _smoothScrolling = MutableStateFlow(prefs.getBoolean(KEY_SMOOTH_SCROLLING, true))
     /** When on, Ora asks Android for the display's fastest refresh rate so scrolling and animations run as smoothly as the screen allows. On by default. */
     val smoothScrolling: StateFlow<Boolean> = _smoothScrolling.asStateFlow()
@@ -1245,6 +1255,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_IMAGE_SAVE_FOLDER = "image_save_folder"
         private const val KEY_DOWNLOAD_NOTIFICATIONS = "download_notifications"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
+        private const val KEY_REJECT_COOKIE_BANNERS = "reject_cookie_banners"
         private const val KEY_SMOOTH_SCROLLING = "smooth_scrolling"
         private const val KEY_STRONG_PRIVATE_TABS = "strong_private_tabs"
         private const val KEY_SWITCH_TO_OPEN_TAB = "switch_to_open_tab"
