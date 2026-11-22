@@ -143,6 +143,7 @@ fun SettingsScreen(
     val phoneBar by settings.phoneBarStyle.collectAsState()
     val tabletBar by settings.tabletBarStyle.collectAsState()
     val barButton by settings.barButton.collectAsState()
+    val barButtonSide by settings.barButtonSide.collectAsState()
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
@@ -723,9 +724,30 @@ fun SettingsScreen(
                     }
                     if ((if (isTablet) tabletBar else phoneBar) == BarStyle.COMPACT && shown(SettingsCategory.TABS)) item {
                         SectionTitle("Compact bar button")
-                        BarButtonList(selected = barButton, onSelect = { settings.setBarButton(it) })
+                        BarButtonList(selected = barButton, tablet = isTablet, onSelect = { settings.setBarButton(it) })
+                        androidx.compose.animation.AnimatedVisibility(
+                            visible = barButton != BarButton.OFF,
+                            enter = androidx.compose.animation.fadeIn(OraMotion.enter()) + androidx.compose.animation.expandVertically(OraMotion.enter()),
+                            exit = androidx.compose.animation.fadeOut(OraMotion.exit()) + androidx.compose.animation.shrinkVertically(OraMotion.exit()),
+                        ) {
+                          Column {
+                            SectionTitle("Button side")
+                            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(browserColors().Surface)) {
+                                com.makemission.ora.settings.BarButtonSide.entries.forEach { side ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().pressFeedback().clickable { settings.setBarButtonSide(side) }.padding(horizontal = 16.dp, vertical = 12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(side.label, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                        com.makemission.ora.ui.OraRadio(selected = side == barButtonSide, onClick = { settings.setBarButtonSide(side) })
+                                    }
+                                }
+                            }
+                          }
+                        }
                         Text(
-                            "The round button beside the address bar in the Compact style.",
+                            "The round button beside the address bar in the Compact style. Hold it for every action the bar can do.",
                             modifier = Modifier.padding(start = 4.dp, top = 6.dp),
                             fontSize = 14.sp,
                             color = browserColors().SecondaryText
@@ -2144,14 +2166,15 @@ private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit, table
 }
 
 @Composable
-private fun BarButtonList(selected: BarButton, onSelect: (BarButton) -> Unit) {
+private fun BarButtonList(selected: BarButton, tablet: Boolean, onSelect: (BarButton) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
             .background(browserColors().Surface)
     ) {
-        BarButton.entries.forEach { button ->
+        // The tablet row already has a Forward button, so offering it again would add nothing.
+        BarButton.entries.filter { !(tablet && it == BarButton.FORWARD) }.forEach { button ->
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

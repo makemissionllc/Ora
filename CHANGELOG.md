@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-22
 
 **Added**
+- The round button next to the address bar is now yours to arrange. In Settings > Tabs you can turn it off, put it on the left or the right of the address bar, and choose from four new jobs: Forward (dimmed when there is no page ahead), Reload, Start page and Reopen closed tab, as well as the earlier ones such as Library and Downloads. Holding the button still opens every action. (`1164f2c`)
 - Close duplicate tabs. When two or more tabs show the same page, the tab overview (phone and tablet) shows a row such as "1 duplicate tab" with Close duplicates. It asks first, keeps one tab of each page (the open one if it is among them), and the closed ones can be brought back from Reopen closed tab. Private tabs are never touched. (`93e8d0f`)
 - Switch to the open tab. Typing an address that another tab already shows now takes you to that tab, with a short note, instead of opening the same page twice. Private and normal tabs are never mixed. It is on by default; turn it off in Settings > Tabs > Open pages. (`d6d96dd`)
 - Close private tabs asks first. Tapping Close private now shows a card that says how many private tabs will close and that they cannot be brought back; Cancel keeps them. (`aa5c03b`)

@@ -118,6 +118,7 @@ import androidx.compose.material.icons.outlined.Bolt
 import com.makemission.ora.settings.ZapLogic
 import androidx.compose.material.icons.outlined.BookmarkBorder
 import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Tab
 import androidx.compose.material.icons.outlined.LibraryBooks
 import androidx.compose.material.icons.outlined.PictureAsPdf
@@ -932,6 +933,7 @@ private fun BrowserContent(
     }
     // The extra round button in the Compact bar runs whichever action the user chose in Settings.
     val barButton by settings.barButton.collectAsState()
+    val barButtonSide by settings.barButtonSide.collectAsState()
     val runBarButton: () -> Unit = {
         BrowserLog.info("nav", "Compact bar button: ${barButton.label}")
         when (barButton) {
@@ -944,6 +946,11 @@ private fun BrowserContent(
             BarButton.FIND -> showFind = true
             BarButton.SAVE_PDF -> savePdf()
             BarButton.SETTINGS -> showSettings = true
+            BarButton.FORWARD -> selected.session.goForward()
+            BarButton.RELOAD -> selected.session.reload()
+            BarButton.HOME -> selected.url = BrowserTabs.START_URL
+            BarButton.REOPEN -> onReopenClosed()
+            BarButton.OFF -> Unit
         }
     }
     // Held on the round button: everything the bar can do, so no action needs a trip through Settings or the menu.
@@ -1435,6 +1442,7 @@ private fun BrowserContent(
                         onSwipeUp = openTabs,
                         onSwitchTab = switchTab,
                         barButton = barButton,
+                        barButtonLeft = barButtonSide == com.makemission.ora.settings.BarButtonSide.LEFT,
                         barButtonBookmarked = selectedBookmarked,
                         onBarButton = runBarButton,
                         quickActions = barQuickActions,
@@ -1463,6 +1471,7 @@ private fun BrowserContent(
             onSwipeDown = openTabs,
             onTabs = openTabs,
             barButton = barButton,
+            barButtonLeft = barButtonSide == com.makemission.ora.settings.BarButtonSide.LEFT,
             barButtonBookmarked = selectedBookmarked,
             onBarButton = runBarButton,
                         quickActions = barQuickActions,
@@ -2894,6 +2903,8 @@ private fun FloatingCompactRow(
     findBar: (@Composable () -> Unit)? = null,
     /** The user's choice for the extra round button. Tabs on a phone means no button (a swipe up opens the tabs). */
     barButton: BarButton = BarButton.TABS,
+    /** True puts the round button before the address bar instead of after it. */
+    barButtonLeft: Boolean = false,
     barButtonBookmarked: Boolean = false,
     onBarButton: () -> Unit = {},
     /** Every action the round button can do, shown in a menu when it is held. Empty turns the menu off. */
@@ -2964,6 +2975,33 @@ private fun FloatingCompactRow(
                 }
             }
         }
+        val extraButton: @Composable () -> Unit = {
+        if (barButton != BarButton.OFF && (onTabs != null || barButton != BarButton.TABS)) {
+            // Quality of life: the button turns into whatever the user picked, and tells screen readers its name.
+            CompactSlot(shrink) {
+                val quick = rememberQuickMenu()
+                QuickActionsMenu(quick, quickActions)
+                FloatingCircleButton(
+                    onClick = { if (onTabs != null && barButton == BarButton.TABS) onTabs() else onBarButton() },
+                    enabled = shrink < 0.5f && (barButton != BarButton.FORWARD || tab.canGoForward),
+                    description = barButton.label,
+                    // Quality of life: hold this button for every action the bar can do, in one menu that grows out of it.
+                    onLongClick = if (quickActions.isNotEmpty()) ({ quick.open = true }) else null,
+                    modifier = Modifier.quickAnchor(quick),
+                ) {
+                    // A changed icon (a bookmark saved or removed) lands with a small bounce instead of swapping.
+                    AnimatedContent(
+                        targetState = barButtonIcon(barButton, barButtonBookmarked),
+                        transitionSpec = {
+                            (fadeIn(OraMotion.quick()) + scaleIn(OraMotion.pop(), initialScale = 0.5f)) togetherWith fadeOut(OraMotion.quick())
+                        },
+                        label = "bar button icon",
+                    ) { icon -> Icon(icon, contentDescription = null) }
+                }
+            }
+        }
+        }
+        if (barButtonLeft) extraButton()
         // The middle slot takes the free width and centres the pill. Shrinking narrows the pill around the
         // centre, as Safari does, instead of letting it widen into the space the round buttons leave.
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -3017,30 +3055,7 @@ private fun FloatingCompactRow(
                 }
             }
         }
-        if (onTabs != null || barButton != BarButton.TABS) {
-            // Quality of life: the button turns into whatever the user picked, and tells screen readers its name.
-            CompactSlot(shrink) {
-                val quick = rememberQuickMenu()
-                QuickActionsMenu(quick, quickActions)
-                FloatingCircleButton(
-                    onClick = { if (onTabs != null && barButton == BarButton.TABS) onTabs() else onBarButton() },
-                    enabled = shrink < 0.5f,
-                    description = barButton.label,
-                    // Quality of life: hold this button for every action the bar can do, in one menu that grows out of it.
-                    onLongClick = if (quickActions.isNotEmpty()) ({ quick.open = true }) else null,
-                    modifier = Modifier.quickAnchor(quick),
-                ) {
-                    // A changed icon (a bookmark saved or removed) lands with a small bounce instead of swapping.
-                    AnimatedContent(
-                        targetState = barButtonIcon(barButton, barButtonBookmarked),
-                        transitionSpec = {
-                            (fadeIn(OraMotion.quick()) + scaleIn(OraMotion.pop(), initialScale = 0.5f)) togetherWith fadeOut(OraMotion.quick())
-                        },
-                        label = "bar button icon",
-                    ) { icon -> Icon(icon, contentDescription = null) }
-                }
-            }
-        }
+        if (!barButtonLeft) extraButton()
         CompactSlot(shrink) {
             FloatingCircleButton(onClick = onMore, enabled = shrink < 0.5f, description = "More") {
                 Icon(Icons.Filled.MoreVert, contentDescription = null)
@@ -3060,6 +3075,11 @@ private fun barButtonIcon(button: BarButton, bookmarked: Boolean) = when (button
     BarButton.FIND -> Icons.Filled.Search
     BarButton.SAVE_PDF -> Icons.Outlined.PictureAsPdf
     BarButton.SETTINGS -> Icons.Outlined.Settings
+    BarButton.FORWARD -> Icons.AutoMirrored.Filled.ArrowForward
+    BarButton.RELOAD -> Icons.Filled.Refresh
+    BarButton.HOME -> Icons.Outlined.Home
+    BarButton.REOPEN -> Icons.Outlined.History
+    BarButton.OFF -> Icons.Outlined.Tab
 }
 
 /** A slot for one round button. It narrows to nothing as the row shrinks, so the button folds away instead of vanishing. */
