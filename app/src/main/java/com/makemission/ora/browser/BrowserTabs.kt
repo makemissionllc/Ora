@@ -996,6 +996,24 @@ class BrowserTabs(
     fun isInactive(tab: BrowserTab): Boolean =
         !tab.isPrivate && tab.id != selectedId && System.currentTimeMillis() - tab.lastActive > INACTIVE_AFTER_MS
 
+    /**
+     * Normal tabs that repeat a page another normal tab already shows. Of each set of same pages the open tab is kept,
+     * otherwise the first; the rest are returned. Start pages and blank tabs are never counted.
+     */
+    fun duplicateTabs(): List<BrowserTab> =
+        tabs.filter { !it.isPrivate && it.url != START_URL && it.url.isNotBlank() && it.url != "about:blank" }
+            .groupBy { sameTabKey(it.url) }
+            .values
+            .flatMap { same -> if (same.size < 2) emptyList() else { val keep = same.firstOrNull { it.id == selectedId } ?: same.first(); same.filter { it !== keep } } }
+
+    /** Closes [duplicateTabs]. Each goes through [close], so "Reopen closed tab" can bring them back. Returns how many closed. */
+    fun closeDuplicates(): Int {
+        val extra = duplicateTabs()
+        extra.forEach { close(it.id) }
+        BrowserLog.info("tabs", "Closed ${extra.size} duplicate tab(s)")
+        return extra.size
+    }
+
     fun tabsIn(groupId: String): List<BrowserTab> = tabs.filter { it.groupId == groupId }
 
     /** Adds an empty group. A blank name becomes "Group N". */

@@ -14,6 +14,7 @@ val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
         date = "22 Nov 2026",
         items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Close duplicate tabs. When two or more tabs show the same page, the tab overview (phone and tablet) shows a row such as "1 duplicate tab" with Close duplicates. It asks first, keeps one tab of each page (the open one if it is among them), and the closed ones can be brought back from Reopen closed tab. Private tabs are never touched. (`93e8d0f`)"),
             ChangeItem(ChangeKind.ADDED, "Switch to the open tab. Typing an address that another tab already shows now takes you to that tab, with a short note, instead of opening the same page twice. Private and normal tabs are never mixed. It is on by default; turn it off in Settings > Tabs > Open pages. (`d6d96dd`)"),
             ChangeItem(ChangeKind.ADDED, "Close private tabs asks first. Tapping Close private now shows a card that says how many private tabs will close and that they cannot be brought back; Cancel keeps them. (`aa5c03b`)"),
             ChangeItem(ChangeKind.ADDED, "Menus and sheets feel more finished. The ⋯ menu on a group now grows out of its button and folds back into it, as a compact card. Sheets with a text box, such as New group, rise above the keyboard so the name field and the Create button stay in view. Long-press buttons (new tab, reload, the lock-screen keys, profile chips, shortcut tiles, group rows and download rows) now sink and tick when pressed, like every other button. (`9e2c7f8`)"),
