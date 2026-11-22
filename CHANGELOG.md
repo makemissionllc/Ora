@@ -10,6 +10,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ### 2026-11-22
 
+**Fixed**
+- Find in page no longer hides under the status bar on the phone. The search box now sits just below it. (`b014e47`)
+
 **Added**
 - Compact bar shortcuts on both sides. The address bar can now have a shortcut on its left and another on its right at the same time. In Settings > Tabs, pick Left or Right and choose a job for it (Forward, Reload, Start page, Reopen closed tab, Downloads and the rest, or Off). A line under the choice tells you what the bar shows, and says so when both are off. Your old choice carries over to the side it was on. (`0466379`)
 - Resize the tablet sidebar. Drag the sidebar's right edge to make it narrower or wider (a small tick tells you when you reach the limit), and Ora remembers the width. Double-tap the edge, or use Reset next to Sidebar width in Settings > Tabs, to go back to the usual width. (`95ac921`)
