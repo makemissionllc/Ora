@@ -30,6 +30,7 @@ object GeckoEngine {
         VideoControlBridge.install(rt)
         ReaderBridge.install(rt)
         com.makemission.ora.extensions.SiteScanBridge.install(rt)
+        com.makemission.ora.extensions.PageImagesBridge.install(rt)
         BrowserLog.info("app", "Reader, video and scan helpers installed after start-up")
     }
 
