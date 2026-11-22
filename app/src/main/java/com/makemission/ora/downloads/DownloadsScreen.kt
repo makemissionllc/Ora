@@ -706,7 +706,7 @@ private fun DownloadRow(
         modifier = modifier
             .onGloballyPositioned { anchor.coords = it }
             .fillMaxWidth()
-            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
             .background(background)
             .combinedClickable(
                 interactionSource = interaction,

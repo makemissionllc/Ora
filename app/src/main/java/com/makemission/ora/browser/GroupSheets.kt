@@ -4,6 +4,11 @@ import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.CheckMark
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
+import com.makemission.ora.ui.theme.BrowserTokens
+import com.makemission.ora.ui.theme.OraMotion
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -173,15 +178,71 @@ private fun GroupEditorSheet(initial: TabGroup?, onDismiss: () -> Unit, onSave: 
     }
 }
 
-/** The ⋯ menu of a group: Rename, Colour, Ungroup and Close group (Ember). */
+/**
+ * The ⋯ menu of a group: Rename, Colour, Ungroup and Close group (Ember). Previous component: the ⋯ button it hangs from.
+ * The card grows out of that button's corner and folds back into it, on the shared overlay motion.
+ */
 @Composable
 fun GroupMenu(expanded: Boolean, onDismiss: () -> Unit, group: TabGroup, tabs: BrowserTabs, state: GroupDialogState, onUngrouped: () -> Unit = {}) {
-    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss, containerColor = browserColors().Surface) {
-        DropdownMenuItem(text = { Text("Rename") }, onClick = { onDismiss(); state.editing = group })
-        DropdownMenuItem(text = { Text("Colour") }, onClick = { onDismiss(); state.editing = group })
-        DropdownMenuItem(text = { Text("Ungroup") }, onClick = { onDismiss(); tabs.ungroup(group.id); onUngrouped() })
-        DropdownMenuItem(text = { Text("Close group", color = Mineral.Ember) }, onClick = { onDismiss(); state.closing = group })
+    val colors = browserColors()
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val gapPx = with(density) { 6.dp.roundToPx() }
+    val marginPx = with(density) { 8.dp.roundToPx() }
+    val visible = remember { androidx.compose.animation.core.MutableTransitionState(false) }
+    visible.targetState = expanded
+    // The popup stays in place while it folds back, so the exit is seen.
+    if (!visible.currentState && !visible.targetState) return
+    val position = remember(gapPx, marginPx) {
+        object : androidx.compose.ui.window.PopupPositionProvider {
+            override fun calculatePosition(
+                anchorBounds: androidx.compose.ui.unit.IntRect,
+                windowSize: androidx.compose.ui.unit.IntSize,
+                layoutDirection: androidx.compose.ui.unit.LayoutDirection,
+                popupContentSize: androidx.compose.ui.unit.IntSize,
+            ): androidx.compose.ui.unit.IntOffset {
+                val x = (anchorBounds.right - popupContentSize.width).coerceIn(marginPx, (windowSize.width - popupContentSize.width - marginPx).coerceAtLeast(marginPx))
+                val below = anchorBounds.bottom + gapPx
+                val y = if (below + popupContentSize.height <= windowSize.height - marginPx) below else (anchorBounds.top - popupContentSize.height - gapPx).coerceAtLeast(marginPx)
+                return androidx.compose.ui.unit.IntOffset(x, y)
+            }
+        }
     }
+    androidx.compose.ui.window.Popup(
+        popupPositionProvider = position,
+        onDismissRequest = onDismiss,
+        properties = androidx.compose.ui.window.PopupProperties(focusable = true),
+    ) {
+        val origin = androidx.compose.ui.graphics.TransformOrigin(1f, 0f)
+        androidx.compose.animation.AnimatedVisibility(
+            visibleState = visible,
+            enter = androidx.compose.animation.fadeIn(OraMotion.overlayFadeIn()) +
+                androidx.compose.animation.scaleIn(OraMotion.overlayScaleIn(), initialScale = OraMotion.MORPH_SCALE, transformOrigin = origin),
+            exit = androidx.compose.animation.fadeOut(OraMotion.overlayFadeOut()) +
+                androidx.compose.animation.scaleOut(OraMotion.overlayScaleOut(), targetScale = OraMotion.MORPH_SCALE, transformOrigin = origin),
+        ) {
+            Column(
+                Modifier
+                    .width(androidx.compose.foundation.layout.IntrinsicSize.Max)
+                    .widthIn(min = 180.dp)
+                    .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+                    .background(colors.Surface)
+                    .padding(vertical = 6.dp),
+            ) {
+                GroupMenuRow("Rename", colors.AddressBarText) { onDismiss(); state.editing = group }
+                GroupMenuRow("Colour", colors.AddressBarText) { onDismiss(); state.editing = group }
+                GroupMenuRow("Ungroup", colors.AddressBarText) { onDismiss(); tabs.ungroup(group.id); onUngrouped() }
+                GroupMenuRow("Close group", Mineral.Ember) { onDismiss(); state.closing = group }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupMenuRow(label: String, color: Color, onClick: () -> Unit) {
+    Box(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).pressFeedback().clickable(onClick = onClick).padding(horizontal = 18.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) { Text(label, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = color) }
 }
 
 /**

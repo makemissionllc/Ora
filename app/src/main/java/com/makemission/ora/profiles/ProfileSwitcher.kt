@@ -149,7 +149,7 @@ private fun ProfileChip(
     Box(
         modifier = Modifier
             .height(BrowserTokens.ProfileChipHeight)
-            .clip(RoundedCornerShape(50))
+            .pressFeedback().clip(RoundedCornerShape(50))
             .background(background)
             .then(if (outlined) Modifier.border(1.dp, browserColors().SecondaryText.copy(alpha = 0.35f), RoundedCornerShape(50)) else Modifier)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)

@@ -263,7 +263,7 @@ private fun ShortcutTile(bookmark: Bookmark, config: StartPageConfig, onLongClic
     Column(
         modifier = Modifier
             .width(config.size.slot())
-            .combinedClickable(onLongClick = onLongClick, onClick = onClick),
+            .pressFeedback().combinedClickable(onLongClick = onLongClick, onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
