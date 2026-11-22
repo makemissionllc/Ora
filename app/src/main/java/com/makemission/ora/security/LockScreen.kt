@@ -231,7 +231,7 @@ private fun PinKey(
         modifier = Modifier
             .size(76.dp)
             .alpha(if (enabled) 1f else 0.4f)
-            .clip(CircleShape)
+            .pressFeedback().clip(CircleShape)
             .background(fill)
             .combinedClickable(enabled = enabled, onClick = onClick, onLongClick = onLongClick, onLongClickLabel = description),
         contentAlignment = Alignment.Center

@@ -11,6 +11,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -174,6 +175,8 @@ fun OraSheet(
             Box(
                 modifier
                     .fillMaxWidth()
+                    // With the keyboard up the sheet rides above it, so a text field and its buttons are never hidden.
+                    .imePadding()
                     .graphicsLayer { translationY = drop.value * heightPx }
                     .clip(RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
                     .background(containerColor)

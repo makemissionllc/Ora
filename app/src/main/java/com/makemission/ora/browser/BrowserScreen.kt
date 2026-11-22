@@ -3486,7 +3486,7 @@ private fun AddressBar(
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
-                                .combinedClickable(onClick = onReload, onLongClick = onHardReload, onClickLabel = "Reload", onLongClickLabel = "Reload without cache"),
+                                .pressFeedback().combinedClickable(onClick = onReload, onLongClick = onHardReload, onClickLabel = "Reload", onLongClickLabel = "Reload without cache"),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(Icons.Filled.Refresh, contentDescription = "Reload", tint = browserColors().AddressBarText)

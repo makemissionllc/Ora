@@ -356,7 +356,7 @@ fun TabGrid(
                 Box(
                     modifier = Modifier
                         .size(width = 64.dp, height = 52.dp)
-                        .clip(RoundedCornerShape(26.dp))
+                        .pressFeedback().clip(RoundedCornerShape(26.dp))
                         .background(browserColors().Accent)
                         .quickAnchor(quick)
                         .combinedClickable(onLongClick = { quick.open = true }) { if (inPrivate) { onNewPrivateTab(); onDone() } else onNewTab() },
@@ -387,7 +387,7 @@ internal fun PillButton(
     Row(
         modifier = modifier
             .height(48.dp)
-            .clip(RoundedCornerShape(24.dp))
+            .pressFeedback().clip(RoundedCornerShape(24.dp))
             .background(fill)
             .combinedClickable(onLongClick = onLongClick, onClick = onClick)
             .padding(horizontal = 22.dp),
@@ -435,7 +435,7 @@ private fun TabTile(
 ) {
     Column(
         modifier = if (dragTabId != null) Modifier.tabDragSource(dragTabId, browserColors().Accent, onLongClick).pressFeedback().clickable(onClick = onClick)
-        else Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        else Modifier.pressFeedback().combinedClickable(onClick = onClick, onLongClick = onLongClick),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Surface(
@@ -691,7 +691,7 @@ fun TabSidebar(
             Box(
                 Modifier
                     .size(48.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .pressFeedback().clip(androidx.compose.foundation.shape.CircleShape)
                     .quickAnchor(quick)
                     .combinedClickable(onLongClick = { quick.open = true }) { if (inPrivate) onNewPrivateTab() else onNewTab() }
                     .semantics { contentDescription = if (inPrivate) "New private tab" else "New tab" },

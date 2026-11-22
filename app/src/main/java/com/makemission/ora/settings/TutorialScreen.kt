@@ -302,7 +302,7 @@ private fun HoldPractice(done: Boolean, onWin: () -> Unit) {
     val colors = browserColors()
     var held by remember { mutableStateOf(false) }
     Box(
-        Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(RoundedCornerShape(BrowserTokens.RadiusSmall)).background(colors.AddressBarBackground)
+        Modifier.fillMaxWidth().heightIn(min = 56.dp).pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall)).background(colors.AddressBarBackground)
             .combinedClickable(onClick = {}, onLongClick = { held = true; onWin() }).padding(horizontal = 16.dp),
         contentAlignment = Alignment.CenterStart,
     ) {
