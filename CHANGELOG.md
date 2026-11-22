@@ -11,7 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-22
 
 **Added**
-- Everything you tap now answers your finger. Buttons, menu tiles, list rows, settings rows, tabs and chips sink a little and tick while you hold them, then spring back when you let go. Wide rows sink less, and full-screen areas stay still so the page never wobbles. Menu backdrops and sheet bodies no longer move when you touch them. (`HASH`)
+- Everything you tap now answers your finger. Buttons, menu tiles, list rows, settings rows, tabs and chips sink a little and tick while you hold them, then spring back when you let go. Wide rows sink less, and full-screen areas stay still so the page never wobbles. Menu backdrops and sheet bodies no longer move when you touch them. (`30ad7d9`)
 
 ### 2026-11-21
 
