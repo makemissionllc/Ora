@@ -178,6 +178,7 @@ fun SettingsScreen(
     var appLockDialog by remember { mutableStateOf(false) }
     val fingerprintingProtection by settings.fingerprintingProtection.collectAsState()
     val strongPrivateTabs by settings.strongPrivateTabs.collectAsState()
+    val closePrivateAway by settings.closePrivateAway.collectAsState()
     val labsOn by settings.labs.collectAsState()
     val quickResume by settings.quickResume.collectAsState()
     val siteTextSizes = remember { SiteTextSizes.get(noticeContext) }
@@ -1323,6 +1324,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = strongPrivateTabs, label = "Switch", onChange = { settings.setStrongPrivateTabs(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .pressFeedback().clickable { settings.setClosePrivateAway(!closePrivateAway) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Close private tabs when away", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "If you leave Ora for more than a minute, your private tabs close by themselves, so nobody who picks up your phone finds them.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = closePrivateAway, label = "Switch", onChange = { settings.setClosePrivateAway(it) })
                             }
                         }
                     }

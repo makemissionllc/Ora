@@ -636,6 +636,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Strongest private tabs ${if (enabled) "on" else "off"}")
     }
 
+    private val _closePrivateAway = MutableStateFlow(prefs.getBoolean(KEY_CLOSE_PRIVATE_AWAY, false))
+    /** When on, private tabs close by themselves if you come back to Ora after more than a minute away. Off by default. */
+    val closePrivateAway: StateFlow<Boolean> = _closePrivateAway.asStateFlow()
+
+    fun setClosePrivateAway(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_CLOSE_PRIVATE_AWAY, enabled).apply()
+        _closePrivateAway.value = enabled
+        BrowserLog.info("settings", "Close private tabs after time away ${if (enabled) "on" else "off"}")
+    }
+
     private val _fingerprintingProtection = MutableStateFlow(prefs.getBoolean(KEY_FINGERPRINTING_PROTECTION, false))
     /** When on, GeckoView hides details that sites use to recognise your device, such as some hardware and font details. */
     val fingerprintingProtection: StateFlow<Boolean> = _fingerprintingProtection.asStateFlow()
@@ -1044,6 +1054,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_DOWNLOAD_NOTIFICATIONS = "download_notifications"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_STRONG_PRIVATE_TABS = "strong_private_tabs"
+        private const val KEY_CLOSE_PRIVATE_AWAY = "close_private_away"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
         private const val KEY_APP_LOCK = "app_lock_record"
         private const val KEY_APP_LOCK_WHOLE = "app_lock_whole"
