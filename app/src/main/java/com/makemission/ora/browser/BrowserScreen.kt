@@ -51,6 +51,9 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.animation.core.snap
 import androidx.compose.ui.graphics.graphicsLayer
 import com.makemission.ora.ui.theme.OraMotion
 import androidx.compose.ui.graphics.TransformOrigin
@@ -1055,6 +1058,9 @@ private fun BrowserContent(
     val phoneZoneHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
     /** Tablet only: whether the tab and bookmark sidebar is visible. Saved in settings. */
     val showSidebar by settings.tabletSidebar.collectAsState()
+    val sidebarWidthDp by settings.sidebarWidth.collectAsState()
+    val sidebarWidth = sidebarWidthDp.dp
+    var sidebarDragging by remember { mutableStateOf(false) }
     val toolbarItems by settings.toolbarItems.collectAsState()
     val showGroupStrip by settings.showGroupStrip.collectAsState()
     val switchToOpenTab by settings.switchToOpenTab.collectAsState()
@@ -1475,8 +1481,9 @@ private fun BrowserContent(
 
     // Tablet: the floating row starts past the sidebar (300 dp + 12 dp gap), because the sidebar holds its own buttons.
     val sidebarInset by animateDpAsState(
-        targetValue = if (isTablet && showSidebar) BrowserTokens.SidebarWidth else 0.dp,
-        animationSpec = OraMotion.enter(),
+        targetValue = if (isTablet && showSidebar) sidebarWidth else 0.dp,
+        // A drag follows the finger at once; only showing and hiding eases.
+        animationSpec = if (sidebarDragging) snap() else OraMotion.enter(),
         label = "sidebar inset",
     )
     val tabletCompactRow: @Composable () -> Unit = {
@@ -1613,9 +1620,10 @@ private fun BrowserContent(
                 // The whole column is sidebar-coloured and fixed to the sidebar width, so no white
                 // window background shows behind the profile chips or beside the list.
                 // It starts below the status bar, so its rounded top corners are not hidden under the bar.
+                Box(Modifier.width(sidebarWidth).fillMaxHeight()) {
                 Column(
                     modifier = Modifier
-                        .width(BrowserTokens.SidebarWidth)
+                        .fillMaxWidth()
                         .fillMaxHeight()
                         .windowInsetsPadding(WindowInsets.statusBars)
                         // The grid colour fills the rounded corners, so they show the browser colour, not the white window.
@@ -1676,6 +1684,14 @@ private fun BrowserContent(
                             onLockPrivate = if (appLockSet) ({ AppLock.lockIfEnabled(settings) }) else null,
                         )
                     }
+                }
+                SidebarResizeHandle(
+                    width = sidebarWidthDp,
+                    onWidth = { settings.setSidebarWidth(it, log = false) },
+                    onDragging = { sidebarDragging = it; if (!it) BrowserLog.info("settings", "Sidebar width ${sidebarWidthDp.toInt()} dp") },
+                    onReset = { settings.setSidebarWidth(BrowserTokens.SidebarWidth.value); InAppNotices.show("Sidebar width reset") },
+                    modifier = Modifier.align(Alignment.CenterEnd),
+                )
                 }
             }
             // With the sidebar open the page sits in a rounded card, inset 12 dp from the sidebar, right and bottom.
@@ -3866,3 +3882,49 @@ private fun PrivateChip() {
 /** A page address reduced so two spellings of the same page compare equal: no scheme, "www.", fragment or trailing slash, in lower case. */
 internal fun sameTabKey(url: String): String =
     url.trim().lowercase().substringBefore('#').removePrefix("https://").removePrefix("http://").removePrefix("www.").trimEnd('/')
+
+/**
+ * The sidebar's right edge is a drag handle: drag to make the sidebar narrower or wider (240 to 420 dp, remembered),
+ * double-tap to put it back to 300. A small bar shows while the finger is on it. It sits on the sidebar's own edge,
+ * so it has no origin of its own to grow from; the sidebar it belongs to grows out of the menu button.
+ */
+@Composable
+private fun SidebarResizeHandle(width: Float, onWidth: (Float) -> Unit, onDragging: (Boolean) -> Unit, onReset: () -> Unit, modifier: Modifier = Modifier) {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val haptics = com.makemission.ora.ui.LocalOraHaptics.current
+    var active by remember { mutableStateOf(false) }
+    var current by remember { mutableFloatStateOf(width) }
+    current = width
+    val bar by animateFloatAsState(if (active) 1f else 0f, OraMotion.quick(), label = "handle bar")
+    Box(
+        modifier = modifier
+            .width(BrowserTokens.SidebarHandleWidth)
+            .fillMaxHeight()
+            .pointerInput(Unit) { detectTapGestures(onDoubleTap = { onReset() }) }
+            .pointerInput(Unit) {
+                var atEdge = false
+                detectHorizontalDragGestures(
+                    onDragStart = { active = true; onDragging(true) },
+                    onDragEnd = { active = false; onDragging(false) },
+                    onDragCancel = { active = false; onDragging(false) },
+                ) { change, delta ->
+                    change.consume()
+                    val next = (current + delta / density.density).coerceIn(240f, 420f)
+                    val hit = next <= 240f || next >= 420f
+                    if (hit && !atEdge) haptics.play(com.makemission.ora.ui.Feel.THRESHOLD)
+                    atEdge = hit
+                    current = next
+                    onWidth(next)
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier
+                .width(4.dp)
+                .height(48.dp)
+                .graphicsLayer { alpha = bar; scaleY = 0.6f + 0.4f * bar }
+                .background(browserColors().Accent, androidx.compose.foundation.shape.CircleShape)
+        )
+    }
+}

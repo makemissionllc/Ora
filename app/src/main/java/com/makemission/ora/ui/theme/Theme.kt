@@ -129,6 +129,11 @@ object BrowserTokens {
 
     // Sidebar (tablet)
     val SidebarWidth = 300.dp
+    /** The tablet sidebar can be dragged between these widths; SidebarWidth is the default and what Reset returns to. */
+    val SidebarMinWidth = 240.dp
+    val SidebarMaxWidth = 420.dp
+    /** Touch strip on the sidebar's edge that resizes it. */
+    val SidebarHandleWidth = 20.dp
     // The sidebar is a panel with rounded edges on its open (right) side, so it reads as a surface, not a stripe.
     val SidebarShape = RoundedCornerShape(topEnd = RadiusLarge, bottomEnd = RadiusLarge)
     val SidebarPadding = PaddingValues(horizontal = 12.dp, vertical = 20.dp)
