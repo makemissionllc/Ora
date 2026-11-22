@@ -26,6 +26,19 @@ object ErrorPage {
      * "Details for support:", and [category] names the GeckoView category in the support block.
      * [secondary] is null when the card has one button.
      */
+    /**
+     * What "Open anyway" does for a blocked page, always for this one load only.
+     * HTTP_ONCE loads the plain-HTTP page with HTTPS-only paused until it finishes. RISK_ONCE loads a page Ora's
+     * safe-browsing list flagged. CERT hands the page to the engine's own warning, which asks again before continuing.
+     */
+    enum class Allow(val key: String) { HTTP_ONCE("http"), RISK_ONCE("risk"), CERT("cert") }
+
+    /** The link scheme the card's Open anyway button uses. The tab catches it; it is never loaded. */
+    const val ALLOW_SCHEME = "ora-allow"
+
+    /** Whether the cards offer Open anyway. Set from the "Offer to open blocked sites" setting. */
+    @Volatile var offerAllow: Boolean = true
+
     data class Message(
         val icon: Icon,
         val title: String,
@@ -34,6 +47,8 @@ object ErrorPage {
         val category: String,
         val primary: Action,
         val secondary: Action?,
+        /** The one-time override this cause allows, or null when none is safe to offer. */
+        val allow: Allow? = null,
     )
 
     fun messageFor(error: WebRequestError): Message = messageFor(error.code, error.category)
@@ -67,8 +82,18 @@ object ErrorPage {
                 "The server is not accepting visitors right now. Try again in a little while.",
                 "connection refused", name, Action.TRY_AGAIN, Action.GO_BACK
             )
+            WebRequestError.ERROR_HTTPS_ONLY -> Message(
+                Icon.SECURITY,
+                if (site != null) "$site has no secure version" else "This site has no secure version",
+                "HTTPS-only mode is on, and this site only answers over plain HTTP, so anything you send could be read on the way. Open it only if you are not entering passwords or personal details.",
+                "https only", name, Action.GO_BACK, null, Allow.HTTP_ONCE
+            )
+            WebRequestError.ERROR_SAFEBROWSING_MALWARE_URI,
+            WebRequestError.ERROR_SAFEBROWSING_HARMFUL_URI -> flagged(name, "This site may harm your device", "malware list", site)
+            WebRequestError.ERROR_SAFEBROWSING_PHISHING_URI -> flagged(name, "This site may be a scam", "phishing list", site)
+            WebRequestError.ERROR_SAFEBROWSING_UNWANTED_URI -> flagged(name, "This site may install unwanted software", "unwanted software list", site)
             WebRequestError.ERROR_SECURITY_BAD_CERT,
-            WebRequestError.ERROR_SECURITY_SSL,
+            WebRequestError.ERROR_SECURITY_SSL -> insecure(name, "certificate", Allow.CERT)
             WebRequestError.ERROR_BAD_HSTS_CERT -> insecure(name, "certificate")
             WebRequestError.ERROR_REDIRECT_LOOP -> Message(
                 Icon.GENERIC,
@@ -97,6 +122,7 @@ object ErrorPage {
                     "There was a problem with the connection. Try again.",
                     "network error", name, Action.TRY_AGAIN, Action.GO_BACK
                 )
+                WebRequestError.ERROR_CATEGORY_SAFEBROWSING -> flagged(name, "This site may be harmful", "safe browsing", site)
                 WebRequestError.ERROR_CATEGORY_SECURITY -> insecure(name, "error")
                 else -> Message(
                     Icon.GENERIC,
@@ -115,11 +141,18 @@ object ErrorPage {
         "no network", category, Action.TRY_AGAIN, Action.GO_BACK
     )
 
-    private fun insecure(category: String, support: String) = Message(
+    private fun flagged(category: String, title: String, support: String, site: String?) = Message(
+        Icon.SECURITY,
+        title,
+        "${if (site != null) "$site is" else "This page is"} on a list of harmful sites, so Ora stopped it before anything loaded. If you are sure it is safe, you can open it this once.",
+        support, category, Action.GO_BACK, null, Allow.RISK_ONCE
+    )
+
+    private fun insecure(category: String, support: String, allow: Allow? = null) = Message(
         Icon.SECURITY,
         "This connection is not private",
         "Ora stopped the page because the site's security could not be verified, so what you send to it could be seen or changed.",
-        "security $support", category, Action.GO_BACK, null
+        "security $support", category, Action.GO_BACK, null, allow
     )
 
     private fun badAddress(category: String) = Message(
@@ -177,6 +210,12 @@ object ErrorPage {
             append("<div class=\"actions\">")
             append(actionHtml(message.primary, failedUrl, retry, "primary"))
             message.secondary?.let { append(actionHtml(it, failedUrl, retry, "secondary")) }
+            // The override is one tap away but never the first choice: it sits last, in the warning colour, and applies once.
+            val allow = message.allow
+            if (offerAllow && allow != null && retry) {
+                append("<a class=\"btn danger\" href=\"").append(ALLOW_SCHEME).append("://").append(allow.key).append("?u=")
+                    .append(escape(Uri.encode(failedUrl))).append("\">Open anyway, this time only</a>")
+            }
             append("</div>")
             append("<details class=\"support\"><summary>").append(svg(CHEVRON, 16))
             append("<span>Details for support: ").append(escape(message.support)).append("</span></summary>")
@@ -234,6 +273,7 @@ h1{margin:0;font-size:28px;line-height:1.15;font-weight:600;letter-spacing:-.5px
 .btn:disabled{opacity:.45;cursor:default;transform:none}
 .primary{height:54px;border-radius:27px;background:var(--action);color:var(--action-fg);font-size:16px}
 .secondary{height:52px;background:var(--quiet);color:var(--fg);font-size:15px}
+.danger{height:52px;background:transparent;color:var(--alert);font-size:15px;box-shadow:inset 0 0 0 1.5px var(--alert)}
 .support{margin-top:8px}
 .support summary{list-style:none;min-height:44px;display:flex;align-items:center;gap:6px;color:var(--fg2);font-size:14px;cursor:pointer}
 .support summary::-webkit-details-marker{display:none}

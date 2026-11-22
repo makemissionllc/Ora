@@ -151,6 +151,7 @@ fun SettingsScreen(
     val showGroupStrip by settings.showGroupStrip.collectAsState()
     val switchToOpenTab by settings.switchToOpenTab.collectAsState()
     val closeOldTabs by settings.closeOldTabs.collectAsState()
+    val offerBlockedAllow by settings.offerBlockedAllow.collectAsState()
     val hintsOn by settings.hints.collectAsState()
     val downloadNotifications by settings.downloadNotifications.collectAsState()
     val noticeContext = LocalContext.current
@@ -1410,6 +1411,24 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = strongPrivateTabs, label = "Switch", onChange = { settings.setStrongPrivateTabs(it) })
+                            }
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .pressFeedback().clickable { settings.setOfferBlockedAllow(!offerBlockedAllow) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Offer to open blocked pages", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text(
+                                        "When a page is stopped (no secure version, flagged as harmful, bad certificate), its card offers Open anyway for that one visit. Nothing is remembered, and the protection is back right after.",
+                                        fontSize = 14.sp,
+                                        color = browserColors().SecondaryText
+                                    )
+                                }
+                                MineralSwitch(checked = offerBlockedAllow, label = "Switch", onChange = { settings.setOfferBlockedAllow(it) })
                             }
                             Row(
                                 modifier = Modifier

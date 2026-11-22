@@ -671,6 +671,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Strongest private tabs ${if (enabled) "on" else "off"}")
     }
 
+    private val _offerBlockedAllow = MutableStateFlow(prefs.getBoolean(KEY_OFFER_BLOCKED_ALLOW, true))
+    /** When on, the card for a blocked page (no secure version, flagged as harmful, bad certificate) offers Open anyway for that one load. On by default. */
+    val offerBlockedAllow: StateFlow<Boolean> = _offerBlockedAllow.asStateFlow()
+
+    fun setOfferBlockedAllow(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_OFFER_BLOCKED_ALLOW, enabled).apply()
+        _offerBlockedAllow.value = enabled
+        BrowserLog.info("settings", "Offer to open blocked pages ${if (enabled) "on" else "off"}")
+    }
+
     private val _closeOldTabs = MutableStateFlow(prefs.getBoolean(KEY_CLOSE_OLD_TABS, false))
     /** When on, loose tabs not opened for a month are closed when Ora comes to the screen. They stay in Reopen closed tab. Off by default. */
     val closeOldTabs: StateFlow<Boolean> = _closeOldTabs.asStateFlow()
@@ -1111,6 +1121,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_SMOOTH_SCROLLING = "smooth_scrolling"
         private const val KEY_STRONG_PRIVATE_TABS = "strong_private_tabs"
         private const val KEY_SWITCH_TO_OPEN_TAB = "switch_to_open_tab"
+        private const val KEY_OFFER_BLOCKED_ALLOW = "offer_blocked_allow"
         private const val KEY_CLOSE_OLD_TABS = "close_old_tabs"
         private const val KEY_CLOSE_PRIVATE_AWAY = "close_private_away"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"

@@ -28,11 +28,19 @@ class ErrorPageTest {
     }
 
     @Test
-    fun certificateProblemHasOneButtonAndNoBypass() {
+    fun certificateProblemHasOneButtonAndOnlyAOneTimeEngineOverride() {
         val message = ErrorPage.messageFor(WebRequestError.ERROR_SECURITY_BAD_CERT, WebRequestError.ERROR_CATEGORY_SECURITY)
         assertEquals(ErrorPage.Icon.SECURITY, message.icon)
         assertEquals(ErrorPage.Action.GO_BACK, message.primary)
         assertNull(message.secondary)
+        assertEquals(ErrorPage.Allow.CERT, message.allow)
+    }
+
+    @Test
+    fun httpsOnlyAndSafeBrowsingGetAOneTimeOverrideButHstsDoesNot() {
+        assertEquals(ErrorPage.Allow.HTTP_ONCE, ErrorPage.messageFor(WebRequestError.ERROR_HTTPS_ONLY, WebRequestError.ERROR_CATEGORY_SECURITY).allow)
+        assertEquals(ErrorPage.Allow.RISK_ONCE, ErrorPage.messageFor(WebRequestError.ERROR_SAFEBROWSING_PHISHING_URI, WebRequestError.ERROR_CATEGORY_SAFEBROWSING).allow)
+        assertNull(ErrorPage.messageFor(WebRequestError.ERROR_BAD_HSTS_CERT, WebRequestError.ERROR_CATEGORY_SECURITY).allow)
     }
 
     @Test

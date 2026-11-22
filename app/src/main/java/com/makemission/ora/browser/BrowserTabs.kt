@@ -65,6 +65,45 @@ class BrowserTab(
     val session: GeckoSession = adopt ?: newSession(isPrivate)
     /** Page and navigation events go here: a private tab logs nothing, so the log never shows private browsing. */
     private val plog = TabLog(isPrivate)
+
+    /** True while HTTPS-only is paused for one Open anyway load. */
+    private var insecureOnce = false
+
+    /** The address whose certificate warning the user chose to see in the engine's own page. */
+    private var engineErrorFor: String? = null
+
+    /**
+     * Runs the card's Open anyway button. [link] is ora-allow://kind?u=address. Each kind overrides one block for this
+     * load only, and nothing is remembered.
+     */
+    private fun allowBlocked(link: String) {
+        val parsed = android.net.Uri.parse(link)
+        val target = parsed.getQueryParameter("u").orEmpty()
+        if (!ErrorPage.offerAllow || !(target.startsWith("http://") || target.startsWith("https://"))) return
+        val host = popupSiteOf(target)
+        when (parsed.host) {
+            ErrorPage.Allow.HTTP_ONCE.key -> {
+                insecureOnce = true
+                GeckoEngine.pauseHttpsOnly(appContext)
+                plog.warn("security", "Opened $host over plain HTTP once, at the user's request")
+                session.loadUri(target)
+            }
+            ErrorPage.Allow.RISK_ONCE.key -> {
+                plog.warn("security", "Opened $host once although it was flagged as harmful, at the user's request")
+                session.load(GeckoSession.Loader().uri(target).flags(GeckoSession.LOAD_FLAGS_BYPASS_CLASSIFIER))
+            }
+            ErrorPage.Allow.CERT.key -> {
+                plog.warn("security", "Showed the engine's certificate warning for $host, at the user's request")
+                engineErrorFor = target
+                session.loadUri(target)
+            }
+        }
+    }
+
+    private fun endInsecureOnce() {
+        insecureOnce = false
+        GeckoEngine.resumeHttpsOnly(appContext)
+    }
     private val appContext: Context = context.applicationContext
 
     /** Reader view for this tab's page: whether it has an article and whether the reader is showing. */
@@ -324,6 +363,11 @@ class BrowserTab(
             }
 
             override fun onLoadRequest(session: GeckoSession, request: GeckoSession.NavigationDelegate.LoadRequest): GeckoResult<AllowOrDeny>? {
+                // The error card's Open anyway button: handled here, never loaded.
+                if (request.uri.startsWith(ErrorPage.ALLOW_SCHEME + ":")) {
+                    allowBlocked(request.uri)
+                    return GeckoResult.fromValue(AllowOrDeny.DENY)
+                }
                 labsOnRequest(request)
                 return GeckoResult.fromValue(onLinkRequest(this@BrowserTab, request).also { if (it == AllowOrDeny.DENY) deniedForApp = true })
             }
@@ -373,6 +417,10 @@ class BrowserTab(
                 plog.error("page", "Could not load $failed: ${message.title} (${message.support}, code ${error.code}, $connection)")
                 // One card per cause, in place of GeckoView's blank error page.
                 if (failed.isBlank() || failed.startsWith("data:")) return null
+                // The load that follows Open anyway ends here either way, so HTTPS-only comes back on.
+                if (insecureOnce) endInsecureOnce()
+                // A certificate problem the user chose to open: the engine's own warning takes over, which asks once more.
+                if (engineErrorFor == failed) { engineErrorFor = null; return null }
                 return GeckoResult.fromValue(ErrorPage.uriFor(failed, error, host, online))
             }
         }
@@ -453,6 +501,7 @@ class BrowserTab(
             }
 
             override fun onPageStop(session: GeckoSession, success: Boolean) {
+                if (insecureOnce) endInsecureOnce()
                 loading = false
                 pageRevealed = true
                 restorePending = false
