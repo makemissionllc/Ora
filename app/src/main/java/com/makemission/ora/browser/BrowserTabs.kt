@@ -1014,6 +1014,18 @@ class BrowserTabs(
         return extra.size
     }
 
+    /**
+     * Closes loose normal tabs not opened for [OLD_TAB_MS] (a month). Tabs in a group, the open tab and private tabs stay.
+     * Each goes through [close], so "Reopen closed tab" can bring back the last few. Returns how many closed.
+     */
+    fun closeOldTabs(): Int {
+        val now = System.currentTimeMillis()
+        val old = tabs.filter { !it.isPrivate && it.id != selectedId && it.groupId == null && now - it.lastActive > OLD_TAB_MS }
+        old.forEach { close(it.id) }
+        if (old.isNotEmpty()) BrowserLog.info("tabs", "Closed ${old.size} tab(s) not opened for a month")
+        return old.size
+    }
+
     fun tabsIn(groupId: String): List<BrowserTab> = tabs.filter { it.groupId == groupId }
 
     /** Adds an empty group. A blank name becomes "Group N". */
@@ -1079,6 +1091,8 @@ class BrowserTabs(
 }
 
 /** A tab not opened for this long moves into the collapsed Inactive tabs row (14 days). */
+/** A tab unused this long is closed when "Close old tabs" is on. */
+const val OLD_TAB_MS = 30L * 24 * 60 * 60 * 1000
 const val INACTIVE_AFTER_MS = 14L * 24 * 60 * 60 * 1000
 /** [BrowserLog] for one tab. Private tabs are silent except for crashes, which say only that a private tab crashed. */
 private class TabLog(private val silent: Boolean) {

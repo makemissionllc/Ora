@@ -150,6 +150,7 @@ fun SettingsScreen(
     val imageAlwaysAsk by settings.imageAlwaysAsk.collectAsState()
     val showGroupStrip by settings.showGroupStrip.collectAsState()
     val switchToOpenTab by settings.switchToOpenTab.collectAsState()
+    val closeOldTabs by settings.closeOldTabs.collectAsState()
     val hintsOn by settings.hints.collectAsState()
     val downloadNotifications by settings.downloadNotifications.collectAsState()
     val noticeContext = LocalContext.current
@@ -720,6 +721,24 @@ fun SettingsScreen(
                                 Text("Typing an address that another tab already shows takes you to that tab instead of opening it twice. Private and normal tabs are kept apart.", fontSize = 14.sp, color = browserColors().SecondaryText)
                             }
                             MineralSwitch(checked = switchToOpenTab, label = "Switch", onChange = { settings.setSwitchToOpenTab(it) })
+                        }
+                    }
+                    if (shown(SettingsCategory.TABS)) item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable { settings.setCloseOldTabs(!closeOldTabs) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Close tabs not opened for a month", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                Text("Old tabs that are not in a group close when you come back to Ora, and a note says how many. Bring back the last few from \"Reopen closed tab\". Off by default.", fontSize = 14.sp, color = browserColors().SecondaryText)
+                            }
+                            MineralSwitch(checked = closeOldTabs, label = "Switch", onChange = { settings.setCloseOldTabs(it) })
                         }
                     }
                     if ((if (isTablet) tabletBar else phoneBar) == BarStyle.COMPACT && shown(SettingsCategory.TABS)) item {
