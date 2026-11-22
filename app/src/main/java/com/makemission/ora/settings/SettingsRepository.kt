@@ -176,6 +176,18 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Tab sidebar ${if (shown) "shown" else "hidden"}")
     }
 
+    private val _sidebarWidth = MutableStateFlow(prefs.getFloat(KEY_SIDEBAR_WIDTH, 300f).coerceIn(240f, 420f))
+    /** Tablet only: width of the sidebar in dp, set by dragging its edge. 300 is the default. */
+    val sidebarWidth: StateFlow<Float> = _sidebarWidth.asStateFlow()
+
+    fun setSidebarWidth(dp: Float, log: Boolean = true) {
+        val v = dp.coerceIn(240f, 420f)
+        if (v == _sidebarWidth.value) return
+        prefs.edit().putFloat(KEY_SIDEBAR_WIDTH, v).apply()
+        _sidebarWidth.value = v
+        if (log) BrowserLog.info("settings", "Sidebar width ${v.toInt()} dp")
+    }
+
     private val _blockPopups = MutableStateFlow(prefs.getBoolean(KEY_BLOCK_POPUPS, true))
     /** When on, sites cannot open pop-up windows. When off, a pop-up opens as a new tab. */
     val blockPopups: StateFlow<Boolean> = _blockPopups.asStateFlow()
@@ -1072,6 +1084,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_APPEARANCE = "appearance"
         private const val KEY_WEBSITE_THEME = "website_theme"
         private const val KEY_TABLET_SIDEBAR = "tablet_sidebar"
+        private const val KEY_SIDEBAR_WIDTH = "sidebar_width_dp"
         private const val KEY_BLOCK_POPUPS = "block_popups"
         private const val KEY_ONBOARDING_DONE = "onboarding_done_version"
         private const val KEY_ONBOARDING_STEP = "onboarding_step"

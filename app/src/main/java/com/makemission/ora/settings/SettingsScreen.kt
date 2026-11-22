@@ -655,6 +655,30 @@ fun SettingsScreen(
                             }
                             MineralSwitch(checked = tabletSidebar, label = "Switch", onChange = { settings.setTabletSidebar(it) })
                         }
+                        // Drag the sidebar's edge to resize it; this row says the width and puts it back.
+                        val sidebarW by settings.sidebarWidth.collectAsState()
+                        Row(
+                            modifier = Modifier
+                                .padding(top = 8.dp)
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .padding(horizontal = 16.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                                Text("Sidebar width", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                Text(
+                                    "${sidebarW.toInt()} dp. Drag the sidebar's right edge to change it; double-tap the edge to reset.",
+                                    fontSize = 14.sp,
+                                    color = browserColors().SecondaryText
+                                )
+                            }
+                            TextButton(onClick = { settings.setSidebarWidth(BrowserTokens.SidebarWidth.value) }, enabled = sidebarW != BrowserTokens.SidebarWidth.value) {
+                                Text("Reset")
+                            }
+                        }
                     }
                     if (!isTablet && shown(SettingsCategory.TABS)) item {
                         SectionTitle("Phone tab bar")

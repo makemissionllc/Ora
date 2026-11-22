@@ -670,7 +670,6 @@ fun TabSidebar(
     GroupDialogs(tabs, groupState)
     Column(
         modifier = Modifier
-            .width(BrowserTokens.SidebarWidth)
             .fillMaxSize()
             .background(browserColors().SidebarBackground)
             .padding(BrowserTokens.SidebarPadding),
