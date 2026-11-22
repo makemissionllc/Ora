@@ -966,9 +966,9 @@ private fun BrowserContent(
         showTabGrid = true
     }
     // The extra round button in the Compact bar runs whichever action the user chose in Settings.
-    val barButton by settings.barButton.collectAsState()
-    val barButtonSide by settings.barButtonSide.collectAsState()
-    val runBarButton: () -> Unit = {
+    val barButtonLeft by settings.barButtonLeft.collectAsState()
+    val barButtonRight by settings.barButtonRight.collectAsState()
+    val runBarButton: (BarButton) -> Unit = { barButton ->
         BrowserLog.info("nav", "Compact bar button: ${barButton.label}")
         when (barButton) {
             BarButton.TABS -> openTabs()
@@ -1491,8 +1491,8 @@ private fun BrowserContent(
                         onMore = { showMenu = true },
                         onSwipeUp = openTabs,
                         onSwitchTab = switchTab,
-                        barButton = barButton,
-                        barButtonLeft = barButtonSide == com.makemission.ora.settings.BarButtonSide.LEFT,
+                        barButtonLeft = barButtonLeft,
+                        barButtonRight = barButtonRight,
                         barButtonBookmarked = selectedBookmarked,
                         onBarButton = runBarButton,
                         quickActions = barQuickActions,
@@ -1521,8 +1521,8 @@ private fun BrowserContent(
             onSwitchTab = switchTab,
             onSwipeDown = openTabs,
             onTabs = openTabs,
-            barButton = barButton,
-            barButtonLeft = barButtonSide == com.makemission.ora.settings.BarButtonSide.LEFT,
+            barButtonLeft = barButtonLeft,
+            barButtonRight = barButtonRight,
             barButtonBookmarked = selectedBookmarked,
             onBarButton = runBarButton,
                         quickActions = barQuickActions,
@@ -2962,11 +2962,11 @@ private fun FloatingCompactRow(
     /** Tablet: find in page, drawn in the address capsule's slot while it is open. */
     findBar: (@Composable () -> Unit)? = null,
     /** The user's choice for the extra round button. Tabs on a phone means no button (a swipe up opens the tabs). */
-    barButton: BarButton = BarButton.TABS,
-    /** True puts the round button before the address bar instead of after it. */
-    barButtonLeft: Boolean = false,
+    barButtonRight: BarButton = BarButton.TABS,
+    /** The shortcut before the address bar. Off by default; both sides can be on at once. */
+    barButtonLeft: BarButton = BarButton.OFF,
     barButtonBookmarked: Boolean = false,
-    onBarButton: () -> Unit = {},
+    onBarButton: (BarButton) -> Unit = {},
     /** Every action the round button can do, shown in a menu when it is held. Empty turns the menu off. */
     quickActions: List<QuickAction> = emptyList(),
 ) {
@@ -3035,14 +3035,14 @@ private fun FloatingCompactRow(
                 }
             }
         }
-        val extraButton: @Composable () -> Unit = {
+        val extraButton: @Composable (BarButton) -> Unit = { barButton ->
         if (barButton != BarButton.OFF && (onTabs != null || barButton != BarButton.TABS)) {
             // Quality of life: the button turns into whatever the user picked, and tells screen readers its name.
             CompactSlot(shrink) {
                 val quick = rememberQuickMenu()
                 QuickActionsMenu(quick, quickActions)
                 FloatingCircleButton(
-                    onClick = { if (onTabs != null && barButton == BarButton.TABS) onTabs() else onBarButton() },
+                    onClick = { if (onTabs != null && barButton == BarButton.TABS) onTabs() else onBarButton(barButton) },
                     enabled = shrink < 0.5f && (barButton != BarButton.FORWARD || tab.canGoForward),
                     description = barButton.label,
                     // Quality of life: hold this button for every action the bar can do, in one menu that grows out of it.
@@ -3061,7 +3061,7 @@ private fun FloatingCompactRow(
             }
         }
         }
-        if (barButtonLeft) extraButton()
+        extraButton(barButtonLeft)
         // The middle slot takes the free width and centres the pill. Shrinking narrows the pill around the
         // centre, as Safari does, instead of letting it widen into the space the round buttons leave.
         Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -3115,7 +3115,7 @@ private fun FloatingCompactRow(
                 }
             }
         }
-        if (!barButtonLeft) extraButton()
+        extraButton(barButtonRight)
         CompactSlot(shrink) {
             FloatingCircleButton(onClick = onMore, enabled = shrink < 0.5f, description = "More") {
                 Icon(Icons.Filled.MoreVert, contentDescription = null)
