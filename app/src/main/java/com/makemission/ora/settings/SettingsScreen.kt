@@ -1933,6 +1933,7 @@ fun SettingsScreen(
                                 color = if (isDefaultBrowser) browserColors().SecondaryText else browserColors().Accent
                             )
                         }
+                        Spacer(Modifier.height(BrowserTokens.SettingsRowGap))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1949,6 +1950,7 @@ fun SettingsScreen(
                             Text("What's new", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                             Text("${Changelog.first().date} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
+                        Spacer(Modifier.height(BrowserTokens.SettingsRowGap))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1965,6 +1967,7 @@ fun SettingsScreen(
                             Text("Keyboard shortcuts", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
                             Text("Ctrl+/ ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
+                        Spacer(Modifier.height(BrowserTokens.SettingsRowGap))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1978,10 +1981,12 @@ fun SettingsScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Notice and privacy", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                            Text("Notice and privacy", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText, modifier = Modifier.weight(1f, fill = false))
                             val accepted = settings.noticeAcceptedDate()
-                            Text(if (accepted.isEmpty()) "›" else "Accepted $accepted ›", fontSize = 14.sp, color = browserColors().SecondaryText)
+                            // A gap and right-aligned text keep the date from touching the title.
+                            Text(if (accepted.isEmpty()) "›" else "Accepted $accepted ›", fontSize = 14.sp, color = browserColors().SecondaryText, textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.padding(start = 16.dp))
                         }
+                        Spacer(Modifier.height(BrowserTokens.SettingsRowGap))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -2000,6 +2005,7 @@ fun SettingsScreen(
                             val count = total.count { it.id in tutorialDone }
                             Text(if (count == 0) "Start ›" else if (count == total.size) "Done ›" else "$count of ${total.size} ›", fontSize = 14.sp, color = browserColors().SecondaryText)
                         }
+                        Spacer(Modifier.height(BrowserTokens.SettingsRowGap))
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
