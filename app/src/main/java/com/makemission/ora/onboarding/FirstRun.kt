@@ -87,6 +87,7 @@ fun FirstRunHost(settings: SettingsRepository, profiles: ProfilesRepository, bro
  */
 @Composable
 private fun SetupFlow(settings: SettingsRepository, profiles: ProfilesRepository) {
+    com.makemission.ora.ui.ScreenOwnsStatusBar()
     val tablet = LocalConfiguration.current.screenWidthDp >= 600
     val stepKey by settings.onboardingStep.collectAsState()
     val step = SetupStep.fromKey(stepKey)

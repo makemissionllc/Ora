@@ -503,6 +503,7 @@ fun LibraryScreen(
     onClearHistory: () -> Unit,
     onDone: () -> Unit,
 ) {
+    com.makemission.ora.ui.ScreenOwnsStatusBar()
     // 0 Bookmarks, 1 Reading, 2 History.
     var segment by rememberSaveable { mutableStateOf(0) }
     val showHistory = segment == 2

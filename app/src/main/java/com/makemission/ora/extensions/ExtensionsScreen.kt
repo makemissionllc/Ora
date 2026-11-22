@@ -77,6 +77,7 @@ fun ExtensionsScreen(
     /** Opens an address in a new tab. "Get extensions" and an extension's own settings page use it. */
     onOpenUrl: (String) -> Unit = {},
 ) {
+    com.makemission.ora.ui.ScreenOwnsStatusBar()
     val extensions by repository.extensions.collectAsState()
     val error by repository.lastError.collectAsState()
     val installingNow by repository.installing.collectAsState()

@@ -149,6 +149,7 @@ fun DownloadsScreen(
     /** Installs a downloaded .xpi as an extension. */
     onInstall: (DownloadItem) -> Unit = {},
 ) {
+    com.makemission.ora.ui.ScreenOwnsStatusBar()
     val all by repository.items.collectAsState()
     val context = LocalContext.current
     val colors = browserColors()

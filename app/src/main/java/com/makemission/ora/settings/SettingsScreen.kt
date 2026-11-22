@@ -112,6 +112,8 @@ fun SettingsScreen(
     profileRules: com.makemission.ora.profiles.ProfileRules,
     profiles: com.makemission.ora.profiles.ProfilesRepository,
 ) {
+    // Settings and every page inside it own the status bar while they are open.
+    com.makemission.ora.ui.ScreenOwnsStatusBar()
     val appearance by settings.appearance.collectAsState()
     val popupSites by popups.allowed.collectAsState()
     val appLinkSites by appLinks.always.collectAsState()
