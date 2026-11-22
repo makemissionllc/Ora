@@ -11,6 +11,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 ### 2026-11-22
 
 **Added**
+- Switch to the open tab. Typing an address that another tab already shows now takes you to that tab, with a short note, instead of opening the same page twice. Private and normal tabs are never mixed. It is on by default; turn it off in Settings > Tabs > Open pages. (`d6d96dd`)
 - Close private tabs asks first. Tapping Close private now shows a card that says how many private tabs will close and that they cannot be brought back; Cancel keeps them. (`aa5c03b`)
 - Menus and sheets feel more finished. The ⋯ menu on a group now grows out of its button and folds back into it, as a compact card. Sheets with a text box, such as New group, rise above the keyboard so the name field and the Create button stay in view. Long-press buttons (new tab, reload, the lock-screen keys, profile chips, shortcut tiles, group rows and download rows) now sink and tick when pressed, like every other button. (`9e2c7f8`)
 - Close private tabs when away. A new switch in Settings > Privacy (off by default): if you leave Ora for more than a minute, your private tabs close by themselves, so nobody who picks up your phone finds them. Coming back takes you to your normal tabs. A short trip, like picking a file, does not close anything. (`7d883da`)

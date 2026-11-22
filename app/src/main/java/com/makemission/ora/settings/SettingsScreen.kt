@@ -148,6 +148,7 @@ fun SettingsScreen(
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
     val imageAlwaysAsk by settings.imageAlwaysAsk.collectAsState()
     val showGroupStrip by settings.showGroupStrip.collectAsState()
+    val switchToOpenTab by settings.switchToOpenTab.collectAsState()
     val hintsOn by settings.hints.collectAsState()
     val downloadNotifications by settings.downloadNotifications.collectAsState()
     val noticeContext = LocalContext.current
@@ -699,6 +700,25 @@ fun SettingsScreen(
                                 Text("A row of the open tab's group, one tap from its other tabs. Never shown for private tabs.", fontSize = 14.sp, color = browserColors().SecondaryText)
                             }
                             MineralSwitch(checked = showGroupStrip, label = "Switch", onChange = { settings.setShowGroupStrip(it) })
+                        }
+                    }
+                    if (shown(SettingsCategory.TABS)) item {
+                        SectionTitle("Open pages")
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                                .clickable { settings.setSwitchToOpenTab(!switchToOpenTab) }
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Switch to the open tab", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                Text("Typing an address that another tab already shows takes you to that tab instead of opening it twice. Private and normal tabs are kept apart.", fontSize = 14.sp, color = browserColors().SecondaryText)
+                            }
+                            MineralSwitch(checked = switchToOpenTab, label = "Switch", onChange = { settings.setSwitchToOpenTab(it) })
                         }
                     }
                     if ((if (isTablet) tabletBar else phoneBar) == BarStyle.COMPACT && shown(SettingsCategory.TABS)) item {

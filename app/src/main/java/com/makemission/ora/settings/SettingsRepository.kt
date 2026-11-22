@@ -529,6 +529,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Group strip ${if (enabled) "on" else "off"}")
     }
 
+    private val _switchToOpenTab = MutableStateFlow(prefs.getBoolean(KEY_SWITCH_TO_OPEN_TAB, true))
+    /** When on, typing an address that another tab already shows jumps to that tab instead of loading it twice. On by default. */
+    val switchToOpenTab: StateFlow<Boolean> = _switchToOpenTab.asStateFlow()
+
+    fun setSwitchToOpenTab(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SWITCH_TO_OPEN_TAB, enabled).apply()
+        _switchToOpenTab.value = enabled
+        BrowserLog.info("settings", "Switch to an already open tab ${if (enabled) "on" else "off"}")
+    }
+
     private val _toolbarItems = MutableStateFlow(ToolbarConfig.parse(prefs.getString(KEY_TOOLBAR_ITEMS, null)))
     /** The buttons in the phone Top layout's bottom toolbar, in order. Menu is always added last by the bar. */
     val toolbarItems: StateFlow<List<ToolbarItem>> = _toolbarItems.asStateFlow()
@@ -1054,6 +1064,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_DOWNLOAD_NOTIFICATIONS = "download_notifications"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_STRONG_PRIVATE_TABS = "strong_private_tabs"
+        private const val KEY_SWITCH_TO_OPEN_TAB = "switch_to_open_tab"
         private const val KEY_CLOSE_PRIVATE_AWAY = "close_private_away"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
         private const val KEY_APP_LOCK = "app_lock_record"
