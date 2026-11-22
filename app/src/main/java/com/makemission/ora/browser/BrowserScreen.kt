@@ -1973,7 +1973,8 @@ private fun BrowserContent(
                         FindBar(
                             session = selected.session,
                             onClose = { showFind = false },
-                            modifier = Modifier.align(Alignment.TopCenter).padding(top = 8.dp)
+                            // Sits below the status bar, not under it. Only this bar's own padding changes; the status bar code is untouched.
+                            modifier = Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.statusBars).padding(top = 8.dp)
                         )
                     }
                 }
