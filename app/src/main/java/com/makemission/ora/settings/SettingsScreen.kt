@@ -887,6 +887,31 @@ fun SettingsScreen(
                         }
                     }
                     if (shown(SettingsCategory.APPEARANCE)) item {
+                        SectionTitle("Smoothness")
+                        val smoothScrolling by settings.smoothScrolling.collectAsState()
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .background(browserColors().Surface)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { settings.setSmoothScrolling(!smoothScrolling) }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text("Smooth scrolling", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = browserColors().AddressBarText)
+                                    Text("Uses your screen's fastest refresh rate so pages scroll smoothly. Uses a little more battery. Private tabs with Strongest private tabs on stay at 60 frames a second, which hides your screen's speed from sites.", fontSize = 14.sp, color = browserColors().SecondaryText)
+                                }
+                                MineralSwitch(checked = smoothScrolling, label = "Smooth scrolling", onChange = { settings.setSmoothScrolling(it) })
+                            }
+                        }
+                    }
+                    if (shown(SettingsCategory.APPEARANCE)) item {
                         SectionTitle("Reader view")
                         val readerSerif by settings.readerSerif.collectAsState()
                         val readerSize by settings.readerSizeStep.collectAsState()

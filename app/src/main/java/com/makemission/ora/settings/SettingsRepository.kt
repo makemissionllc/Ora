@@ -651,6 +651,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Global Privacy Control ${if (enabled) "on" else "off"}")
     }
 
+    private val _smoothScrolling = MutableStateFlow(prefs.getBoolean(KEY_SMOOTH_SCROLLING, true))
+    /** When on, Ora asks Android for the display's fastest refresh rate so scrolling and animations run as smoothly as the screen allows. On by default. */
+    val smoothScrolling: StateFlow<Boolean> = _smoothScrolling.asStateFlow()
+
+    fun setSmoothScrolling(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SMOOTH_SCROLLING, enabled).apply()
+        _smoothScrolling.value = enabled
+        BrowserLog.info("settings", "Smooth scrolling (fastest refresh rate) ${if (enabled) "on" else "off"}")
+    }
+
     private val _strongPrivateTabs = MutableStateFlow(prefs.getBoolean(KEY_STRONG_PRIVATE_TABS, true))
     /** When on, private tabs (only) get the strictest protections: fingerprint resistance, HTTPS-only, isolated cookies, tracking-parameter stripping and email-tracker blocking. On by default. */
     val strongPrivateTabs: StateFlow<Boolean> = _strongPrivateTabs.asStateFlow()
@@ -1098,6 +1108,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_IMAGE_SAVE_FOLDER = "image_save_folder"
         private const val KEY_DOWNLOAD_NOTIFICATIONS = "download_notifications"
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
+        private const val KEY_SMOOTH_SCROLLING = "smooth_scrolling"
         private const val KEY_STRONG_PRIVATE_TABS = "strong_private_tabs"
         private const val KEY_SWITCH_TO_OPEN_TAB = "switch_to_open_tab"
         private const val KEY_CLOSE_OLD_TABS = "close_old_tabs"
