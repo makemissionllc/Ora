@@ -149,6 +149,7 @@ Working branch: `develop` (created from `main` at `5ff9fec`, so it holds every f
 - Default browser row in Settings > About, and web links from other apps open in a new tab (`462778d`). The system request dialog is not yet checked on a device.
 - Keeps tabs, the page and the search when the screen rotates (`configChanges` in the manifest, so the activity is not recreated).
 - Clears the link menu when a new page starts.
+- Switch knob reaches the end when on; spacing between the About cards (`775068f`). Previous component: none (changes in place).
 - Full-screen app pages own the status bar (Settings and subpages, Library, Downloads, Extensions, first-run, App lock) through `ScreenOwnsStatusBar()` in `ui/ScreenStatusBar.kt`; the site tint returns when they close (`5e49250`). Rule 22 was lifted by the user for this change only. Previous component: none (system-level bar, no morph).
 
 ## Being finished
@@ -499,3 +500,4 @@ Each entry lists the change, the devices, and what was checked. Devices: phone (
 | 2026-11-22 | `f536b0b` | Animated empty states | Phone (CPH2745): in Library > Reading, a search with no match showed the magnifier doodle moving, centred above Nothing matches. The clock, tray and ribbon doodles and Show all downloads: Not checked. | Tablet: Not checked (not connected) |
 | 2026-11-22 | `95ac921` | Resizable sidebar | Phone: Not checked (tablet-only feature) | Tablet (portrait): an adb swipe on the sidebar edge widened it from 300 dp to about 350 dp and the page card followed. Double-tap, Settings row, landscape: Not checked (tablet was in use). |
 | 2026-11-21 | `5e49250` | Status bar on app screens | Phone (CPH2745, Android 17), screenshots: Dark theme, Settings from a white site and from a dark site showed a Basalt bar with light icons, and the site tint returned after closing. Light theme, Settings from the dark site showed a Stone bar with dark icons and the dark tint returned after Done; Library from the white site showed a Stone bar with dark icons and the white strip returned after Done. Not checked: Downloads, Extensions, first-run screens, App lock, Pure dark | Not checked |
+| 2026-11-22 | `775068f` | Switch knob and About spacing | Phone (CPH2745, Android 17), Dark: Desktop site switch on showed the knob at the right end; About showed six separate cards with gaps and the Notice date clear of its title. Not checked: Light, Pure dark | Not checked |

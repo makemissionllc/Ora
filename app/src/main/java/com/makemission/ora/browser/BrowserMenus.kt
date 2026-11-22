@@ -347,7 +347,7 @@ fun MineralSwitch(checked: Boolean, label: String, onChange: (Boolean) -> Unit) 
     val press = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     val pressed by press.collectIsPressedAsState()
     val knobWidth by androidx.compose.animation.core.animateDpAsState(if (pressed) 26.dp else 20.dp, OraMotion.quick(), label = "switch knob width")
-    val thumbX by androidx.compose.animation.core.animateDpAsState(if (checked) 28.dp - knobWidth else 0.dp, OraMotion.quick(), label = "switch thumb")
+    val thumbX by androidx.compose.animation.core.animateDpAsState(if (checked) 40.dp - knobWidth else 0.dp, OraMotion.quick(), label = "switch thumb")
     val track by androidx.compose.animation.animateColorAsState(if (checked) colors.Accent else colors.AddressBarBackground, OraMotion.quick(), label = "switch track")
     val thumb by androidx.compose.animation.animateColorAsState(if (checked) colors.GridBackground else colors.SecondaryText, OraMotion.quick(), label = "switch thumb colour")
     Box(

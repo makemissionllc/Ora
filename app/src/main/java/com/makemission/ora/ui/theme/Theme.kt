@@ -110,6 +110,8 @@ object BrowserTokens {
     /** Corner radius for cards on Settings, Extensions and the library. */
     val CardRadius = RadiusMedium
     val SettingsCardRadius = 20.dp
+    /** The space between stacked cards inside one Settings section, so they read as separate rows. */
+    val SettingsRowGap = 8.dp
     /** Height of the drawn, animated scene at the top of each Settings page. */
     val SettingsIllustrationHeight = 156.dp
 
