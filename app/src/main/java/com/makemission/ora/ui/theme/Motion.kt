@@ -165,6 +165,15 @@ object OraMotion {
     /** Scale a pressed element sinks to while the finger is down. */
     const val PRESS_SCALE = 0.94f
 
+    /** The same sink for wide rows (a full-width Settings row, a list row): shallower, so a long row does not visibly shrink. */
+    const val ROW_PRESS_SCALE = 0.975f
+
+    /** Elements wider than this (in dp) use [ROW_PRESS_SCALE]. */
+    const val ROW_PRESS_MIN_WIDTH_DP = 220
+
+    /** Elements this big in both directions (a full-screen scrim) do not move when pressed. */
+    const val PRESS_STILL_MIN_DP = 400
+
     /** Sinking into a press: quick, with no overshoot, so the touch registers at once. */
     fun <T> pressDown(): FiniteAnimationSpec<T> =
         if (ValueAnimator.areAnimatorsEnabled()) tween(durationMillis = 90, easing = FastOutSlowInEasing)

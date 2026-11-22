@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.oraRowMotion
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -433,7 +434,7 @@ private fun TabTile(
     dragTabId: Long? = null,
 ) {
     Column(
-        modifier = if (dragTabId != null) Modifier.tabDragSource(dragTabId, browserColors().Accent, onLongClick).clickable(onClick = onClick)
+        modifier = if (dragTabId != null) Modifier.tabDragSource(dragTabId, browserColors().Accent, onLongClick).pressFeedback().clickable(onClick = onClick)
         else Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -467,7 +468,7 @@ private fun TabTile(
                         .align(Alignment.TopEnd)
                         .padding(6.dp)
                         .size(BrowserTokens.CloseBadgeSize)
-                        .background(browserColors().GridBackground.copy(alpha = 0.6f), RoundedCornerShape(50))
+                        .pressFeedback().background(browserColors().GridBackground.copy(alpha = 0.6f), RoundedCornerShape(50))
                         .clickable(onClick = onClose),
                     contentAlignment = Alignment.Center
                 ) {
@@ -510,7 +511,7 @@ private fun TabTile(
 private fun GroupCard(group: TabGroup, count: Int, onClick: () -> Unit, onDropTab: (Long) -> Unit) {
     val colors = browserColors()
     var hovering by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.tabDropTarget({ hovering = it }, onDropTab).then(if (hovering) Modifier.border(BrowserTokens.SelectionWidth, colors.Accent, BrowserTokens.TabTileShape) else Modifier).clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier = Modifier.tabDropTarget({ hovering = it }, onDropTab).then(if (hovering) Modifier.pressFeedback().border(BrowserTokens.SelectionWidth, colors.Accent, BrowserTokens.TabTileShape) else Modifier).clickable(onClick = onClick), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Box(Modifier.fillMaxWidth().height(BrowserTokens.TabTileHeight)) {
             Surface(Modifier.align(Alignment.BottomCenter).padding(horizontal = 18.dp).fillMaxWidth().height(BrowserTokens.TabTileHeight - 4.dp), shape = BrowserTokens.TabTileShape, color = colors.SidebarSelected.copy(alpha = 0.5f)) {}
             Surface(Modifier.align(Alignment.BottomCenter).padding(horizontal = 9.dp).fillMaxWidth().height(BrowserTokens.TabTileHeight - 10.dp), shape = BrowserTokens.TabTileShape, color = colors.SidebarSelected) {}
@@ -536,7 +537,7 @@ private fun SidebarGroupHeader(group: TabGroup, count: Int, tabs: BrowserTabs, s
     var hovering by remember { mutableStateOf(false) }
     val turn by animateFloatAsState(if (group.collapsed) 0f else 90f, OraMotion.enter(), label = "chevron")
     Row(
-        modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(12.dp)).background(if (hovering) colors.SidebarSelected else Color.Transparent).tabDropTarget({ hovering = it }) { tabs.moveToGroup(it, group.id) }.clickable { tabs.toggleCollapsed(group.id) }.padding(start = 8.dp),
+        modifier = Modifier.fillMaxWidth().height(44.dp).pressFeedback().clip(RoundedCornerShape(12.dp)).background(if (hovering) colors.SidebarSelected else Color.Transparent).tabDropTarget({ hovering = it }) { tabs.moveToGroup(it, group.id) }.clickable { tabs.toggleCollapsed(group.id) }.padding(start = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = if (group.collapsed) "Expand ${group.name}" else "Collapse ${group.name}", tint = colors.SecondaryText, modifier = Modifier.size(20.dp).rotate(turn))
@@ -616,20 +617,20 @@ fun TabSidebar(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (inPrivate) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().height(40.dp).clip(androidx.compose.foundation.shape.CircleShape).clickable { inPrivate = false }.padding(horizontal = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().height(40.dp).pressFeedback().clip(androidx.compose.foundation.shape.CircleShape).clickable { inPrivate = false }.padding(horizontal = 8.dp)) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Back to tabs", color = browserColors().SecondaryText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }
             PrivateSpacePanel(tabs = tabs, onSelect = { tabs.select(it) }, onNewPrivateTab = onNewPrivateTab, onLock = onLockPrivate, modifier = Modifier.weight(1f))
             if (privateCount > 0) Box(
-                modifier = Modifier.fillMaxWidth().height(44.dp).clip(androidx.compose.foundation.shape.CircleShape).clickable { tabs.closePrivate(); inPrivate = false },
+                modifier = Modifier.fillMaxWidth().height(44.dp).pressFeedback().clip(androidx.compose.foundation.shape.CircleShape).clickable { tabs.closePrivate(); inPrivate = false },
                 contentAlignment = Alignment.Center,
             ) { Text("Close private", color = Mineral.Ember, fontSize = 15.sp, fontWeight = FontWeight.SemiBold) }
             return@Column
         }
         if (inReading) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().height(40.dp).clip(androidx.compose.foundation.shape.CircleShape).clickable { inReading = false; query = "" }.padding(horizontal = 8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().height(40.dp).pressFeedback().clip(androidx.compose.foundation.shape.CircleShape).clickable { inReading = false; query = "" }.padding(horizontal = 8.dp)) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
                 Text("Back to tabs", color = browserColors().SecondaryText, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
@@ -795,7 +796,7 @@ fun TabSidebar(
                         )
                         item(key = "new_group") {
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(44.dp).clip(RoundedCornerShape(12.dp)).clickable { groupState.newGroup() }.padding(horizontal = 12.dp),
+                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(44.dp).pressFeedback().clip(RoundedCornerShape(12.dp)).clickable { groupState.newGroup() }.padding(horizontal = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Icon(Icons.Filled.Add, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
@@ -820,7 +821,7 @@ fun TabSidebar(
         }
         // Pinned at the bottom: the reading list, then the private space.
         Row(
-            modifier = Modifier.fillMaxWidth().height(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().GridBackground).clickable { inReading = true; query = "" }.padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp).pressFeedback().clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().GridBackground).clickable { inReading = true; query = "" }.padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Outlined.Article, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
@@ -828,7 +829,7 @@ fun TabSidebar(
             Text(if (unreadCount > 0) "Reading list ($unreadCount unread)" else "Reading list", color = browserColors().AddressBarText, fontSize = 15.sp, fontWeight = FontWeight.Medium)
         }
         Row(
-            modifier = Modifier.fillMaxWidth().height(48.dp).clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().GridBackground).clickable { inPrivate = true }.padding(horizontal = 16.dp),
+            modifier = Modifier.fillMaxWidth().height(48.dp).pressFeedback().clip(androidx.compose.foundation.shape.CircleShape).background(browserColors().GridBackground).clickable { inPrivate = true }.padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(Icons.Filled.VisibilityOff, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp))
@@ -857,7 +858,7 @@ internal fun SlidingSegments(labels: List<String>, position: Float, onSelect: (I
         Row(Modifier.fillMaxSize()) {
             labels.forEachIndexed { i, label ->
                 val selected = position.roundToInt() == i
-                Box(Modifier.weight(1f).fillMaxHeight().clip(androidx.compose.foundation.shape.CircleShape).clickable { onSelect(i) }, contentAlignment = Alignment.Center) {
+                Box(Modifier.weight(1f).fillMaxHeight().pressFeedback().clip(androidx.compose.foundation.shape.CircleShape).clickable { onSelect(i) }, contentAlignment = Alignment.Center) {
                     com.makemission.ora.ui.RollingText(
                         label, fontSize = 14.sp,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
@@ -878,7 +879,7 @@ internal fun SegmentLabel(text: String, selected: Boolean, modifier: Modifier, p
     Box(
         modifier = modifier
             .fillMaxSize()
-            .clip(if (pill) androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .pressFeedback().clip(if (pill) androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(BrowserTokens.RadiusSmall))
             .background(if (selected) (if (pill) browserColors().Accent else browserColors().SidebarSelected) else Color.Transparent)
             .clickable { if (!selected) haptics.play(com.makemission.ora.ui.Feel.SELECT); onClick() },
         contentAlignment = Alignment.Center
@@ -926,7 +927,7 @@ internal fun SidebarSearch(query: String, placeholder: String, pill: Boolean = f
                         tint = browserColors().SecondaryText,
                         modifier = Modifier
                             .size(16.dp)
-                            .clickable { onQueryChange("") },
+                            .pressFeedback().clickable { onQueryChange("") },
                     )
                 }
             }
@@ -951,7 +952,7 @@ private fun SidebarRow(label: String, url: String, selected: Boolean, onClick: (
         modifier = Modifier
             .fillMaxWidth()
             .height(BrowserTokens.SidebarRowHeight)
-            .clip(RoundedCornerShape(12.dp))
+            .pressFeedback().clip(RoundedCornerShape(12.dp))
             .background(if (selected) browserColors().SidebarSelected else Color.Transparent)
             .then(if (dragTabId != null) Modifier.tabDragSource(dragTabId, browserColors().Accent, onLongClick).clickable(onClick = onClick) else Modifier.combinedClickable(onClick = onClick, onLongClick = onLongClick))
             .padding(horizontal = 12.dp),
@@ -979,7 +980,7 @@ private fun SidebarRow(label: String, url: String, selected: Boolean, onClick: (
 private fun InactiveHeader(count: Int, open: Boolean, onToggle: () -> Unit) {
     val turn by androidx.compose.animation.core.animateFloatAsState(if (open) 90f else 0f, OraMotion.enter(), label = "inactive chevron")
     Row(
-        modifier = Modifier.fillMaxWidth().height(44.dp).clip(RoundedCornerShape(12.dp)).clickable(onClick = onToggle).padding(horizontal = 12.dp),
+        modifier = Modifier.fillMaxWidth().height(44.dp).pressFeedback().clip(RoundedCornerShape(12.dp)).clickable(onClick = onToggle).padding(horizontal = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = browserColors().SecondaryText, modifier = Modifier.size(18.dp).rotate(turn))

@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -84,7 +85,7 @@ fun SessionsDialog(
                         Modifier.fillMaxWidth().heightIn(min = 52.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Column(Modifier.weight(1f).clickable { onOpen(s) }.padding(vertical = 6.dp)) {
+                        Column(Modifier.weight(1f).pressFeedback().clickable { onOpen(s) }.padding(vertical = 6.dp)) {
                             Text(s.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Text("${s.pages.size} ${if (s.pages.size == 1) "page" else "pages"}  ·  ${dateFormat.format(Date(s.savedAt))}", fontSize = 12.sp, color = colors.SecondaryText)
                         }

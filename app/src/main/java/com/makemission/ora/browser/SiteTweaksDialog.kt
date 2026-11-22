@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,7 +58,7 @@ fun SiteTweaksDialog(
                         SiteTweak.FONTS.forEach { (key, label) ->
                             val on = tweak.font == key
                             Box(
-                                Modifier.weight(1f).height(40.dp).clip(CircleShape).background(if (on) colors.Accent else colors.AddressBarBackground).clickable { onChange(tweak.copy(font = key)) },
+                                Modifier.weight(1f).height(40.dp).pressFeedback().clip(CircleShape).background(if (on) colors.Accent else colors.AddressBarBackground).clickable { onChange(tweak.copy(font = key)) },
                                 contentAlignment = Alignment.Center,
                             ) { Text(label, fontSize = 12.sp, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Medium, color = if (on) colors.GridBackground else colors.AddressBarText, maxLines = 1) }
                         }
@@ -73,7 +74,7 @@ fun SiteTweaksDialog(
 @Composable
 private fun TweakSwitch(title: String, subtitle: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
     val colors = browserColors()
-    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable { onChecked(!checked) }, verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp).pressFeedback().clickable { onChecked(!checked) }, verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f).padding(end = 12.dp)) {
             Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText)
             Text(subtitle, fontSize = 12.sp, color = colors.SecondaryText)

@@ -1,5 +1,6 @@
 package com.makemission.ora.downloads
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.MutableTransitionState
@@ -101,7 +102,7 @@ fun DownloadStartedNotice(
                     .widthIn(max = BrowserTokens.DownloadNoticeMaxWidth)
                     .offset { IntOffset(slide.value.roundToInt(), 0) }
                     .onSizeChanged { widthPx = it.width.toFloat() }
-                    .clip(RoundedCornerShape(BrowserTokens.RadiusLarge))
+                    .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusLarge))
                     .background(colors.Surface)
                     .clickable {
                         BrowserLog.info("download", "Opened Downloads from the start notice")

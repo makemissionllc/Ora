@@ -1,5 +1,6 @@
 package com.makemission.ora.extensions
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -162,7 +163,7 @@ fun ExtensionsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+                        .pressFeedback().clip(RoundedCornerShape(BrowserTokens.CardRadius))
                         .background(browserColors().AddressBarBackground)
                         .clickable { onOpenUrl("https://addons.mozilla.org/android/"); onDone() }
                         .padding(horizontal = 14.dp),
@@ -198,7 +199,7 @@ fun ExtensionsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(52.dp)
-                        .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+                        .pressFeedback().clip(RoundedCornerShape(BrowserTokens.CardRadius))
                         .background(browserColors().AddressBarBackground)
                         .clickable { picker.launch(arrayOf("*/*")) }
                         .padding(horizontal = 14.dp),
@@ -467,7 +468,7 @@ private fun ExtensionRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.CardRadius))
             .background(if (selected) browserColors().SidebarSelected else browserColors().AddressBarBackground)
             .clickable(onClick = onOpen)
             .padding(start = 14.dp, end = 8.dp, top = 8.dp, bottom = 8.dp),
@@ -511,7 +512,7 @@ private fun ExtensionDetail(
     ) {
         if (onBack != null) {
             Row(
-                modifier = Modifier.height(40.dp).clip(RoundedCornerShape(50)).clickable(onClick = onBack).padding(end = 12.dp),
+                modifier = Modifier.height(40.dp).pressFeedback().clip(RoundedCornerShape(50)).clickable(onClick = onBack).padding(end = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null, tint = colors.SecondaryText, modifier = Modifier.size(18.dp))
@@ -537,13 +538,13 @@ private fun ExtensionDetail(
         }
         extension.optionsUrl?.let { url ->
             Row(
-                Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.AddressBarBackground).clickable { onOpenUrl(url) }.padding(horizontal = 14.dp),
+                Modifier.fillMaxWidth().height(52.dp).pressFeedback().clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.AddressBarBackground).clickable { onOpenUrl(url) }.padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) { Text("Extension settings", fontSize = 15.sp, color = colors.AddressBarText) }
         }
         if (!extension.builtIn) {
             Row(
-                Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.AddressBarBackground).clickable(onClick = onRemove).padding(horizontal = 14.dp),
+                Modifier.fillMaxWidth().height(52.dp).pressFeedback().clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.AddressBarBackground).clickable(onClick = onRemove).padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) { Text("Remove", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = com.makemission.ora.ui.theme.Mineral.Ember) }
         }

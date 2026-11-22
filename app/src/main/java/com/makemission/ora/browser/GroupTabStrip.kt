@@ -137,9 +137,9 @@ fun GroupTabStrip(
                     val isOpen = tab.id == tabs.selectedId
                     if (tablet) {
                         Row(
-                            Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).height(36.dp).clip(RoundedCornerShape(18.dp))
+                            Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).height(36.dp).pressFeedback().clip(RoundedCornerShape(18.dp))
                                 .background(if (isOpen) colors.Accent else colors.GridBackground)
-                                .pressFeedback().clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }.padding(horizontal = 12.dp),
+                                .clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }.padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             SiteDot(tab, 18.dp)
@@ -154,13 +154,13 @@ fun GroupTabStrip(
                         // The open tab has a ring in the group colour and a small close badge.
                         Box(Modifier.animateItem(fadeInSpec = OraMotion.standard(), placementSpec = OraMotion.standard(), fadeOutSpec = OraMotion.leave()).size(48.dp), contentAlignment = Alignment.Center) {
                             Box(
-                                Modifier.size(40.dp).clip(CircleShape)
-                                    .pressFeedback().clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }
+                                Modifier.size(40.dp).pressFeedback().clip(CircleShape)
+                                    .clickable { if (TabSwitchGesture.state?.jump(tab.id) != true) tabs.select(tab.id) }
                                     .semantics { contentDescription = tab.shownTitle(displayUrl(tab.url)) },
                                 contentAlignment = Alignment.Center,
                             ) { SiteDot(tab, 30.dp) }
                             if (isOpen) Box(
-                                Modifier.align(Alignment.TopEnd).size(18.dp).clip(CircleShape).background(colors.Accent)
+                                Modifier.align(Alignment.TopEnd).size(18.dp).pressFeedback().clip(CircleShape).background(colors.Accent)
                                     .clickable { BrowserLog.info("groups", "Closed a tab from the group strip"); tabs.close(tab.id) }
                                     .semantics { contentDescription = "Close tab" },
                                 contentAlignment = Alignment.Center,

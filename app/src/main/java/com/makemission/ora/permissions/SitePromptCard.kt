@@ -1,5 +1,6 @@
 package com.makemission.ora.permissions
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -153,7 +154,7 @@ private fun PromptButton(text: String, content: Color, fill: Color, onClick: () 
     Box(
         modifier = Modifier
             .height(48.dp)
-            .clip(CircleShape)
+            .pressFeedback().clip(CircleShape)
             .background(fill)
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp),

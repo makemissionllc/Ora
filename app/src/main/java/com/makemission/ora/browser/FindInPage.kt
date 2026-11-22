@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -140,7 +141,7 @@ fun FindBar(session: GeckoSession, onClose: () -> Unit, modifier: Modifier = Mod
             Box(
                 modifier = Modifier
                     .height(40.dp)
-                    .clip(RoundedCornerShape(percent = 50))
+                    .pressFeedback().clip(RoundedCornerShape(percent = 50))
                     .background(colors.Accent)
                     .clickable(onClick = onClose)
                     .padding(horizontal = 16.dp),
@@ -187,19 +188,19 @@ fun FindBar(session: GeckoSession, onClose: () -> Unit, modifier: Modifier = Mod
                 Icons.Filled.KeyboardArrowUp,
                 contentDescription = "Previous match",
                 tint = if (total > 0) colors.Accent else colors.DisabledIcon,
-                modifier = Modifier.size(BrowserTokens.ToolbarButtonSize).clickable(enabled = total > 0) { find(backwards = true) }.padding(12.dp)
+                modifier = Modifier.size(BrowserTokens.ToolbarButtonSize).pressFeedback().clickable(enabled = total > 0) { find(backwards = true) }.padding(12.dp)
             )
             Icon(
                 Icons.Filled.KeyboardArrowDown,
                 contentDescription = "Next match",
                 tint = if (total > 0) colors.Accent else colors.DisabledIcon,
-                modifier = Modifier.size(BrowserTokens.ToolbarButtonSize).clickable(enabled = total > 0) { find(backwards = false) }.padding(12.dp)
+                modifier = Modifier.size(BrowserTokens.ToolbarButtonSize).pressFeedback().clickable(enabled = total > 0) { find(backwards = false) }.padding(12.dp)
             )
             Icon(
                 Icons.Filled.Close,
                 contentDescription = "Close find",
                 tint = colors.IconColor,
-                modifier = Modifier.size(BrowserTokens.ToolbarButtonSize).clickable(onClick = onClose).padding(12.dp)
+                modifier = Modifier.size(BrowserTokens.ToolbarButtonSize).pressFeedback().clickable(onClick = onClose).padding(12.dp)
             )
         }
     }
@@ -212,7 +213,7 @@ private fun FindRoundButton(icon: androidx.compose.ui.graphics.vector.ImageVecto
     Box(
         modifier = Modifier
             .size(40.dp)
-            .clip(CircleShape)
+            .pressFeedback().clip(CircleShape)
             .background(colors.ToolbarBackground)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center,

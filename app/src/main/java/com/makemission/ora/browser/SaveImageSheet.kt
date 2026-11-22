@@ -101,7 +101,7 @@ fun SaveImageSheet(
         }
     }
 
-    BoxWithConstraints(Modifier.fillMaxSize().background(colors.GridBackground.copy(alpha = 0.5f)).clickable(onClick = close)) {
+    BoxWithConstraints(Modifier.fillMaxSize().pressFeedback().background(colors.GridBackground.copy(alpha = 0.5f)).clickable(onClick = close)) {
         val density = LocalDensity.current
         val origin = TransformOrigin(
             (with(density) { originX.toDp() } / maxWidth).coerceIn(0f, 1f),
@@ -118,7 +118,7 @@ fun SaveImageSheet(
                     .padding(BrowserTokens.QuickMenuEdgeGap * 2)
                     .widthIn(max = 380.dp)
                     .heightIn(max = maxHeight - BrowserTokens.QuickMenuEdgeGap * 4)
-                    .clip(RoundedCornerShape(BrowserTokens.CardRadius))
+                    .pressFeedback().clip(RoundedCornerShape(BrowserTokens.CardRadius))
                     .background(colors.ToolbarBackground)
                     .clickable(onClick = {})
                     .verticalScroll(rememberScrollState())
@@ -147,7 +147,7 @@ fun SaveImageSheet(
                         Text("Save to", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
                         Text(if (folder == null) "Pictures › Ora" else "The folder you chose", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText)
                     }
-                    if (folder != null) Text("Reset", fontSize = 14.sp, color = colors.SecondaryText, modifier = Modifier.clickable { settings.setImageSaveFolder(null) }.padding(12.dp))
+                    if (folder != null) Text("Reset", fontSize = 14.sp, color = colors.SecondaryText, modifier = Modifier.pressFeedback().clickable { settings.setImageSaveFolder(null) }.padding(12.dp))
                     Text("Change", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText, modifier = Modifier.clickable { picker.launch(null) }.padding(12.dp))
                 }
                 // Format. Converting re-encodes the image and drops its metadata.
@@ -164,7 +164,7 @@ fun SaveImageSheet(
                         fontSize = 12.sp, color = colors.SecondaryText,
                     )
                 }
-                Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).clickable { settings.setImageAlwaysAsk(!alwaysAsk) }, verticalAlignment = Alignment.CenterVertically) {
+                Row(Modifier.fillMaxWidth().heightIn(min = 44.dp).pressFeedback().clickable { settings.setImageAlwaysAsk(!alwaysAsk) }, verticalAlignment = Alignment.CenterVertically) {
                     Text("Always ask where to save", fontSize = 15.sp, color = colors.AddressBarText, modifier = Modifier.weight(1f))
                     MineralSwitch(checked = alwaysAsk, label = "Switch", onChange = { settings.setImageAlwaysAsk(it) })
                 }

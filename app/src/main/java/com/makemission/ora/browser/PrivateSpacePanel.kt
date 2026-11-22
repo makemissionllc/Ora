@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -86,7 +87,7 @@ fun PrivateSpacePanel(
                     modifier = oraRowMotion()
                         .fillMaxWidth()
                         .height(BrowserTokens.SidebarRowHeight)
-                        .clip(RoundedCornerShape(12.dp))
+                        .pressFeedback().clip(RoundedCornerShape(12.dp))
                         .background(if (selected) colors.SidebarSelected else androidx.compose.ui.graphics.Color.Transparent)
                         .clickable { onSelect(tab.id) }
                         .padding(start = 12.dp, end = 4.dp),
@@ -109,7 +110,7 @@ fun PrivateSpacePanel(
                         color = colors.AddressBarText,
                     )
                     Box(
-                        modifier = Modifier.size(40.dp).clip(CircleShape).clickable { tabs.close(tab.id) },
+                        modifier = Modifier.size(40.dp).pressFeedback().clip(CircleShape).clickable { tabs.close(tab.id) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(Icons.Filled.Close, contentDescription = "Close private tab", tint = colors.SecondaryText, modifier = Modifier.size(16.dp))
@@ -122,7 +123,7 @@ fun PrivateSpacePanel(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
-                .clip(CircleShape)
+                .pressFeedback().clip(CircleShape)
                 .clickable(onClick = onNewPrivateTab)
                 .dashedOutline(CircleShape, colors.Accent),
             contentAlignment = Alignment.Center,
@@ -134,7 +135,7 @@ fun PrivateSpacePanel(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp)
-                    .clip(CircleShape)
+                    .pressFeedback().clip(CircleShape)
                     .background(colors.Surface)
                     .clickable(onClick = onLock),
                 verticalAlignment = Alignment.CenterVertically,

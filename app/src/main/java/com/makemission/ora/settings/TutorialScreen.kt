@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -179,7 +180,7 @@ private fun LessonCard(number: Int, lesson: Lesson, done: Boolean, open: Boolean
     val turn by animateFloatAsState(if (open) 90f else 0f, OraMotion.enter(), label = "lesson chevron")
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.CardRadius)).background(colors.Surface)) {
         Row(
-            Modifier.fillMaxWidth().heightIn(min = 60.dp).clickable(onClick = onToggle).padding(horizontal = 16.dp, vertical = 10.dp),
+            Modifier.fillMaxWidth().heightIn(min = 60.dp).pressFeedback().clickable(onClick = onToggle).padding(horizontal = 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Box(
@@ -257,7 +258,7 @@ private fun SwitcherPractice(done: Boolean, onWin: () -> Unit) {
     if (matches.isEmpty()) Text("Nothing matches", fontSize = 13.sp, color = colors.SecondaryText)
     matches.forEach { item ->
         Row(
-            Modifier.fillMaxWidth().heightIn(min = 44.dp).clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+            Modifier.fillMaxWidth().heightIn(min = 44.dp).pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                 .clickable { picked = item.title; onWin() }.padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
@@ -333,7 +334,7 @@ private fun KeysPractice(done: Boolean, onWin: () -> Unit) {
         onDispose { KeyShortcuts.practice = null }
     }
     Box(
-        Modifier.fillMaxWidth().heightIn(min = 64.dp).clip(RoundedCornerShape(BrowserTokens.RadiusSmall)).background(colors.AddressBarBackground)
+        Modifier.fillMaxWidth().heightIn(min = 64.dp).pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall)).background(colors.AddressBarBackground)
             .focusRequester(focus).onFocusChanged { focused = it.isFocused }.clickable { runCatching { focus.requestFocus() } }.padding(horizontal = 16.dp, vertical = 12.dp),
         contentAlignment = Alignment.CenterStart,
     ) {

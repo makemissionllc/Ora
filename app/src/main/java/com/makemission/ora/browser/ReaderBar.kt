@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -105,7 +106,7 @@ fun ReaderBar(reader: ReaderState, settings: SettingsRepository, compact: Boolea
             Box(
                 modifier = Modifier
                     .size(button)
-                    .clip(CircleShape)
+                    .pressFeedback().clip(CircleShape)
                     .background(colors.AddressBarBackground)
                     .clickable(role = Role.Button) { reader.close() }
                     .semantics { contentDescription = "Close reader" },
@@ -127,7 +128,7 @@ private fun TextSizeButton(label: String, fontSize: androidx.compose.ui.unit.Tex
     Box(
         modifier = Modifier
             .size(size)
-            .clip(CircleShape)
+            .pressFeedback().clip(CircleShape)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center,
@@ -142,7 +143,7 @@ private fun FaceChoice(label: String, selected: Boolean, family: FontFamily, onC
     Box(
         modifier = Modifier
             .height(40.dp)
-            .clip(CircleShape)
+            .pressFeedback().clip(CircleShape)
             .background(if (selected) colors.Accent else androidx.compose.ui.graphics.Color.Transparent)
             .clickable(role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 14.dp),
@@ -170,7 +171,7 @@ private fun PageDot(choice: ReaderPage, selected: Boolean, size: androidx.compos
     Box(
         modifier = Modifier
             .size(size + 8.dp)
-            .border(2.dp, if (selected) colors.Accent else androidx.compose.ui.graphics.Color.Transparent, CircleShape)
+            .pressFeedback().border(2.dp, if (selected) colors.Accent else androidx.compose.ui.graphics.Color.Transparent, CircleShape)
             .padding(4.dp)
             .clip(CircleShape)
             .background(fill)

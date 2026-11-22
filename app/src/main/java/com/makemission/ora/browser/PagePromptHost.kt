@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -139,7 +140,7 @@ private fun ChoiceDialog(prompt: PagePrompt.Choices, leave: () -> Unit) {
                         Modifier
                             .fillMaxWidth()
                             .heightIn44()
-                            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+                            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                             .background(if (on) colors.AddressBarBackground else Color.Transparent)
                             .clickable(enabled = !row.disabled) {
                                 if (prompt.multiple) picked = if (on) picked - row.id else picked + row.id
@@ -244,7 +245,7 @@ private fun inRange(day: LocalDate, min: LocalDate?, max: LocalDate?) = (min == 
 private fun PickerHeader(title: String, onPrev: () -> Unit, onNext: () -> Unit) {
     val colors = browserColors()
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(BrowserTokens.PromptCell).clip(CircleShape).clickable(onClick = onPrev), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(BrowserTokens.PromptCell).pressFeedback().clip(CircleShape).clickable(onClick = onPrev), contentAlignment = Alignment.Center) {
             Icon(Icons.Outlined.ChevronLeft, contentDescription = "Previous", tint = colors.IconColor)
         }
         Text(title, Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = colors.AddressBarText)
@@ -289,7 +290,7 @@ private fun CalendarGrid(
                         day.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) == selected.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR) else day == selected
                     Box(Modifier.weight(1f).height(BrowserTokens.PromptCell), contentAlignment = Alignment.Center) {
                         Box(
-                            Modifier.size(40.dp).clip(CircleShape)
+                            Modifier.size(40.dp).pressFeedback().clip(CircleShape)
                                 .background(if (on) colors.Accent else Color.Transparent)
                                 .clickable(enabled = ok) { onPick(day) },
                             contentAlignment = Alignment.Center,
@@ -320,7 +321,7 @@ private fun MonthGrid(month: YearMonth, selected: LocalDate, min: LocalDate?, ma
                     val on = selected.year == month.year && selected.monthValue == m
                     Box(Modifier.weight(1f).height(BrowserTokens.PromptCell + 4.dp), contentAlignment = Alignment.Center) {
                         Box(
-                            Modifier.height(40.dp).width(80.dp).clip(CircleShape).background(if (on) colors.Accent else Color.Transparent).clickable(enabled = ok) { onPick(day) },
+                            Modifier.height(40.dp).width(80.dp).pressFeedback().clip(CircleShape).background(if (on) colors.Accent else Color.Transparent).clickable(enabled = ok) { onPick(day) },
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(
@@ -355,7 +356,7 @@ private fun TimeSteppers(time: LocalTime, stepMinutes: Int, onChange: (LocalTime
 private fun Stepper(value: String, what: String, up: () -> Unit, down: () -> Unit, typed: (String) -> Unit) {
     val colors = browserColors()
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(BrowserTokens.PromptCell).clip(CircleShape).clickable(onClick = up), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(BrowserTokens.PromptCell).pressFeedback().clip(CircleShape).clickable(onClick = up), contentAlignment = Alignment.Center) {
             Icon(Icons.Outlined.KeyboardArrowUp, contentDescription = "More $what", tint = colors.IconColor)
         }
         BasicTextField(
@@ -367,7 +368,7 @@ private fun Stepper(value: String, what: String, up: () -> Unit, down: () -> Uni
             cursorBrush = SolidColor(colors.Accent),
             modifier = Modifier.width(72.dp).clip(RoundedCornerShape(BrowserTokens.RadiusSmall)).background(colors.AddressBarBackground).padding(vertical = 10.dp),
         )
-        Box(Modifier.size(BrowserTokens.PromptCell).clip(CircleShape).clickable(onClick = down), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(BrowserTokens.PromptCell).pressFeedback().clip(CircleShape).clickable(onClick = down), contentAlignment = Alignment.Center) {
             Icon(Icons.Outlined.KeyboardArrowDown, contentDescription = "Less $what", tint = colors.IconColor)
         }
     }

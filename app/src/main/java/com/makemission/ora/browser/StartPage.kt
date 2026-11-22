@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -188,7 +189,7 @@ fun StartPage(
                 Box(
                     modifier = Modifier
                         .heightIn(min = 44.dp)
-                        .clip(pillShape)
+                        .pressFeedback().clip(pillShape)
                         .background(colors.AddressBarBackground)
                         .clickable(onClick = onCustomize)
                         .padding(horizontal = 18.dp),

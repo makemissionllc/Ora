@@ -12,6 +12,12 @@ data class ChangeDay(val date: String, val items: List<ChangeItem>)
 /** Newest first. Keep in step with CHANGELOG.md, per AGENTS.md rule 20. */
 val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
+        date = "22 Nov 2026",
+        items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Everything you tap now answers your finger. Buttons, menu tiles, list rows, settings rows, tabs and chips sink a little and tick while you hold them, then spring back when you let go. Wide rows sink less, and full-screen areas stay still so the page never wobbles. Menu backdrops and sheet bodies no longer move when you touch them. (`30ad7d9`)"),
+        ),
+    ),
+    ChangeDay(
         date = "21 Nov 2026",
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "Strongest private tabs. A new switch in Settings > Privacy (on by default) makes a private tab harder for websites to recognise: it shows a neutral time zone and screen size, keeps third-party cookies apart, blocks email trackers, strips tracking parts from links and only opens secure (HTTPS) pages. Normal tabs are not changed. The start page of a private tab now says what it hides. Your network address is still visible to sites, so use a VPN if that matters. (`00f6000`)"),

@@ -1,5 +1,6 @@
 package com.makemission.ora.devices
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -89,7 +90,7 @@ fun DevicesSection(settings: SettingsRepository) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Link devices", modifier = Modifier.padding(start = 4.dp, bottom = 2.dp), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = colors.SecondaryText)
         Row(
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
+            modifier = Modifier.fillMaxWidth().pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
                 .clickable { setLink(!on) }.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -105,7 +106,7 @@ fun DevicesSection(settings: SettingsRepository) {
         }
         if (on) {
             Row(
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
                     .clickable { renaming = true }.padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -114,7 +115,7 @@ fun DevicesSection(settings: SettingsRepository) {
                 Text("$name ›", fontSize = 14.sp, color = colors.SecondaryText)
             }
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
+                modifier = Modifier.fillMaxWidth().pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
                     .clickable { settings.setDeviceContinue(!shareCurrent) }.padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -126,7 +127,7 @@ fun DevicesSection(settings: SettingsRepository) {
                 MineralSwitch(checked = shareCurrent, label = "Continue on another device", onChange = { settings.setDeviceContinue(it) })
             }
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
+                modifier = Modifier.fillMaxWidth().pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius)).background(colors.Surface)
                     .clickable { settings.setDeviceReading(!syncReading) }.padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -160,7 +161,7 @@ fun DevicesSection(settings: SettingsRepository) {
                     }
                 }
                 Row(
-                    Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable { pairing = true }.padding(horizontal = 16.dp),
+                    Modifier.fillMaxWidth().heightIn(min = 52.dp).pressFeedback().clickable { pairing = true }.padding(horizontal = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text("Pair a device", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = colors.Accent)
@@ -251,7 +252,7 @@ private fun PairDialog(link: DeviceLink, onDismiss: () -> Unit) {
                     }
                     candidates.forEach { peer ->
                         Row(
-                            Modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(BrowserTokens.RadiusSmall)).clickable { chosen = peer; error = null }.padding(horizontal = 8.dp),
+                            Modifier.fillMaxWidth().heightIn(min = 48.dp).pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall)).clickable { chosen = peer; error = null }.padding(horizontal = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) { Text(peer.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = colors.AddressBarText) }
                     }

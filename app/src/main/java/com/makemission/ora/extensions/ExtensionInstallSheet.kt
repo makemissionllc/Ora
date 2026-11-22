@@ -1,5 +1,6 @@
 package com.makemission.ora.extensions
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -96,7 +97,7 @@ fun ExtensionInstallSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 44.dp)
-                    .clickable { allowPrivate = !allowPrivate },
+                    .pressFeedback().clickable { allowPrivate = !allowPrivate },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column(Modifier.weight(1f)) {
@@ -112,7 +113,7 @@ fun ExtensionInstallSheet(
                 color = colors.SecondaryText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.height(44.dp).clickable(onClick = onCancel).padding(horizontal = 12.dp),
+                modifier = Modifier.height(44.dp).pressFeedback().clickable(onClick = onCancel).padding(horizontal = 12.dp),
             )
             Spacer(Modifier.weight(1f))
             PillButton(text = "Add extension", onClick = { onAdd(allowPrivate) }, primary = true)

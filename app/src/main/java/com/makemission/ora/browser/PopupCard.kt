@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -91,7 +92,7 @@ fun PopupCard(
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier
                     .height(44.dp)
-                    .clickable(onClick = onBlock)
+                    .pressFeedback().clickable(onClick = onBlock)
                     .padding(horizontal = 12.dp)
 
             )

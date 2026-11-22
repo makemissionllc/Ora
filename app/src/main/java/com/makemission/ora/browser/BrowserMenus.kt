@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.oraRowMotion
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.ui.graphics.graphicsLayer
@@ -316,7 +317,7 @@ private fun MenuRow(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 52.dp)
-            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -473,7 +474,7 @@ private fun MenuAction(icon: ImageVector, label: String, onClick: () -> Unit, mo
     Column(
         modifier = modifier
             .height(76.dp)
-            .clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusMedium))
             .background(fill)
             .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -528,7 +529,7 @@ fun LibraryScreen(
             Box(
                 modifier = Modifier
                     .height(44.dp)
-                    .clip(androidx.compose.foundation.shape.CircleShape)
+                    .pressFeedback().clip(androidx.compose.foundation.shape.CircleShape)
                     .background(browserColors().AddressBarBackground)
                     .clickable(onClick = onDone)
                     .padding(horizontal = 18.dp),
@@ -600,7 +601,7 @@ fun LibraryScreen(
                         modifier = oraRowMotion()
                             .fillMaxWidth()
                             .heightIn(min = 60.dp)
-                            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+                            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                             .clickable { onOpen(bookmark.url) },
                         verticalAlignment = Alignment.CenterVertically
                     ) {

@@ -1,5 +1,6 @@
 package com.makemission.ora.browser
 
+import com.makemission.ora.ui.pressFeedback
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -109,7 +110,7 @@ fun StartPageEditor(config: StartPageConfig, settings: SettingsRepository, onDis
             EditorLabel("Tile size")
             ChoiceRow(TileSize.entries, config.size, { it.label }) { save(config.copy(size = it), "${it.label} tile size") }
             Row(
-                Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable { save(config.copy(labels = !config.labels), "tile names ${if (!config.labels) "on" else "off"}") },
+                Modifier.fillMaxWidth().heightIn(min = 52.dp).pressFeedback().clickable { save(config.copy(labels = !config.labels), "tile names ${if (!config.labels) "on" else "off"}") },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -148,7 +149,7 @@ private fun MoveButton(icon: androidx.compose.ui.graphics.vector.ImageVector, la
         Modifier
             .size(44.dp)
             .alpha(if (enabled) 1f else 0.3f)
-            .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+            .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
             .clickable(enabled = enabled, onClick = onClick)
             .semantics { contentDescription = label },
         contentAlignment = Alignment.Center
@@ -168,7 +169,7 @@ private fun <T> ChoiceRow(options: List<T>, selected: T, label: (T) -> String, o
                 Modifier
                     .weight(1f)
                     .heightIn(min = 44.dp)
-                    .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+                    .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                     .background(if (on) colors.Accent else colors.AddressBarBackground)
                     .clickable { onPick(option) },
                 contentAlignment = Alignment.Center

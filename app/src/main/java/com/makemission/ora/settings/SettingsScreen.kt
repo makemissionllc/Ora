@@ -1,5 +1,6 @@
 package com.makemission.ora.settings
 
+import com.makemission.ora.ui.pressFeedback
 import com.makemission.ora.ui.theme.OraMotion
 import androidx.compose.animation.togetherWith
 import androidx.compose.ui.layout.positionInRoot
@@ -282,7 +283,7 @@ fun SettingsScreen(
             Box(
                 modifier = Modifier
                     .height(40.dp)
-                    .clip(CircleShape)
+                    .pressFeedback().clip(CircleShape)
                     .background(browserColors().Accent)
                     .clickable(onClick = onDone)
                     .padding(horizontal = 22.dp),
@@ -371,7 +372,7 @@ fun SettingsScreen(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .clickable { settings.setAppearance(mode) }
+                                            .pressFeedback().clickable { settings.setAppearance(mode) }
                                             .padding(horizontal = 16.dp, vertical = 12.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
@@ -384,7 +385,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setWebsiteTheme(!websiteTheme) }
+                                    .pressFeedback().clickable { settings.setWebsiteTheme(!websiteTheme) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -402,7 +403,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setFadePagesIn(!fadePagesIn) }
+                                    .pressFeedback().clickable { settings.setFadePagesIn(!fadePagesIn) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -420,7 +421,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setEdgeSwipeSidebar(!edgeSwipeSidebar) }
+                                    .pressFeedback().clickable { settings.setEdgeSwipeSidebar(!edgeSwipeSidebar) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -439,7 +440,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable {
+                                    .pressFeedback().clickable {
                                         settings.setPaletteStyle(
                                             if (paletteStyle == PaletteStyle.MATERIAL) PaletteStyle.ORIGINAL else PaletteStyle.MATERIAL
                                         )
@@ -522,7 +523,7 @@ fun SettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { settings.setMotionStyle(style) }
+                                        .pressFeedback().clickable { settings.setMotionStyle(style) }
                                         .padding(horizontal = 16.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -558,7 +559,7 @@ fun SettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { settings.setAddressSwipeTarget(target) }
+                                        .pressFeedback().clickable { settings.setAddressSwipeTarget(target) }
                                         .padding(horizontal = 16.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -583,7 +584,7 @@ fun SettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { settings.setAddressSwipeEffect(effect) }
+                                        .pressFeedback().clickable { settings.setAddressSwipeEffect(effect) }
                                         .padding(horizontal = 16.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -613,7 +614,7 @@ fun SettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { settings.setPreloadMode(mode) }
+                                        .pressFeedback().clickable { settings.setPreloadMode(mode) }
                                         .padding(horizontal = 16.dp, vertical = 10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -632,7 +633,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setTabletSidebar(!tabletSidebar) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -685,7 +686,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setShowGroupStrip(!showGroupStrip) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -723,7 +724,7 @@ fun SettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable {
+                                        .pressFeedback().clickable {
                                             settings.setHapticStrength(level)
                                             // Play a sample at the new level, so the choice can be felt before leaving the row.
                                             com.makemission.ora.ui.OraHaptics(platformHaptics) { level }.play(com.makemission.ora.ui.Feel.CONFIRM)
@@ -752,7 +753,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setVideoGestures(!videoGestures) }
+                                    .pressFeedback().clickable { settings.setVideoGestures(!videoGestures) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -770,7 +771,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setVideoOraControls(!videoOraControls) }
+                                    .pressFeedback().clickable { settings.setVideoOraControls(!videoOraControls) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -788,7 +789,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setVideoBackExits(!videoBackExits) }
+                                    .pressFeedback().clickable { settings.setVideoBackExits(!videoBackExits) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -806,7 +807,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setVideoAutoPip(!videoAutoPip) }
+                                    .pressFeedback().clickable { settings.setVideoAutoPip(!videoAutoPip) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -837,7 +838,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setReaderSerif(!readerSerif) }
+                                    .pressFeedback().clickable { settings.setReaderSerif(!readerSerif) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -864,7 +865,7 @@ fun SettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { settings.setReaderPage(choice) }
+                                        .pressFeedback().clickable { settings.setReaderPage(choice) }
                                         .padding(horizontal = 16.dp, vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -880,7 +881,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setSaveHistory(!saveHistory) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -966,7 +967,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setBlockPopups(!blockPopups) }
+                                    .pressFeedback().clickable { settings.setBlockPopups(!blockPopups) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1019,7 +1020,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setBlockAds(!blockAds) }
+                                    .pressFeedback().clickable { settings.setBlockAds(!blockAds) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1045,7 +1046,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setAutofillPasswords(!autofillPasswords) }
+                                    .pressFeedback().clickable { settings.setAutofillPasswords(!autofillPasswords) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1063,7 +1064,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { showPasswords = true }
+                                    .pressFeedback().clickable { showPasswords = true }
                                     .padding(horizontal = 16.dp, vertical = 14.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1108,7 +1109,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setSecureDns(!secureDns) }
+                                    .pressFeedback().clickable { settings.setSecureDns(!secureDns) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1126,7 +1127,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setHints(!hintsOn) }
+                                    .pressFeedback().clickable { settings.setHints(!hintsOn) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1144,7 +1145,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setFastHttpDownloads(!fastHttpDownloads) }
+                                    .pressFeedback().clickable { settings.setFastHttpDownloads(!fastHttpDownloads) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1162,7 +1163,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setImageAlwaysAsk(!imageAlwaysAsk) }
+                                    .pressFeedback().clickable { settings.setImageAlwaysAsk(!imageAlwaysAsk) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1180,7 +1181,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setDownloadNotifications(!downloadNotifications) }
+                                    .pressFeedback().clickable { settings.setDownloadNotifications(!downloadNotifications) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1199,7 +1200,7 @@ fun SettingsScreen(
                                             color = Mineral.Ember,
                                             modifier = Modifier
                                                 .padding(top = 4.dp)
-                                                .clickable { openNotificationSettings() }
+                                                .pressFeedback().clickable { openNotificationSettings() }
                                         )
                                     }
                                 }
@@ -1217,7 +1218,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { appLockDialog = true }
+                                    .pressFeedback().clickable { appLockDialog = true }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1236,7 +1237,7 @@ fun SettingsScreen(
                             if (appLockRecord != null) Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setAppLockWholeApp(!appLockWholeApp) }
+                                    .pressFeedback().clickable { settings.setAppLockWholeApp(!appLockWholeApp) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1254,7 +1255,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setHttpsOnly(!httpsOnly) }
+                                    .pressFeedback().clickable { settings.setHttpsOnly(!httpsOnly) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1272,7 +1273,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setGlobalPrivacyControl(!globalPrivacyControl) }
+                                    .pressFeedback().clickable { settings.setGlobalPrivacyControl(!globalPrivacyControl) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1290,7 +1291,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setFingerprintingProtection(!fingerprintingProtection) }
+                                    .pressFeedback().clickable { settings.setFingerprintingProtection(!fingerprintingProtection) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1308,7 +1309,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setStrongPrivateTabs(!strongPrivateTabs) }
+                                    .pressFeedback().clickable { settings.setStrongPrivateTabs(!strongPrivateTabs) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1364,7 +1365,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { showStartEditor = true }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -1387,7 +1388,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setQuickResume(!quickResume) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -1410,7 +1411,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setSearchSuggestions(!searchSuggestions) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -1432,7 +1433,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setLoadAhead(!loadAhead) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -1454,7 +1455,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setSlowLoadTips(!slowLoadTips) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -1485,7 +1486,7 @@ fun SettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { settings.setSearchEngineEnabled(engine, !on) }
+                                        .pressFeedback().clickable { settings.setSearchEngineEnabled(engine, !on) }
                                         .padding(start = 4.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
@@ -1515,7 +1516,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setAskEachSearch(!askEachSearch) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -1540,7 +1541,7 @@ fun SettingsScreen(
                                 .background(browserColors().Surface)
                         ) {
                             Row(
-                                modifier = Modifier.fillMaxWidth().clickable { settings.setSearchShortcutsOn(!shortcutsOn) }.padding(horizontal = 16.dp, vertical = 12.dp),
+                                modifier = Modifier.fillMaxWidth().pressFeedback().clickable { settings.setSearchShortcutsOn(!shortcutsOn) }.padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
@@ -1566,7 +1567,7 @@ fun SettingsScreen(
                                 }
                                 customShortcuts.forEach { sc ->
                                     Row(
-                                        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp).clickable { removeShortcut = sc }.padding(horizontal = 16.dp),
+                                        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp).pressFeedback().clickable { removeShortcut = sc }.padding(horizontal = 16.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
@@ -1588,7 +1589,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable {
                                     // Quality of life: with nothing saved, say so instead of opening an empty confirmation.
@@ -1615,7 +1616,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { confirmClear = true }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -1644,7 +1645,7 @@ fun SettingsScreen(
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { settings.setDeviceFontWeb(!deviceFontWeb) }
+                                    .pressFeedback().clickable { settings.setDeviceFontWeb(!deviceFontWeb) }
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
@@ -1663,7 +1664,7 @@ fun SettingsScreen(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .clickable { settings.setLab(feature, feature !in labsOn) }
+                                        .pressFeedback().clickable { settings.setLab(feature, feature !in labsOn) }
                                         .padding(horizontal = 16.dp, vertical = 12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
@@ -1695,7 +1696,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { showDiagnostics = true }
                                 .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -1709,7 +1710,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable { settings.setUsageStats(!usageStats) }
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -1747,7 +1748,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable(enabled = !isDefaultBrowser) {
                                     val intent = DefaultBrowser.requestIntent(context)
@@ -1783,7 +1784,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable {
                                     BrowserLog.info("settings", "Opened What's new")
@@ -1799,7 +1800,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable {
                                     BrowserLog.info("settings", "Opened Keyboard shortcuts")
@@ -1815,7 +1816,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable {
                                     BrowserLog.info("settings", "Opened Notice and privacy")
@@ -1832,7 +1833,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable {
                                     BrowserLog.info("settings", "Opened Interactive tutorial")
@@ -1850,7 +1851,7 @@ fun SettingsScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
+                                .pressFeedback().clip(RoundedCornerShape(BrowserTokens.SettingsCardRadius))
                                 .background(browserColors().Surface)
                                 .clickable {
                                     // Setup starts from what is set now, so nothing changes unless a choice is changed.
@@ -1995,7 +1996,7 @@ private fun SettingsCategoryList(onOpen: (SettingsCategory, androidx.compose.ui.
                         .fillMaxWidth()
                         .heightIn(min = 64.dp)
                         .onGloballyPositioned { centerY = it.positionInRoot().y + it.size.height / 2f }
-                        .clickable { onOpen(section, androidx.compose.ui.graphics.TransformOrigin(0.5f, ((centerY - listTop) / listHeight).coerceIn(0f, 1f))) }
+                        .pressFeedback().clickable { onOpen(section, androidx.compose.ui.graphics.TransformOrigin(0.5f, ((centerY - listTop) / listHeight).coerceIn(0f, 1f))) }
                         .padding(horizontal = 16.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -2026,7 +2027,7 @@ private fun SettingsRail(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(BrowserTokens.SettingsRailRowHeight)
-                    .clip(CircleShape)
+                    .pressFeedback().clip(CircleShape)
                     .background(if (on) browserColors().Accent else Color.Transparent)
                     .clickable { onSelect(section) }
                     .padding(horizontal = 12.dp),
@@ -2060,7 +2061,7 @@ private fun AppearanceSegments(selected: AppearanceMode, onSelect: (AppearanceMo
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxHeight()
-                    .clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
+                    .pressFeedback().clip(RoundedCornerShape(BrowserTokens.RadiusSmall))
                     .background(if (on) browserColors().Surface else Color.Transparent)
                     .clickable { onSelect(mode) },
                 contentAlignment = Alignment.Center,
@@ -2088,7 +2089,7 @@ private fun BarStyleList(selected: BarStyle, onSelect: (BarStyle) -> Unit, table
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onSelect(style) }
+                    .pressFeedback().clickable { onSelect(style) }
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -2115,7 +2116,7 @@ private fun BarButtonList(selected: BarButton, onSelect: (BarButton) -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { onSelect(button) }
+                    .pressFeedback().clickable { onSelect(button) }
                     .padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -2147,7 +2148,7 @@ private fun CookieChoice(title: String, description: String, selected: Boolean, 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onSelect)
+            .pressFeedback().clickable(onClick = onSelect)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
