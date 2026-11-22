@@ -448,7 +448,19 @@ private fun BrowserContent(
     // Quick resume: when the app leaves the screen, every profile open this session has its tabs saved.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
+        var leftAt = 0L
         val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) leftAt = android.os.SystemClock.elapsedRealtime()
+            // Away for over a minute with the setting on: private tabs close, in every profile.
+            if (event == Lifecycle.Event.ON_START && leftAt > 0L && settings.closePrivateAway.value &&
+                android.os.SystemClock.elapsedRealtime() - leftAt > 60_000L
+            ) {
+                val open = tabsByProfile.values.sumOf { t -> t.tabs.count { it.isPrivate } }
+                if (open > 0) {
+                    tabsByProfile.values.forEach { it.closePrivate() }
+                    BrowserLog.info("tabs", "Closed $open private tab(s) after more than a minute away")
+                }
+            }
             if (event == Lifecycle.Event.ON_STOP && settings.quickResume.value) {
                 var savedCount = 0
                 tabsByProfile.forEach { (id, profileTabs) ->
