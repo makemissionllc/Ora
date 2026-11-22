@@ -832,6 +832,8 @@ class SettingsRepository(context: Context) {
         com.makemission.ora.labs.Labs.enabled = next
         UsageStats.count("setting.lab")
         BrowserLog.info("settings", "Lab: ${feature.label} ${if (enabled) "on" else "off"}${if (feature.restart) " (applies at next start)" else ""}")
+        // Quality of life: a lab that Gecko reads only at start-up says so, instead of seeming to do nothing.
+        if (feature.restart) com.makemission.ora.notice.InAppNotices.show("${feature.label} takes effect after you close and reopen Ora.")
     }
 
     private val _textSizePercent = MutableStateFlow(prefs.getInt(KEY_TEXT_SIZE_PERCENT, 100).coerceIn(TEXT_SIZE_MIN, TEXT_SIZE_MAX))

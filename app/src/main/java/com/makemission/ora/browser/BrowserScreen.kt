@@ -571,6 +571,17 @@ private fun BrowserContent(
             com.makemission.ora.notice.InAppNotices.show("$it You can undo this in Settings > Diagnostics.")
         }
     }
+
+    // Lab: a private tab on screen blanks Android's Recents card (and blocks screenshots) while it is selected.
+    val hideRecents = com.makemission.ora.labs.LabFeature.HIDE_PRIVATE_RECENTS in labs && tabs.selected?.isPrivate == true
+    val hostActivity = context as? android.app.Activity
+    DisposableEffect(hideRecents) {
+        if (hideRecents) {
+            hostActivity?.window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE)
+            BrowserLog.info("labs", "Recents card hidden for the private tab")
+        }
+        onDispose { if (hideRecents) hostActivity?.window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_SECURE) }
+    }
     LaunchedEffect(labs, strongPrivate) {
         try {
             val on = { f: com.makemission.ora.labs.LabFeature -> f in labs }
