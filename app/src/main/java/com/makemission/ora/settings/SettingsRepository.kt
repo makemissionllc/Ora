@@ -661,6 +661,16 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Strongest private tabs ${if (enabled) "on" else "off"}")
     }
 
+    private val _closeOldTabs = MutableStateFlow(prefs.getBoolean(KEY_CLOSE_OLD_TABS, false))
+    /** When on, loose tabs not opened for a month are closed when Ora comes to the screen. They stay in Reopen closed tab. Off by default. */
+    val closeOldTabs: StateFlow<Boolean> = _closeOldTabs.asStateFlow()
+
+    fun setCloseOldTabs(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_CLOSE_OLD_TABS, enabled).apply()
+        _closeOldTabs.value = enabled
+        BrowserLog.info("settings", "Close tabs not opened for a month ${if (enabled) "on" else "off"}")
+    }
+
     private val _closePrivateAway = MutableStateFlow(prefs.getBoolean(KEY_CLOSE_PRIVATE_AWAY, false))
     /** When on, private tabs close by themselves if you come back to Ora after more than a minute away. Off by default. */
     val closePrivateAway: StateFlow<Boolean> = _closePrivateAway.asStateFlow()
@@ -1090,6 +1100,7 @@ class SettingsRepository(context: Context) {
         private const val KEY_GLOBAL_PRIVACY_CONTROL = "global_privacy_control"
         private const val KEY_STRONG_PRIVATE_TABS = "strong_private_tabs"
         private const val KEY_SWITCH_TO_OPEN_TAB = "switch_to_open_tab"
+        private const val KEY_CLOSE_OLD_TABS = "close_old_tabs"
         private const val KEY_CLOSE_PRIVATE_AWAY = "close_private_away"
         private const val KEY_FINGERPRINTING_PROTECTION = "fingerprinting_protection"
         private const val KEY_APP_LOCK = "app_lock_record"

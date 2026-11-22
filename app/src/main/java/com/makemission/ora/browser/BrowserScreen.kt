@@ -462,6 +462,12 @@ private fun BrowserContent(
                     BrowserLog.info("tabs", "Closed $open private tab(s) after more than a minute away")
                 }
             }
+            // A month-old loose tab is closed on return, when the setting is on and the tabs are fully restored.
+            if (event == Lifecycle.Event.ON_START && settings.closeOldTabs.value) {
+                var closedOld = 0
+                tabsByProfile.values.forEach { t -> if (t.savableSnapshot() != null) closedOld += t.closeOldTabs() }
+                if (closedOld > 0) InAppNotices.show(if (closedOld == 1) "Closed 1 tab not opened for a month" else "Closed $closedOld tabs not opened for a month")
+            }
             if (event == Lifecycle.Event.ON_STOP && settings.quickResume.value) {
                 var savedCount = 0
                 tabsByProfile.forEach { (id, profileTabs) ->
