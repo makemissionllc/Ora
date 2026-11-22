@@ -51,7 +51,7 @@ All paths are under `app/src/main/java/com/makemission/ora/`.
 - `log/`: `BrowserLog`, which every error and browser event goes through. It shows on Settings > Diagnostics. `UsageStats` counts feature use (action names only) on the same page.
 - `bookmarks/`: the bookmark store.
 - `browser/KeyShortcuts.kt`, `browser/ShortcutsCard.kt`: physical keyboard shortcuts (`MainActivity.dispatchKeyEvent` feeds `KeyShortcuts`; BrowserScreen acts on them) and the card that lists them.
-- `settings/SettingsRepository.kt` `BarButton`: the action behind the round button in the Compact bar (picked in Settings > Tabs).
+- `settings/SettingsRepository.kt` `BarButton`: the action behind a round shortcut in the Compact bar; `barButtonLeft` and `barButtonRight` hold one per side (picked in Settings > Tabs).
 - `browser/QuickSwitcher.kt`: the Ctrl+K quick switcher and its pure `quickMatches` ranking.
 - `browser/VideoPlayerControls.kt`: Ora's full-screen video player and the handle that opens it over the site's own controls.
 - `browser/AddressSuggestions.kt`: address dropdown rows (bookmarks, tabs, history with remove, engine phrases, commands).
