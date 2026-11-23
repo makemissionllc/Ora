@@ -81,6 +81,8 @@ class DownloadsRepository(
     private val fastHttp: () -> Boolean = { false },
     /** Makes the transport for one download. The app uses GeckoWebExecutor; tests use the default plain connection. */
     private val transportFor: (isPrivate: Boolean, referrer: String?) -> DownloadTransport = { _, _ -> HttpUrlTransport() },
+    /** Read each time a download wants to start: how many may transfer at once. Zero or less means no limit. */
+    private val maxSimultaneous: () -> Int = { 0 },
 ) {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -98,6 +100,8 @@ class DownloadsRepository(
     /** Ids the user paused; their job stops and is marked paused instead of cancelled. */
     private val pausing: MutableSet<Long> = ConcurrentHashMap.newKeySet()
     private val lock = Any()
+    /** Downloads waiting for a free slot, oldest first. They show as paused with [QUEUED_NOTICE] and start by themselves. */
+    private val queued = java.util.LinkedHashSet<Long>()
     /** Downloads the user paused on purpose. Everything else that was unfinished continues by itself after a restart. */
     private val stateStore = context.getSharedPreferences("ora_downloads_state", Context.MODE_PRIVATE)
     private val userPaused: MutableSet<Long> = ConcurrentHashMap.newKeySet<Long>().also { set ->
@@ -265,6 +269,7 @@ class DownloadsRepository(
         val item = find(id) ?: return
         if (item.status != DownloadStatus.RUNNING && item.status != DownloadStatus.PAUSED && item.status != DownloadStatus.FAILED) return
         jobs[id]?.cancel()
+        synchronized(queued) { queued.remove(id) }
         partFile(id).delete()
         tasks.remove(id)
         autoRetries.remove(id)
@@ -296,10 +301,39 @@ class DownloadsRepository(
         BrowserLog.info("download", "Cleared ${before - _items.value.size} finished downloads from the list")
     }
 
+    /** Starts waiting downloads while there are free slots. Called when a transfer ends and when the limit changes. */
+    fun startQueued() {
+        while (true) {
+            val next = synchronized(queued) {
+                val limit = maxSimultaneous()
+                if (limit > 0 && jobs.count { it.value.isActive } >= limit) return
+                queued.firstOrNull()?.also { queued.remove(it) }
+            } ?: return
+            if (find(next)?.status == DownloadStatus.PAUSED) {
+                BrowserLog.info("download", downloadLogLine("Left the queue", find(next)?.url))
+                launch(next)
+            }
+        }
+    }
+
+    /** True when every slot is taken, so this download should wait its turn. */
+    private fun mustWait(id: Long): Boolean {
+        val limit = maxSimultaneous()
+        return limit > 0 && jobs.count { it.key != id && it.value.isActive } >= limit
+    }
+
     private fun launch(id: Long) {
         if (jobs[id]?.isActive == true) return
+        if (mustWait(id)) {
+            val item = find(id) ?: return
+            synchronized(queued) { queued.add(id) }
+            update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.PAUSED, speed = 0, error = null, notice = QUEUED_NOTICE) else it } }
+            BrowserLog.info("download", downloadLogLine("Queued", item.url, " (${queued.size} waiting)"))
+            return
+        }
+        synchronized(queued) { queued.remove(id) }
         rememberUserPause(id, false)
-        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.RUNNING, error = null, notice = it.notice.takeUnless { n -> n == AUTO_RETRY_NOTICE }, pausedBySystem = false) else it } }
+        update { list -> list.map { if (it.id == id) it.copy(status = DownloadStatus.RUNNING, error = null, notice = it.notice.takeUnless { n -> n == AUTO_RETRY_NOTICE || n == QUEUED_NOTICE }, pausedBySystem = false) else it } }
         jobs[id] = scope.launch {
             try {
                 run(id, restarted = false)
@@ -324,6 +358,7 @@ class DownloadsRepository(
             } finally {
                 // Removes only this run's job, so a resume that started a newer run is not dropped from the map.
                 currentCoroutineContext()[Job]?.let { jobs.remove(id, it) }
+                startQueued()
             }
         }
     }
@@ -540,6 +575,7 @@ class DownloadsRepository(
 
     companion object {
         const val FILE_CHANGED_NOTICE = "The file changed, so it restarted"
+        const val QUEUED_NOTICE = "Waiting for a free slot"
         const val FAILED_TAP_TO_RETRY = "Failed: tap to retry"
         const val AUTO_RETRY_NOTICE = "Connection lost. Trying again soon"
         private const val KEY_USER_PAUSED = "user_paused"
@@ -561,6 +597,7 @@ class DownloadsRepository(
             return DownloadsRepository(
                 app,
                 fastHttp = { settings.fastHttpDownloads.value },
+                maxSimultaneous = { com.makemission.ora.settings.SettingsRepository.maxSimultaneousDownloads(app) },
                 transportFor = { priv, referrer -> GeckoTransport(com.makemission.ora.browser.GeckoEngine.runtime(app), priv, referrer) },
             )
         }
