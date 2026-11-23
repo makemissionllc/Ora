@@ -546,6 +546,17 @@ class SettingsRepository(context: Context) {
         BrowserLog.info("settings", "Fast downloads for plain http ${if (enabled) "on" else "off"}")
     }
 
+    private val _maxSimultaneousDownloads = MutableStateFlow(prefs.getInt(KEY_MAX_SIMULTANEOUS_DOWNLOADS, DEFAULT_SIMULTANEOUS_DOWNLOADS))
+    /** How many downloads transfer at once; the rest wait in a queue. 0 means no limit. */
+    val maxSimultaneousDownloads: StateFlow<Int> = _maxSimultaneousDownloads.asStateFlow()
+
+    fun setMaxSimultaneousDownloads(count: Int) {
+        val clean = count.coerceIn(0, 10)
+        prefs.edit().putInt(KEY_MAX_SIMULTANEOUS_DOWNLOADS, clean).apply()
+        _maxSimultaneousDownloads.value = clean
+        BrowserLog.info("settings", "Simultaneous downloads ${if (clean == 0) "unlimited" else clean.toString()}")
+    }
+
     private val _showGroupStrip = MutableStateFlow(prefs.getBoolean(KEY_SHOW_GROUP_STRIP, true))
     /** Whether the group strip shows while the open tab is in a group. On by default. */
     val showGroupStrip: StateFlow<Boolean> = _showGroupStrip.asStateFlow()
@@ -1249,6 +1260,8 @@ class SettingsRepository(context: Context) {
         private const val KEY_HINTS = "hints_enabled"
         private const val KEY_SEEN_HINTS = "hints_seen"
         private const val KEY_FAST_HTTP_DOWNLOADS = "fast_http_downloads"
+        private const val KEY_MAX_SIMULTANEOUS_DOWNLOADS = "max_simultaneous_downloads"
+        const val DEFAULT_SIMULTANEOUS_DOWNLOADS = 3
         private const val KEY_SHOW_GROUP_STRIP = "show_group_strip"
         private const val KEY_TOOLBAR_ITEMS = "toolbar_items"
         private const val KEY_IMAGE_ALWAYS_ASK = "image_always_ask"
@@ -1303,6 +1316,11 @@ class SettingsRepository(context: Context) {
         private const val KEY_HAPTICS = "haptic_strength"
         /** Empty means the Ora start page, which is what Home opened before the address was honoured. */
         const val DEFAULT_HOME_PAGE = ""
+
+        /** Read straight from storage each time, so the download queue sees a change made on the Settings page at once. */
+        fun maxSimultaneousDownloads(context: Context): Int =
+            context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                .getInt(KEY_MAX_SIMULTANEOUS_DOWNLOADS, DEFAULT_SIMULTANEOUS_DOWNLOADS)
 
         /** Read straight from storage, for code with no repository instance (the download notifier). */
         fun downloadNotificationsEnabled(context: Context): Boolean =

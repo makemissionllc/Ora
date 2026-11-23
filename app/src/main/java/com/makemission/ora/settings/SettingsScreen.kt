@@ -149,6 +149,7 @@ fun SettingsScreen(
     val blockAds by settings.blockAds.collectAsState()
     val secureDns by settings.secureDns.collectAsState()
     val fastHttpDownloads by settings.fastHttpDownloads.collectAsState()
+    val maxSimultaneousDownloads by settings.maxSimultaneousDownloads.collectAsState()
     val imageAlwaysAsk by settings.imageAlwaysAsk.collectAsState()
     val showGroupStrip by settings.showGroupStrip.collectAsState()
     val switchToOpenTab by settings.switchToOpenTab.collectAsState()
@@ -1286,6 +1287,35 @@ fun SettingsScreen(
                                     )
                                 }
                                 MineralSwitch(checked = fastHttpDownloads, label = "Switch", onChange = { settings.setFastHttpDownloads(it) })
+                            }
+                            Text(
+                                "Downloads at once",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = browserColors().AddressBarText,
+                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 12.dp)
+                            )
+                            Text(
+                                "More than this wait in line and start by themselves, so a long list does not slow every file down.",
+                                fontSize = 14.sp,
+                                color = browserColors().SecondaryText,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth().height(44.dp).padding(horizontal = 12.dp, vertical = 4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                listOf(1 to "1", 2 to "2", 3 to "3", 5 to "5", 0 to "No limit").forEach { (count, label) ->
+                                    com.makemission.ora.browser.SegmentLabel(
+                                        text = label,
+                                        selected = maxSimultaneousDownloads == count,
+                                        modifier = Modifier.weight(1f),
+                                        pill = true,
+                                    ) {
+                                        settings.setMaxSimultaneousDownloads(count)
+                                        com.makemission.ora.downloads.DownloadsRepository.current?.startQueued()
+                                    }
+                                }
                             }
                             Row(
                                 modifier = Modifier
