@@ -12,6 +12,12 @@ data class ChangeDay(val date: String, val items: List<ChangeItem>)
 /** Newest first. Keep in step with CHANGELOG.md, per AGENTS.md rule 20. */
 val Changelog: List<ChangeDay> = listOf(
     ChangeDay(
+        date = "23 Nov 2026",
+        items = listOf(
+            ChangeItem(ChangeKind.ADDED, "Download queue. Settings > Downloads has a new Downloads at once choice (1, 2, 3, 5 or No limit, 3 at first). Files past the limit wait in line, marked \"Waiting for a free slot\", and start by themselves when a download ends. A long list no longer slows every file down. (`d79cd06`)"),
+        ),
+    ),
+    ChangeDay(
         date = "22 Nov 2026",
         items = listOf(
             ChangeItem(ChangeKind.ADDED, "Save all images. The page menu has a new Save all images row. It lists every picture on the page as thumbnails (all picked at first, with All and None and a count), and Save sends the picked ones to Downloads. Repeats are shown once, a page with no pictures says so, and saving more than 20 asks first and says how many. In a private tab the downloads are private and are not kept in your list. (`22d91ba`)"),

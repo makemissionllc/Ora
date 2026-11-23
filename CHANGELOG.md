@@ -8,6 +8,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates a
 
 ## Unreleased
 
+### 2026-11-23
+
+**Added**
+- Download queue. Settings > Downloads has a new Downloads at once choice (1, 2, 3, 5 or No limit, 3 at first). Files past the limit wait in line, marked "Waiting for a free slot", and start by themselves when a download ends. A long list no longer slows every file down. (`d79cd06`)
+
 ### 2026-11-22
 
 **Fixed**
